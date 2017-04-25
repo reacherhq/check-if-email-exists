@@ -1,9 +1,9 @@
 # check-if-email-exists
-Check if an email address exists without sending any email. Uses telnet.
+Check if an email address exists before sending the email. Uses Telnet.
 
 ## Why?
 
-Many online services (https://hunter.io, http://verify-email.org, http://email-checker.net) offer this service for a fee. Here is an open-source alternative to those tools.
+Many online services (https://hunter.io, http://verify-email.org, http://email-checker.net) offer this service for a paid fee. Here is an open-source alternative to those tools.
 
 ## Usage
 
