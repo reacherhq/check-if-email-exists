@@ -8,9 +8,11 @@ set port [lindex $argv 2]
 # Start a Telnet communication
 spawn telnet $host $port;
 expect "220"
-send "MAIL FROM: test@test.org\r";
+send "HELO Hi\r";
 expect "250"
-send "RCPT TO: $email\r";
+send "MAIL FROM: <test@test.org>\r";
+expect "250"
+send "RCPT TO: <$email>\r";
 expect "*"
 send "QUIT\r"
 expect eof
