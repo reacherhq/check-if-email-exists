@@ -3,10 +3,6 @@ version: '0.1.0'
 author: Amaury Martiny <amaury.martiny@protonmail.com>
 about: Check if an email address exists without sending any email.
 args:
-  - verbose:
-      short: v
-      long: verbose
-      help: The program will tell you everything it does
   - EMAIL:
       help: The email to check
       required: true
