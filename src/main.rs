@@ -16,4 +16,14 @@ fn main() {
     let email = matches.value_of("EMAIL").unwrap();
 
     debug!("Testing email {}...", email);
+
+    let domain = match email.split("@").skip(1).next() {
+        Some(i) => i,
+        None => {
+            error!("{} is not a valid email.", email);
+            ::std::process::exit(1);
+        }
+    };
+
+    debug!("Domain is: {}", domain);
 }
