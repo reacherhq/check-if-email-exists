@@ -3,7 +3,10 @@ extern crate clap;
 extern crate env_logger;
 #[macro_use]
 extern crate log;
+
 use clap::App;
+
+pub mod mx_hosts;
 
 fn main() {
     env_logger::init();
@@ -26,4 +29,9 @@ fn main() {
     };
 
     debug!("Domain is: {}", domain);
+
+    let hosts = mx_hosts::get_mx_lookup(domain);
+    for host in hosts.iter() {
+        println!("{}", host.exchange())
+    }
 }
