@@ -15,7 +15,7 @@ fi
 
 for HOST in ${MX_HOSTS[@]}; do
     for PORT in ${PORTS[@]}; do
-        OUTPUT=`expect expectTelnet.tcl $EMAIL $HOST $PORT $SENDER`;
+        OUTPUT=`expect expectTelnet.tcl $EMAIL $HOST $PORT $SENDER 2>/dev/null`;
         if [[ `echo $OUTPUT | grep "2.1.5"` ]]; then # 2.1.5 means address exists
             echo true;
             exit 0;
