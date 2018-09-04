@@ -10,7 +10,7 @@ if [[ $# == 2 ]]; then
     SENDER="$2"
 fi
 if [ -z $SENDER ]; then
-    SENDER='test@test.org'
+    SENDER='email@example.com'
 fi
 
 for HOST in ${MX_HOSTS[@]}; do
