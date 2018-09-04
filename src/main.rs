@@ -6,7 +6,8 @@ extern crate log;
 
 use clap::App;
 
-pub mod mx_hosts;
+mod mx_hosts;
+mod telnet;
 
 fn main() {
     env_logger::init();
@@ -34,4 +35,6 @@ fn main() {
     for host in hosts.iter() {
         println!("{}", host.exchange())
     }
+
+    telnet::connect();
 }
