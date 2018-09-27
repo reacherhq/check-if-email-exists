@@ -34,11 +34,6 @@ fn main() {
     let hosts = mx_hosts::get_mx_lookup(domain);
     for host in hosts.iter() {
         println!("{}", host.exchange());
-        telnet::connect(
-            "amaury.martiny@protonmail.com",
-            "amaury.martiny@protonmail.com",
-            host.exchange(),
-            25,
-        );
+        telnet::connect("amaury.martiny@protonmail.com", email, host.exchange(), 25);
     }
 }
