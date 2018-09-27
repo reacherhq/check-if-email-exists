@@ -1,8 +1,11 @@
 extern crate telnet;
+extern crate trust_dns_resolver;
 
 use self::telnet::{Telnet, TelnetEvent};
+use self::trust_dns_resolver::Name;
 use std::str::from_utf8;
 
+// The step into the telnet discussion we're in.
 enum Step {
     Welcome,
     SentHelo,
@@ -12,9 +15,11 @@ enum Step {
     NotFound,
 }
 
-pub fn connect() {
-    let mut connection = Telnet::connect(("gmail-smtp-in.l.google.com.", 25), 256)
-        .expect("Couldn't connect to the server...");
+pub fn connect(from: &str, to: &str, domain: Name, port: u16) {
+    debug!("Connecting to: {}...", domain);
+
+    let mut connection =
+        Telnet::connect((domain, port), 256).expect("Couldn't connect to the server...");
 
     let mut step = Step::Welcome;
     loop {
@@ -23,14 +28,15 @@ pub fn connect() {
             TelnetEvent::Data(read_buffer) => {
                 // `answer` is what we get from the server
                 let answer = from_utf8(&read_buffer).unwrap();
-                println!("Received: {}", answer);
+
+                debug!("Received: {}", answer);
 
                 // `question` is what we ask the server
                 let question = match step {
                     Step::Welcome => {
                         if answer.contains("220") {
                             step = Step::SentHelo;
-                            "HELO Hi\n"
+                            String::from("HELO Hi\n")
                         } else {
                             panic!("Got an unexpected answer at Welcome step.");
                         }
@@ -38,7 +44,7 @@ pub fn connect() {
                     Step::SentHelo => {
                         if answer.contains("250") {
                             step = Step::SentMailFrom;
-                            "MAIL FROM: <amaury.martiny@protonmail.com>\n"
+                            format!("{}{}{}", "MAIL FROM: <", from, ">\n")
                         } else {
                             panic!("Got an unexpected answer at SentHelo step.");
                         }
@@ -46,7 +52,7 @@ pub fn connect() {
                     Step::SentMailFrom => {
                         if answer.contains("250") {
                             step = Step::SentRcptTo;
-                            "RCPT TO: <amaury.martiny@protonmail.com>\n"
+                            format!("{}{}{}", "RCPT TO: <", to, ">\n")
                         } else {
                             panic!("Got an unexpected answer at SentMailFrom step.");
                         }
@@ -58,12 +64,12 @@ pub fn connect() {
                         } else {
                             step = Step::NotFound;
                         }
-                        "QUIT\n"
+                        String::from("QUIT\n")
                     }
                     _ => panic!("Got an unexpected answer at Found/NotFound step."),
                 };
 
-                println!("Sent: {}", question);
+                debug!("Sent: {}", question);
 
                 // Buffer to write to telnet
                 let write_buffer = question.as_bytes(); // TODO Define buffer depending on read_buffer
