@@ -49,11 +49,11 @@ pub fn connect(from: &str, to: &str, domain: &Name, port: u16) -> bool {
                         debug!("Received: {}", answer);
 
                         // `question` is what we ask the server
-                        let question = match step {
+                        let mut question = match step {
                             Step::Welcome => {
                                 if answer.contains("220") {
                                     step = Step::SentHelo;
-                                    String::from("HELO Hi\n")
+                                    String::from("HELO Hi")
                                 } else {
                                     break;
                                 }
@@ -61,7 +61,7 @@ pub fn connect(from: &str, to: &str, domain: &Name, port: u16) -> bool {
                             Step::SentHelo => {
                                 if answer.contains("250") {
                                     step = Step::SentMailFrom;
-                                    format!("{}{}{}", "MAIL FROM: <", from, ">\n")
+                                    format!("{}{}{}", "MAIL FROM: <", from, ">")
                                 } else {
                                     break;
                                 }
@@ -69,7 +69,7 @@ pub fn connect(from: &str, to: &str, domain: &Name, port: u16) -> bool {
                             Step::SentMailFrom => {
                                 if answer.contains("2.1.0") {
                                     step = Step::SentRcptTo;
-                                    format!("{}{}{}", "RCPT TO: <", to, ">\n")
+                                    format!("{}{}{}", "RCPT TO: <", to, ">")
                                 } else {
                                     break;
                                 }
@@ -81,7 +81,7 @@ pub fn connect(from: &str, to: &str, domain: &Name, port: u16) -> bool {
                                 } else {
                                     step = Step::NotFound;
                                 }
-                                String::from("QUIT\n")
+                                String::from("QUIT")
                             }
                             _ => panic!("Step is Found/NotFound where it shouldn't be."),
                         };
@@ -89,7 +89,8 @@ pub fn connect(from: &str, to: &str, domain: &Name, port: u16) -> bool {
                         debug!("Sent: {}", question);
 
                         // Buffer to write to telnet
-                        let write_buffer = question.as_bytes(); // TODO Define buffer depending on read_buffer
+                        question.push_str("\n");
+                        let write_buffer = question.as_bytes();
                         if let Err(e) = connection.write(&write_buffer) {
                             debug!("Error while writing, {}", e);
                         }

@@ -18,14 +18,15 @@ fn main() {
     let matches = App::from_yaml(yaml).get_matches();
 
     // Calling .unwrap() is safe here because "EMAIL" is required
-    let email = matches.value_of("EMAIL").unwrap();
+    let from_email = matches.value_of("from").unwrap_or("test@example.com");
+    let to_email = matches.value_of("TO").unwrap();
 
-    debug!("Testing email {}...", email);
+    debug!("Testing email {}...", to_email);
 
-    let domain = match email.split("@").skip(1).next() {
+    let domain = match to_email.split("@").skip(1).next() {
         Some(i) => i,
         None => {
-            error!("{} is not a valid email.", email);
+            error!("{} is not a valid email.", to_email);
             ::std::process::exit(1);
         }
     };
@@ -36,12 +37,7 @@ fn main() {
     let ports = vec![25, 465, 587];
     for port in ports.into_iter() {
         for host in hosts.iter() {
-            if telnet::connect(
-                "amaury.martiny@protonmail.com",
-                email,
-                host.exchange(),
-                port,
-            ) {
+            if telnet::connect(from_email, to_email, host.exchange(), port) {
                 println!("true");
                 process::exit(0x0100);
             };
