@@ -1,13 +1,7 @@
 language: rust
 rust:
   - stable
-  - beta
-  - nightly
 cache: cargo
-matrix:
-  allow_failures:
-    - rust: nightly
-  fast_finish: true
 script:
   - cargo test --verbose --all
   - cargo run -- $TEST_EMAIL
