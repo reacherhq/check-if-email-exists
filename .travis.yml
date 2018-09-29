@@ -3,5 +3,5 @@ rust:
   - stable
 cache: cargo
 script:
-  - cargo test --verbose --all
+  - cargo test
   - cargo run -- $TEST_EMAIL | grep true
