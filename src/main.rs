@@ -5,6 +5,7 @@ extern crate env_logger;
 extern crate log;
 
 use clap::App;
+use std::process;
 
 mod mx_hosts;
 mod telnet;
@@ -32,8 +33,19 @@ fn main() {
     debug!("Domain is: {}", domain);
 
     let hosts = mx_hosts::get_mx_lookup(domain);
-    for host in hosts.iter() {
-        println!("{}", host.exchange());
-        telnet::connect("amaury.martiny@protonmail.com", email, host.exchange(), 25);
+    let ports = vec![25, 465, 587];
+    for port in ports.into_iter() {
+        for host in hosts.iter() {
+            if telnet::connect(
+                "amaury.martiny@protonmail.com",
+                email,
+                host.exchange(),
+                port,
+            ) {
+                println!("true");
+                process::exit(0x0100);
+            };
+        }
     }
+    println!("false");
 }
