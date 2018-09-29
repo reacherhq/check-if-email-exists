@@ -10,4 +10,4 @@ matrix:
   fast_finish: true
 script:
   - cargo test --verbose --all
-  - cargo run -- amaury.martiny@protonmail.com
+  - cargo run -- $TEST_EMAIL
