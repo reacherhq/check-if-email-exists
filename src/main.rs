@@ -17,8 +17,8 @@ fn main() {
     let yaml = load_yaml!("cli.yml");
     let matches = App::from_yaml(yaml).get_matches();
 
-    // Calling .unwrap() is safe here because "EMAIL" is required
     let from_email = matches.value_of("from").unwrap_or("test@example.com");
+    // Calling .unwrap() is safe here because "EMAIL" is required
     let to_email = matches.value_of("TO").unwrap();
 
     debug!("Testing email {}...", to_email);
@@ -27,7 +27,7 @@ fn main() {
         Some(i) => i,
         None => {
             error!("{} is not a valid email.", to_email);
-            ::std::process::exit(1);
+            process::exit(1);
         }
     };
 
