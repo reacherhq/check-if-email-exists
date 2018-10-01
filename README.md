@@ -16,6 +16,21 @@ Make sure you have Telnet installed.
 
 Outputs `true` if email exists, `false` if it doesn't.
 
+Some mail providers validate sender's mail address before respond, so you should give a valid mail address as sender's mail.
+
+You can do this by one of the following methods:
+
+```bash
+export SENDER=vaild_sender@domain.com
+./checkEmail.sh you@domain.com
+```
+
+or
+
+```bash
+./checkEmail.sh you@domain.com vaild_sender@domain.com
+```
+
 ## Notes
 
 This is really a draft version of the tool, for my personal uses. If someone wants to improve it (and it's easy), please submit a PR. The code is really easy, but needs some improvement to be deliverable to the public.
