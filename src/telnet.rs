@@ -38,64 +38,63 @@ pub fn connect(from: &str, to: &str, domain: &Name, port: u16) -> bool {
                     Err(_) => break,
                 };
 
-                match event {
-                    TelnetEvent::Data(read_buffer) => {
-                        // `answer` is what we get from the server
-                        let answer = match from_utf8(&read_buffer) {
-                            Ok(i) => i,
-                            _ => break,
-                        };
+                if let TelnetEvent::Data(read_buffer) = event {
+                    // `answer` is what we get from the server
+                    let answer = match from_utf8(&read_buffer) {
+                        Ok(i) => i,
+                        _ => break,
+                    };
 
-                        debug!("Received: {}", answer);
+                    debug!("Received: {}", answer);
 
-                        // `question` is what we ask the server
-                        let mut question = match step {
-                            Step::Welcome => {
-                                if answer.contains("220") {
-                                    step = Step::SentHelo;
-                                    String::from("HELO Hi")
-                                } else {
-                                    break;
-                                }
+                    // `question` is what we ask the server
+                    let mut question = match step {
+                        Step::Welcome => {
+                            if answer.contains("220") {
+                                step = Step::SentHelo;
+                                String::from("HELO Hi")
+                            } else {
+                                break;
                             }
-                            Step::SentHelo => {
-                                if answer.contains("250") {
-                                    step = Step::SentMailFrom;
-                                    format!("{}{}{}", "MAIL FROM: <", from, ">")
-                                } else {
-                                    break;
-                                }
-                            }
-                            Step::SentMailFrom => {
-                                if answer.contains("2.1.0") {
-                                    step = Step::SentRcptTo;
-                                    format!("{}{}{}", "RCPT TO: <", to, ">")
-                                } else {
-                                    break;
-                                }
-                            }
-                            Step::SentRcptTo => {
-                                // 2.1.5 means address exists
-                                if answer.contains("2.1.5") {
-                                    step = Step::Found;
-                                } else {
-                                    step = Step::NotFound;
-                                }
-                                String::from("QUIT")
-                            }
-                            _ => panic!("Step is Found/NotFound where it shouldn't be."),
-                        };
-
-                        debug!("Sent: {}", question);
-
-                        // Buffer to write to telnet
-                        question.push_str("\n");
-                        let write_buffer = question.as_bytes();
-                        if let Err(e) = connection.write(&write_buffer) {
-                            debug!("Error while writing, {}", e);
                         }
+                        Step::SentHelo => {
+                            if answer.contains("250") {
+                                step = Step::SentMailFrom;
+                                format!("{}{}{}", "MAIL FROM: <", from, ">")
+                            } else {
+                                break;
+                            }
+                        }
+                        Step::SentMailFrom => {
+                            if answer.contains("2.1.0") {
+                                step = Step::SentRcptTo;
+                                format!("{}{}{}", "RCPT TO: <", to, ">")
+                            } else {
+                                break;
+                            }
+                        }
+                        Step::SentRcptTo => {
+                            // 2.1.5 means address exists
+                            if answer.contains("2.1.5") {
+                                step = Step::Found;
+                            } else {
+                                step = Step::NotFound;
+                            }
+                            String::from("QUIT")
+                        }
+                        // This should never happen, because, we already
+                        // matched the 4 enums above.
+                        _ => panic!("Step is Found/NotFound where it shouldn't be."),
+                    };
+
+                    debug!("Sent: {}", question);
+
+                    // Buffer to write to telnet
+                    question.push_str("\n");
+                    let write_buffer = question.as_bytes();
+                    if let Err(e) = connection.write(&write_buffer) {
+                        debug!("Error while writing, {}", e);
                     }
-                    _ => break,
                 }
             }
             _ => break,
