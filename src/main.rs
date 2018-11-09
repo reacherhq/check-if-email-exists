@@ -21,7 +21,7 @@ fn main() {
     // Calling .unwrap() is safe here because "EMAIL" is required
     let to_email = matches.value_of("TO").unwrap();
 
-    debug!("Testing email {}...", to_email);
+    debug!("User inputted email {}", to_email);
 
     let domain = match to_email.split("@").skip(1).next() {
         Some(i) => i,
@@ -30,18 +30,23 @@ fn main() {
             process::exit(1);
         }
     };
+    debug!("Domain name is: {}", domain);
 
-    debug!("Domain is: {}", domain);
-
+    debug!("Getting MX lookup...");
     let hosts = mx_hosts::get_mx_lookup(domain);
+    debug!("Found the following MX hosts {:?}", hosts);
     let ports = vec![25, 465, 587];
+    let mut combinations = Vec::new(); // `(host, port)` combination
     for port in ports.into_iter() {
         for host in hosts.iter() {
-            if telnet::connect(from_email, to_email, host.exchange(), port) {
-                println!("true");
-                process::exit(0x0100);
-            };
+            combinations.push((host.exchange(), port))
         }
     }
+    for c in combinations {
+        let (domain, port) = c;
+        let found = telnet::connect(from_email, to_email, domain, port);
+        debug!("found? {}", found)
+    }
+
     println!("false");
 }

@@ -16,7 +16,7 @@ enum Step {
 }
 
 pub fn connect(from: &str, to: &str, domain: &Name, port: u16) -> bool {
-    debug!("Telnet connection to {}...", domain);
+    debug!("Telnet connection to {}:{}...", domain, port);
 
     let mut connection = match Telnet::connect((domain.to_utf8().as_str(), port), 256) {
         Ok(i) => i,
@@ -35,7 +35,7 @@ pub fn connect(from: &str, to: &str, domain: &Name, port: u16) -> bool {
                 // telnet connection.
                 let event = match connection.read() {
                     Ok(i) => i,
-                    Err(_) => break,
+                    _ => break,
                 };
 
                 if let TelnetEvent::Data(read_buffer) = event {
