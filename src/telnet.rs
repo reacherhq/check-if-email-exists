@@ -21,7 +21,7 @@ pub fn connect(from: &str, to: &str, domain: &Name, port: u16) -> bool {
     let mut connection = match Telnet::connect((domain.to_utf8().as_str(), port), 256) {
         Ok(i) => i,
         Err(e) => {
-            debug!("Failed to connect, {}", e);
+            debug!("On {}:{}, failed to connect, {}", domain, port, e);
             return false;
         }
     };
@@ -45,7 +45,7 @@ pub fn connect(from: &str, to: &str, domain: &Name, port: u16) -> bool {
                         _ => break,
                     };
 
-                    debug!("Received: {}", answer);
+                    debug!("On {}:{}, received: {}", domain, port, answer);
 
                     // `question` is what we ask the server
                     let mut question = match step {
@@ -87,13 +87,13 @@ pub fn connect(from: &str, to: &str, domain: &Name, port: u16) -> bool {
                         _ => panic!("Step is Found/NotFound where it shouldn't be."),
                     };
 
-                    debug!("Sent: {}", question);
+                    debug!("On {}:{}, sent: {}", domain, port, question);
 
                     // Buffer to write to telnet
                     question.push_str("\n");
                     let write_buffer = question.as_bytes();
                     if let Err(e) = connection.write(&write_buffer) {
-                        debug!("Error while writing, {}", e);
+                        debug!("On {}:{}, error while writing, {}", domain, port, e);
                     }
                 }
             }

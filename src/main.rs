@@ -3,8 +3,10 @@ extern crate clap;
 extern crate env_logger;
 #[macro_use]
 extern crate log;
+extern crate rayon;
 
 use clap::App;
+use rayon::prelude::*;
 use std::process;
 
 mod mx_hosts;
@@ -18,7 +20,7 @@ fn main() {
     let matches = App::from_yaml(yaml).get_matches();
 
     let from_email = matches.value_of("from").unwrap_or("test@example.com");
-    // Calling .unwrap() is safe here because "EMAIL" is required
+    // Calling .unwrap() is safe here because "TO" is required
     let to_email = matches.value_of("TO").unwrap();
 
     debug!("User inputted email {}", to_email);
@@ -42,11 +44,11 @@ fn main() {
             combinations.push((host.exchange(), port))
         }
     }
-    for c in combinations {
-        let (domain, port) = c;
-        let found = telnet::connect(from_email, to_email, domain, port);
-        debug!("found? {}", found)
-    }
 
-    println!("false");
+    let found = combinations
+        .par_iter() // Parallelize the find_any
+        .find_any(|(domain, port)| telnet::connect(from_email, to_email, domain, *port))
+        .is_some();
+
+    println!("{}", found);
 }
