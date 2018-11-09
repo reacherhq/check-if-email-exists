@@ -4,4 +4,4 @@ rust:
 cache: cargo
 script:
   - cargo test
-  - cargo run -- $TEST_EMAIL | grep true
+  - RUST_LOG=debug cargo run -- $TEST_EMAIL | grep true
