@@ -102,7 +102,10 @@ pub fn connect(from: &str, to: &str, domain: &Name, port: u16) -> bool {
     }
 
     match step {
-        Step::Found => true,
+        Step::Found => {
+            debug!("Email address exists.");
+            true
+        }
         _ => false,
     }
 }

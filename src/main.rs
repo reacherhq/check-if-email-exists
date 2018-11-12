@@ -23,16 +23,16 @@ fn main() {
     // Calling .unwrap() is safe here because "TO" is required
     let to_email = matches.value_of("TO").unwrap();
 
-    debug!("User inputted email {}", to_email);
+    debug!("User inputted email '{}'", to_email);
 
     let domain = match to_email.split("@").skip(1).next() {
         Some(i) => i,
         None => {
-            error!("{} is not a valid email.", to_email);
+            error!("'{}' is not a valid email.", to_email);
             process::exit(1);
         }
     };
-    debug!("Domain name is: {}", domain);
+    debug!("Domain name is '{}'", domain);
 
     debug!("Getting MX lookup...");
     let hosts = mx_hosts::get_mx_lookup(domain);
