@@ -11,8 +11,6 @@ use clap::App;
 use lettre::smtp::{SMTP_PORT, SUBMISSION_PORT};
 use rayon::prelude::*;
 use std::process;
-use std::str::FromStr;
-use trust_dns_resolver::Name;
 
 mod mx_hosts;
 mod with_lettre;
@@ -39,33 +37,21 @@ fn main() {
     };
     debug!("Domain name is '{}'", domain);
 
-    // debug!("Getting MX lookup...");
-    // let hosts = mx_hosts::get_mx_lookup(domain);
-    // info!("Found the following MX hosts {:?}", hosts);
-    // let ports = vec![SMTP_PORT, SUBMISSION_PORT, 465];
-    // let mut combinations = Vec::new(); // `(host, port)` combination
-    // for port in ports.into_iter() {
-    //     for host in hosts.iter() {
-    //         combinations.push((host.exchange(), port))
-    //     }
-    // }
+    debug!("Getting MX lookup...");
+    let hosts = mx_hosts::get_mx_lookup(domain);
+    info!("Found the following MX hosts {:?}", hosts);
+    let ports = vec![SMTP_PORT, SUBMISSION_PORT, 465];
+    let mut combinations = Vec::new(); // `(host, port)` combination
+    for port in ports.into_iter() {
+        for host in hosts.iter() {
+            combinations.push((host.exchange(), port))
+        }
+    }
 
-    with_lettre::email_exists(
-        from_email,
-        to_email,
-        &Name::from_str("smtp.gmail.com").unwrap(),
-        465,
-    );
+    let found = combinations
+        .par_iter() // Parallelize the find_any
+        .find_any(|(host, port)| with_lettre::email_exists(from_email, to_email, host, *port))
+        .is_some();
 
-    // let found = combinations
-    //     .par_iter() // Parallelize the find_any
-    //     .find_any(|(host, port)| with_lettre::email_exists(
-    //     from_email,
-    //     to_email,
-    //     host,
-    //     *port,
-    // ))
-    //     .is_some();
-
-    // println!("{}", found);
+    println!("{}", found);
 }
