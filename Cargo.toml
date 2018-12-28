@@ -6,7 +6,8 @@ authors = ["Amaury Martiny <amaury.martiny@protonmail.com>"]
 [dependencies]
 clap = {version = "2.32", features = ["yaml"]}
 env_logger = "0.5.13"
+lettre = "0.8.3"
 log = "0.4"
+native-tls = "^0.1"
 rayon = "1.0.3"
-telnet = "0.1.2"
 trust-dns-resolver = "0.9.1"

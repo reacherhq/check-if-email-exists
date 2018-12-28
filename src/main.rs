@@ -1,16 +1,21 @@
 #[macro_use]
 extern crate clap;
 extern crate env_logger;
+extern crate lettre;
 #[macro_use]
 extern crate log;
 extern crate rayon;
+extern crate trust_dns_resolver;
 
 use clap::App;
+use lettre::smtp::{SMTP_PORT, SUBMISSION_PORT};
 use rayon::prelude::*;
 use std::process;
+use std::str::FromStr;
+use trust_dns_resolver::Name;
 
 mod mx_hosts;
-mod telnet;
+mod with_lettre;
 
 fn main() {
     env_logger::init();
@@ -23,7 +28,7 @@ fn main() {
     // Calling .unwrap() is safe here because "TO" is required
     let to_email = matches.value_of("TO").unwrap();
 
-    debug!("User inputted email '{}'", to_email);
+    info!("User inputted email '{}'", to_email);
 
     let domain = match to_email.split("@").skip(1).next() {
         Some(i) => i,
@@ -34,21 +39,33 @@ fn main() {
     };
     debug!("Domain name is '{}'", domain);
 
-    debug!("Getting MX lookup...");
-    let hosts = mx_hosts::get_mx_lookup(domain);
-    debug!("Found the following MX hosts {:?}", hosts);
-    let ports = vec![25, 465, 587];
-    let mut combinations = Vec::new(); // `(host, port)` combination
-    for port in ports.into_iter() {
-        for host in hosts.iter() {
-            combinations.push((host.exchange(), port))
-        }
-    }
+    // debug!("Getting MX lookup...");
+    // let hosts = mx_hosts::get_mx_lookup(domain);
+    // info!("Found the following MX hosts {:?}", hosts);
+    // let ports = vec![SMTP_PORT, SUBMISSION_PORT, 465];
+    // let mut combinations = Vec::new(); // `(host, port)` combination
+    // for port in ports.into_iter() {
+    //     for host in hosts.iter() {
+    //         combinations.push((host.exchange(), port))
+    //     }
+    // }
 
-    let found = combinations
-        .par_iter() // Parallelize the find_any
-        .find_any(|(domain, port)| telnet::connect(from_email, to_email, domain, *port))
-        .is_some();
+    with_lettre::email_exists(
+        from_email,
+        to_email,
+        &Name::from_str("smtp.gmail.com").unwrap(),
+        465,
+    );
 
-    println!("{}", found);
+    // let found = combinations
+    //     .par_iter() // Parallelize the find_any
+    //     .find_any(|(host, port)| with_lettre::email_exists(
+    //     from_email,
+    //     to_email,
+    //     host,
+    //     *port,
+    // ))
+    //     .is_some();
+
+    // println!("{}", found);
 }
