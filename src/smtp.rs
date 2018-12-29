@@ -47,27 +47,23 @@ pub fn email_exists(from: &str, to: &str, host: &Name, port: u16) -> Result<bool
 	);
 
 	// Send ehlo and get server info.
-	let ehlo_response = ensure_positive!(
-		try_smtp!(
-			smtp_client.command(EhloCommand::new(ClientId::new("localhost".to_string()))),
-			smtp_client
-		),
+	let ehlo_response = try_smtp!(
+		smtp_client.command(EhloCommand::new(ClientId::new("localhost".to_string()))),
 		smtp_client
 	);
+	let ehlo_response = ensure_positive!(ehlo_response, smtp_client);
 	let server_info = ServerInfo::from_response(&ehlo_response);
 	debug!("Server info: {}", server_info.as_ref().unwrap());
 
 	// Send from.
-	ensure_positive!(
-		try_smtp!(
-			smtp_client.command(MailCommand::new(
-				Some(EmailAddress::new(from.to_string()).unwrap()),
-				vec![],
-			)),
-			smtp_client
-		),
+	let from_response = try_smtp!(
+		smtp_client.command(MailCommand::new(
+			Some(EmailAddress::new(from.to_string()).unwrap()),
+			vec![],
+		)),
 		smtp_client
 	);
+	ensure_positive!(from_response, smtp_client);
 
 	// Send to.
 	let rctp_response = try_smtp!(
