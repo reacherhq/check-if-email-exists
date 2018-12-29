@@ -78,5 +78,9 @@ pub fn email_exists(from: &str, to: &str, host: &Name, port: u16) -> Result<bool
 	// Quit.
 	smtp_client.close();
 
+	match result {
+		Ok(val) => debug!("Checked email on {}:{}, exists={}.", host, port, val),
+		Err(_) => debug!("Cannot check email on {}:{}.", host, port),
+	};
 	result
 }
