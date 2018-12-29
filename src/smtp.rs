@@ -8,10 +8,11 @@ use trust_dns_resolver::Name;
 
 // Try to send an smtp command, close if fails.
 macro_rules! try_smtp (
-    ($res: expr, $client: ident) => ({
+    ($res: expr, $client: ident, $host: expr, $port: expr) => ({
         match $res {
             Ok(res) => res,
-            _ => {
+            Err(err) => {
+				debug!("Closing {}:{}, because of error '{}'.", $host, $port, err);
 				$client.close();
                 return Err(());
             },
@@ -26,19 +27,25 @@ pub fn email_exists(from: &str, to: &str, host: &Name, port: u16) -> Result<bool
 	// Set timeout.
 	try_smtp!(
 		smtp_client.set_timeout(Some(Duration::new(3, 0))),
-		smtp_client
+		smtp_client,
+		host,
+		port
 	);
 
 	// Connect to the host.
 	try_smtp!(
 		smtp_client.connect(&(host.to_utf8().as_str(), port), None),
-		smtp_client
+		smtp_client,
+		host,
+		port
 	);
 
 	// Send ehlo and get server info.
 	let ehlo_response = try_smtp!(
 		smtp_client.command(EhloCommand::new(ClientId::new("localhost".to_string()))),
-		smtp_client
+		smtp_client,
+		host,
+		port
 	);
 	let server_info = ServerInfo::from_response(&ehlo_response);
 	debug!("Server info: {}", server_info.as_ref().unwrap());
@@ -49,7 +56,9 @@ pub fn email_exists(from: &str, to: &str, host: &Name, port: u16) -> Result<bool
 			Some(EmailAddress::new(from.to_string()).unwrap()),
 			vec![],
 		)),
-		smtp_client
+		smtp_client,
+		host,
+		port
 	);
 
 	// Send to.
