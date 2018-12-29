@@ -5,4 +5,4 @@ cache: cargo
 script:
   - cargo test
   - cargo build
-  - RUST_LOG=debug ./target/debug/check-if-email-exists $TEST_EMAIL | grep true
+  # - RUST_LOG=debug ./target/debug/check_if_email_exists $TEST_EMAIL | tail -n 1 | grep true'
