@@ -66,30 +66,27 @@ pub fn email_exists(from: &str, to: &str, host: &Name, port: u16) -> Result<bool
 	ensure_positive!(from_response, smtp_client);
 
 	// Send to.
-	let rctp_response = try_smtp!(
-		smtp_client.command(RcptCommand::new(
-			EmailAddress::new(to.to_string()).unwrap(),
-			vec![],
-		)),
-		smtp_client
-	);
+	let result = match smtp_client.command(RcptCommand::new(
+		EmailAddress::new(to.to_string()).unwrap(),
+		vec![],
+	)) {
+		Ok(response) => {
+			if let Some(message) = response.first_line() {
+				if message.contains("2.1.5") {
+					debug!("1.5.2. {}", message);
+					return Ok(true);
+				}
+			}
+			Err(())
+		}
+		Err(err) => {
+			debug!("the error is,{}", err);
+			Err(())
+		}
+	};
 
 	// Quit.
 	smtp_client.close();
 
-	if let Some(message) = rctp_response.first_line() {
-		debug!("message {}", message);
-		// 250 2.1.5 Recipient e-mail address ok.
-		if message.contains("2.1.5") {
-			debug!("1.5.2. {}", message);
-			return Ok(true);
-		}
-		// 550 5.1.1 Mailbox does not exist.
-		if message.contains("5.1.1") {
-			debug!("5.1.1 {}", message);
-			return Ok(false);
-		}
-	}
-
-	Err(())
+	result
 }
