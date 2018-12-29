@@ -1,8 +1,6 @@
-extern crate trust_dns_resolver;
-
-use self::trust_dns_resolver::config::*;
-use self::trust_dns_resolver::lookup::MxLookup;
-use self::trust_dns_resolver::Resolver;
+use trust_dns_resolver::config::*;
+use trust_dns_resolver::lookup::MxLookup;
+use trust_dns_resolver::Resolver;
 
 pub fn get_mx_lookup(domain: &str) -> MxLookup {
 	// Construct a new Resolver with default configuration options

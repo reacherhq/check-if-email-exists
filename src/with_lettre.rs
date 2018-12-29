@@ -1,15 +1,11 @@
-extern crate lettre;
-extern crate native_tls;
-extern crate trust_dns_resolver;
-
-use self::lettre::smtp::client::net::NetworkStream;
-use self::lettre::smtp::client::InnerClient;
-use self::lettre::smtp::commands::*;
-use self::lettre::smtp::extension::{ClientId, Extension, ServerInfo};
-use self::lettre::{ClientTlsParameters, EmailAddress};
-use self::native_tls::TlsConnector;
-use self::trust_dns_resolver::Name;
+use lettre::smtp::client::net::NetworkStream;
+use lettre::smtp::client::InnerClient;
+use lettre::smtp::commands::*;
+use lettre::smtp::extension::{ClientId, Extension, ServerInfo};
+use lettre::{ClientTlsParameters, EmailAddress};
+use native_tls::TlsConnector;
 use std::time::Duration;
+use trust_dns_resolver::Name;
 
 macro_rules! try_smtp (
     ($err: expr, $client: ident) => ({

@@ -4,6 +4,7 @@ extern crate env_logger;
 extern crate lettre;
 #[macro_use]
 extern crate log;
+extern crate native_tls;
 extern crate rayon;
 extern crate trust_dns_resolver;
 
