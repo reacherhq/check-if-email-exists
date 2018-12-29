@@ -9,7 +9,7 @@ extern crate rayon;
 extern crate trust_dns_resolver;
 
 use clap::App;
-use lettre::smtp::{SMTP_PORT, SUBMISSION_PORT};
+use lettre::smtp::{SMTP_PORT, SUBMISSIONS_PORT, SUBMISSION_PORT};
 use rayon::prelude::*;
 use std::process;
 
@@ -23,7 +23,7 @@ fn main() {
 	let yaml = load_yaml!("cli.yml");
 	let matches = App::from_yaml(yaml).get_matches();
 
-	let from_email = matches.value_of("from").unwrap_or("test@example.com");
+	let from_email = matches.value_of("from").unwrap_or("user@example.org");
 	// Calling .unwrap() is safe here because "TO" is required
 	let to_email = matches.value_of("TO").unwrap();
 
@@ -41,7 +41,7 @@ fn main() {
 	debug!("Getting MX lookup...");
 	let hosts = mx_hosts::get_mx_lookup(domain);
 	info!("Found the following MX hosts {:?}", hosts);
-	let ports = vec![SMTP_PORT, SUBMISSION_PORT, 465];
+	let ports = vec![SMTP_PORT, SUBMISSION_PORT, SUBMISSIONS_PORT];
 	let mut combinations = Vec::new(); // `(host, port)` combination
 	for port in ports.into_iter() {
 		for host in hosts.iter() {

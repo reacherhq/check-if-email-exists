@@ -13,7 +13,7 @@ macro_rules! try_smtp (
             Ok(res) => {
 				if !res.is_positive() {
 					if let Some(message) = res.first_line() {
-						debug!("{}", message);
+						debug!("Error: {}", message);
 					}
 					$client.close();
 					return false;
@@ -21,7 +21,7 @@ macro_rules! try_smtp (
 				res
 			},
             Err(err) => {
-				debug!("{}", err);
+				debug!("Error: {}", err);
 				$client.close();
                 return false;
             },
@@ -38,12 +38,10 @@ pub fn email_exists(from: &str, to: &str, host: &Name, port: u16) -> bool {
 		return false;
 	}
 
-	let tls_builder = TlsConnector::builder();
-	let tls_parameters = ClientTlsParameters::new(host.to_string(), tls_builder.build().unwrap());
-
-	// Connect to the host
+	// Connect to the host. Start with insecure connection and use `STARTTLS`
+	// when available
 	try_smtp!(
-		email_client.connect(&(host.to_utf8().as_str(), port), Some(&tls_parameters)),
+		email_client.connect(&(host.to_utf8().as_str(), port), None),
 		email_client
 	);
 
@@ -55,13 +53,22 @@ pub fn email_exists(from: &str, to: &str, host: &Name, port: u16) -> bool {
 	let server_info = ServerInfo::from_response(&ehlo_response);
 	debug!("Server info: {}", server_info.as_ref().unwrap());
 
-	// Send starttls if available
+	// Send `STARTTLS` if available
 	if server_info
 		.as_ref()
 		.unwrap()
 		.supports_feature(Extension::StartTls)
 	{
 		try_smtp!(email_client.command(StarttlsCommand), email_client);
+
+		let tls_builder = TlsConnector::builder();
+		let tls_parameters =
+			ClientTlsParameters::new(host.to_string(), tls_builder.build().unwrap());
+		if let Err(err) = email_client.upgrade_tls_stream(&tls_parameters) {
+			debug!("{}", err);
+			email_client.close();
+			return false;
+		}
 
 		debug!("Connection is encrypted.");
 	}
