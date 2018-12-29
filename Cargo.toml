@@ -1,7 +1,15 @@
 [package]
-name = "check-if-email-exists"
+name = "check_if_email_exists"
 version = "0.1.0"
 authors = ["Amaury Martiny <amaury.martiny@protonmail.com>"]
+
+[lib]
+name = "check_if_email_exists"
+path = "src/lib.rs"
+
+[[bin]]
+name = "check_if_email_exists_bin"
+path = "src/bin/main.rs"
 
 [dependencies]
 clap = {version = "2.32", features = ["yaml"]}
