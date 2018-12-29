@@ -1,6 +1,6 @@
 [package]
 name = "check_if_email_exists"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Amaury Martiny <amaury.martiny@protonmail.com>"]
 
 [lib]
