@@ -1,41 +1,58 @@
-# check-if-email-exists
+# check_if_email_exists
 
-Check if an email address exists before sending the email. Uses Telnet.
+Check if an email address exists before sending the email.
+
+[![](https://img.shields.io/travis/amaurymartiny/check_if_email_exists.svg)](https://travis-ci.org/amaurymartiny/check-if-email-exists/)
+[![](https://ci.appveyor.com/api/projects/status/github/amaurymartiny/check_if_email_exists?branch=master&svg=true)](https://ci.appveyor.com/project/amaurymartiny/check-if-email-exists-a08kp)
 
 ## Why?
 
 Many online services (https://hunter.io, http://verify-email.org, http://email-checker.net) offer this service for a paid fee. Here is an open-source alternative to those tools.
 
+## Download the binary
+
+Head to the [releases page](https://github.com/amaurymartiny/check_if_email_exists/releases) and download the binary for your platform.
+
 ## Usage
 
-Make sure you have Telnet installed.
+Make sure you have [`openssl`](https://www.openssl.org/) installed.
 
-```bash
-./checkEmail.sh you@domain.com
+```
+USAGE:
+    check_if_email_exists [OPTIONS] <TO_EMAIL>
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+OPTIONS:
+        --from <FROM_EMAIL>    The from email to use in the Telnet connection (default: test@example.com)
+
+ARGS:
+    <TO_EMAIL>    The email to check
 ```
 
-Outputs `true` if email exists, `false` if it doesn't.
+## Legacy Bash Script
 
-Some mail providers validate sender's mail address before respond, so you should give a valid mail address as sender's mail.
+The 1st version of this tool was a simple bash script which made a telnet call. If you would like to use that simpler version, have a look at the [`legacy`](https://github.com/amaurymartiny/check_if_email_exists/tree/legacy) branch. The reasons for porting the bash script to the current codebase are explained [here](https://github.com/amaurymartiny/check_if_email_exists/issues/4).
 
-You can do this by one of the following methods:
+## Build From Source
 
-```bash
-export SENDER=vaild_sender@domain.com
-./checkEmail.sh you@domain.com
-```
-
-or
+First, [install Rust](https://www.rust-lang.org/tools/install). Then, clone the source code locally
 
 ```bash
-./checkEmail.sh you@domain.com vaild_sender@domain.com
+# Download the code
+$ git clone https://github.com/amaurymartiny/check_if_email_exists
+$ cd check_if_email_exists
+
+# Make your modifications in src/
+
+# Build in release mode
+$ cargo build --release
+
+# Run the binary
+$ ./target/release/check_if_email_exists --help
 ```
-
-## Notes
-
-This is really a draft version of the tool, for my personal uses. If someone wants to improve it (and it's easy), please submit a PR. The code is really easy, but needs some improvement to be deliverable to the public.
-
-The main Bash script (checkEmail.sh) calls an expect script (expectTelnet.sh) to make a Telnet call to the host with ports 587, 465 and 25.
 
 ## License
 
