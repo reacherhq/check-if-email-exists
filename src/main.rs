@@ -55,7 +55,7 @@ fn main() {
 			|(host, port)| match smtp::email_exists(from_email, to_email, host, *port) {
 				Ok(val) => {
 					println!("{}", val);
-					process::exit(0x0100);
+					process::exit(0);
 				}
 				_ => false,
 			},
