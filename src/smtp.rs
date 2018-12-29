@@ -1,9 +1,8 @@
 use lettre::smtp::client::net::NetworkStream;
 use lettre::smtp::client::InnerClient;
 use lettre::smtp::commands::*;
-use lettre::smtp::extension::{ClientId, Extension, ServerInfo};
-use lettre::{ClientTlsParameters, EmailAddress};
-use native_tls::TlsConnector;
+use lettre::smtp::extension::{ClientId, ServerInfo};
+use lettre::EmailAddress;
 use std::time::Duration;
 use trust_dns_resolver::Name;
 
@@ -63,7 +62,7 @@ pub fn email_exists(from: &str, to: &str, host: &Name, port: u16) -> bool {
 	);
 
 	// Send to
-	try_smtp!(
+	let rctp_response = try_smtp!(
 		email_client.command(RcptCommand::new(
 			EmailAddress::new(to.to_string()).unwrap(),
 			vec![],
@@ -74,5 +73,12 @@ pub fn email_exists(from: &str, to: &str, host: &Name, port: u16) -> bool {
 	// Quit
 	try_smtp!(email_client.command(QuitCommand), email_client);
 
-	true
+	if let Some(message) = rctp_response.first_line() {
+		debug!("aaa {}", message);
+		if message.contains("2.1.5") {
+			return true;
+		}
+	}
+
+	false
 }
