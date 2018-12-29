@@ -28,7 +28,7 @@ pub fn email_exists(from_email: &str, to_email: &str) -> bool {
 	debug!("Getting MX lookup...");
 	let hosts = mx_hosts::get_mx_lookup(domain);
 	debug!("Found the following MX hosts {:?}", hosts);
-	let ports = vec![SMTP_PORT, SUBMISSION_PORT, SUBMISSIONS_PORT];
+	let ports = vec![SMTP_PORT, SUBMISSION_PORT, SUBMISSIONS_PORT]; // 25, 587, 465
 	let mut combinations = Vec::new(); // `(host, port)` combination
 	for port in ports.into_iter() {
 		for host in hosts.iter() {
