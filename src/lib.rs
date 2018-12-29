@@ -36,15 +36,12 @@ pub fn email_exists(from_email: &str, to_email: &str) -> bool {
 		}
 	}
 
-	combinations
+	match combinations
 		.par_iter() // Parallelize the find_any
-		.find_any(
-			|(host, port)| match smtp::email_exists(from_email, to_email, host, *port) {
-				Ok(val) => {
-					println!("{}", val);
-					process::exit(0);
-				}
-				_ => false,
-			},
-		).is_some()
+		.filter_map(|(host, port)| smtp::email_exists(from_email, to_email, host, *port))
+		.find_any(|_| true)
+	{
+		Some(result) => result,
+		None => false,
+	}
 }

@@ -14,13 +14,13 @@ macro_rules! try_smtp (
             Err(err) => {
 				debug!("Closing {}:{}, because of error '{}'.", $host, $port, err);
 				$client.close();
-                return Err(());
+                return None;
             },
         }
     })
 );
 
-pub fn email_exists(from: &str, to: &str, host: &Name, port: u16) -> Result<bool, ()> {
+pub fn email_exists(from: &str, to: &str, host: &Name, port: u16) -> Option<bool> {
 	debug!("Connecting to {}:{}...", host, port);
 	let mut smtp_client: InnerClient<NetworkStream> = InnerClient::new();
 
@@ -70,19 +70,19 @@ pub fn email_exists(from: &str, to: &str, host: &Name, port: u16) -> Result<bool
 			Some(message) => {
 				// 250 2.1.0 Sender e-mail address ok.
 				if message.contains("2.1.5") {
-					Ok(true)
+					Some(true)
 				} else {
-					Err(())
+					None
 				}
 			}
-			_ => Err(()),
+			_ => None,
 		},
 		Err(err) => {
 			// 550 5.1.1 Mailbox does not exist.
 			if err.to_string().contains("5.1.1") {
-				Ok(false)
+				Some(false)
 			} else {
-				Err(())
+				None
 			}
 		}
 	};
@@ -91,8 +91,8 @@ pub fn email_exists(from: &str, to: &str, host: &Name, port: u16) -> Result<bool
 	smtp_client.close();
 
 	match result {
-		Ok(val) => debug!("Checked email on {}:{}, exists={}.", host, port, val),
-		Err(_) => debug!("Cannot check email on {}:{}.", host, port),
+		Some(val) => debug!("Checked email on {}:{}, exists={}.", host, port, val),
+		None => debug!("Cannot check email on {}:{}.", host, port),
 	};
 	result
 }
