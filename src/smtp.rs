@@ -19,17 +19,6 @@ macro_rules! try_smtp (
     })
 );
 
-// Ensure that the error code we get is okay.
-macro_rules! ensure_positive (
-    ($res: expr, $client: ident) => ({
-		if !$res.is_positive() {
-			$client.close();
-			return Err(());
-		}
-		$res
-    })
-);
-
 pub fn email_exists(from: &str, to: &str, host: &Name, port: u16) -> Result<bool, ()> {
 	debug!("Connecting to {}:{}...", host, port);
 	let mut smtp_client: InnerClient<NetworkStream> = InnerClient::new();
@@ -51,19 +40,17 @@ pub fn email_exists(from: &str, to: &str, host: &Name, port: u16) -> Result<bool
 		smtp_client.command(EhloCommand::new(ClientId::new("localhost".to_string()))),
 		smtp_client
 	);
-	let ehlo_response = ensure_positive!(ehlo_response, smtp_client);
 	let server_info = ServerInfo::from_response(&ehlo_response);
 	debug!("Server info: {}", server_info.as_ref().unwrap());
 
 	// Send from.
-	let from_response = try_smtp!(
+	try_smtp!(
 		smtp_client.command(MailCommand::new(
 			Some(EmailAddress::new(from.to_string()).unwrap()),
 			vec![],
 		)),
 		smtp_client
 	);
-	ensure_positive!(from_response, smtp_client);
 
 	// Send to.
 	let result = match smtp_client.command(RcptCommand::new(
@@ -72,15 +59,18 @@ pub fn email_exists(from: &str, to: &str, host: &Name, port: u16) -> Result<bool
 	)) {
 		Ok(response) => {
 			if let Some(message) = response.first_line() {
+				// 250 2.1.0 Sender e-mail address ok.
 				if message.contains("2.1.5") {
-					debug!("1.5.2. {}", message);
 					return Ok(true);
 				}
 			}
 			Err(())
 		}
 		Err(err) => {
-			debug!("the error is,{}", err);
+			// 550 5.1.1 Mailbox does not exist.
+			if err.to_string().contains("5.1.1") {
+				return Ok(false);
+			}
 			Err(())
 		}
 	};
