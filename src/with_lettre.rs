@@ -17,7 +17,7 @@ macro_rules! try_smtp (
             Ok(res) => {
 				if !res.is_positive() {
 					if let Some(message) = res.first_line() {
-						error!("{}", message);
+						info!("{}", message);
 					}
 					$client.close();
 					return false;
@@ -25,7 +25,7 @@ macro_rules! try_smtp (
 				res
 			},
             Err(err) => {
-				error!("{}", err);
+				info!("{}", err);
 				$client.close();
                 return false;
             },
@@ -37,7 +37,7 @@ pub fn email_exists(from: &str, to: &str, host: &Name, port: u16) -> bool {
 	info!("Connecting to {}:{}...", host, port);
 	let mut email_client: Client<NetworkStream> = Client::new();
 	if let Err(err) = email_client.set_timeout(Some(Duration::new(1, 0))) {
-		error!("{}", err);
+		info!("{}", err);
 		email_client.close();
 		return false;
 	}
