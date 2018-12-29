@@ -74,7 +74,6 @@ pub fn email_exists(from: &str, to: &str, host: &Name, port: u16) -> bool {
 	try_smtp!(email_client.command(QuitCommand), email_client);
 
 	if let Some(message) = rctp_response.first_line() {
-		debug!("aaa {}", message);
 		if message.contains("2.1.5") {
 			return true;
 		}
