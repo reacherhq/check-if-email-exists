@@ -26,7 +26,7 @@ fn main() {
 	// Calling .unwrap() is safe here because "TO" is required
 	let to_email = matches.value_of("TO").unwrap();
 
-	info!("User inputted email '{}'", to_email);
+	debug!("User inputted email '{}'", to_email);
 
 	let domain = match to_email.split("@").skip(1).next() {
 		Some(i) => i,

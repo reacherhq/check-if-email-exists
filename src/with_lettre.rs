@@ -3,7 +3,7 @@ extern crate native_tls;
 extern crate trust_dns_resolver;
 
 use self::lettre::smtp::client::net::NetworkStream;
-use self::lettre::smtp::client::Client;
+use self::lettre::smtp::client::InnerClient;
 use self::lettre::smtp::commands::*;
 use self::lettre::smtp::extension::{ClientId, Extension, ServerInfo};
 use self::lettre::{ClientTlsParameters, EmailAddress};
@@ -17,7 +17,7 @@ macro_rules! try_smtp (
             Ok(res) => {
 				if !res.is_positive() {
 					if let Some(message) = res.first_line() {
-						info!("{}", message);
+						debug!("{}", message);
 					}
 					$client.close();
 					return false;
@@ -25,7 +25,7 @@ macro_rules! try_smtp (
 				res
 			},
             Err(err) => {
-				info!("{}", err);
+				debug!("{}", err);
 				$client.close();
                 return false;
             },
@@ -34,17 +34,16 @@ macro_rules! try_smtp (
 );
 
 pub fn email_exists(from: &str, to: &str, host: &Name, port: u16) -> bool {
-	info!("Connecting to {}:{}...", host, port);
-	let mut email_client: Client<NetworkStream> = Client::new();
+	debug!("Connecting to {}:{}...", host, port);
+	let mut email_client: InnerClient<NetworkStream> = InnerClient::new();
 	if let Err(err) = email_client.set_timeout(Some(Duration::new(1, 0))) {
-		info!("{}", err);
+		debug!("{}", err);
 		email_client.close();
 		return false;
 	}
 
 	let tls_builder = TlsConnector::builder();
-	let tls_parameters =
-		ClientTlsParameters::new(host.to_string(), tls_builder.unwrap().build().unwrap());
+	let tls_parameters = ClientTlsParameters::new(host.to_string(), tls_builder.build().unwrap());
 
 	// Connect to the host
 	try_smtp!(
