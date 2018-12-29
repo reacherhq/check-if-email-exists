@@ -11,30 +11,27 @@ macro_rules! try_smtp (
         match $err {
             Ok(res) => {
 				if !res.is_positive() {
-					if let Some(message) = res.first_line() {
-						debug!("Error: {}", message);
-					}
 					$client.close();
-					return false;
+					return Err(());
 				}
 				res
 			},
             Err(err) => {
 				debug!("Error: {}", err);
 				$client.close();
-                return false;
+                return Err(());
             },
         }
     })
 );
 
-pub fn email_exists(from: &str, to: &str, host: &Name, port: u16) -> bool {
+pub fn email_exists(from: &str, to: &str, host: &Name, port: u16) -> Result<bool, ()> {
 	debug!("Connecting to {}:{}...", host, port);
 	let mut email_client: InnerClient<NetworkStream> = InnerClient::new();
 	if let Err(err) = email_client.set_timeout(Some(Duration::new(1, 0))) {
 		debug!("{}", err);
 		email_client.close();
-		return false;
+		return Err(());
 	}
 
 	// Connect to the host. Start with insecure connection and use `STARTTLS`
@@ -74,10 +71,15 @@ pub fn email_exists(from: &str, to: &str, host: &Name, port: u16) -> bool {
 	try_smtp!(email_client.command(QuitCommand), email_client);
 
 	if let Some(message) = rctp_response.first_line() {
+		// 250 2.1.5 Recipient e-mail address ok.
 		if message.contains("2.1.5") {
-			return true;
+			return Ok(true);
+		}
+		// 550 5.1.1 Mailbox does not exist.
+		if message.contains("5.1.1") {
+			return Ok(true);
 		}
 	}
 
-	false
+	Err(())
 }

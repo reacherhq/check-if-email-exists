@@ -51,8 +51,12 @@ fn main() {
 
 	let found = combinations
 		.par_iter() // Parallelize the find_any
-		.find_any(|(host, port)| smtp::email_exists(from_email, to_email, host, *port))
-		.is_some();
+		.find_any(
+			|(host, port)| match smtp::email_exists(from_email, to_email, host, *port) {
+				Ok(val) => val,
+				_ => false,
+			},
+		).is_some();
 
 	println!("{}", found);
 }
