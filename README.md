@@ -2,6 +2,9 @@
 
 Check if an email address exists before sending the email.
 
+[![](https://img.shields.io/travis/amaurymartiny/check_if_email_exists.svg)](https://travis-ci.org/amaurymartiny/check-if-email-exists/)
+[![](https://img.shields.io/appveyor/ci/amaurymartiny/check-if-email-exists-a08kp.svg)](https://ci.appveyor.com/project/amaurymartiny/check_if_email_exists-a08kp)
+
 ## Why?
 
 Many online services (https://hunter.io, http://verify-email.org, http://email-checker.net) offer this service for a paid fee. Here is an open-source alternative to those tools.
