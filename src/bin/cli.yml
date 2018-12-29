@@ -3,12 +3,11 @@ version: '0.1.0'
 author: Amaury Martiny <amaury.martiny@protonmail.com>
 about: Check if an email address exists without sending any email.
 args:
-  - from:
+  - FROM_EMAIL:
       long: from
       help: 'The from email to use in the Telnet connection (default: test@example.com)'
       takes_value: true
-      value_name: FROM
-  - TO:
+  - TO_EMAIL:
       help: The email to check
       required: true
       index: 1

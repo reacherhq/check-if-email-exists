@@ -20,7 +20,7 @@ macro_rules! try_smtp (
     })
 );
 
-pub fn email_exists(from: &str, to: &str, host: &Name, port: u16) -> Option<bool> {
+pub fn email_exists(from_email: &str, to_email: &str, host: &Name, port: u16) -> Option<bool> {
 	debug!("Connecting to {}:{}...", host, port);
 	let mut smtp_client: InnerClient<NetworkStream> = InnerClient::new();
 
@@ -51,7 +51,7 @@ pub fn email_exists(from: &str, to: &str, host: &Name, port: u16) -> Option<bool
 	// Send from.
 	try_smtp!(
 		smtp_client.command(MailCommand::new(
-			Some(EmailAddress::new(from.to_string()).unwrap()),
+			Some(EmailAddress::new(from_email.to_string()).unwrap()),
 			vec![],
 		)),
 		smtp_client,
@@ -61,7 +61,7 @@ pub fn email_exists(from: &str, to: &str, host: &Name, port: u16) -> Option<bool
 
 	// Send to.
 	let result = match smtp_client.command(RcptCommand::new(
-		EmailAddress::new(to.to_string()).unwrap(),
+		EmailAddress::new(to_email.to_string()).unwrap(),
 		vec![],
 	)) {
 		Ok(response) => match response.first_line() {

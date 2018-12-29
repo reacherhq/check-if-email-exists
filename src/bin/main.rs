@@ -17,9 +17,9 @@ fn main() {
 	let yaml = load_yaml!("cli.yml");
 	let matches = App::from_yaml(yaml).get_matches();
 
-	let from_email = matches.value_of("from").unwrap_or("user@example.org");
+	let from_email = matches.value_of("FROM_EMAIL").unwrap_or("user@example.org");
 	// Calling .unwrap() is safe here because "TO" is required
-	let to_email = matches.value_of("TO").unwrap();
+	let to_email = matches.value_of("TO_EMAIL").unwrap();
 
 	println!("{}", email_exists(from_email, to_email));
 }
