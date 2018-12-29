@@ -5,7 +5,7 @@ about: Check if an email address exists without sending any email.
 args:
   - FROM_EMAIL:
       long: from
-      help: 'The from email to use in the Telnet connection (default: test@example.com)'
+      help: 'The from email to use in the SMTP connection (default: user@example.org)'
       takes_value: true
   - TO_EMAIL:
       help: The email to check
