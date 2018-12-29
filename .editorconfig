@@ -1,0 +1,18 @@
+# top-most EditorConfig file
+root = true
+
+[*]
+indent_style=tab
+indent_size=tab
+tab_width=4
+end_of_line=lf
+charset=utf-8
+trim_trailing_whitespace=true
+max_line_length=120
+insert_final_newline=true
+
+[*.{yml,sh}]
+indent_style=space
+indent_size=2
+tab_width=8
+end_of_line=lf
