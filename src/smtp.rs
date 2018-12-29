@@ -66,21 +66,24 @@ pub fn email_exists(from: &str, to: &str, host: &Name, port: u16) -> Result<bool
 		EmailAddress::new(to.to_string()).unwrap(),
 		vec![],
 	)) {
-		Ok(response) => {
-			if let Some(message) = response.first_line() {
+		Ok(response) => match response.first_line() {
+			Some(message) => {
 				// 250 2.1.0 Sender e-mail address ok.
 				if message.contains("2.1.5") {
-					return Ok(true);
+					Ok(true)
+				} else {
+					Err(())
 				}
 			}
-			Err(())
-		}
+			_ => Err(()),
+		},
 		Err(err) => {
 			// 550 5.1.1 Mailbox does not exist.
 			if err.to_string().contains("5.1.1") {
-				return Ok(false);
+				Ok(false)
+			} else {
+				Err(())
 			}
-			Err(())
 		}
 	};
 
