@@ -53,26 +53,6 @@ pub fn email_exists(from: &str, to: &str, host: &Name, port: u16) -> bool {
 	let server_info = ServerInfo::from_response(&ehlo_response);
 	debug!("Server info: {}", server_info.as_ref().unwrap());
 
-	// Send `STARTTLS` if available
-	if server_info
-		.as_ref()
-		.unwrap()
-		.supports_feature(Extension::StartTls)
-	{
-		try_smtp!(email_client.command(StarttlsCommand), email_client);
-
-		let tls_builder = TlsConnector::builder();
-		let tls_parameters =
-			ClientTlsParameters::new(host.to_string(), tls_builder.build().unwrap());
-		if let Err(err) = email_client.upgrade_tls_stream(&tls_parameters) {
-			debug!("{}", err);
-			email_client.close();
-			return false;
-		}
-
-		debug!("Connection is encrypted.");
-	}
-
 	// Send from
 	try_smtp!(
 		email_client.command(MailCommand::new(
