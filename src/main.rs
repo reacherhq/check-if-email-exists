@@ -53,7 +53,10 @@ fn main() {
 		.par_iter() // Parallelize the find_any
 		.find_any(
 			|(host, port)| match smtp::email_exists(from_email, to_email, host, *port) {
-				Ok(val) => val,
+				Ok(val) => {
+					println!("{}", val);
+					process::exit(0x0100);
+				}
 				_ => false,
 			},
 		).is_some();
