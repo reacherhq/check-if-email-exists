@@ -27,7 +27,7 @@ pub fn email_exists(from_email: &str, to_email: &str) -> bool {
 
 	debug!("Getting MX lookup...");
 	let hosts = mx_hosts::get_mx_lookup(domain);
-	info!("Found the following MX hosts {:?}", hosts);
+	debug!("Found the following MX hosts {:?}", hosts);
 	let ports = vec![SMTP_PORT, SUBMISSION_PORT, SUBMISSIONS_PORT];
 	let mut combinations = Vec::new(); // `(host, port)` combination
 	for port in ports.into_iter() {
@@ -37,7 +37,7 @@ pub fn email_exists(from_email: &str, to_email: &str) -> bool {
 	}
 
 	match combinations
-		.par_iter() // Parallelize the find_any
+		.par_iter() // Parallelize the filter_map
 		.filter_map(|(host, port)| smtp::email_exists(from_email, to_email, host, *port))
 		.find_any(|_| true)
 	{

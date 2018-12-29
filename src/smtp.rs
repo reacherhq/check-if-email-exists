@@ -1,7 +1,7 @@
 use lettre::smtp::client::net::NetworkStream;
 use lettre::smtp::client::InnerClient;
 use lettre::smtp::commands::*;
-use lettre::smtp::extension::{ClientId, ServerInfo};
+use lettre::smtp::extension::ClientId;
 use lettre::EmailAddress;
 use std::time::Duration;
 use trust_dns_resolver::Name;
@@ -40,15 +40,13 @@ pub fn email_exists(from: &str, to: &str, host: &Name, port: u16) -> Option<bool
 		port
 	);
 
-	// Send ehlo and get server info.
-	let ehlo_response = try_smtp!(
+	// Send ehlo.
+	try_smtp!(
 		smtp_client.command(EhloCommand::new(ClientId::new("localhost".to_string()))),
 		smtp_client,
 		host,
 		port
 	);
-	let server_info = ServerInfo::from_response(&ehlo_response);
-	debug!("Server info: {}", server_info.as_ref().unwrap());
 
 	// Send from.
 	try_smtp!(
