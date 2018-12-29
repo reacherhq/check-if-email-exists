@@ -12,6 +12,8 @@ Head to the [releases page](https://github.com/amaurymartiny/check_if_email_exis
 
 ## Usage
 
+Make sure you have [`openssl`](https://www.openssl.org/) installed.
+
 ```bash
 USAGE:
     check_if_email_exists [OPTIONS] <TO_EMAIL>
