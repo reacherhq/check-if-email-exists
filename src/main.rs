@@ -14,7 +14,7 @@ use rayon::prelude::*;
 use std::process;
 
 mod mx_hosts;
-mod with_lettre;
+mod smtp;
 
 fn main() {
 	env_logger::init();
@@ -51,7 +51,7 @@ fn main() {
 
 	let found = combinations
 		.par_iter() // Parallelize the find_any
-		.find_any(|(host, port)| with_lettre::email_exists(from_email, to_email, host, *port))
+		.find_any(|(host, port)| smtp::email_exists(from_email, to_email, host, *port))
 		.is_some();
 
 	println!("{}", found);
