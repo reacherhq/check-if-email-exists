@@ -2,10 +2,6 @@ extern crate env_logger;
 #[macro_use]
 extern crate clap;
 extern crate check_if_email_exists;
-extern crate lettre;
-extern crate native_tls;
-extern crate rayon;
-extern crate trust_dns_resolver;
 
 use check_if_email_exists::email_exists;
 use clap::App;

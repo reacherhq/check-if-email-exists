@@ -4,7 +4,6 @@ version = "0.1.1"
 authors = ["Amaury Martiny <amaury.martiny@protonmail.com>"]
 
 [lib]
-name = "check_if_email_exists"
 path = "src/lib.rs"
 
 [[bin]]
