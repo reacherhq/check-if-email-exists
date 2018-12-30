@@ -66,7 +66,7 @@ pub fn email_exists(from_email: &str, to_email: &str, host: &Name, port: u16) ->
 	)) {
 		Ok(response) => match response.first_line() {
 			Some(message) => {
-				// 250 2.1.0 Sender e-mail address ok.
+				// 250 2.1.5 Recipient e-mail address ok.
 				if message.contains("2.1.5") {
 					Some(true)
 				} else {
