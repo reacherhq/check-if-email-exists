@@ -26,7 +26,7 @@ FLAGS:
     -V, --version    Prints version information
 
 OPTIONS:
-        --from <FROM_EMAIL>    The from email to use in the Telnet connection (default: test@example.com)
+        --from <FROM_EMAIL>    The from email to use in the SMTP connection (default: test@example.com)
 
 ARGS:
     <TO_EMAIL>    The email to check
