@@ -14,9 +14,10 @@ main() {
     cross test --target $TARGET
     cross test --target $TARGET --release
 
-    # TODO run with a $TEST_EMAIL, to test that the tool actually works.
-    cross run --target $TARGET $TEST_EMAIL | grep true
-    cross run --target $TARGET --release $TEST_EMAIL | grep true
+    # Run the binary with a $TEST_EMAIL, to test that the tool actually works.
+    # TODO This only works on osx now, see #11
+    [ "$TRAVIS_OS_NAME" = osx ] && cross run --target $TARGET $TEST_EMAIL | grep true
+    [ "$TRAVIS_OS_NAME" = osx ] && cross run --target $TARGET --release $TEST_EMAIL | grep true
 }
 
 # we don't run the "test phase" when doing deploys
