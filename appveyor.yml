@@ -41,6 +41,7 @@ install:
   - cargo -V
 
 # TODO This is the "test phase", tweak it as you see fit
+# TODO Add cargo run, which currently doesn't work
 test_script:
   # we don't run the "test phase" when doing deploys
   - if [%APPVEYOR_REPO_TAG%]==[false] (
