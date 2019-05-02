@@ -18,7 +18,7 @@ macro_rules! try_smtp (
     })
 );
 
-pub fn email_exists<'a>(
+pub fn email_exists(
 	from_email: &str,
 	to_email: &str,
 	host: &Name,
@@ -73,10 +73,10 @@ pub fn email_exists<'a>(
 				if message.contains("2.1.5") {
 					Ok(true)
 				} else {
-					Err(Error::Client("Can't find 2.1.5 in send email command"))
+					Err(Error::Client("Can't find 2.1.5 in RCPT command"))
 				}
 			}
-			None => Err(Error::Client("No response on send")),
+			None => Err(Error::Client("No response on RCPT command")),
 		},
 		Err(err) => {
 			// 550 5.1.1 Mailbox does not exist.
