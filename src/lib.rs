@@ -12,7 +12,7 @@ use std::process;
 mod mx_hosts;
 mod smtp;
 
-pub fn email_exists<'a>(from_email: &'a str, to_email: &'a str) -> Result<bool, &'a str> {
+pub fn email_exists(from_email: &str, to_email: &str) -> Option<bool> {
 	debug!("Checking email '{}'", to_email);
 
 	let domain = match to_email.split("@").skip(1).next() {
@@ -41,7 +41,7 @@ pub fn email_exists<'a>(from_email: &'a str, to_email: &'a str) -> Result<bool, 
 		.find_any(|(host, port)| smtp::email_exists(from_email, to_email, host, *port).is_ok());
 
 	match found {
-		Some((host, port)) => Ok(smtp::email_exists(from_email, to_email, host, *port).unwrap()), // unwrap won't panic here, because of find_any above. qed.
-		None => Err("Cannot check if email exists, see logs for more info"),
+		Some((host, port)) => Some(smtp::email_exists(from_email, to_email, host, *port).unwrap()), // unwrap won't panic here, because of find_any above. qed.
+		None => None,
 	}
 }

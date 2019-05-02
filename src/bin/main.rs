@@ -18,7 +18,7 @@ fn main() {
 	let to_email = matches.value_of("TO_EMAIL").unwrap();
 
 	match email_exists(from_email, to_email) {
-		Ok(value) => println!("{}", value),
-		Err(err) => println!("{}", err),
+		Some(value) => println!("{}", value),
+		None => println!("Can't check if email exists, see logs for more info"),
 	}
 }
