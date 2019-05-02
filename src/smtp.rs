@@ -23,18 +23,14 @@ macro_rules! try_smtp (
 pub fn email_exists(from_email: &str, to_email: &str, host: &Name, port: u16) -> Option<bool> {
 	debug!("Connecting to {}:{}...", host, port);
 	let mut smtp_client: InnerClient<NetworkStream> = InnerClient::new();
+	let timeout = Some(Duration::new(3000, 0)); // Set timeout to 3s
 
 	// Set timeout.
-	try_smtp!(
-		smtp_client.set_timeout(Some(Duration::new(3, 0))),
-		smtp_client,
-		host,
-		port
-	);
+	try_smtp!(smtp_client.set_timeout(timeout), smtp_client, host, port);
 
 	// Connect to the host.
 	try_smtp!(
-		smtp_client.connect(&(host.to_utf8().as_str(), port), None),
+		smtp_client.connect(&(host.to_utf8().as_str(), port), timeout, None),
 		smtp_client,
 		host,
 		port
