@@ -1,6 +1,7 @@
 use lettre::smtp::client::net::NetworkStream;
 use lettre::smtp::client::InnerClient;
 use lettre::smtp::commands::*;
+use lettre::smtp::error::Error;
 use lettre::smtp::extension::ClientId;
 use lettre::EmailAddress;
 use std::time::Duration;
@@ -9,24 +10,30 @@ use trust_dns_resolver::Name;
 // Try to send an smtp command, close if fails.
 macro_rules! try_smtp (
     ($res: expr, $client: ident, $host: expr, $port: expr) => ({
-        match $res {
-            Ok(res) => res,
-            Err(err) => {
-				debug!("Closing {}:{}, because of error '{}'.", $host, $port, err);
-				$client.close();
-                return None;
-            },
-        }
+		if let Err(err) = $res {
+			debug!("Closing {}:{}, because of error '{}'.", $host, $port, err);
+			$client.close();
+			return Err(err);
+		}
     })
 );
 
-pub fn email_exists(from_email: &str, to_email: &str, host: &Name, port: u16) -> Option<bool> {
-	debug!("Connecting to {}:{}...", host, port);
+pub fn email_exists<'a>(
+	from_email: &str,
+	to_email: &str,
+	host: &Name,
+	port: u16,
+) -> Result<bool, Error> {
+	debug!("Connecting to {}:{}", host, port);
 	let mut smtp_client: InnerClient<NetworkStream> = InnerClient::new();
-	let timeout = Some(Duration::new(3000, 0)); // Set timeout to 3s
+	let timeout = Some(Duration::new(3, 0)); // Set timeout to 3s
 
 	// Set timeout.
-	try_smtp!(smtp_client.set_timeout(timeout), smtp_client, host, port);
+	if let Err(err) = smtp_client.set_timeout(timeout) {
+		debug!("Closing {}:{}, because of error '{}'.", host, port, err);
+		smtp_client.close();
+		return Err(Error::from(err));
+	}
 
 	// Connect to the host.
 	try_smtp!(
@@ -64,19 +71,19 @@ pub fn email_exists(from_email: &str, to_email: &str, host: &Name, port: u16) ->
 			Some(message) => {
 				// 250 2.1.5 Recipient e-mail address ok.
 				if message.contains("2.1.5") {
-					Some(true)
+					Ok(true)
 				} else {
-					None
+					Err(Error::Client("Can't find 2.1.5 in send email command"))
 				}
 			}
-			_ => None,
+			None => Err(Error::Client("No response on send")),
 		},
 		Err(err) => {
 			// 550 5.1.1 Mailbox does not exist.
 			if err.to_string().contains("5.1.1") {
-				Some(false)
+				Ok(false)
 			} else {
-				None
+				Err(err)
 			}
 		}
 	};
@@ -85,8 +92,8 @@ pub fn email_exists(from_email: &str, to_email: &str, host: &Name, port: u16) ->
 	smtp_client.close();
 
 	match result {
-		Some(val) => debug!("Checked email on {}:{}, exists={}.", host, port, val),
-		None => debug!("Cannot check email on {}:{}.", host, port),
+		Ok(val) => debug!("Checked email on {}:{}, exists={}.", host, port, val),
+		Err(_) => debug!("Cannot check email on {}:{}.", host, port),
 	};
 	result
 }

@@ -17,5 +17,8 @@ fn main() {
 	// Calling .unwrap() is safe here because "TO" is required
 	let to_email = matches.value_of("TO_EMAIL").unwrap();
 
-	println!("{}", email_exists(from_email, to_email));
+	match email_exists(from_email, to_email) {
+		Ok(value) => println!("{}", value),
+		Err(err) => println!("{}", err),
+	}
 }
