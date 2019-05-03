@@ -6,6 +6,6 @@ All notable changes to this project will be documented in this file. See [standa
 
 -   Remove i686 arch ([36158fa](https://github.com/amaurymartiny/check_if_email_exists/commit/36158fa87415eaca143f281fc15244e8515ed579))
 
-# [0.1.0]() (2018-12-29)
+# 0.1.0 (2018-12-29)
 
--   Change whole codebase to Rust ([#7](https://github.com/amaurymartiny/check_if_email_exists/pull/7)) ([05569e4](https://github.com/amaurymartiny/check_if_email_exists/commit/05569e4900b4467fa6d7f03086343fac753fe4ad))
+-   Change codebase to Rust ([#7](https://github.com/amaurymartiny/check_if_email_exists/pull/7)) ([05569e4](https://github.com/amaurymartiny/check_if_email_exists/commit/05569e4900b4467fa6d7f03086343fac753fe4ad))
