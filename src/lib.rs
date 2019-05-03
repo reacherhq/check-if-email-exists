@@ -35,13 +35,9 @@ pub fn email_exists(from_email: &str, to_email: &str) -> Option<bool> {
 		}
 	}
 
-	let found = combinations
+	combinations
 		// Parallely find any combination that returns true for email_exists
 		.par_iter()
-		.find_any(|(host, port)| smtp::email_exists(from_email, to_email, host, *port).is_ok());
-
-	match found {
-		Some((host, port)) => Some(smtp::email_exists(from_email, to_email, host, *port).unwrap()), // unwrap won't panic here, because of find_any above. qed.
-		None => None,
-	}
+		.flat_map(|(host, port)| smtp::email_exists(from_email, to_email, host, *port))
+		.find_any(|_| true)
 }
