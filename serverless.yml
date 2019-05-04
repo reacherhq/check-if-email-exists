@@ -1,0 +1,21 @@
+service: check_if_email_exists
+provider:
+  name: aws
+  runtime: rust
+plugins:
+  # this adds informs servleress to use
+  # the serverless-rust plugin
+  - serverless-rust
+# creates one artifact for each function
+package:
+  individually: true
+functions:
+  check_if_email_exists:
+    # handler value syntax is `{cargo-package-name}.{bin-name}`
+    # or `{cargo-package-name}` for short when you are building a
+    # default bin for a given package.
+    handler: check_if_email_exists_serverless
+    events:
+      - http:
+          path: /
+          method: GET
