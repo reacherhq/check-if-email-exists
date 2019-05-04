@@ -1,10 +1,11 @@
 [package]
-name = "check_if_email_exists_bin"
+name = "check_if_email_exists_serverless"
 version = "0.1.1"
 authors = ["Amaury Martiny <amaury.martiny@protonmail.com>"]
 edition = "2018"
 
 [dependencies]
 check_if_email_exists = { path = "../check_if_email_exists" }
-clap = { version = "2.32", features = ["yaml"] }
-env_logger = "0.6"
+lambda_http = "0.1"
+lambda_runtime = "0.2"
+serde_json = "1.0"

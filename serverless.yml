@@ -1,4 +1,4 @@
-service: check_if_email_exists
+service: check-if-email-exists
 provider:
   name: aws
   runtime: rust
@@ -10,7 +10,7 @@ plugins:
 package:
   individually: true
 functions:
-  check_if_email_exists:
+  check_if_email_exists_serverless:
     # handler value syntax is `{cargo-package-name}.{bin-name}`
     # or `{cargo-package-name}` for short when you are building a
     # default bin for a given package.

@@ -1,0 +1,12 @@
+[package]
+name = "check_if_email_exists"
+version = "0.1.1"
+authors = ["Amaury Martiny <amaury.martiny@protonmail.com>"]
+edition = "2018"
+
+[dependencies]
+lettre = { git = "https://github.com/lettre/lettre", rev = "1cbcbbb11f7a39a5d5d3829ce4162ca1beafedfb" }
+log = "0.4"
+native-tls = "^0.2"
+rayon = "1.0.3"
+trust-dns-resolver = "0.10.2"
