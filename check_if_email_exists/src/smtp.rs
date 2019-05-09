@@ -7,7 +7,7 @@ use lettre::EmailAddress;
 use std::time::Duration;
 use trust_dns_resolver::Name;
 
-// Try to send an smtp command, close if fails.
+/// Try to send an smtp command, close and return Err if fails.
 macro_rules! try_smtp (
     ($res: expr, $client: ident, $host: expr, $port: expr) => ({
 		if let Err(err) = $res {
@@ -18,9 +18,10 @@ macro_rules! try_smtp (
     })
 );
 
-pub fn email_exists(
-	from_email: &str,
-	to_email: &str,
+/// Check if `to_email` exists on host server with given port
+pub fn email_exists_on_host(
+	from_email: &EmailAddress,
+	to_email: &EmailAddress,
 	host: &Name,
 	port: u16,
 ) -> Result<bool, Error> {
@@ -52,21 +53,19 @@ pub fn email_exists(
 	);
 
 	// Send from.
+	// FIXME Do not clone?
+	let from_email_clone = from_email.clone();
 	try_smtp!(
-		smtp_client.command(MailCommand::new(
-			Some(EmailAddress::new(from_email.to_string()).unwrap()),
-			vec![],
-		)),
+		smtp_client.command(MailCommand::new(Some(from_email_clone), vec![],)),
 		smtp_client,
 		host,
 		port
 	);
 
 	// Send to.
-	let result = match smtp_client.command(RcptCommand::new(
-		EmailAddress::new(to_email.to_string()).unwrap(),
-		vec![],
-	)) {
+	// FIXME Do not clone?
+	let to_email_clone = to_email.clone();
+	let result = match smtp_client.command(RcptCommand::new(to_email_clone, vec![])) {
 		Ok(response) => match response.first_line() {
 			Some(message) => {
 				// 250 2.1.5 Recipient e-mail address ok.

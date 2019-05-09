@@ -1,10 +1,27 @@
 extern crate env_logger;
 #[macro_use]
 extern crate clap;
-extern crate check_if_email_exists;
+extern crate check_if_email_exists_core;
+extern crate lettre;
 
-use check_if_email_exists::email_exists;
+use check_if_email_exists_core::email_exists;
 use clap::App;
+use lettre::EmailAddress;
+use std::process;
+use std::str::FromStr;
+
+/// Log error and exit immediately if there's one
+macro_rules! try_or_exit (
+    ($res: expr) => ({
+		match $res {
+			Ok(value) => value,
+			Err(err) => {
+				println!("{:?}", err);
+				process::exit(1)
+			}
+		}
+    })
+);
 
 fn main() {
 	env_logger::init();
@@ -13,12 +30,17 @@ fn main() {
 	let yaml = load_yaml!("cli.yml");
 	let matches = App::from_yaml(yaml).get_matches();
 
-	let from_email = matches.value_of("FROM_EMAIL").unwrap_or("user@example.org");
-	// Calling .unwrap() is safe here because "TO" is required
-	let to_email = matches.value_of("TO_EMAIL").unwrap();
+	let from_email = try_or_exit!(EmailAddress::from_str(
+		matches.value_of("FROM_EMAIL").unwrap_or("user@example.org")
+	));
+	let to_email = try_or_exit!(EmailAddress::from_str(
+		matches
+			.value_of("TO_EMAIL")
+			.expect("'TO_EMAIL' is required. qed.")
+	));
 
-	match email_exists(from_email, to_email) {
-		Some(value) => println!("{}", value),
-		None => println!("Can't check if email exists, see logs for more info"),
-	}
+	println!("This operation can take up to 1 minute, please be patient...");
+	let exists = try_or_exit!(email_exists(&from_email, &to_email));
+
+	println!("{}", exists)
 }
