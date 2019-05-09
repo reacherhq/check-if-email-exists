@@ -1,10 +1,9 @@
 extern crate env_logger;
 #[macro_use]
 extern crate clap;
-extern crate check_if_email_exists_core;
 extern crate lettre;
 
-use check_if_email_exists_core::email_exists;
+use check_if_email_exists::email_exists;
 use clap::App;
 use lettre::EmailAddress;
 use std::process;
