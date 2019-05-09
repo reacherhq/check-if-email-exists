@@ -4,10 +4,11 @@ Check if an email address exists before sending the email.
 
 [![](https://img.shields.io/travis/amaurymartiny/check_if_email_exists.svg)](https://travis-ci.org/amaurymartiny/check_if_email_exists)
 [![](https://ci.appveyor.com/api/projects/status/github/amaurymartiny/check_if_email_exists?branch=master&svg=true)](https://ci.appveyor.com/project/amaurymartiny/check-if-email-exists-a08kp)
+![License](https://img.shields.io/github/license/amaurymartiny/check_if_email_exists.svg)
 
-Try it here: https://y78n51qcpj.execute-api.us-east-1.amazonaws.com/dev/?to_email=PUT_YOUR_EMAIL_HERE
+#### 👉 Try it here: https://y78n51qcpj.execute-api.us-east-1.amazonaws.com/dev/?to_email=PUT_YOUR_EMAIL_HERE
 
-> Note: The operation might take up to 1 minute.
+> Note: The above operation might take up to 1 minute.
 
 ## Why?
 
@@ -50,7 +51,7 @@ RUST_LOG=debug check_if_email_exists [OPTIONS] <TO_EMAIL>
 
 Most ISPs block outgoing SMTP requests through ports 25, 587 and 465, to prevent spam. `check_if_email_exists` needs to have these ports open to make a connection to the email's SMTP server, so won't work behind these ISPs, and will instead hang until it times out. There's unfortunately no easy workaround for this problem, see for example [this StackOverflow thread](https://stackoverflow.com/questions/18139102/how-to-get-around-an-isp-block-on-port-25-for-smtp). One solution is to rent a Linux cloud server with a static IP and no blocked ports.
 
-To have more information why the binary hangs, run it in [verbose mode](#verbose-mode) to see the logs.
+To see in details what the binary is doing behind the scenes, run it in [verbose mode](#verbose-mode) to see the logs.
 
 ## Legacy Bash Script
 
@@ -74,4 +75,4 @@ $ ./target/release/check_if_email_exists --help
 
 ## License
 
-See the LICENSE file.
+MIT. See the [LICENSE](./LICENSE) file for more info.

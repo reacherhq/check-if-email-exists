@@ -118,9 +118,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "check_if_email_exists"
-version = "0.1.2"
+version = "0.2.0"
 dependencies = [
- "check_if_email_exists_core 0.1.2",
+ "check_if_email_exists_core 0.2.0",
  "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "env_logger 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "lettre 0.9.0 (git+https://github.com/lettre/lettre?rev=1cbcbbb11f7a39a5d5d3829ce4162ca1beafedfb)",
@@ -128,7 +128,7 @@ dependencies = [
 
 [[package]]
 name = "check_if_email_exists_core"
-version = "0.1.2"
+version = "0.2.0"
 dependencies = [
  "lettre 0.9.0 (git+https://github.com/lettre/lettre?rev=1cbcbbb11f7a39a5d5d3829ce4162ca1beafedfb)",
  "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -139,9 +139,9 @@ dependencies = [
 
 [[package]]
 name = "check_if_email_exists_serverless"
-version = "0.1.2"
+version = "0.2.0"
 dependencies = [
- "check_if_email_exists_core 0.1.2",
+ "check_if_email_exists_core 0.2.0",
  "lambda_http 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "lambda_runtime 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "lettre 0.9.0 (git+https://github.com/lettre/lettre?rev=1cbcbbb11f7a39a5d5d3829ce4162ca1beafedfb)",
