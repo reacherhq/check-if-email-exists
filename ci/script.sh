@@ -17,8 +17,8 @@ main() {
     # Run the binary with a $TEST_EMAIL, to test that the tool actually works.
     # TODO This only works on osx now, see #11
     if [ $TRAVIS_OS_NAME = osx ]; then
-        cross run --target $TARGET $TEST_EMAIL | grep true
-        cross run --target $TARGET --release $TEST_EMAIL | grep true
+        cross run --target $TARGET --bin check_if_email_exists $TEST_EMAIL | grep true
+        cross run --target $TARGET --release --bin check_if_email_exists $TEST_EMAIL | grep true
     fi
 }
 
