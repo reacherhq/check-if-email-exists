@@ -8,7 +8,9 @@ To try it out, follow the steps below:
 
 Follow serverless's guide: https://serverless.com/framework/docs/providers/aws/guide/quick-start/.
 
-#### Invoke the function locally change `put_your_email_here@gmail.com` to the email your wish to test inside `payload.json`, and run from the root folder:
+#### Invoke the function locally
+
+Change `put_your_email_here@gmail.com` to the email your wish to test inside `payload.json`, and run from the root folder:
 
 Note: you need to have Docker installed.
 

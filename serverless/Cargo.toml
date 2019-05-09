@@ -1,11 +1,11 @@
 [package]
 name = "check_if_email_exists_serverless"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Amaury Martiny <amaury.martiny@protonmail.com>"]
 edition = "2018"
 
 [dependencies]
-check_if_email_exists_core = { path = "../check_if_email_exists" }
+check_if_email_exists = { path = ".." }
 lambda_http = "0.1"
 lambda_runtime = "0.2"
 lettre = { git = "https://github.com/lettre/lettre", rev = "1cbcbbb11f7a39a5d5d3829ce4162ca1beafedfb" }
