@@ -1,5 +1,5 @@
 name: check_if_email_exists
-version: '0.2.2'
+version: '0.2.3'
 author: Amaury Martiny <amaury.martiny@protonmail.com>
 about: Check if an email address exists without sending any email.
 args:

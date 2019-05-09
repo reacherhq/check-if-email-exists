@@ -1,3 +1,12 @@
+## [0.2.3](https://github.com/amaurymartiny/check_if_email_exists/compare/v0.2.2...v0.2.3) (2019-05-09)
+
+
+### Bug Fixes
+
+* Update version to correct version in cli ([992777c](https://github.com/amaurymartiny/check_if_email_exists/commit/992777c))
+
+
+
 ## [0.2.2](https://github.com/amaurymartiny/check_if_email_exists/compare/v0.2.1...v0.2.2) (2019-05-09)
 
 
