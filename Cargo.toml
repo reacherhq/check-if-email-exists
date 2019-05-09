@@ -1,6 +1,6 @@
 [package]
 name = "check_if_email_exists"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Amaury Martiny <amaury.martiny@protonmail.com>"]
 edition = "2018"
 

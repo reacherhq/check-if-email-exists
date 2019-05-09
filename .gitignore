@@ -2,3 +2,6 @@
 **/*.rs.bk
 .DS_Store
 .serverless
+
+# Used internally, to play along well with standard-version
+package.json
