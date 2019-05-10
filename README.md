@@ -6,7 +6,7 @@ Check if an email address exists before sending the email.
 [![](https://ci.appveyor.com/api/projects/status/github/amaurymartiny/check_if_email_exists?branch=master&svg=true)](https://ci.appveyor.com/project/amaurymartiny/check-if-email-exists-a08kp)
 ![License](https://img.shields.io/github/license/amaurymartiny/check_if_email_exists.svg)
 
-#### 👉 Try it here: https://y78n51qcpj.execute-api.us-east-1.amazonaws.com/dev/?to_email=PUT_YOUR_EMAIL_HERE
+#### 👉 Try it here: https://tinyurl.com/email-exists?to_email=EMAIL_ADDRESS
 
 > Note: The above operation might take up to 1 minute.
 
