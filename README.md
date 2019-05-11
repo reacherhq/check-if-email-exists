@@ -10,6 +10,8 @@ Check if an email address exists before sending the email.
 
 > Note: The above operation might take up to 1 minute.
 
+> Note: For those who (judiciously) don't trust the above tinyurl link, the full URL is [this one](https://y78n51qcpj.execute-api.us-east-1.amazonaws.com/dev?to_email=EMAIL_ADDRESS).
+
 ## Why?
 
 Many online services (https://hunter.io, http://verify-email.org, http://email-checker.net) offer this service for a paid fee. Here is an open-source alternative to those tools.
