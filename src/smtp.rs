@@ -141,10 +141,10 @@ fn email_has_catch_all(
 	smtp_client: &mut InnerClient<NetworkStream>,
 	domain: &str,
 ) -> Result<bool, Error> {
-	// Create a random 10-char alphanumerical string
+	// Create a random 15-char alphanumerical string
 	let random_email = rand::thread_rng()
 		.sample_iter(&Alphanumeric)
-		.take(10)
+		.take(15)
 		.collect::<String>();
 	let random_email = EmailAddress::new(format!("{}@{}", random_email, domain));
 
