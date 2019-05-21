@@ -164,6 +164,7 @@ pub fn email_details(
 ) -> Result<EmailDetails, Error> {
 	let mut smtp_client = connect_to_host(from_email, host, port)?;
 
+	let has_catch_all = email_has_catch_all(&mut smtp_client, domain).unwrap_or(false);
 	let (deliverable, full_inbox) = match email_deliverable(&mut smtp_client, to_email) {
 		Ok(exists) => (exists, false),
 		Err(err) => {
@@ -177,11 +178,11 @@ pub fn email_details(
 			{
 				(true, true)
 			} else {
+				debug!("Closing {}:{}, because of error '{}'.", host, port, err);
 				return Err(err);
 			}
 		}
 	};
-	let has_catch_all = email_has_catch_all(&mut smtp_client, domain).unwrap_or(false);
 
 	// Quit.
 	smtp_client.close();
