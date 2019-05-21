@@ -74,6 +74,8 @@ pub struct EmailDetails {
 	pub smtp: SmtpEmailDetails,
 }
 
+/// The main function: checks email format, checks MX records, and checks SMTP
+/// responses to the email inbox.
 pub fn email_exists(from_email: &str, to_email: &str) -> Result<EmailDetails, EmailExistsError> {
 	debug!("Checking email '{}'", to_email);
 

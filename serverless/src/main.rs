@@ -36,6 +36,7 @@ pub struct Response {
 	full_inbox: bool,
 	has_catch_all: bool,
 	host_exists: bool,
+	hosts: Vec<String>,
 	valid_format: bool,
 	username: String,
 }
@@ -64,6 +65,7 @@ fn handler(request: Request, _: Context) -> Result<impl IntoResponse, HandlerErr
 				full_inbox: details.smtp.full_inbox,
 				has_catch_all: details.smtp.has_catch_all,
 				host_exists: details.mx.len() > 0,
+				hosts: details.mx,
 				username: details.address.username,
 				valid_format: details.address.valid_format,
 			},
@@ -74,6 +76,7 @@ fn handler(request: Request, _: Context) -> Result<impl IntoResponse, HandlerErr
 				full_inbox: false,
 				has_catch_all: false,
 				host_exists: false,
+				hosts: vec![],
 				username: String::new(),
 				valid_format: false,
 			},
