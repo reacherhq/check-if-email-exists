@@ -40,11 +40,11 @@ macro_rules! try_smtp (
 #[derive(Debug)]
 pub struct SmtpEmailDetails {
 	/// Can we send an email to this address?
-	deliverable: bool,
+	pub deliverable: bool,
 	/// Is this email account's inbox full?
-	full_inbox: bool,
+	pub full_inbox: bool,
 	/// Does this domain have a catch-all email address?
-	has_catch_all: bool,
+	pub has_catch_all: bool,
 }
 
 /// Attempt to connect to host via SMTP, and return SMTP client on success

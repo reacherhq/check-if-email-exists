@@ -38,26 +38,40 @@ use trust_dns_resolver::error::ResolveError;
 /// Errors that are returned by email_exists
 #[derive(Debug)]
 pub enum EmailExistsError {
-	AddressError(LettreError), // Email address formatting error
-	BlockedByIsp,              // ISP is blocking SMTP ports
-	Io(IoError),               // IO error
-	MxLookup(ResolveError),    // Error while resolving MX lookups
+	/// ISP is blocking SMTP ports
+	BlockedByIsp,
+	/// To email address formatting error
+	FromAddressError(LettreError),
+	/// IO error
+	Io(IoError),
+	///Error while resolving MX lookups
+	MxLookup(ResolveError),
+	/// To email address formatting error
+	ToAddressError(LettreError),
 }
 
+/// Information after parsing an email address
 #[derive(Debug)]
-struct AddressDetails {
-	address: EmailAddress,
-	domain: String,
-	username: String,
-	valid_format: bool,
+pub struct AddressDetails {
+	/// The email address as a lettre EmailAddress
+	pub address: EmailAddress,
+	/// The domain name, after "@"
+	pub domain: String,
+	/// The username, before "@"
+	pub username: String,
+	/// Is the email in a valid format?
+	pub valid_format: bool,
 }
 
-/// All details about email address, MX records and SMTP responses.
+/// All details about email address, MX records and SMTP responses
 #[derive(Debug)]
 pub struct EmailDetails {
-	address: AddressDetails,
-	mx: Vec<String>,
-	smtp: SmtpEmailDetails,
+	/// Details about the email address
+	pub address: AddressDetails,
+	/// Details about the MX records of the domain
+	pub mx: Vec<String>,
+	/// Details about the SMTP responses of the email
+	pub smtp: SmtpEmailDetails,
 }
 
 pub fn email_exists(from_email: &str, to_email: &str) -> Result<EmailDetails, EmailExistsError> {
@@ -65,11 +79,11 @@ pub fn email_exists(from_email: &str, to_email: &str) -> Result<EmailDetails, Em
 
 	let from_email = match EmailAddress::from_str(from_email) {
 		Ok(email) => email,
-		Err(err) => return Err(EmailExistsError::AddressError(err)),
+		Err(err) => return Err(EmailExistsError::FromAddressError(err)),
 	};
 	let to_email = match EmailAddress::from_str(to_email) {
 		Ok(email) => email,
-		Err(err) => return Err(EmailExistsError::AddressError(err)),
+		Err(err) => return Err(EmailExistsError::ToAddressError(err)),
 	};
 
 	let iter: &str = to_email.as_ref();
