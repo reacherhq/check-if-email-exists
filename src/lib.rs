@@ -21,17 +21,22 @@ extern crate native_tls;
 extern crate rayon;
 extern crate trust_dns_resolver;
 
-use lettre::smtp::{SMTP_PORT, SUBMISSIONS_PORT, SUBMISSION_PORT};
-use lettre::EmailAddress;
-use rayon::prelude::*;
-
 mod mx_hosts;
 mod smtp;
+
+use lettre::smtp::SMTP_PORT;
+use lettre::EmailAddress;
+use mx_hosts::MxLookupError;
+use rayon::prelude::*;
+use std::io::Error as IoError;
+use trust_dns_resolver::error::ResolveError;
 
 /// Errors that are returned by email_exists
 #[derive(Debug)]
 pub enum EmailExistsError {
-	BlockedByIsp,
+	BlockedByIsp,           // ISP is blocking SMTP ports
+	IoError(IoError),       // IO error
+	MxLookup(ResolveError), // Error while resolving MX lookups
 }
 
 pub fn email_exists(
@@ -50,14 +55,21 @@ pub fn email_exists(
 	debug!("Domain name is '{}'", domain);
 
 	debug!("Getting MX lookup...");
-	let hosts = mx_hosts::get_mx_lookup(domain);
-	debug!("Found the following MX hosts {:?}", hosts);
-	let ports = vec![SMTP_PORT, SUBMISSION_PORT, SUBMISSIONS_PORT]; // [25, 587, 465]
-	let mut combinations = Vec::new(); // `(host, port)` combination
-	for port in ports.into_iter() {
-		for host in hosts.iter() {
-			combinations.push((host.exchange(), port))
+	let hosts = match mx_hosts::get_mx_lookup(domain) {
+		Ok(h) => h,
+		Err(MxLookupError::IoError(err)) => {
+			return Err(EmailExistsError::IoError(err));
 		}
+		Err(MxLookupError::ResolveError(err)) => {
+			return Err(EmailExistsError::MxLookup(err));
+		}
+	};
+	debug!("Found the following MX hosts {:?}", hosts);
+
+	let mut combinations = Vec::new(); // `(host, port)` combination
+	for host in hosts.iter() {
+		// We could add ports 465 and 587 too
+		combinations.push((host.exchange(), SMTP_PORT));
 	}
 
 	combinations
