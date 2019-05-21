@@ -72,7 +72,13 @@ pub fn email_exists(
 		// We could add ports 465 and 587 too
 		combinations.push((host.exchange(), SMTP_PORT));
 	}
-	debug!("Found the following MX hosts {:?}", combinations);
+	debug!(
+		"Found the following MX hosts {:?}",
+		combinations
+			.iter()
+			.map(|(host, _)| host.to_string())
+			.collect::<Vec<String>>()
+	);
 
 	combinations
 		// Concurrently find any combination that returns true for email_exists
