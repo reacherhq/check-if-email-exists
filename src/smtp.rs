@@ -39,11 +39,15 @@ macro_rules! try_smtp (
 /// Details that we gathered from connecting to this email via SMTP
 #[derive(Debug)]
 pub struct EmailDetails {
+	/// Can we send an email to this address?
 	deliverable: bool,
+	/// Is this email account's inbox full?
 	full_inbox: bool,
+	/// Does this domain have a catch-all email address?
 	has_catch_all: bool,
 }
 
+/// Attempt to connect to host via SMTP, and return SMTP client on success
 fn connect_to_host(
 	from_email: &EmailAddress,
 	host: &Name,
@@ -68,7 +72,7 @@ fn connect_to_host(
 		port
 	);
 
-	// Send ehlo.
+	// "EHLO localhost"
 	try_smtp!(
 		smtp_client.command(EhloCommand::new(ClientId::new("localhost".to_string()))),
 		smtp_client,
@@ -76,7 +80,7 @@ fn connect_to_host(
 		port
 	);
 
-	// Send from.
+	// "MAIL FROM: user@example.org"
 	// FIXME Do not clone?
 	let from_email = from_email.clone();
 	try_smtp!(
@@ -94,7 +98,7 @@ fn email_deliverable(
 	smtp_client: &mut InnerClient<NetworkStream>,
 	to_email: &EmailAddress,
 ) -> Result<bool, Error> {
-	// Send to.
+	// "RCPT TO: me@email.com"
 	// FIXME Do not clone?
 	let to_email = to_email.clone();
 	match smtp_client.command(RcptCommand::new(to_email, vec![])) {
@@ -135,14 +139,14 @@ fn email_deliverable(
 /// Verify the existence of a catch-all email
 fn email_has_catch_all(
 	smtp_client: &mut InnerClient<NetworkStream>,
-	host: &Name,
+	domain: &str,
 ) -> Result<bool, Error> {
 	// Create a random 10-char alphanumerical string
 	let random_email = rand::thread_rng()
 		.sample_iter(&Alphanumeric)
 		.take(10)
 		.collect::<String>();
-	let random_email = EmailAddress::new(format!("{}@{}", random_email, host));
+	let random_email = EmailAddress::new(format!("{}@{}", random_email, domain));
 
 	email_deliverable(
 		smtp_client,
@@ -150,12 +154,13 @@ fn email_has_catch_all(
 	)
 }
 
-/// Get all email details we can
+/// Get all email details we can.
 pub fn email_details(
 	from_email: &EmailAddress,
 	to_email: &EmailAddress,
 	host: &Name,
 	port: u16,
+	domain: &str,
 ) -> Result<EmailDetails, Error> {
 	let mut smtp_client = connect_to_host(from_email, host, port)?;
 
@@ -176,7 +181,7 @@ pub fn email_details(
 			}
 		}
 	};
-	let has_catch_all = email_has_catch_all(&mut smtp_client, host).unwrap_or(false);
+	let has_catch_all = email_has_catch_all(&mut smtp_client, domain).unwrap_or(false);
 
 	// Quit.
 	smtp_client.close();

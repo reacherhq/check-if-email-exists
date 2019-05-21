@@ -78,7 +78,7 @@ pub fn email_exists(
 		// Concurrently find any combination that returns true for email_exists
 		.par_iter()
 		// Attempt to make a SMTP call to host
-		.flat_map(|(host, port)| smtp::email_details(from_email, to_email, host, *port))
+		.flat_map(|(host, port)| smtp::email_details(from_email, to_email, host, *port, domain))
 		.find_any(|_| true)
 		// If all smtp calls timed out/got refused/errored, we assume that the
 		// ISP is blocking relevant ports
