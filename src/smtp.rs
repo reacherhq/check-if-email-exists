@@ -38,7 +38,7 @@ macro_rules! try_smtp (
 
 /// Details that we gathered from connecting to this email via SMTP
 #[derive(Debug)]
-pub struct EmailDetails {
+pub struct SmtpEmailDetails {
 	/// Can we send an email to this address?
 	deliverable: bool,
 	/// Is this email account's inbox full?
@@ -161,7 +161,7 @@ pub fn email_details(
 	host: &Name,
 	port: u16,
 	domain: &str,
-) -> Result<EmailDetails, Error> {
+) -> Result<SmtpEmailDetails, Error> {
 	let mut smtp_client = connect_to_host(from_email, host, port)?;
 
 	let has_catch_all = email_has_catch_all(&mut smtp_client, domain).unwrap_or(false);
@@ -187,7 +187,7 @@ pub fn email_details(
 	// Quit.
 	smtp_client.close();
 
-	Ok(EmailDetails {
+	Ok(SmtpEmailDetails {
 		deliverable,
 		full_inbox,
 		has_catch_all,

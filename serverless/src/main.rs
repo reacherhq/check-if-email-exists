@@ -27,6 +27,23 @@ use serde_json::json;
 use std::borrow::Cow;
 use std::str::FromStr;
 
+/// JSON Response
+pub struct Response {
+	address: EmailAddress,
+	username: String,
+	domain: String,
+	md5_hash: String,
+	valid_format: bool,
+	deliverable: bool,
+	full_nbox: bool,
+	host_exists: bool,
+	has_catch_all: bool,
+}
+// Some ideas to add to Response
+// - gravatar: Does the email have a gravatar icon?
+// - dispoable: Does the email's domain come from a disposable email provider?
+// - free: Is the email provider free?
+
 /// Return HTTP response with error when there's one
 macro_rules! try_or_return (
     ($res: expr) => ({
@@ -50,10 +67,10 @@ fn handler(request: Request, _: Context) -> Result<impl IntoResponse, HandlerErr
 			.get("from_email")
 			.unwrap_or(&Cow::Borrowed("user@example.org"));
 
-		let from_email = try_or_return!(EmailAddress::from_str(from_email));
-		let to_email = try_or_return!(EmailAddress::from_str(to_email));
+		let from_email = EmailAddress::from_str(from_email);
+		let to_email = EmailAddress::from_str(to_email);
 
-		let exists = try_or_return!(email_exists(&from_email, &to_email));
+		let exists = email_exists(&from_email, &to_email);
 
 		Ok(json!({ "message": exists }))
 	} else {
