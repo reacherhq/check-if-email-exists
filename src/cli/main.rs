@@ -57,5 +57,5 @@ fn main() {
 	println!("This operation can take up to 1 minute, please be patient...");
 	let exists = try_or_exit!(email_exists(&from_email, &to_email));
 
-	println!("{}", exists)
+	println!("{:?}", exists)
 }

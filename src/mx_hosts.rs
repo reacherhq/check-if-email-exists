@@ -21,7 +21,7 @@ use trust_dns_resolver::lookup::MxLookup;
 use trust_dns_resolver::Resolver;
 
 pub enum MxLookupError {
-	IoError(IoError),
+	Io(IoError),
 	ResolveError(ResolveError),
 }
 
@@ -30,7 +30,7 @@ pub fn get_mx_lookup(domain: &str) -> Result<MxLookup, MxLookupError> {
 	let resolver = match Resolver::new(ResolverConfig::default(), ResolverOpts::default()) {
 		Ok(r) => r,
 		Err(err) => {
-			return Err(MxLookupError::IoError(err));
+			return Err(MxLookupError::Io(err));
 		}
 	};
 

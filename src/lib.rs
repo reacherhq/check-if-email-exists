@@ -18,6 +18,7 @@ extern crate lettre;
 #[macro_use]
 extern crate log;
 extern crate native_tls;
+extern crate rand;
 extern crate rayon;
 extern crate trust_dns_resolver;
 
@@ -28,6 +29,7 @@ use lettre::smtp::SMTP_PORT;
 use lettre::EmailAddress;
 use mx_hosts::MxLookupError;
 use rayon::prelude::*;
+use smtp::EmailDetails;
 use std::io::Error as IoError;
 use trust_dns_resolver::error::ResolveError;
 
@@ -35,14 +37,14 @@ use trust_dns_resolver::error::ResolveError;
 #[derive(Debug)]
 pub enum EmailExistsError {
 	BlockedByIsp,           // ISP is blocking SMTP ports
-	IoError(IoError),       // IO error
+	Io(IoError),            // IO error
 	MxLookup(ResolveError), // Error while resolving MX lookups
 }
 
 pub fn email_exists(
 	from_email: &EmailAddress,
 	to_email: &EmailAddress,
-) -> Result<bool, EmailExistsError> {
+) -> Result<EmailDetails, EmailExistsError> {
 	debug!("Checking email '{}'", to_email);
 
 	let domain = to_email.to_string();
@@ -57,25 +59,26 @@ pub fn email_exists(
 	debug!("Getting MX lookup...");
 	let hosts = match mx_hosts::get_mx_lookup(domain) {
 		Ok(h) => h,
-		Err(MxLookupError::IoError(err)) => {
-			return Err(EmailExistsError::IoError(err));
+		Err(MxLookupError::Io(err)) => {
+			return Err(EmailExistsError::Io(err));
 		}
 		Err(MxLookupError::ResolveError(err)) => {
 			return Err(EmailExistsError::MxLookup(err));
 		}
 	};
-	debug!("Found the following MX hosts {:?}", hosts);
 
 	let mut combinations = Vec::new(); // `(host, port)` combination
 	for host in hosts.iter() {
 		// We could add ports 465 and 587 too
 		combinations.push((host.exchange(), SMTP_PORT));
 	}
+	debug!("Found the following MX hosts {:?}", combinations);
 
 	combinations
-		// Parallely find any combination that returns true for email_exists
+		// Concurrently find any combination that returns true for email_exists
 		.par_iter()
-		.flat_map(|(host, port)| smtp::email_exists_on_host(from_email, to_email, host, *port))
+		// Attempt to make a SMTP call to host
+		.flat_map(|(host, port)| smtp::email_details(from_email, to_email, host, *port))
 		.find_any(|_| true)
 		// If all smtp calls timed out/got refused/errored, we assume that the
 		// ISP is blocking relevant ports
