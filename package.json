@@ -1,0 +1,12 @@
+{
+	"name": "check-if-email-exists",
+	"version": "0.2.3",
+	"scripts": {
+		"deploy": "serverless deploy",
+		"invoke": "serverless invoke -f check_if_email_exists_serverless -d \"$(cat serverless/payload.json)\""
+	},
+	"devDependencies": {
+		"serverless": "^1.43.0",
+		"serverless-rust": "^0.3.4"
+	}
+}
