@@ -18,54 +18,137 @@ extern crate lettre;
 #[macro_use]
 extern crate log;
 extern crate native_tls;
+extern crate rand;
 extern crate rayon;
 extern crate trust_dns_resolver;
-
-use lettre::smtp::{SMTP_PORT, SUBMISSIONS_PORT, SUBMISSION_PORT};
-use lettre::EmailAddress;
-use rayon::prelude::*;
 
 mod mx_hosts;
 mod smtp;
 
+use lettre::error::Error as LettreError;
+use lettre::smtp::SMTP_PORT;
+use lettre::EmailAddress;
+use mx_hosts::MxLookupError;
+use rayon::prelude::*;
+use smtp::SmtpEmailDetails;
+use std::io::Error as IoError;
+use std::str::FromStr;
+use trust_dns_resolver::error::ResolveError;
+
 /// Errors that are returned by email_exists
 #[derive(Debug)]
 pub enum EmailExistsError {
+	/// ISP is blocking SMTP ports
 	BlockedByIsp,
+	/// To email address formatting error
+	FromAddressError(LettreError),
+	/// IO error
+	Io(IoError),
+	///Error while resolving MX lookups
+	MxLookup(ResolveError),
+	/// To email address formatting error
+	ToAddressError(LettreError),
 }
 
-pub fn email_exists(
-	from_email: &EmailAddress,
-	to_email: &EmailAddress,
-) -> Result<bool, EmailExistsError> {
+/// Information after parsing an email address
+#[derive(Debug)]
+pub struct AddressDetails {
+	/// The email address as a lettre EmailAddress
+	pub address: EmailAddress,
+	/// The domain name, after "@"
+	pub domain: String,
+	/// The username, before "@"
+	pub username: String,
+	/// Is the email in a valid format?
+	pub valid_format: bool,
+}
+
+/// All details about email address, MX records and SMTP responses
+#[derive(Debug)]
+pub struct EmailDetails {
+	/// Details about the email address
+	pub address: AddressDetails,
+	/// Details about the MX records of the domain
+	pub mx: Vec<String>,
+	/// Details about the SMTP responses of the email
+	pub smtp: SmtpEmailDetails,
+}
+
+/// The main function: checks email format, checks MX records, and checks SMTP
+/// responses to the email inbox.
+pub fn email_exists(from_email: &str, to_email: &str) -> Result<EmailDetails, EmailExistsError> {
 	debug!("Checking email '{}'", to_email);
 
-	let domain = to_email.to_string();
-	let domain = domain
-		.as_str()
-		.split("@")
-		.skip(1)
+	let from_email = match EmailAddress::from_str(from_email) {
+		Ok(email) => email,
+		Err(err) => return Err(EmailExistsError::FromAddressError(err)),
+	};
+	let to_email = match EmailAddress::from_str(to_email) {
+		Ok(email) => email,
+		Err(err) => return Err(EmailExistsError::ToAddressError(err)),
+	};
+
+	let iter: &str = to_email.as_ref();
+	let mut iter = iter.split("@");
+	let username = iter
 		.next()
-		.expect("We checked above that email is valid. qed.");
-	debug!("Domain name is '{}'", domain);
+		.expect("We checked above that email is valid. qed.")
+		.to_string();
+	let domain = iter
+		.next()
+		.expect("We checked above that email is valid. qed.")
+		.to_string();
+
+	let address_details = AddressDetails {
+		address: to_email,
+		domain,
+		username,
+		valid_format: true,
+	};
+	debug!("Details of the email address: {:?}", address_details);
 
 	debug!("Getting MX lookup...");
-	let hosts = mx_hosts::get_mx_lookup(domain);
-	debug!("Found the following MX hosts {:?}", hosts);
-	let ports = vec![SMTP_PORT, SUBMISSION_PORT, SUBMISSIONS_PORT]; // [25, 587, 465]
-	let mut combinations = Vec::new(); // `(host, port)` combination
-	for port in ports.into_iter() {
-		for host in hosts.iter() {
-			combinations.push((host.exchange(), port))
+	let hosts = match mx_hosts::get_mx_lookup(address_details.domain.as_str()) {
+		Ok(h) => h,
+		Err(MxLookupError::Io(err)) => {
+			return Err(EmailExistsError::Io(err));
 		}
+		Err(MxLookupError::ResolveError(err)) => {
+			return Err(EmailExistsError::MxLookup(err));
+		}
+	};
+	let mut combinations = Vec::new(); // `(host, port)` combination
+	for host in hosts.iter() {
+		// We could add ports 465 and 587 too
+		combinations.push((host.exchange(), SMTP_PORT));
 	}
+	let mx_details = combinations
+		.iter()
+		.map(|(host, _)| host.to_string())
+		.collect::<Vec<String>>();
+	debug!("Found the following MX hosts {:?}", mx_details);
 
-	combinations
-		// Parallely find any combination that returns true for email_exists
+	let smtp_details = combinations
+		// Concurrently find any combination that returns true for email_exists
 		.par_iter()
-		.flat_map(|(host, port)| smtp::email_exists_on_host(from_email, to_email, host, *port))
+		// Attempt to make a SMTP call to host
+		.flat_map(|(host, port)| {
+			smtp::email_details(
+				&from_email,
+				&address_details.address,
+				host,
+				*port,
+				address_details.domain.as_str(),
+			)
+		})
 		.find_any(|_| true)
 		// If all smtp calls timed out/got refused/errored, we assume that the
 		// ISP is blocking relevant ports
-		.ok_or(EmailExistsError::BlockedByIsp)
+		.ok_or(EmailExistsError::BlockedByIsp)?;
+
+	Ok(EmailDetails {
+		address: address_details,
+		mx: mx_details,
+		smtp: smtp_details,
+	})
 }

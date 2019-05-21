@@ -14,16 +14,31 @@
 // You should have received a copy of the GNU General Public License
 // along with check_if_email_exists.  If not, see <http://www.gnu.org/licenses/>.
 
+use std::io::Error as IoError;
 use trust_dns_resolver::config::*;
+use trust_dns_resolver::error::ResolveError;
 use trust_dns_resolver::lookup::MxLookup;
 use trust_dns_resolver::Resolver;
 
-pub fn get_mx_lookup(domain: &str) -> MxLookup {
+pub enum MxLookupError {
+	Io(IoError),
+	ResolveError(ResolveError),
+}
+
+pub fn get_mx_lookup(domain: &str) -> Result<MxLookup, MxLookupError> {
 	// Construct a new Resolver with default configuration options
-	let resolver = Resolver::new(ResolverConfig::default(), ResolverOpts::default()).unwrap();
+	let resolver = match Resolver::new(ResolverConfig::default(), ResolverOpts::default()) {
+		Ok(r) => r,
+		Err(err) => {
+			return Err(MxLookupError::Io(err));
+		}
+	};
 
 	// Lookup the MX records associated with a name.
 	// The final dot forces this to be an FQDN, otherwise the search rules as specified
 	// in `ResolverOpts` will take effect. FQDN's are generally cheaper queries.
-	resolver.mx_lookup(domain).unwrap()
+	match resolver.mx_lookup(domain) {
+		Ok(l) => Ok(l),
+		Err(err) => Err(MxLookupError::ResolveError(err)),
+	}
 }

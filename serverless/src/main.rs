@@ -19,25 +19,32 @@ extern crate lambda_runtime;
 extern crate lettre;
 extern crate serde_json;
 
-use check_if_email_exists::email_exists;
+use check_if_email_exists::{email_exists, EmailExistsError};
 use lambda_http::{lambda, IntoResponse, Request, RequestExt};
 use lambda_runtime::{error::HandlerError, Context};
-use lettre::EmailAddress;
+use serde::Serialize;
 use serde_json::json;
 use std::borrow::Cow;
-use std::str::FromStr;
 
-/// Return HTTP response with error when there's one
-macro_rules! try_or_return (
-    ($res: expr) => ({
-		match $res {
-			Ok(value) => value,
-			Err(err) => {
-				return Ok(json!({ "error": format!("{:?}", err) }));
-			}
-		}
-    })
-);
+/// JSON Response
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Response {
+	address: String,
+	deliverable: bool,
+	domain: String,
+	full_inbox: bool,
+	has_catch_all: bool,
+	host_exists: bool,
+	hosts: Vec<String>,
+	valid_format: bool,
+	username: String,
+}
+// Some ideas to add to Response
+// - gravatar: Does the email have a gravatar icon?
+// - dispoable: Does the email's domain come from a disposable email provider?
+// - free: Is the email provider free?
+// - md5_hash: MD5 hash of the email address
 
 fn main() {
 	lambda!(handler)
@@ -50,12 +57,33 @@ fn handler(request: Request, _: Context) -> Result<impl IntoResponse, HandlerErr
 			.get("from_email")
 			.unwrap_or(&Cow::Borrowed("user@example.org"));
 
-		let from_email = try_or_return!(EmailAddress::from_str(from_email));
-		let to_email = try_or_return!(EmailAddress::from_str(to_email));
+		let response = match email_exists(&from_email, &to_email) {
+			Ok(details) => Response {
+				address: details.address.address.to_string(),
+				deliverable: details.smtp.deliverable,
+				domain: details.address.domain,
+				full_inbox: details.smtp.full_inbox,
+				has_catch_all: details.smtp.has_catch_all,
+				host_exists: details.mx.len() > 0,
+				hosts: details.mx,
+				username: details.address.username,
+				valid_format: details.address.valid_format,
+			},
+			Err(EmailExistsError::ToAddressError(_)) => Response {
+				address: to_email.to_string(),
+				deliverable: false,
+				domain: String::new(),
+				full_inbox: false,
+				has_catch_all: false,
+				host_exists: false,
+				hosts: vec![],
+				username: String::new(),
+				valid_format: false,
+			},
+			Err(err) => return Ok(json!({ "error": format!("{:?}", err) })),
+		};
 
-		let exists = try_or_return!(email_exists(&from_email, &to_email));
-
-		Ok(json!({ "message": exists }))
+		Ok(json!(response))
 	} else {
 		Ok(json!({ "error": "`to_email` is a required query param" }))
 	}
