@@ -18,7 +18,7 @@ env_logger = "0.6"
 lettre = { git = "https://github.com/lettre/lettre", rev = "1cbcbbb11f7a39a5d5d3829ce4162ca1beafedfb" }
 log = "0.4"
 native-tls = "^0.2"
-rand = "0.6"
+rand = "0.7"
 rayon = "1.1.0"
 trust-dns-resolver = "0.11.1"
 
