@@ -77,4 +77,4 @@ $ ./target/release/check_if_email_exists --help
 
 ## License
 
-MIT. See the [LICENSE](./LICENSE) file for more info.
+GPL-3.0. See the [LICENSE](./LICENSE) file for more info.
