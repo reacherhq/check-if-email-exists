@@ -20,6 +20,8 @@ Many online services (https://hunter.io, http://verify-email.org, http://email-c
 
 Head to the [releases page](https://github.com/amaurymartiny/check_if_email_exists/releases) and download the binary for your platform.
 
+> Note: The binary does connect to the above serverless backend, it runs from your computer.
+
 ## Usage
 
 Make sure you have [`openssl`](https://www.openssl.org/) installed.
