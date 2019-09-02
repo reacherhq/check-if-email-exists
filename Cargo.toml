@@ -19,7 +19,7 @@ lettre = { git = "https://github.com/lettre/lettre", rev = "1cbcbbb11f7a39a5d5d3
 log = "0.4"
 native-tls = "^0.2"
 rand = "0.7"
-rayon = "1.1.0"
+rayon = "1.2.0"
 trust-dns-resolver = "0.12.0"
 
 [workspace]
