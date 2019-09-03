@@ -24,6 +24,7 @@ use rand::distributions::Alphanumeric;
 use rand::Rng;
 use std::time::Duration;
 use trust_dns_resolver::Name;
+use serde::{Deserialize,Serialize};
 
 /// Try to send an smtp command, close and return Err if fails.
 macro_rules! try_smtp (
@@ -37,7 +38,7 @@ macro_rules! try_smtp (
 );
 
 /// Details that we gathered from connecting to this email via SMTP
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct SmtpEmailDetails {
 	/// Can we send an email to this address?
 	pub deliverable: bool,
@@ -66,7 +67,7 @@ fn connect_to_host(
 
 	// Connect to the host.
 	try_smtp!(
-		smtp_client.connect(&(host.to_utf8().as_str(), port), timeout, None),
+		smtp_client.connect(&(host.to_utf8().as_str(), port), None),
 		smtp_client,
 		host,
 		port

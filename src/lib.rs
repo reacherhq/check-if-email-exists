@@ -30,28 +30,33 @@ use lettre::smtp::SMTP_PORT;
 use lettre::EmailAddress;
 use mx_hosts::MxLookupError;
 use rayon::prelude::*;
+use serde::{Deserialize, Serialize};
 use smtp::SmtpEmailDetails;
 use std::io::Error as IoError;
 use std::str::FromStr;
 use trust_dns_resolver::error::ResolveError;
 
 /// Errors that are returned by email_exists
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub enum EmailExistsError {
 	/// ISP is blocking SMTP ports
 	BlockedByIsp,
 	/// To email address formatting error
+	#[serde(skip)]
 	FromAddressError(LettreError),
 	/// IO error
+	#[serde(skip)]
 	Io(IoError),
 	///Error while resolving MX lookups
+	#[serde(skip)]
 	MxLookup(ResolveError),
 	/// To email address formatting error
+	#[serde(skip)]
 	ToAddressError(LettreError),
 }
 
 /// Information after parsing an email address
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct AddressDetails {
 	/// The email address as a lettre EmailAddress
 	pub address: EmailAddress,
@@ -64,7 +69,7 @@ pub struct AddressDetails {
 }
 
 /// All details about email address, MX records and SMTP responses
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct EmailDetails {
 	/// Details about the email address
 	pub address: AddressDetails,

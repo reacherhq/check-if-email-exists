@@ -17,12 +17,14 @@ clap = { version = "2.32", features = ["yaml"] }
 env_logger = "0.6"
 futures = "0.1"
 hyper = "0.12"
-lettre = { git = "https://github.com/lettre/lettre", rev = "1cbcbbb11f7a39a5d5d3829ce4162ca1beafedfb" }
+lettre = "0.9"
 log = "0.4"
 native-tls = "^0.2"
 rand = "0.7"
 rayon = "1.2.0"
 trust-dns-resolver = "0.12.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 
 [workspace]
 members = [
