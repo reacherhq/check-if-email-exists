@@ -17,7 +17,10 @@
 extern crate env_logger;
 #[macro_use]
 extern crate clap;
+extern crate futures;
 extern crate lettre;
+
+mod http;
 
 use check_if_email_exists::email_exists;
 use clap::App;
@@ -30,16 +33,29 @@ fn main() {
 	let yaml = load_yaml!("cli.yml");
 	let matches = App::from_yaml(yaml).get_matches();
 
-	let from_email = matches.value_of("FROM_EMAIL").unwrap_or("user@example.org");
-	let to_email = matches
-		.value_of("TO_EMAIL")
-		.expect("'TO_EMAIL' is required. qed.");
+	let from_email = matches
+		.value_of("FROM_EMAIL")
+		.expect("FROM_EMAIL has a default value. qed.");
+	let http_port = matches
+		.value_of("HTTP_PORT")
+		.expect("HTTP_PORT has a default value. qed.");
+	let is_http = matches.is_present("HTTP");
+	let maybe_to_email = matches.value_of("TO_EMAIL");
 
-	match email_exists(&from_email, &to_email) {
-		Ok(exists) => println!("{:?}", exists),
-		Err(err) => {
-			println!("{:?}", err);
-			process::exit(1);
+	if let Some(to_email) = maybe_to_email {
+		match email_exists(&from_email, &to_email) {
+			Ok(exists) => println!("{:?}", exists),
+			Err(err) => {
+				println!("{:?}", err);
+				if !is_http {
+					process::exit(1);
+				}
+			}
 		}
+	}
+
+	// Run the web server on :3000
+	if is_http {
+		http::run(http_port.parse::<u16>().unwrap());
 	}
 }
