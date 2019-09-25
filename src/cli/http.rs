@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with check_if_email_exists.  If not, see <http://www.gnu.org/licenses/>.
 
-use check_if_email_exists::email_exists;
 use futures::future;
 use futures::Stream;
 use hyper::rt::Future;
@@ -54,7 +53,8 @@ fn req_handler(req: Request<Body>) -> BoxFut {
 				let result = match serde_json::from_slice::<PostReqBody>(body) {
 					Ok(b) => {
 						println!("YEAH! {:?}", b);
-						serde_json::to_string(&email_exists(&b.from_email, &b.to_email)).unwrap()
+						// serde_json::to_string(&email_exists(&b.from_email, &b.to_email)).unwrap()
+						serde_json::to_string("todo").unwrap()
 					}
 
 					Err(err) => serde_json::to_string(&PostResError {

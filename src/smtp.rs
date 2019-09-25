@@ -17,14 +17,36 @@
 use lettre::smtp::client::net::NetworkStream;
 use lettre::smtp::client::InnerClient;
 use lettre::smtp::commands::*;
-use lettre::smtp::error::Error;
+use lettre::smtp::error::Error as LettreSmtpError;
 use lettre::smtp::extension::ClientId;
 use lettre::EmailAddress;
 use rand::distributions::Alphanumeric;
 use rand::Rng;
+use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use trust_dns_resolver::Name;
-use serde::{Deserialize,Serialize};
+
+/// Details that we gathered from connecting to this email via SMTP
+#[derive(Debug, Deserialize, Serialize)]
+pub struct SmtpDetails {
+	/// Can we send an email to this address?
+	pub deliverable: bool,
+	/// Is this email account's inbox full?
+	pub full_inbox: bool,
+	/// Does this domain have a catch-all email address?
+	pub has_catch_all: bool,
+}
+
+/// Error occured connecting to this email server via SMTP
+#[derive(Debug)]
+pub enum SmtpError {
+	/// Skipped checking SMTP details
+	Skipped,
+	/// ISP is blocking SMTP ports
+	BlockedByIsp,
+	/// IO error when communicating with SMTP server
+	Io(LettreSmtpError),
+}
 
 /// Try to send an smtp command, close and return Err if fails.
 macro_rules! try_smtp (
@@ -37,23 +59,12 @@ macro_rules! try_smtp (
     })
 );
 
-/// Details that we gathered from connecting to this email via SMTP
-#[derive(Debug, Deserialize, Serialize)]
-pub struct SmtpEmailDetails {
-	/// Can we send an email to this address?
-	pub deliverable: bool,
-	/// Is this email account's inbox full?
-	pub full_inbox: bool,
-	/// Does this domain have a catch-all email address?
-	pub has_catch_all: bool,
-}
-
 /// Attempt to connect to host via SMTP, and return SMTP client on success
 fn connect_to_host(
 	from_email: &EmailAddress,
 	host: &Name,
 	port: u16,
-) -> Result<InnerClient<NetworkStream>, Error> {
+) -> Result<InnerClient<NetworkStream>, LettreSmtpError> {
 	debug!("Connecting to {}:{}", host, port);
 	let mut smtp_client: InnerClient<NetworkStream> = InnerClient::new();
 	let timeout = Some(Duration::new(3, 0)); // Set timeout to 3s
@@ -62,7 +73,7 @@ fn connect_to_host(
 	if let Err(err) = smtp_client.set_timeout(timeout) {
 		debug!("Closing {}:{}, because of error '{}'.", host, port, err);
 		smtp_client.close();
-		return Err(Error::from(err));
+		return Err(LettreSmtpError::from(err));
 	}
 
 	// Connect to the host.
@@ -98,7 +109,7 @@ fn connect_to_host(
 fn email_deliverable(
 	smtp_client: &mut InnerClient<NetworkStream>,
 	to_email: &EmailAddress,
-) -> Result<bool, Error> {
+) -> Result<bool, LettreSmtpError> {
 	// "RCPT TO: me@email.com"
 	// FIXME Do not clone?
 	let to_email = to_email.clone();
@@ -109,10 +120,10 @@ fn email_deliverable(
 					// 250 2.1.5 Recipient e-mail address ok.
 					Ok(true)
 				} else {
-					Err(Error::Client("Can't find 2.1.5 in RCPT command"))
+					Err(LettreSmtpError::Client("Can't find 2.1.5 in RCPT command"))
 				}
 			}
-			None => Err(Error::Client("No response on RCPT command")),
+			None => Err(LettreSmtpError::Client("No response on RCPT command")),
 		},
 		Err(err) => {
 			let err_string = err.to_string();
@@ -141,7 +152,7 @@ fn email_deliverable(
 fn email_has_catch_all(
 	smtp_client: &mut InnerClient<NetworkStream>,
 	domain: &str,
-) -> Result<bool, Error> {
+) -> Result<bool, LettreSmtpError> {
 	// Create a random 15-char alphanumerical string
 	let random_email = rand::thread_rng()
 		.sample_iter(&Alphanumeric)
@@ -156,13 +167,13 @@ fn email_has_catch_all(
 }
 
 /// Get all email details we can.
-pub fn email_details(
+pub fn smtp_details(
 	from_email: &EmailAddress,
 	to_email: &EmailAddress,
 	host: &Name,
 	port: u16,
 	domain: &str,
-) -> Result<SmtpEmailDetails, Error> {
+) -> Result<SmtpDetails, LettreSmtpError> {
 	let mut smtp_client = connect_to_host(from_email, host, port)?;
 
 	let has_catch_all = email_has_catch_all(&mut smtp_client, domain).unwrap_or(false);
@@ -188,7 +199,7 @@ pub fn email_details(
 	// Quit.
 	smtp_client.close();
 
-	Ok(SmtpEmailDetails {
+	Ok(SmtpDetails {
 		deliverable,
 		full_inbox,
 		has_catch_all,

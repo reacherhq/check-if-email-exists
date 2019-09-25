@@ -20,17 +20,23 @@ use trust_dns_resolver::error::ResolveError;
 use trust_dns_resolver::lookup::MxLookup;
 use trust_dns_resolver::Resolver;
 
-pub enum MxLookupError {
+#[derive(Debug)]
+/// Errors that can happen on MX lookups
+pub enum MxError {
+	/// Skipped checking MX records
+	Skipped,
+	/// Error with IO
 	Io(IoError),
+	/// Error while resolving MX lookups
 	ResolveError(ResolveError),
 }
 
-pub fn get_mx_lookup(domain: &str) -> Result<MxLookup, MxLookupError> {
+pub fn get_mx_lookup(domain: &str) -> Result<MxLookup, MxError> {
 	// Construct a new Resolver with default configuration options
 	let resolver = match Resolver::new(ResolverConfig::default(), ResolverOpts::default()) {
 		Ok(r) => r,
 		Err(err) => {
-			return Err(MxLookupError::Io(err));
+			return Err(MxError::Io(err));
 		}
 	};
 
@@ -39,6 +45,6 @@ pub fn get_mx_lookup(domain: &str) -> Result<MxLookup, MxLookupError> {
 	// in `ResolverOpts` will take effect. FQDN's are generally cheaper queries.
 	match resolver.mx_lookup(domain) {
 		Ok(l) => Ok(l),
-		Err(err) => Err(MxLookupError::ResolveError(err)),
+		Err(err) => Err(MxError::ResolveError(err)),
 	}
 }

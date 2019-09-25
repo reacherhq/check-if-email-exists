@@ -24,7 +24,6 @@ mod http;
 
 use check_if_email_exists::email_exists;
 use clap::App;
-use std::process;
 
 fn main() {
 	env_logger::init();
@@ -40,19 +39,11 @@ fn main() {
 		.value_of("HTTP_PORT")
 		.expect("HTTP_PORT has a default value. qed.");
 	let is_http = matches.is_present("HTTP");
-	let maybe_to_email = matches.value_of("TO_EMAIL");
+	let to_email = matches
+		.value_of("TO_EMAIL")
+		.expect("TO_EMAIL is required. qed.");
 
-	if let Some(to_email) = maybe_to_email {
-		match email_exists(&from_email, &to_email) {
-			Ok(exists) => println!("{:?}", exists),
-			Err(err) => {
-				println!("{:?}", err);
-				if !is_http {
-					process::exit(1);
-				}
-			}
-		}
-	}
+	println!("{:?}", email_exists(&to_email, &from_email));
 
 	// Run the web server on :3000
 	if is_http {
