@@ -14,14 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with check_if_email_exists.  If not, see <http://www.gnu.org/licenses/>.
 
+use crate::util::use_display;
 use lettre::error::Error as LettreError;
 /// Information about the syntax of an email address
 use lettre::EmailAddress;
+use serde::Serialize;
 use std::str::FromStr;
 
 /// Syntax information after parsing an email address
-#[derive(Clone, Debug)]
-pub struct AddressSyntax {
+#[derive(Debug, Serialize)]
+pub struct SyntaxDetails {
 	/// The email address as a lettre EmailAddress
 	pub address: EmailAddress,
 	/// The domain name, after "@"
@@ -32,10 +34,19 @@ pub struct AddressSyntax {
 	pub valid_format: bool,
 }
 
+#[derive(Debug, Serialize)]
+pub struct SyntaxError {
+	#[serde(serialize_with = "use_display")]
+	error: LettreError,
+}
+
 /// From an `email_address` string, compute syntax information about it, such as
 /// username and domain
-pub fn address_syntax(email_address: &str) -> Result<AddressSyntax, LettreError> {
-	let email_address = EmailAddress::from_str(email_address)?;
+pub fn address_syntax(email_address: &str) -> Result<SyntaxDetails, SyntaxError> {
+	let email_address = match EmailAddress::from_str(email_address) {
+		Ok(m) => m,
+		Err(error) => return Err(SyntaxError { error }),
+	};
 
 	let iter: &str = email_address.as_ref();
 	let mut iter = iter.split("@");
@@ -48,7 +59,7 @@ pub fn address_syntax(email_address: &str) -> Result<AddressSyntax, LettreError>
 		.expect("We checked above that email is valid. qed.")
 		.into();
 
-	let address_details = AddressSyntax {
+	let address_details = SyntaxDetails {
 		address: email_address,
 		domain,
 		username,

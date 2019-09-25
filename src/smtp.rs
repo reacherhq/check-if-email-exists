@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with check_if_email_exists.  If not, see <http://www.gnu.org/licenses/>.
 
+use crate::util::use_display;
 use lettre::smtp::client::net::NetworkStream;
 use lettre::smtp::client::InnerClient;
 use lettre::smtp::commands::*;
@@ -22,12 +23,12 @@ use lettre::smtp::extension::ClientId;
 use lettre::EmailAddress;
 use rand::distributions::Alphanumeric;
 use rand::Rng;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use std::time::Duration;
 use trust_dns_resolver::Name;
 
 /// Details that we gathered from connecting to this email via SMTP
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Serialize)]
 pub struct SmtpDetails {
 	/// Can we send an email to this address?
 	pub deliverable: bool,
@@ -38,13 +39,14 @@ pub struct SmtpDetails {
 }
 
 /// Error occured connecting to this email server via SMTP
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub enum SmtpError {
 	/// Skipped checking SMTP details
 	Skipped,
 	/// ISP is blocking SMTP ports
 	BlockedByIsp,
 	/// IO error when communicating with SMTP server
+	#[serde(serialize_with = "use_display")]
 	Io(LettreSmtpError),
 }
 

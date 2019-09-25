@@ -14,9 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with check_if_email_exists.  If not, see <http://www.gnu.org/licenses/>.
 
-extern crate env_logger;
-#[macro_use]
 extern crate clap;
+extern crate env_logger;
 extern crate futures;
 extern crate lettre;
 
@@ -24,12 +23,13 @@ mod http;
 
 use check_if_email_exists::email_exists;
 use clap::App;
+use serde_json::Result as JsonResult;
 
-fn main() {
+fn main() -> JsonResult<()> {
 	env_logger::init();
 
 	// The YAML file is found relative to the current file, similar to how modules are found
-	let yaml = load_yaml!("cli.yml");
+	let yaml = clap::load_yaml!("cli.yml");
 	let matches = App::from_yaml(yaml).get_matches();
 
 	let from_email = matches
@@ -43,10 +43,13 @@ fn main() {
 		.value_of("TO_EMAIL")
 		.expect("TO_EMAIL is required. qed.");
 
-	println!("{:?}", email_exists(&to_email, &from_email));
+	let output = serde_json::to_string(&email_exists(&to_email, &from_email))?;
+	println!("{}", output);
 
 	// Run the web server on :3000
 	if is_http {
 		http::run(http_port.parse::<u16>().unwrap());
 	}
+
+	Ok(())
 }

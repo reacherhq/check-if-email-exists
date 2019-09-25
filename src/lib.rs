@@ -20,31 +20,32 @@ extern crate log;
 extern crate native_tls;
 extern crate rand;
 extern crate rayon;
+extern crate serde;
 extern crate trust_dns_resolver;
 
 mod mx;
 mod smtp;
 mod syntax;
+mod util;
 
-use lettre::error::Error as LettreError;
 use lettre::smtp::SMTP_PORT;
 use lettre::EmailAddress;
-use mx::{get_mx_lookup, MxError};
+use mx::{get_mx_lookup, MxDetails, MxError};
 use rayon::prelude::*;
+use serde::Serialize;
 use smtp::{SmtpDetails, SmtpError};
 use std::str::FromStr;
-use syntax::{address_syntax, AddressSyntax};
-use trust_dns_resolver::lookup::MxLookup;
+use syntax::{address_syntax, SyntaxDetails, SyntaxError};
 
 /// All details about email address, MX records and SMTP responses
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct SingleEmail {
 	/// Details about the MX host
-	pub mx: Result<MxLookup, MxError>,
+	pub mx: Result<MxDetails, MxError>,
 	/// Details about the SMTP responses of the email
 	pub smtp: Result<SmtpDetails, SmtpError>, // TODO Better Err type
 	/// Details about the email address
-	pub syntax: Result<AddressSyntax, LettreError>,
+	pub syntax: Result<SyntaxDetails, SyntaxError>,
 }
 
 /// The main function: checks email format, checks MX records, and checks SMTP
@@ -83,6 +84,7 @@ pub fn email_exists(to_email: &str, from_email: &str) -> SingleEmail {
 	// `(host, port)` combination
 	// We could add ports 465 and 587 too
 	let combinations = my_mx
+		.lookup
 		.iter()
 		.map(|host| (host.exchange(), SMTP_PORT))
 		.collect::<Vec<_>>();
