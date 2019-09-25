@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with check_if_email_exists.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::util::use_display;
+use crate::util::ser_with_display;
 use lettre::error::Error as LettreError;
 /// Information about the syntax of an email address
 use lettre::EmailAddress;
@@ -36,7 +36,7 @@ pub struct SyntaxDetails {
 
 #[derive(Debug, Serialize)]
 pub struct SyntaxError {
-	#[serde(serialize_with = "use_display")]
+	#[serde(serialize_with = "ser_with_display")]
 	error: LettreError,
 }
 

@@ -43,7 +43,7 @@ fn main() -> JsonResult<()> {
 		.value_of("TO_EMAIL")
 		.expect("TO_EMAIL is required. qed.");
 
-	let output = serde_json::to_string(&email_exists(&to_email, &from_email))?;
+	let output = serde_json::to_string_pretty(&email_exists(&to_email, &from_email))?;
 	println!("{}", output);
 
 	// Run the web server on :3000

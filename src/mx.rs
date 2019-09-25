@@ -14,18 +14,26 @@
 // You should have received a copy of the GNU General Public License
 // along with check_if_email_exists.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::util::use_display;
-use serde::Serialize;
+use crate::util::ser_with_display;
+use serde::{Serialize,Serializer};
 use std::io::Error;
 use trust_dns_resolver::config::*;
 use trust_dns_resolver::error::ResolveError;
 use trust_dns_resolver::lookup::MxLookup;
 use trust_dns_resolver::Resolver;
 
+/// Custom implementation of `Serialize` for a `MxLookup`
+pub fn ser_with_mx_lookup<S>(lookup: &MxLookup, serializer: S) -> Result<S::Ok, S::Error>
+where
+	S: Serializer,
+{
+	serializer.collect_seq(lookup.iter().map(|host| host.exchange().to_string()))
+}
+
 /// Details about the MX lookup
 #[derive(Debug, Serialize)]
 pub struct MxDetails {
-	#[serde(skip)]
+	#[serde(serialize_with = "ser_with_mx_lookup")]
 	pub lookup: MxLookup,
 }
 
@@ -35,11 +43,11 @@ pub enum MxError {
 	/// Skipped checking MX records
 	Skipped,
 	/// Error with IO
-	#[serde(serialize_with = "use_display")]
+	#[serde(serialize_with = "ser_with_display")]
 	Io(Error),
 	/// Error while resolving MX lookups
-	#[serde(serialize_with = "use_display")]
-	ResolveError(ResolveError),
+	#[serde(serialize_with = "ser_with_display")]
+	Resolve(ResolveError),
 }
 
 pub fn get_mx_lookup(domain: &str) -> Result<MxDetails, MxError> {
@@ -56,6 +64,6 @@ pub fn get_mx_lookup(domain: &str) -> Result<MxDetails, MxError> {
 	// in `ResolverOpts` will take effect. FQDN's are generally cheaper queries.
 	match resolver.mx_lookup(domain) {
 		Ok(lookup) => Ok(MxDetails { lookup }),
-		Err(err) => Err(MxError::ResolveError(err)),
+		Err(err) => Err(MxError::Resolve(err)),
 	}
 }
