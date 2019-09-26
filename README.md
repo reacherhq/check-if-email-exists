@@ -41,7 +41,7 @@ ARGS:
     <TO_EMAIL>    The email to check
 ```
 
-The output will be a JSON with the following format, for `someone@gmail.com`:
+The output will be a JSON with the following format, for `someone@gmail.com` (note that it is disabled by Gmail):
 
 ```json
 {
@@ -55,7 +55,7 @@ The output will be a JSON with the following format, for `someone@gmail.com`:
 		]
 	},
 	"smtp": {
-		"deliverable": false, // someone@gmail.com is indeed disabled by Google
+		"deliverable": false,
 		"full_inbox": false,
 		"has_catch_all": false
 	},
