@@ -34,7 +34,7 @@ pub struct SyntaxDetails {
 }
 
 #[derive(Debug, Serialize)]
-// #[serde(tag = "type", content = "message")]
+#[serde(tag = "type", content = "message")]
 pub enum SyntaxError {
 	#[serde(serialize_with = "ser_with_display")]
 	SyntaxError(LettreError),
