@@ -14,23 +14,56 @@
 // You should have received a copy of the GNU General Public License
 // along with check_if_email_exists.  If not, see <http://www.gnu.org/licenses/>.
 
-use std::io::Error as IoError;
+use crate::util::ser_with_display;
+use serde::{ser::SerializeMap, Serialize, Serializer};
+use std::io::Error;
 use trust_dns_resolver::config::*;
 use trust_dns_resolver::error::ResolveError;
 use trust_dns_resolver::lookup::MxLookup;
 use trust_dns_resolver::Resolver;
 
-pub enum MxLookupError {
-	Io(IoError),
-	ResolveError(ResolveError),
+/// Details about the MX lookup
+#[derive(Debug)]
+pub struct MxDetails(pub MxLookup);
+
+impl Serialize for MxDetails {
+	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+	where
+		S: Serializer,
+	{
+		let mut map = serializer.serialize_map(Some(1))?;
+		map.serialize_entry(
+			"records",
+			&self
+				.0
+				.iter()
+				.map(|host| host.exchange().to_string())
+				.collect::<Vec<_>>(),
+		)?;
+		map.end()
+	}
 }
 
-pub fn get_mx_lookup(domain: &str) -> Result<MxLookup, MxLookupError> {
+/// Errors that can happen on MX lookups
+#[derive(Debug, Serialize)]
+pub enum MxError {
+	/// Skipped checking MX records
+	Skipped,
+	/// Error with IO
+	#[serde(serialize_with = "ser_with_display")]
+	Io(Error),
+	/// Error while resolving MX lookups
+	#[serde(serialize_with = "ser_with_display")]
+	Resolve(ResolveError),
+}
+
+/// Make a MX lookup
+pub fn get_mx_lookup(domain: &str) -> Result<MxDetails, MxError> {
 	// Construct a new Resolver with default configuration options
 	let resolver = match Resolver::new(ResolverConfig::default(), ResolverOpts::default()) {
 		Ok(r) => r,
 		Err(err) => {
-			return Err(MxLookupError::Io(err));
+			return Err(MxError::Io(err));
 		}
 	};
 
@@ -38,7 +71,7 @@ pub fn get_mx_lookup(domain: &str) -> Result<MxLookup, MxLookupError> {
 	// The final dot forces this to be an FQDN, otherwise the search rules as specified
 	// in `ResolverOpts` will take effect. FQDN's are generally cheaper queries.
 	match resolver.mx_lookup(domain) {
-		Ok(l) => Ok(l),
-		Err(err) => Err(MxLookupError::ResolveError(err)),
+		Ok(lookup) => Ok(MxDetails(lookup)),
+		Err(err) => Err(MxError::Resolve(err)),
 	}
 }
