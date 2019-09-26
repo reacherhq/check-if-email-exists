@@ -1,3 +1,18 @@
+# Change Log
+
+All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+
+# [0.3.0](https://github.com/amaurymartiny/check_if_email_exists/compare/v0.2.3...v0.3.0) (2019-09-26)
+
+
+### Features
+
+* New error JSON format ([#56](https://github.com/amaurymartiny/check_if_email_exists/issues/56)) ([fec4315](https://github.com/amaurymartiny/check_if_email_exists/commit/fec4315))
+* Output JSON information with CLI ([#53](https://github.com/amaurymartiny/check_if_email_exists/issues/53)) ([1d026d5](https://github.com/amaurymartiny/check_if_email_exists/commit/1d026d5))
+* Return Result<EmailDetails> instead of Result<bool>, with much more details ([#23](https://github.com/amaurymartiny/check_if_email_exists/issues/23)) ([39b13f5](https://github.com/amaurymartiny/check_if_email_exists/commit/39b13f5))
+
+
+
 ## [0.2.3](https://github.com/amaurymartiny/check_if_email_exists/compare/v0.2.2...v0.2.3) (2019-05-09)
 
 
@@ -44,4 +59,3 @@
 ### Features
 
 * Change codebase to Rust ([#7](https://github.com/amaurymartiny/check_if_email_exists/pull/7)) ([05569e4](https://github.com/amaurymartiny/check_if_email_exists/commit/05569e4900b4467fa6d7f03086343fac753fe4ad))
-
