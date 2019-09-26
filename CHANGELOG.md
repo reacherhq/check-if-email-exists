@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.3.1](https://github.com/amaurymartiny/check_if_email_exists/compare/v0.3.0...v0.3.1) (2019-09-26)
+
+
+### Bug Fixes
+
+* Don't use virtual workspace, be able to build ([#59](https://github.com/amaurymartiny/check_if_email_exists/issues/59)) ([6c93893](https://github.com/amaurymartiny/check_if_email_exists/commit/6c93893))
+
+
+
 # [0.3.0](https://github.com/amaurymartiny/check_if_email_exists/compare/v0.2.3...v0.3.0) (2019-09-26)
 
 
