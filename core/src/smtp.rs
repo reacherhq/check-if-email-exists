@@ -40,6 +40,7 @@ pub struct SmtpDetails {
 
 /// Error occured connecting to this email server via SMTP
 #[derive(Debug, Serialize)]
+#[serde(tag = "type", content = "message")]
 pub enum SmtpError {
 	/// Skipped checking SMTP details
 	Skipped,
@@ -47,7 +48,7 @@ pub enum SmtpError {
 	BlockedByIsp,
 	/// IO error when communicating with SMTP server
 	#[serde(serialize_with = "ser_with_display")]
-	Io(LettreSmtpError),
+	SmtpError(LettreSmtpError),
 }
 
 /// Try to send an smtp command, close and return Err if fails.
@@ -141,6 +142,8 @@ fn email_deliverable(
 				|| err_string.contains("undeliverable")
 				|| err_string.contains("user unknown")
 				|| err_string.contains("user not found")
+				// The email account that you tried to reach is disabled. Learn more at https://support.google.com/mail/?p=DisabledUser
+				|| err_string.contains("disabled")
 			{
 				Ok(false)
 			} else {

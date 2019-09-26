@@ -14,10 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with check_if_email_exists.  If not, see <http://www.gnu.org/licenses/>.
 
+use crate::util::ser_with_display;
 use lettre::error::Error as LettreError;
-/// Information about the syntax of an email address
 use lettre::EmailAddress;
-use serde::{Serialize, Serializer};
+use serde::Serialize;
 use std::str::FromStr;
 
 /// Syntax information after parsing an email address
@@ -33,24 +33,22 @@ pub struct SyntaxDetails {
 	pub valid_format: bool,
 }
 
-#[derive(Debug)]
-pub struct SyntaxError(LettreError);
+#[derive(Debug, Serialize)]
+// #[serde(tag = "type", content = "message")]
+pub enum SyntaxError {
+	#[serde(serialize_with = "ser_with_display")]
+	SyntaxError(LettreError),
+}
 
 impl PartialEq for SyntaxError {
 	fn eq(&self, other: &Self) -> bool {
-		match (self.0, other.0) {
-			(LettreError::InvalidEmailAddress, LettreError::InvalidEmailAddress) => true,
+		match (self, other) {
+			(
+				SyntaxError::SyntaxError(LettreError::InvalidEmailAddress),
+				SyntaxError::SyntaxError(LettreError::InvalidEmailAddress),
+			) => true,
 			_ => false,
 		}
-	}
-}
-
-impl Serialize for SyntaxError {
-	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-	where
-		S: Serializer,
-	{
-		serializer.collect_str(&self.0)
 	}
 }
 
@@ -59,7 +57,7 @@ impl Serialize for SyntaxError {
 pub fn address_syntax(email_address: &str) -> Result<SyntaxDetails, SyntaxError> {
 	let email_address = match EmailAddress::from_str(email_address) {
 		Ok(m) => m,
-		Err(error) => return Err(SyntaxError(error)),
+		Err(error) => return Err(SyntaxError::SyntaxError(error)),
 	};
 
 	let iter: &str = email_address.as_ref();
@@ -91,7 +89,7 @@ mod tests {
 	fn should_return_error_for_invalid_email() {
 		assert_eq!(
 			address_syntax("foo"),
-			Err(SyntaxError(LettreError::InvalidEmailAddress))
+			Err(SyntaxError::SyntaxError(LettreError::InvalidEmailAddress))
 		);
 	}
 
@@ -99,7 +97,7 @@ mod tests {
 	fn should_return_error_for_invalid_email_with_at() {
 		assert_eq!(
 			address_syntax("foo@bar"),
-			Err(SyntaxError(LettreError::InvalidEmailAddress))
+			Err(SyntaxError::SyntaxError(LettreError::InvalidEmailAddress))
 		);
 	}
 

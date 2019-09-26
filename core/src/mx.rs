@@ -46,15 +46,16 @@ impl Serialize for MxDetails {
 
 /// Errors that can happen on MX lookups
 #[derive(Debug, Serialize)]
+#[serde(tag = "type", content = "message")]
 pub enum MxError {
 	/// Skipped checking MX records
 	Skipped,
 	/// Error with IO
 	#[serde(serialize_with = "ser_with_display")]
-	Io(Error),
+	IoError(Error),
 	/// Error while resolving MX lookups
 	#[serde(serialize_with = "ser_with_display")]
-	Resolve(ResolveError),
+	ResolveError(ResolveError),
 }
 
 /// Make a MX lookup
@@ -63,7 +64,7 @@ pub fn get_mx_lookup(domain: &str) -> Result<MxDetails, MxError> {
 	let resolver = match Resolver::new(ResolverConfig::default(), ResolverOpts::default()) {
 		Ok(r) => r,
 		Err(err) => {
-			return Err(MxError::Io(err));
+			return Err(MxError::IoError(err));
 		}
 	};
 
@@ -72,6 +73,6 @@ pub fn get_mx_lookup(domain: &str) -> Result<MxDetails, MxError> {
 	// in `ResolverOpts` will take effect. FQDN's are generally cheaper queries.
 	match resolver.mx_lookup(domain) {
 		Ok(lookup) => Ok(MxDetails(lookup)),
-		Err(err) => Err(MxError::Resolve(err)),
+		Err(err) => Err(MxError::ResolveError(err)),
 	}
 }
