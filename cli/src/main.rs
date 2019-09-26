@@ -16,10 +16,7 @@
 
 extern crate clap;
 extern crate env_logger;
-extern crate futures;
 extern crate serde;
-
-mod http;
 
 use check_if_email_exists_core::email_exists;
 use clap::App;
@@ -35,21 +32,12 @@ fn main() -> JsonResult<()> {
 	let from_email = matches
 		.value_of("FROM_EMAIL")
 		.expect("FROM_EMAIL has a default value. qed.");
-	let http_port = matches
-		.value_of("HTTP_PORT")
-		.expect("HTTP_PORT has a default value. qed.");
-	let is_http = matches.is_present("HTTP");
 	let to_email = matches
 		.value_of("TO_EMAIL")
 		.expect("TO_EMAIL is required. qed.");
 
 	let output = serde_json::to_string_pretty(&email_exists(&to_email, &from_email))?;
 	println!("{}", output);
-
-	// Run the web server on :3000
-	if is_http {
-		http::run(http_port.parse::<u16>().unwrap());
-	}
 
 	Ok(())
 }
