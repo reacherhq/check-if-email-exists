@@ -1,5 +1,5 @@
 [package]
-name = "check_if_email_exists_serverless"
+name = "check_if_email_exists_core"
 version = "0.2.3"
 authors = ["Amaury Martiny <amaury.martiny@protonmail.com>"]
 description = "Check if an email address exists without sending any email"
@@ -7,8 +7,11 @@ edition = "2018"
 publish = false
 
 [dependencies]
-check_if_email_exists_core = { path = "../core" }
-lambda_http = "0.1"
-lambda_runtime = "0.2"
+lettre = "0.9"
+log = "0.4"
+native-tls = "^0.2"
+rand = "0.7"
+rayon = "1.2.0"
+trust-dns-resolver = "0.12.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
