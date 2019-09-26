@@ -142,6 +142,8 @@ fn email_deliverable(
 				|| err_string.contains("undeliverable")
 				|| err_string.contains("user unknown")
 				|| err_string.contains("user not found")
+				// The email account that you tried to reach is disabled. Learn more at https://support.google.com/mail/?p=DisabledUser
+				|| err_string.contains("disabled")
 			{
 				Ok(false)
 			} else {
