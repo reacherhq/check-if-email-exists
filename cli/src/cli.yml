@@ -11,3 +11,4 @@ args:
   - TO_EMAIL:
       help: The email to check
       index: 1
+      required: true

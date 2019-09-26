@@ -20,7 +20,7 @@ Many online services (https://hunter.io, http://verify-email.org, http://email-c
 
 Head to the [releases page](https://github.com/amaurymartiny/check_if_email_exists/releases) and download the binary for your platform.
 
-> Note: The binary doesn't connect to the above serverless backend, it runs from your computer.
+> Note: The binary doesn't connect to the above serverless backend, it checks the mail directly from your computer.
 
 ## Usage
 
@@ -35,10 +35,37 @@ FLAGS:
     -V, --version    Prints version information
 
 OPTIONS:
-        --from <FROM_EMAIL>    The from email to use in the SMTP connection (default: test@example.org)
+        --from <FROM_EMAIL>    The from email to use in the SMTP connection [default: user@example.org]
 
 ARGS:
     <TO_EMAIL>    The email to check
+```
+
+The output will be a JSON with the following format, for `someone@gmail.com`:
+
+```json
+{
+	"mx": {
+		"records": [
+			"alt3.gmail-smtp-in.l.google.com.",
+			"gmail-smtp-in.l.google.com.",
+			"alt1.gmail-smtp-in.l.google.com.",
+			"alt4.gmail-smtp-in.l.google.com.",
+			"alt2.gmail-smtp-in.l.google.com."
+		]
+	},
+	"smtp": {
+		"deliverable": false, // someone@gmail.com is indeed disabled by Google
+		"full_inbox": false,
+		"has_catch_all": false
+	},
+	"syntax": {
+		"address": "someone@gmail.com",
+		"domain": "gmail.com",
+		"username": "someone",
+		"valid_format": true
+	}
+}
 ```
 
 ### Verbose Mode
@@ -63,7 +90,7 @@ The 1st version of this tool was a simple bash script which made a telnet call. 
 
 ## Build From Source
 
-First, [install Rust](https://www.rust-lang.org/tools/install). Then, clone the source code locally:
+First, [install Rust](https://www.rust-lang.org/tools/install); you'll need Rust 1.37.0 or later. Then, clone the source code locally:
 
 ```bash
 # Download the code
