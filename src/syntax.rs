@@ -14,11 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with check_if_email_exists.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::util::ser_with_display;
 use lettre::error::Error as LettreError;
 /// Information about the syntax of an email address
 use lettre::EmailAddress;
-use serde::Serialize;
+use serde::{Serialize,Serializer};
 use std::str::FromStr;
 
 /// Syntax information after parsing an email address
@@ -34,10 +33,16 @@ pub struct SyntaxDetails {
 	pub valid_format: bool,
 }
 
-#[derive(Debug, Serialize)]
-pub struct SyntaxError {
-	#[serde(serialize_with = "ser_with_display")]
-	error: LettreError,
+#[derive(Debug)]
+pub struct SyntaxError(LettreError);
+
+impl Serialize for SyntaxError {
+	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+	where
+		S: Serializer,
+	{
+		serializer.collect_str(&self.0)
+	}
 }
 
 /// From an `email_address` string, compute syntax information about it, such as
@@ -45,7 +50,7 @@ pub struct SyntaxError {
 pub fn address_syntax(email_address: &str) -> Result<SyntaxDetails, SyntaxError> {
 	let email_address = match EmailAddress::from_str(email_address) {
 		Ok(m) => m,
-		Err(error) => return Err(SyntaxError { error }),
+		Err(error) => return Err(SyntaxError(error)),
 	};
 
 	let iter: &str = email_address.as_ref();

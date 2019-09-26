@@ -28,17 +28,16 @@ mod smtp;
 mod syntax;
 mod util;
 
-use lettre::smtp::SMTP_PORT;
-use lettre::EmailAddress;
+use lettre::{smtp::SMTP_PORT, EmailAddress};
 use mx::{get_mx_lookup, MxDetails, MxError};
 use rayon::prelude::*;
-use serde::Serialize;
+use serde::{ser::SerializeMap, Serialize, Serializer};
 use smtp::{SmtpDetails, SmtpError};
 use std::str::FromStr;
 use syntax::{address_syntax, SyntaxDetails, SyntaxError};
 
 /// All details about email address, MX records and SMTP responses
-#[derive(Debug, Serialize)]
+#[derive(Debug)]
 pub struct SingleEmail {
 	/// Details about the MX host
 	pub mx: Result<MxDetails, MxError>,
@@ -46,6 +45,35 @@ pub struct SingleEmail {
 	pub smtp: Result<SmtpDetails, SmtpError>, // TODO Better Err type
 	/// Details about the email address
 	pub syntax: Result<SyntaxDetails, SyntaxError>,
+}
+
+// Implement a custom serialize
+impl Serialize for SingleEmail {
+	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+	where
+		S: Serializer,
+	{
+		// This is just used internally to get the nested error field
+		#[derive(Serialize)]
+		struct MyError<E> {
+			error: E,
+		}
+
+		let mut map = serializer.serialize_map(Some(1))?;
+		match &self.mx {
+			Ok(t) => map.serialize_entry("mx", &t)?,
+			Err(error) => map.serialize_entry("mx", &MyError { error })?,
+		}
+		match &self.smtp {
+			Ok(t) => map.serialize_entry("smtp", &t)?,
+			Err(error) => map.serialize_entry("smtp", &MyError { error })?,
+		}
+		match &self.syntax {
+			Ok(t) => map.serialize_entry("syntax", &t)?,
+			Err(error) => map.serialize_entry("syntax", &MyError { error })?,
+		}
+		map.end()
+	}
 }
 
 /// The main function: checks email format, checks MX records, and checks SMTP
@@ -84,7 +112,7 @@ pub fn email_exists(to_email: &str, from_email: &str) -> SingleEmail {
 	// `(host, port)` combination
 	// We could add ports 465 and 587 too
 	let combinations = my_mx
-		.lookup
+		.0
 		.iter()
 		.map(|host| (host.exchange(), SMTP_PORT))
 		.collect::<Vec<_>>();
