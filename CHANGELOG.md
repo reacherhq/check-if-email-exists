@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.3.2](https://github.com/amaurymartiny/check_if_email_exists/compare/v0.3.1...v0.3.2) (2019-09-26)
+
+
+### Bug Fixes
+
+* **core:** SyntaxError also is type & message ([#60](https://github.com/amaurymartiny/check_if_email_exists/issues/60)) ([996633b](https://github.com/amaurymartiny/check_if_email_exists/commit/996633b))
+
+
+
 ## [0.3.1](https://github.com/amaurymartiny/check_if_email_exists/compare/v0.3.0...v0.3.1) (2019-09-26)
 
 
