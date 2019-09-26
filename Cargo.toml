@@ -1,32 +1,6 @@
-[package]
-name = "check_if_email_exists"
-version = "0.2.3"
-authors = ["Amaury Martiny <amaury.martiny@protonmail.com>"]
-edition = "2018"
-
-[lib]
-name = "check_if_email_exists"
-path = "src/lib.rs"
-
-[[bin]]
-name = "check_if_email_exists"
-path = "src/cli/main.rs"
-
-[dependencies]
-clap = { version = "2.32", features = ["yaml"] }
-env_logger = "0.6"
-futures = "0.1"
-hyper = "0.12"
-lettre = "0.9"
-log = "0.4"
-native-tls = "^0.2"
-rand = "0.7"
-rayon = "1.2.0"
-trust-dns-resolver = "0.12.0"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-
 [workspace]
 members = [
+	"cli",
+	"core",
 	"serverless"
 ]

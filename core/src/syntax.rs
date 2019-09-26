@@ -17,11 +17,11 @@
 use lettre::error::Error as LettreError;
 /// Information about the syntax of an email address
 use lettre::EmailAddress;
-use serde::{Serialize,Serializer};
+use serde::{Serialize, Serializer};
 use std::str::FromStr;
 
 /// Syntax information after parsing an email address
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct SyntaxDetails {
 	/// The email address as a lettre EmailAddress
 	pub address: EmailAddress,
@@ -35,6 +35,15 @@ pub struct SyntaxDetails {
 
 #[derive(Debug)]
 pub struct SyntaxError(LettreError);
+
+impl PartialEq for SyntaxError {
+	fn eq(&self, other: &Self) -> bool {
+		match (self.0, other.0) {
+			(LettreError::InvalidEmailAddress, LettreError::InvalidEmailAddress) => true,
+			_ => false,
+		}
+	}
+}
 
 impl Serialize for SyntaxError {
 	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -72,4 +81,38 @@ pub fn address_syntax(email_address: &str) -> Result<SyntaxDetails, SyntaxError>
 	};
 
 	Ok(address_details)
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn should_return_error_for_invalid_email() {
+		assert_eq!(
+			address_syntax("foo"),
+			Err(SyntaxError(LettreError::InvalidEmailAddress))
+		);
+	}
+
+	#[test]
+	fn should_return_error_for_invalid_email_with_at() {
+		assert_eq!(
+			address_syntax("foo@bar"),
+			Err(SyntaxError(LettreError::InvalidEmailAddress))
+		);
+	}
+
+	#[test]
+	fn should_work_for_valid_email() {
+		assert_eq!(
+			address_syntax("foo@bar.com"),
+			Ok(SyntaxDetails {
+				address: EmailAddress::new("foo@bar.com".into()).unwrap(),
+				domain: "bar.com".into(),
+				username: "foo".into(),
+				valid_format: true
+			})
+		);
+	}
 }
