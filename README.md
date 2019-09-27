@@ -5,6 +5,7 @@ Check if an email address exists before sending the email.
 [![](https://img.shields.io/travis/amaurymartiny/check_if_email_exists.svg)](https://travis-ci.org/amaurymartiny/check_if_email_exists)
 [![](https://ci.appveyor.com/api/projects/status/github/amaurymartiny/check_if_email_exists?branch=master&svg=true)](https://ci.appveyor.com/project/amaurymartiny/check-if-email-exists-a08kp)
 ![License](https://img.shields.io/github/license/amaurymartiny/check_if_email_exists.svg)
+[![](https://img.shields.io/badge/Buy%20me%20a%20tree-%F0%9F%8C%B3-lightgreen)](https://offset.earth/amaurymartiny)
 
 #### 👉 Try it here: https://tinyurl.com/email-exists?to_email=EMAIL_ADDRESS
 
