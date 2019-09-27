@@ -11,11 +11,11 @@ main() {
         return
     fi
 
-    cross test --target $TARGET
-    cross test --target $TARGET --release
+    cross test --all --target $TARGET
+    cross test --all --target $TARGET --release
 
     # Run the binary with a $TEST_EMAIL, to test that the tool actually works.
-    # aka some quick e2e test
+    # aka some quick e2e test on the binary itself
     # TODO This only works on osx now, see #11
     if [ $TRAVIS_OS_NAME = osx ]; then
         cross run --target $TARGET $TEST_EMAIL | grep "\"deliverable\": true"
