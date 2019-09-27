@@ -1,5 +1,5 @@
 [package]
-name = "check_if_email_exists"
+name = "check_if_email_exists_test_suite"
 version = "0.3.2"
 authors = ["Amaury Martiny <amaury.martiny@protonmail.com>"]
 description = "Check if an email address exists without sending any email"
@@ -7,15 +7,6 @@ edition = "2018"
 publish = false
 
 [dependencies]
-check_if_email_exists_core = { path = "core" }
-clap = { version = "2.32", features = ["yaml"] }
-env_logger = "0.6"
+check_if_email_exists_core = { path = "../core" }
 serde = "1.0"
 serde_json = "1.0"
-
-[workspace]
-members = [
-	"core",
-	"serverless",
-	"test_suite"
-]
