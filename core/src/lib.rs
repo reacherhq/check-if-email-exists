@@ -17,6 +17,7 @@
 extern crate lettre;
 #[macro_use]
 extern crate log;
+extern crate mailchecker;
 extern crate native_tls;
 extern crate rand;
 extern crate rayon;
@@ -97,7 +98,7 @@ pub fn email_exists(to_email: &str, from_email: &str) -> SingleEmail {
 	debug!("Details of the email address: {:?}", my_syntax);
 
 	debug!("Getting MX lookup...");
-	let my_mx = match get_mx_lookup(&my_syntax.domain) {
+	let my_mx = match get_mx_lookup(&my_syntax) {
 		Ok(m) => m,
 		e => {
 			return SingleEmail {
@@ -112,7 +113,7 @@ pub fn email_exists(to_email: &str, from_email: &str) -> SingleEmail {
 	// `(host, port)` combination
 	// We could add ports 465 and 587 too
 	let combinations = my_mx
-		.0
+		.lookup
 		.iter()
 		.map(|host| (host.exchange(), SMTP_PORT))
 		.collect::<Vec<_>>();

@@ -20,9 +20,9 @@ extern crate serde;
 
 use check_if_email_exists_core::email_exists;
 use clap::App;
-use serde_json::Result as JsonResult;
+use serde_json;
 
-fn main() -> JsonResult<()> {
+fn main() -> serde_json::Result<()> {
 	env_logger::init();
 
 	// The YAML file is found relative to the current file, similar to how modules are found

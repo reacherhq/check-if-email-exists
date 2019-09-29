@@ -9,6 +9,7 @@ publish = false
 [dependencies]
 lettre = "0.9"
 log = "0.4"
+mailchecker = "3.2"
 native-tls = "^0.2"
 rand = "0.7"
 rayon = "1.2.0"

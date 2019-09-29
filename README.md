@@ -47,6 +47,7 @@ The output will be a JSON with the following format, for `someone@gmail.com` (no
 ```json
 {
 	"mx": {
+		"is_disposable": false,
 		"records": [
 			"alt3.gmail-smtp-in.l.google.com.",
 			"gmail-smtp-in.l.google.com.",
@@ -56,9 +57,9 @@ The output will be a JSON with the following format, for `someone@gmail.com` (no
 		]
 	},
 	"smtp": {
-		"deliverable": false,
-		"full_inbox": false,
-		"has_catch_all": false
+		"has_full_inbox": false,
+		"is_catch_all": false,
+		"is_deliverable": false
 	},
 	"syntax": {
 		"address": "someone@gmail.com",

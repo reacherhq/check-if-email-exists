@@ -30,12 +30,12 @@ use trust_dns_resolver::Name;
 /// Details that we gathered from connecting to this email via SMTP
 #[derive(Debug, Serialize)]
 pub struct SmtpDetails {
-	/// Can we send an email to this address?
-	pub deliverable: bool,
 	/// Is this email account's inbox full?
-	pub full_inbox: bool,
+	pub has_full_inbox: bool,
+	/// Can we send an email to this address?
+	pub is_deliverable: bool,
 	/// Does this domain have a catch-all email address?
-	pub has_catch_all: bool,
+	pub is_catch_all: bool,
 }
 
 /// Error occured connecting to this email server via SMTP
@@ -181,8 +181,8 @@ pub fn smtp_details(
 ) -> Result<SmtpDetails, LettreSmtpError> {
 	let mut smtp_client = connect_to_host(from_email, host, port)?;
 
-	let has_catch_all = email_has_catch_all(&mut smtp_client, domain).unwrap_or(false);
-	let (deliverable, full_inbox) = match email_deliverable(&mut smtp_client, to_email) {
+	let is_catch_all = email_has_catch_all(&mut smtp_client, domain).unwrap_or(false);
+	let (is_deliverable, has_full_inbox) = match email_deliverable(&mut smtp_client, to_email) {
 		Ok(exists) => (exists, false),
 		Err(err) => {
 			let err_string = err.to_string();
@@ -205,8 +205,8 @@ pub fn smtp_details(
 	smtp_client.close();
 
 	Ok(SmtpDetails {
-		deliverable,
-		full_inbox,
-		has_catch_all,
+		has_full_inbox,
+		is_deliverable,
+		is_catch_all,
 	})
 }
