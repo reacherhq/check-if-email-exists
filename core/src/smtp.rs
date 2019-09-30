@@ -30,12 +30,14 @@ use trust_dns_resolver::Name;
 /// Details that we gathered from connecting to this email via SMTP
 #[derive(Debug, Serialize)]
 pub struct SmtpDetails {
-	/// Can we send an email to this address?
-	pub deliverable: bool,
 	/// Is this email account's inbox full?
-	pub full_inbox: bool,
+	pub has_full_inbox: bool,
 	/// Does this domain have a catch-all email address?
-	pub has_catch_all: bool,
+	pub is_catch_all: bool,
+	/// Can we send an email to this address?
+	pub is_deliverable: bool,
+	/// Is the email blocked or disabled by the provider?
+	pub is_disabled: bool,
 }
 
 /// Error occured connecting to this email server via SMTP
@@ -108,11 +110,20 @@ fn connect_to_host(
 	Ok(smtp_client)
 }
 
+struct Deliverability {
+	/// Is this email account's inbox full?
+	pub has_full_inbox: bool,
+	/// Can we send an email to this address?
+	is_deliverable: bool,
+	/// Is the email blocked or disabled by the provider?
+	is_disabled: bool,
+}
+
 /// Check if `to_email` exists on host server with given port
 fn email_deliverable(
 	smtp_client: &mut InnerClient<NetworkStream>,
 	to_email: &EmailAddress,
-) -> Result<bool, LettreSmtpError> {
+) -> Result<Deliverability, LettreSmtpError> {
 	// "RCPT TO: me@email.com"
 	// FIXME Do not clone?
 	let to_email = to_email.clone();
@@ -121,7 +132,11 @@ fn email_deliverable(
 			Some(message) => {
 				if message.contains("2.1.5") {
 					// 250 2.1.5 Recipient e-mail address ok.
-					Ok(true)
+					Ok(Deliverability {
+						has_full_inbox: false,
+						is_deliverable: true,
+						is_disabled: false,
+					})
 				} else {
 					Err(LettreSmtpError::Client("Can't find 2.1.5 in RCPT command"))
 				}
@@ -132,6 +147,31 @@ fn email_deliverable(
 			let err_string = err.to_string();
 			// Don't return an error if the error contains anything about the
 			// address being undeliverable
+
+			// Check if the email account has been disabled or blocked
+			// e.g. "The email account that you tried to reach is disabled. Learn more at https://support.google.com/mail/?p=DisabledUser"
+			if err_string.contains("disabled") || err_string.contains("blocked") {
+				return Ok(Deliverability {
+					has_full_inbox: false,
+					is_deliverable: false,
+					is_disabled: true,
+				});
+			}
+
+			// Check if the email account has a full inbox
+			if err_string.contains("full")
+				|| err_string.contains("insufficient")
+				|| err_string.contains("over quota")
+				|| err_string.contains("space")
+			{
+				return Ok(Deliverability {
+					has_full_inbox: true,
+					is_deliverable: false,
+					is_disabled: false,
+				});
+			}
+
+			// These are the possible error messages when email account doesn't exist
 			if err_string.contains("address rejected")
 				|| err_string.contains("does not exist")
 				|| err_string.contains("invalid address")
@@ -142,13 +182,16 @@ fn email_deliverable(
 				|| err_string.contains("undeliverable")
 				|| err_string.contains("user unknown")
 				|| err_string.contains("user not found")
-				// The email account that you tried to reach is disabled. Learn more at https://support.google.com/mail/?p=DisabledUser
 				|| err_string.contains("disabled")
 			{
-				Ok(false)
-			} else {
-				Err(err)
+				return Ok(Deliverability {
+					has_full_inbox: false,
+					is_deliverable: false,
+					is_disabled: false,
+				});
 			}
+
+			Err(err)
 		}
 	}
 }
@@ -169,6 +212,7 @@ fn email_has_catch_all(
 		smtp_client,
 		&random_email.expect("Email is correctly constructed. qed."),
 	)
+	.map(|deliverability| deliverability.is_deliverable)
 }
 
 /// Get all email details we can.
@@ -181,32 +225,15 @@ pub fn smtp_details(
 ) -> Result<SmtpDetails, LettreSmtpError> {
 	let mut smtp_client = connect_to_host(from_email, host, port)?;
 
-	let has_catch_all = email_has_catch_all(&mut smtp_client, domain).unwrap_or(false);
-	let (deliverable, full_inbox) = match email_deliverable(&mut smtp_client, to_email) {
-		Ok(exists) => (exists, false),
-		Err(err) => {
-			let err_string = err.to_string();
-			// These messages mean that inbox is full, which also means that
-			// email exists
-			if err_string.contains("full")
-				|| err_string.contains("insufficient")
-				|| err_string.contains("over quota")
-				|| err_string.contains("space")
-			{
-				(true, true)
-			} else {
-				debug!("Closing {}:{}, because of error '{}'.", host, port, err);
-				return Err(err);
-			}
-		}
-	};
+	let is_catch_all = email_has_catch_all(&mut smtp_client, domain).unwrap_or(false);
+	let deliverability = email_deliverable(&mut smtp_client, to_email)?;
 
-	// Quit.
 	smtp_client.close();
 
 	Ok(SmtpDetails {
-		deliverable,
-		full_inbox,
-		has_catch_all,
+		has_full_inbox: deliverability.has_full_inbox,
+		is_catch_all,
+		is_deliverable: deliverability.is_deliverable,
+		is_disabled: deliverability.is_disabled,
 	})
 }

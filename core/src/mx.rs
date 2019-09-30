@@ -14,7 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with check_if_email_exists.  If not, see <http://www.gnu.org/licenses/>.
 
+use crate::syntax::SyntaxDetails;
 use crate::util::ser_with_display;
+use mailchecker;
 use serde::{ser::SerializeMap, Serialize, Serializer};
 use std::io::Error;
 use trust_dns_resolver::config::*;
@@ -24,7 +26,10 @@ use trust_dns_resolver::Resolver;
 
 /// Details about the MX lookup
 #[derive(Debug)]
-pub struct MxDetails(pub MxLookup);
+pub struct MxDetails {
+	pub is_disposable: bool,
+	pub lookup: MxLookup,
+}
 
 impl Serialize for MxDetails {
 	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -35,11 +40,12 @@ impl Serialize for MxDetails {
 		map.serialize_entry(
 			"records",
 			&self
-				.0
+				.lookup
 				.iter()
 				.map(|host| host.exchange().to_string())
 				.collect::<Vec<_>>(),
 		)?;
+		map.serialize_entry("is_disposable", &self.is_disposable)?;
 		map.end()
 	}
 }
@@ -59,7 +65,7 @@ pub enum MxError {
 }
 
 /// Make a MX lookup
-pub fn get_mx_lookup(domain: &str) -> Result<MxDetails, MxError> {
+pub fn get_mx_lookup(syntax: &SyntaxDetails) -> Result<MxDetails, MxError> {
 	// Construct a new Resolver with default configuration options
 	let resolver = match Resolver::new(ResolverConfig::default(), ResolverOpts::default()) {
 		Ok(r) => r,
@@ -71,8 +77,14 @@ pub fn get_mx_lookup(domain: &str) -> Result<MxDetails, MxError> {
 	// Lookup the MX records associated with a name.
 	// The final dot forces this to be an FQDN, otherwise the search rules as specified
 	// in `ResolverOpts` will take effect. FQDN's are generally cheaper queries.
-	match resolver.mx_lookup(domain) {
-		Ok(lookup) => Ok(MxDetails(lookup)),
+	match resolver.mx_lookup(syntax.domain.as_ref()) {
+		Ok(lookup) => Ok(MxDetails {
+			// mailchecker::is_valid checks also if the syntax is valid. But if
+			// we're here, it means we're sure the syntax is valid, so is_valid
+			// actually will only check the disposable email provider.
+			is_disposable: !mailchecker::is_valid(syntax.address.to_string().as_ref()),
+			lookup,
+		}),
 		Err(err) => Err(MxError::ResolveError(err)),
 	}
 }

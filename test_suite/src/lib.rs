@@ -35,13 +35,4 @@ mod tests {
 			"{\"mx\":{\"error\":{\"type\":\"ResolveError\",\"message\":\"no record found for name: bar.baz type: MX class: IN\"}},\"smtp\":{\"error\":{\"type\":\"Skipped\"}},\"syntax\":{\"address\":\"foo@bar.baz\",\"domain\":\"bar.baz\",\"username\":\"foo\",\"valid_format\":true}}"
 		);
 	}
-
-	#[test]
-	#[ignore]
-	fn should_output_error_when_blocked_by_isp() {
-		assert_eq!(
-			serde_json::to_string(&email_exists("someone@fastmail.com", "user@example.org")).unwrap(),
-			"{\"mx\":{\"records\":[\"in1-smtp.messagingengine.com.\",\"in2-smtp.messagingengine.com.\"]},\"smtp\":{\"error\":{\"type\":\"BlockedByIsp\"}},\"syntax\":{\"address\":\"someone@fastmail.com\",\"domain\":\"fastmail.com\",\"username\":\"someone\",\"valid_format\":true}}"
-		);
-	}
 }
