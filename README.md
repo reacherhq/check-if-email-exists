@@ -59,7 +59,8 @@ The output will be a JSON with the following format, for `someone@gmail.com` (no
 	"smtp": {
 		"has_full_inbox": false,
 		"is_catch_all": false,
-		"is_deliverable": false
+		"is_deliverable": false,
+		"is_disabled": true,
 	},
 	"syntax": {
 		"address": "someone@gmail.com",
