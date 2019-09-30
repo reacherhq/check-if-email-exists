@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+# [0.4.0](https://github.com/amaurymartiny/check_if_email_exists/compare/v0.3.2...v0.4.0) (2019-09-30)
+
+
+### Features
+
+* Add disposable email check ([#64](https://github.com/amaurymartiny/check_if_email_exists/issues/64)) ([1b2cea3](https://github.com/amaurymartiny/check_if_email_exists/commit/1b2cea3))
+
+
+### BREAKING CHANGES
+
+* the `smtp`'s object keys have changed. Instead of
+```
+{
+  "deliverable": ...,
+  "full_inbox": ...,
+  "has_catch_all": ...
+}
+```
+it now returns 
+```
+{
+  "has_full_inbox": ...,
+  "is_deliverable": ...,
+  "is_disabled": ...,
+  "is_catch_all": ...
+}
+```
+where `is_disabled` checks if the address has been disabled/blocked by the email provider
+
+
+
 ## [0.3.2](https://github.com/amaurymartiny/check_if_email_exists/compare/v0.3.1...v0.3.2) (2019-09-26)
 
 
