@@ -9,7 +9,7 @@ Check if an email address exists before sending the email.
 
 #### 👉 Try it here: https://f57z6l2w0i.execute-api.us-east-1.amazonaws.com/dev?to_email=EMAIL
 
-And replace the `EMAIL` placeholder with the email you would like to verify.
+And replaAce the `EMAIL` placeholder with the email you would like to verify.
 
 > Note: The above operation might take up to 1 minute.
 
