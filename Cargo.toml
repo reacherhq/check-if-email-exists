@@ -18,6 +18,5 @@ serde_json = "1.0"
 [workspace]
 members = [
 	"core",
-	"serverless",
 	"test_suite"
 ]

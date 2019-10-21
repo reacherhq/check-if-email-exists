@@ -22,7 +22,7 @@ Many online services (https://hunter.io, http://verify-email.org, http://email-c
 
 Head to the [releases page](https://github.com/amaurymartiny/check-if-email-exists/releases) and download the binary for your platform.
 
-> Note: The binary doesn't connect to the above serverless backend, it checks the mail directly from your computer.
+> Note: The binary doesn't connect to the above `now.sh` backend, it checks the mail directly from your computer.
 
 ## CLI Usage
 
@@ -85,6 +85,7 @@ RUST_LOG=debug check_if_email_exists [OPTIONS] <TO_EMAIL>
 In your own Rust project, you can add `check-if-email-exists` in your `Cargo.toml`:
 
 ```toml
+[dependencies]
 check-if-email-exists = "0.4"
 ```
 
