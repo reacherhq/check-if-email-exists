@@ -4,17 +4,17 @@ version = "0.4.0"
 authors = ["Amaury Martiny <amaury.martiny@protonmail.com>"]
 categories = ["email"]
 description = "Check if an email address exists without sending any email"
-documentation = "http://docs.rs/check_if_email_exists"
+documentation = "http://docs.rs/check-if-email-exists"
 edition = "2018"
 keywords = ["email", "smtp", "mx", "email verification"]
 license = "GPL-3.0"
 publish = true
 readme = "../README.md"
-repository = "https://github.com/amaurymartiny/check_if_email_exists"
+repository = "https://github.com/amaurymartiny/check-if-email-exists"
 
 [badges]
-appveyor = { repository = "https://github.com/amaurymartiny/check_if_email_exists", service = "github" }
-travis-ci = { repository = "https://github.com/amaurymartiny/check_if_email_exists", service = "github" }
+appveyor = { repository = "https://github.com/amaurymartiny/check-if-email-exists", service = "github" }
+travis-ci = { repository = "https://github.com/amaurymartiny/check-if-email-exists", service = "github" }
 
 [dependencies]
 lettre = "0.9"

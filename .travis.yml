@@ -12,7 +12,7 @@ sudo: required
 env:
   global:
     # TODO Update this to match the name of your project.
-    - CRATE_NAME=check_if_email_exists
+    - CRATE_NAME=check-if-email-exists
 
 matrix:
   # TODO These are all the build jobs. Adjust as necessary. Comment out what you
