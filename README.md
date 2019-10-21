@@ -2,6 +2,7 @@
 
 Check if an email address exists before sending the email.
 
+[![Crate](https://img.shields.io/crates/v/check-if-email-exists.svg)](https://crates.io/crates/check-if-email-exists)
 [![](https://img.shields.io/travis/amaurymartiny/check-if-email-exists.svg)](https://travis-ci.org/amaurymartiny/check-if-email-exists)
 [![](https://ci.appveyor.com/api/projects/status/github/amaurymartiny/check-if-email-exists?branch=master&svg=true)](https://ci.appveyor.com/project/amaurymartiny/check-if-email-exists-a08kp)
 ![License](https://img.shields.io/github/license/amaurymartiny/check-if-email-exists.svg)
@@ -23,7 +24,7 @@ Head to the [releases page](https://github.com/amaurymartiny/check-if-email-exis
 
 > Note: The binary doesn't connect to the above serverless backend, it checks the mail directly from your computer.
 
-## Usage
+## CLI Usage
 
 Make sure you have [`openssl`](https://www.openssl.org/) installed.
 
@@ -79,9 +80,29 @@ To show debug logs when running the binary, run:
 RUST_LOG=debug check_if_email_exists [OPTIONS] <TO_EMAIL>
 ```
 
+## Usage as a Library
+
+In your own Rust project, you can add `check-if-email-exists` in your `Cargo.toml`:
+
+```toml
+check-if-email-exists = "0.4"
+```
+
+And use it in your code as follows:
+
+```rust
+
+use check_if_email_exists::email_exists;
+
+// First arg is the email we want to check, second arg is the FROM email used in the SMTP connection
+let checked = email_exists("check.this.email@gmail.com", "user@example.org");
+
+println!({:?}, checked); // `checked` is a SingleEmail struct
+```
+
 ## FAQ
 
-### The binary hangs/takes a long time/doesn't show anything after 1 minute.
+### The library hangs/takes a long time/doesn't show anything after 1 minute.
 
 Most ISPs block outgoing SMTP requests through ports 25, 587 and 465, to prevent spam. `check-if-email-exists` needs to have these ports open to make a connection to the email's SMTP server, so won't work behind these ISPs, and will instead hang until it times out. There's unfortunately no easy workaround for this problem, see for example [this StackOverflow thread](https://stackoverflow.com/questions/18139102/how-to-get-around-an-isp-block-on-port-25-for-smtp). One solution is to rent a Linux cloud server with a static IP and no blocked ports.
 
