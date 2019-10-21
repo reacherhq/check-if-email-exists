@@ -1,5 +1,5 @@
 [package]
-name = "check_if_email_exists"
+name = "check-if-email-exists"
 version = "0.4.0"
 authors = ["Amaury Martiny <amaury.martiny@protonmail.com>"]
 categories = ["email"]
