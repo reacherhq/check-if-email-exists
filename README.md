@@ -1,10 +1,10 @@
-# check_if_email_exists
+# check-if-email-exists
 
 Check if an email address exists before sending the email.
 
-[![](https://img.shields.io/travis/amaurymartiny/check_if_email_exists.svg)](https://travis-ci.org/amaurymartiny/check_if_email_exists)
-[![](https://ci.appveyor.com/api/projects/status/github/amaurymartiny/check_if_email_exists?branch=master&svg=true)](https://ci.appveyor.com/project/amaurymartiny/check-if-email-exists-a08kp)
-![License](https://img.shields.io/github/license/amaurymartiny/check_if_email_exists.svg)
+[![](https://img.shields.io/travis/amaurymartiny/check-if-email-exists.svg)](https://travis-ci.org/amaurymartiny/check-if-email-exists)
+[![](https://ci.appveyor.com/api/projects/status/github/amaurymartiny/check-if-email-exists?branch=master&svg=true)](https://ci.appveyor.com/project/amaurymartiny/check-if-email-exists-a08kp)
+![License](https://img.shields.io/github/license/amaurymartiny/check-if-email-exists.svg)
 [![](https://img.shields.io/badge/Buy%20me%20a%20tree-%F0%9F%8C%B3-lightgreen)](https://offset.earth/amaurymartiny)
 
 #### 👉 Try it here: https://reacher.now.sh/api/verify/demo?toEmail=EMAIL
@@ -19,7 +19,7 @@ Many online services (https://hunter.io, http://verify-email.org, http://email-c
 
 ## Download the binary
 
-Head to the [releases page](https://github.com/amaurymartiny/check_if_email_exists/releases) and download the binary for your platform.
+Head to the [releases page](https://github.com/amaurymartiny/check-if-email-exists/releases) and download the binary for your platform.
 
 > Note: The binary doesn't connect to the above serverless backend, it checks the mail directly from your computer.
 
@@ -60,7 +60,7 @@ The output will be a JSON with the following format, for `someone@gmail.com` (no
 		"has_full_inbox": false,
 		"is_catch_all": false,
 		"is_deliverable": false,
-		"is_disabled": true,
+		"is_disabled": true
 	},
 	"syntax": {
 		"address": "someone@gmail.com",
@@ -83,13 +83,13 @@ RUST_LOG=debug check_if_email_exists [OPTIONS] <TO_EMAIL>
 
 ### The binary hangs/takes a long time/doesn't show anything after 1 minute.
 
-Most ISPs block outgoing SMTP requests through ports 25, 587 and 465, to prevent spam. `check_if_email_exists` needs to have these ports open to make a connection to the email's SMTP server, so won't work behind these ISPs, and will instead hang until it times out. There's unfortunately no easy workaround for this problem, see for example [this StackOverflow thread](https://stackoverflow.com/questions/18139102/how-to-get-around-an-isp-block-on-port-25-for-smtp). One solution is to rent a Linux cloud server with a static IP and no blocked ports.
+Most ISPs block outgoing SMTP requests through ports 25, 587 and 465, to prevent spam. `check-if-email-exists` needs to have these ports open to make a connection to the email's SMTP server, so won't work behind these ISPs, and will instead hang until it times out. There's unfortunately no easy workaround for this problem, see for example [this StackOverflow thread](https://stackoverflow.com/questions/18139102/how-to-get-around-an-isp-block-on-port-25-for-smtp). One solution is to rent a Linux cloud server with a static IP and no blocked ports.
 
 To see in details what the binary is doing behind the scenes, run it in [verbose mode](#verbose-mode) to see the logs.
 
 ## Legacy Bash Script
 
-The 1st version of this tool was a simple bash script which made a telnet call. If you would like to use that simpler version, have a look at the [`legacy`](https://github.com/amaurymartiny/check_if_email_exists/tree/legacy) branch. The reasons for porting the bash script to the current codebase are explained [in this issue](https://github.com/amaurymartiny/check_if_email_exists/issues/4).
+The 1st version of this tool was a simple bash script which made a telnet call. If you would like to use that simpler version, have a look at the [`legacy`](https://github.com/amaurymartiny/check-if-email-exists/tree/legacy) branch. The reasons for porting the bash script to the current codebase are explained [in this issue](https://github.com/amaurymartiny/check-if-email-exists/issues/4).
 
 ## Build From Source
 
@@ -97,14 +97,14 @@ First, [install Rust](https://www.rust-lang.org/tools/install); you'll need Rust
 
 ```bash
 # Download the code
-$ git clone https://github.com/amaurymartiny/check_if_email_exists
-$ cd check_if_email_exists
+$ git clone https://github.com/amaurymartiny/check-if-email-exists
+$ cd check-if-email-exists
 
 # Build in release mode
 $ cargo build --release
 
 # Run the binary
-$ ./target/release/check_if_email_exists --help
+$ ./target/release/check-if-email-exists --help
 ```
 
 ## License
