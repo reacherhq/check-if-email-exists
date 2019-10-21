@@ -2,6 +2,3 @@
 **/*.rs.bk
 .DS_Store
 
-# Used internally, to be able to use serverless
-node_modules
-.serverless
