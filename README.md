@@ -22,7 +22,7 @@ Many online services (https://hunter.io, http://verify-email.org, http://email-c
 
 Head to the [releases page](https://github.com/amaurymartiny/check-if-email-exists/releases) and download the binary for your platform.
 
-> Note: The binary doesn't connect to the above serverless backend, it checks the mail directly from your computer.
+> Note: The binary doesn't connect to the above `now.sh` backend, it checks the mail directly from your computer.
 
 ## CLI Usage
 
