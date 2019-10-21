@@ -1,10 +1,19 @@
 [package]
-name = "check_if_email_exists_core"
+name = "check_if_email_exists"
 version = "0.4.0"
 authors = ["Amaury Martiny <amaury.martiny@protonmail.com>"]
+categories = ["email"]
 description = "Check if an email address exists without sending any email"
+documentation = "http://docs.rs/check_if_email_exists"
 edition = "2018"
-publish = false
+keywords = ["email", "smtp", "mx", "email verification"]
+publish = true
+repository = "https://github.com/amaurymartiny/check_if_email_exists"
+readme = "../README.md"
+
+[badges]
+appveyor = { repository = "https://github.com/amaurymartiny/check_if_email_exists", service = "github" }
+travis-ci = { repository = "https://github.com/amaurymartiny/check_if_email_exists", service = "github" }
 
 [dependencies]
 lettre = "0.9"

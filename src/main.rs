@@ -18,7 +18,7 @@ extern crate clap;
 extern crate env_logger;
 extern crate serde;
 
-use check_if_email_exists_core::email_exists;
+use check_if_email_exists::email_exists;
 use clap::App;
 use serde_json;
 

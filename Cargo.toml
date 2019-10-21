@@ -1,13 +1,15 @@
 [package]
-name = "check_if_email_exists"
+name = "check_if_email_exists_cli"
 version = "0.4.0"
-authors = ["Amaury Martiny <amaury.martiny@protonmail.com>"]
-description = "Check if an email address exists without sending any email"
 edition = "2018"
 publish = false
 
+[[bin]]
+name = "check_if_email_exists"
+path = "src/main.rs"
+
 [dependencies]
-check_if_email_exists_core = { path = "core" }
+check_if_email_exists = { path = "core" }
 clap = { version = "2.32", features = ["yaml"] }
 env_logger = "0.7"
 serde = "1.0"

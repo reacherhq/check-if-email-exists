@@ -18,7 +18,7 @@ extern crate lambda_http;
 extern crate lambda_runtime;
 extern crate serde_json;
 
-use check_if_email_exists_core::email_exists;
+use check_if_email_exists::email_exists;
 use lambda_http::{lambda, IntoResponse, Request, RequestExt};
 use lambda_runtime::{error::HandlerError, Context};
 use serde_json::json;

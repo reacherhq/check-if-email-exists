@@ -18,7 +18,7 @@
 
 #[cfg(test)]
 mod tests {
-	use check_if_email_exists_core::email_exists;
+	use check_if_email_exists::email_exists;
 
 	#[test]
 	fn should_output_error_for_invalid_email() {
