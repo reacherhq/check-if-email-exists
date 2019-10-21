@@ -118,18 +118,7 @@ version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
-name = "check_if_email_exists"
-version = "0.4.0"
-dependencies = [
- "check_if_email_exists_core 0.4.0",
- "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "env_logger 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.101 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_json 1.0.41 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "check_if_email_exists_core"
+name = "check-if-email-exists"
 version = "0.4.0"
 dependencies = [
  "lettre 0.9.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -144,10 +133,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "check_if_email_exists_serverless"
+name = "check-if-email-exists-cli"
 version = "0.4.0"
 dependencies = [
- "check_if_email_exists_core 0.4.0",
+ "check-if-email-exists 0.4.0",
+ "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "env_logger 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.101 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_json 1.0.41 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "check-if-email-exists-serverless"
+version = "0.4.0"
+dependencies = [
+ "check-if-email-exists 0.4.0",
  "lambda_http 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "lambda_runtime 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.101 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -155,10 +155,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "check_if_email_exists_test_suite"
+name = "check-if-email-exists-test-suite"
 version = "0.4.0"
 dependencies = [
- "check_if_email_exists_core 0.4.0",
+ "check-if-email-exists 0.4.0",
  "serde 1.0.101 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.41 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
