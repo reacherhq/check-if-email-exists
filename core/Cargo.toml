@@ -13,8 +13,8 @@ readme = "../README.md"
 repository = "https://github.com/amaurymartiny/check-if-email-exists"
 
 [badges]
-appveyor = { repository = "https://github.com/amaurymartiny/check-if-email-exists", service = "github" }
-travis-ci = { repository = "https://github.com/amaurymartiny/check-if-email-exists", service = "github" }
+appveyor = { repository = "amaurymartiny/check-if-email-exists", service = "github" }
+travis-ci = { repository = "amaurymartiny/check-if-email-exists", service = "github" }
 
 [dependencies]
 lettre = "0.9"
