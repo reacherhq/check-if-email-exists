@@ -61,7 +61,7 @@ pub fn address_syntax(email_address: &str) -> Result<SyntaxDetails, SyntaxError>
 	};
 
 	let iter: &str = email_address.as_ref();
-	let mut iter = iter.split("@");
+	let mut iter = iter.split('@');
 	let username = iter
 		.next()
 		.expect("We checked above that email is valid. qed.")
