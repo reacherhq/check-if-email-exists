@@ -80,9 +80,9 @@ impl Serialize for SingleEmail {
 /// The main function: checks email format, checks MX records, and checks SMTP
 /// responses to the email inbox.
 pub fn email_exists(to_email: &str, from_email: &str) -> SingleEmail {
-	let from_email = EmailAddress::from_str(from_email).unwrap_or(
-		EmailAddress::from_str("user@example.org").expect("This is a valid email. qed."),
-	);
+	let from_email = EmailAddress::from_str(from_email).unwrap_or_else(|_| {
+		EmailAddress::from_str("user@example.org").expect("This is a valid email. qed.")
+	});
 
 	debug!("Checking email '{}'", to_email);
 	let my_syntax = match address_syntax(to_email) {
