@@ -19,19 +19,23 @@
 #[cfg(test)]
 mod tests {
 	use check_if_email_exists::email_exists;
+	use futures::executor::block_on;
 
 	#[test]
 	fn should_output_error_for_invalid_email() {
+		let result = block_on(email_exists("foo", "user@example.org"));
 		assert_eq!(
-			serde_json::to_string(&email_exists("foo", "user@example.org")).unwrap(),
+			serde_json::to_string(&result).unwrap(),
 			"{\"mx\":{\"error\":{\"type\":\"Skipped\"}},\"smtp\":{\"error\":{\"type\":\"Skipped\"}},\"syntax\":{\"error\":{\"type\":\"SyntaxError\",\"message\":\"invalid email address\"}}}"
 		);
 	}
 
 	#[test]
 	fn should_output_error_for_invalid_mx() {
+		let result = block_on(email_exists("foo@bar.baz", "user@example.org"));
+
 		assert_eq!(
-			serde_json::to_string(&email_exists("foo@bar.baz", "user@example.org")).unwrap(),
+			serde_json::to_string(&result).unwrap(),
 			"{\"mx\":{\"error\":{\"type\":\"ResolveError\",\"message\":\"no record found for name: bar.baz type: MX class: IN\"}},\"smtp\":{\"error\":{\"type\":\"Skipped\"}},\"syntax\":{\"address\":\"foo@bar.baz\",\"domain\":\"bar.baz\",\"username\":\"foo\",\"valid_format\":true}}"
 		);
 	}

@@ -148,6 +148,7 @@ name = "check-if-email-exists-test-suite"
 version = "0.4.0"
 dependencies = [
  "check-if-email-exists 0.4.0",
+ "futures 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.102 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.41 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
