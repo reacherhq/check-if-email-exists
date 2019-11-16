@@ -109,6 +109,7 @@ pub async fn email_exists(to_email: &str, from_email: &str) -> SingleEmail {
 	};
 	debug!("Found the following MX hosts {:?}", my_mx);
 
+	// Create one future per lookup result
 	let futures = my_mx
 		.lookup
 		.iter()
