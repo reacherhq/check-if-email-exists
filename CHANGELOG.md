@@ -2,6 +2,36 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+# [](https://github.com/amaurymartiny/check_if_email_exists/compare/v0.4.0...v) (2019-11-16)
+
+
+### Code Refactoring
+
+* Use futures ([#78](https://github.com/amaurymartiny/check_if_email_exists/issues/78)) ([0e1f6b0](https://github.com/amaurymartiny/check_if_email_exists/commit/0e1f6b0))
+
+
+### BREAKING CHANGES
+
+* - The main function `email_exists` now returns a Future:
+```rust
+pub async fn email_exists(to_email: &str, from_email: &str) -> SingleEmail {}
+```
+- The `SmtpError::SmtpError` has been renamed to `SmtpError::LettreError` to show the underlying error more correctly (i.e., coming from `lettre` crate).
+- The `BlockedByISP` error has been removed. Instead, you'll see e.g. `"connection refused"`, or whatever is returned by the SMTP server:
+```json
+{
+  // ...,
+  "smtp": {
+    "error": {
+      "type": "LettreError",
+      "message": "connection refused"
+    }
+  },
+}
+```
+
+
+
 # [0.4.0](https://github.com/amaurymartiny/check_if_email_exists/compare/v0.3.2...v0.4.0) (2019-09-30)
 
 
