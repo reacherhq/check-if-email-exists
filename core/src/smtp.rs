@@ -46,8 +46,6 @@ pub struct SmtpDetails {
 pub enum SmtpError {
 	/// Skipped checking SMTP details
 	Skipped,
-	/// ISP is blocking SMTP ports
-	BlockedByIsp,
 	/// Error when communicating with SMTP server
 	#[serde(serialize_with = "ser_with_display")]
 	LettreError(LettreSmtpError),
