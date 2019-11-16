@@ -20,7 +20,6 @@ extern crate log;
 extern crate mailchecker;
 extern crate native_tls;
 extern crate rand;
-extern crate rayon;
 extern crate serde;
 extern crate trust_dns_resolver;
 
@@ -29,9 +28,9 @@ mod smtp;
 mod syntax;
 mod util;
 
+use futures::future::select_ok;
 use lettre::{smtp::SMTP_PORT, EmailAddress};
 use mx::{get_mx_lookup, MxDetails, MxError};
-use rayon::prelude::*;
 use serde::{ser::SerializeMap, Serialize, Serializer};
 use smtp::{SmtpDetails, SmtpError};
 use std::str::FromStr;
@@ -79,7 +78,7 @@ impl Serialize for SingleEmail {
 
 /// The main function: checks email format, checks MX records, and checks SMTP
 /// responses to the email inbox.
-pub fn email_exists(to_email: &str, from_email: &str) -> SingleEmail {
+pub async fn email_exists(to_email: &str, from_email: &str) -> SingleEmail {
 	let from_email = EmailAddress::from_str(from_email).unwrap_or_else(|_| {
 		EmailAddress::from_str("user@example.org").expect("This is a valid email. qed.")
 	});
@@ -110,31 +109,30 @@ pub fn email_exists(to_email: &str, from_email: &str) -> SingleEmail {
 	};
 	debug!("Found the following MX hosts {:?}", my_mx);
 
-	// `(host, port)` combination
-	// We could add ports 465 and 587 too
-	let combinations = my_mx
+	// Create one future per lookup result
+	let futures = my_mx
 		.lookup
 		.iter()
-		.map(|host| (host.exchange(), SMTP_PORT))
-		.collect::<Vec<_>>();
-
-	let my_smtp = combinations
-		// Concurrently find any combination that returns true for email_exists
-		.par_iter()
-		// Attempt to make a SMTP call to host
-		.flat_map(|(host, port)| {
-			smtp::smtp_details(
+		.map(|host| {
+			let fut = smtp::smtp_details(
 				&from_email,
 				&my_syntax.address,
-				host,
-				*port,
+				host.exchange(),
+				// We could add ports 465 and 587 too
+				SMTP_PORT,
 				my_syntax.domain.as_str(),
-			)
+			);
+
+			// https://rust-lang.github.io/async-book/04_pinning/01_chapter.html
+			Box::pin(fut)
 		})
-		.find_any(|_| true)
-		// If all smtp calls timed out/got refused/errored, we assume that the
-		// ISP is blocking relevant ports
-		.ok_or(SmtpError::BlockedByIsp);
+		.collect::<Vec<_>>();
+
+	// Race, return the first future that resolves
+	let my_smtp = match select_ok(futures).await {
+		Ok((details, _)) => Ok(details),
+		Err(err) => Err(err),
+	};
 
 	SingleEmail {
 		mx: Ok(my_mx),

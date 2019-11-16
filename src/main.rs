@@ -20,6 +20,7 @@ extern crate serde;
 
 use check_if_email_exists::email_exists;
 use clap::App;
+use futures::executor::block_on;
 use serde_json;
 
 fn main() -> serde_json::Result<()> {
@@ -36,7 +37,9 @@ fn main() -> serde_json::Result<()> {
 		.value_of("TO_EMAIL")
 		.expect("TO_EMAIL is required. qed.");
 
-	let output = serde_json::to_string_pretty(&email_exists(&to_email, &from_email))?;
+	let result = block_on(email_exists(&to_email, &from_email));
+
+	let output = serde_json::to_string_pretty(&result)?;
 	println!("{}", output);
 
 	Ok(())
