@@ -28,7 +28,7 @@ mod smtp;
 mod syntax;
 mod util;
 
-use futures::future::select_all;
+use futures::future::select_ok;
 use lettre::{smtp::SMTP_PORT, EmailAddress};
 use mx::{get_mx_lookup, MxDetails, MxError};
 use serde::{ser::SerializeMap, Serialize, Serializer};
@@ -128,7 +128,10 @@ pub async fn email_exists(to_email: &str, from_email: &str) -> SingleEmail {
 		.collect::<Vec<_>>();
 
 	// Race, return the first promise that resolves
-	let (my_smtp, _, _) = select_all(futures).await;
+	let my_smtp = match select_ok(futures).await {
+		Ok((details, _)) => Ok(details),
+		Err(err) => Err(err),
+	};
 
 	SingleEmail {
 		mx: Ok(my_mx),
