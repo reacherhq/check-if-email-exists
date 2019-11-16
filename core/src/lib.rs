@@ -128,7 +128,7 @@ pub async fn email_exists(to_email: &str, from_email: &str) -> SingleEmail {
 		})
 		.collect::<Vec<_>>();
 
-	// Race, return the first promise that resolves
+	// Race, return the first future that resolves
 	let my_smtp = match select_ok(futures).await {
 		Ok((details, _)) => Ok(details),
 		Err(err) => Err(err),
