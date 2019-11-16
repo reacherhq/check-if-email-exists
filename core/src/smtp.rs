@@ -48,9 +48,9 @@ pub enum SmtpError {
 	Skipped,
 	/// ISP is blocking SMTP ports
 	BlockedByIsp,
-	/// IO error when communicating with SMTP server
+	/// Error when communicating with SMTP server
 	#[serde(serialize_with = "ser_with_display")]
-	SmtpError(LettreSmtpError),
+	LettreError(LettreSmtpError),
 }
 
 /// Try to send an smtp command, close and return Err if fails.
@@ -123,7 +123,7 @@ struct Deliverability {
 fn email_deliverable(
 	smtp_client: &mut InnerClient<NetworkStream>,
 	to_email: &EmailAddress,
-) -> Result<Deliverability, LettreSmtpError> {
+) -> Result<Deliverability, SmtpError> {
 	// "RCPT TO: me@email.com"
 	// FIXME Do not clone?
 	let to_email = to_email.clone();
@@ -138,10 +138,14 @@ fn email_deliverable(
 						is_disabled: false,
 					})
 				} else {
-					Err(LettreSmtpError::Client("Can't find 2.1.5 in RCPT command"))
+					Err(SmtpError::LettreError(LettreSmtpError::Client(
+						"Can't find 2.1.5 in RCPT command",
+					)))
 				}
 			}
-			None => Err(LettreSmtpError::Client("No response on RCPT command")),
+			None => Err(SmtpError::LettreError(LettreSmtpError::Client(
+				"No response on RCPT command",
+			))),
 		},
 		Err(err) => {
 			let err_string = err.to_string();
@@ -191,7 +195,7 @@ fn email_deliverable(
 				});
 			}
 
-			Err(err)
+			Err(SmtpError::LettreError(err))
 		}
 	}
 }
@@ -200,7 +204,7 @@ fn email_deliverable(
 fn email_has_catch_all(
 	smtp_client: &mut InnerClient<NetworkStream>,
 	domain: &str,
-) -> Result<bool, LettreSmtpError> {
+) -> Result<bool, SmtpError> {
 	// Create a random 15-char alphanumerical string
 	let random_email = rand::thread_rng()
 		.sample_iter(&Alphanumeric)
@@ -216,14 +220,17 @@ fn email_has_catch_all(
 }
 
 /// Get all email details we can.
-pub fn smtp_details(
+pub async fn smtp_details(
 	from_email: &EmailAddress,
 	to_email: &EmailAddress,
 	host: &Name,
 	port: u16,
 	domain: &str,
-) -> Result<SmtpDetails, LettreSmtpError> {
-	let mut smtp_client = connect_to_host(from_email, host, port)?;
+) -> Result<SmtpDetails, SmtpError> {
+	let mut smtp_client = match connect_to_host(from_email, host, port) {
+		Ok(client) => client,
+		Err(err) => return Err(SmtpError::LettreError(err)),
+	};
 
 	let is_catch_all = email_has_catch_all(&mut smtp_client, domain).unwrap_or(false);
 	let deliverability = email_deliverable(&mut smtp_client, to_email)?;
