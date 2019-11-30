@@ -8,9 +8,9 @@ Check if an email address exists before sending the email.
 ![License](https://img.shields.io/github/license/amaurymartiny/check-if-email-exists.svg)
 [![](https://img.shields.io/badge/Buy%20me%20a%20tree-%F0%9F%8C%B3-lightgreen)](https://offset.earth/amaurymartiny)
 
-#### 👉 Try it here: https://reacher.now.sh/api/verify/demo?toEmail=EMAIL
+#### 👉 Try it here: https://3nbyey1wsi.execute-api.us-east-1.amazonaws.com/dev/?to_email=YOUR_EMAIL_HERE
 
-And replace the `EMAIL` placeholder with the email you would like to verify.
+And replace the `YOUR_EMAIL_HERE` placeholder with the email you would like to verify.
 
 > Note: The above operation might take up to 1 minute.
 
