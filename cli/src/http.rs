@@ -40,12 +40,12 @@ async fn req_handler(req: Request<Body>) -> Result<Response<Body>, hyper::Error>
 		))),
 
 		// Do email_exists check on POST /
-        (&Method::POST, "/") => {
+		(&Method::POST, "/") => {
 			let body = req.into_body().try_concat().await;
 			let body = body.map(move |chunk| {
-                chunk.iter().cloned().collect::<Vec<u8>>()
+				chunk.iter().cloned().collect::<Vec<u8>>()
 
-            })?;
+			})?;
 			let body = match serde_json::from_slice::<PostReqBody>(&body) {
 				Ok(b) => b,
 				Err(err) => {
@@ -72,17 +72,17 @@ async fn req_handler(req: Request<Body>) -> Result<Response<Body>, hyper::Error>
 				}
 			};
 
-            Ok(Response::new(Body::from(body)))
-        }
+			Ok(Response::new(Body::from(body)))
+		}
 
-        // Return the 404 Not Found for other routes.
-        _ => {
-            Ok(Response::builder()
+		// Return the 404 Not Found for other routes.
+		_ => {
+			Ok(Response::builder()
 				.status(StatusCode::NOT_FOUND)
 				.body(Body::empty())
 				.expect("Response::builder with this body will not throw. qed.")
 			)
-        }
+		}
 	}
 }
 
