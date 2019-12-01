@@ -20,6 +20,12 @@ And replace the `YOUR_EMAIL_HERE` placeholder with the email you would like to v
 
 ## ✅ What Does This Tool Check?
 
+The main feature this tool checks is deliverability:
+
+✔️ **Deliverability.** Is mailbox for the email address deliverable?
+
+It also checks the following properties of an email address:
+
 ✔️ **Syntax validation.** Is the address syntactically valid?
 
 ✔️ **DNS records validation.** Does the domain of the email address have valid MX DNS records?
@@ -27,8 +33,6 @@ And replace the `YOUR_EMAIL_HERE` placeholder with the email you would like to v
 ✔️ **Disposable email address (DEA) validation.** Is the address provided by a known [disposable email address](https://en.wikipedia.org/wiki/Disposable_email_address) provider?
 
 ✔️ **SMTP server validation.** Can the mail exchanger of the email address domain be contacted successfully?
-
-✔️ **Mailbox deliverability.** Is mailbox for the email address deliverable?
 
 ✔️ **Mailbox disabled.** Has this email address been disabled by the email provider?
 
@@ -50,7 +54,7 @@ Many online services (https://hunter.io, http://verify-email.org, http://email-c
 
 ## 🚀 Try It Yourself
 
-There are 4 ways to try `check-if-email-exists`.
+There are 4 ways you can try `check-if-email-exists`.
 
 ### 1. Use the Hosted Version
 
@@ -60,7 +64,7 @@ And replace the `YOUR_EMAIL_HERE` placeholder with the email you would like to v
 
 > Note: The above operation might take up to 15s.
 
-### 2. Using Docker
+### 2. Use Docker
 
 The [Docker image](./Dockerfile) is hosted on Docker Hub:
 
@@ -79,15 +83,20 @@ You can then send a POST request with the following body (`from_email` is option
 }
 ```
 
+Here's the equivalent `curl` command:
+
+```bash
+curl -X POST -d'{"from_email":"user@example.org","to_email":"someone@gmail.com"}' http://localhost:3000
+```
+
 ### 3. Download the Binary
 
 > Note: The binary doesn't connect to the above `amazonaws.com` backend, it checks the mail directly from your computer.
 
-Head to the [releases page](https://github.com/amaurymartiny/check-if-email-exists/releases) and download the binary for your platform.
-
-Make sure you have [`openssl`](https://www.openssl.org/) installed.
+Head to the [releases page](https://github.com/amaurymartiny/check-if-email-exists/releases) and download the binary for your platform. Make sure you have [`openssl`](https://www.openssl.org/) installed on your local machine.
 
 ```
+> $ check_if_email_exists --help
 Check if an email address exists without sending any email.
 
 USAGE:
@@ -116,7 +125,13 @@ If you run with the `--http` flag, `check-if-email-exists` will serve a HTTP ser
 }
 ```
 
-**PRO TIP:** To show debug logs when running the binary, run:
+Here's the equivalent `curl` command:
+
+```bash
+curl -X POST -d'{"from_email":"user@example.org","to_email":"someone@gmail.com"}' http://localhost:3000
+```
+
+**💡 PRO TIP:** To show debug logs when running the binary, run:
 
 ```bash
 RUST_LOG=debug check_if_email_exists [FLAGS] [OPTIONS] [TO_EMAIL]
@@ -140,7 +155,7 @@ use check_if_email_exists::email_exists;
 // First arg is the email we want to check, second arg is the FROM email used in the SMTP connection
 let checked = email_exists("check.this.email@gmail.com", "user@example.org").await;
 
-println!({:?}, checked); // `checked` is a SingleEmail struct
+println!({:?}, checked); // `checked` is a SingleEmail struct, see docs for more info
 ```
 
 The reference docs are hosted on [docs.rs](https://docs.rs/check-if-email-exists).
@@ -185,7 +200,7 @@ Most ISPs block outgoing SMTP requests through ports 25, 587 and 465, to prevent
 
 To see in details what the binary is doing behind the scenes, run it in [verbose mode](#verbose-mode) to see the logs.
 
-### The output show "connection refused" in the `smtp` field.
+### The output show `"connection refused"` in the `smtp` field.
 
 This also happens when your ISP block SMTP ports, see the above answer.
 
