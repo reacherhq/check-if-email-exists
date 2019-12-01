@@ -40,8 +40,9 @@ Planned features:
 
 -   [ ] **Role account validation.** Is the email address a well-known role account?
 -   [ ] **Free email provider check.** Is the email address bound to a known free email provider?
--   [ ] **Syntax validation, provider-specific.** According to the syntactic rules of the target mail provider, is the address syntactically valid.
--   [ ] **Honeypot detection.** Does email address under test hide a [honeypot](<https://en.wikipedia.org/wiki/Honeypot_(computing)>)?
+-   [ ] **Syntax validation, provider-specific.** According to the syntactic rules of the target mail provider, is the address syntactically valid?
+-   [ ] **Honeypot detection.** Does email address under test hide a [honeypot](https://en.wikipedia.org/wiki/Spamtrap)?
+-   [ ] **Gravatar.** Does this email address have a [Gravatar](https://gravatar.com/) profile picture?
 
 ## 🤔 Why?
 
@@ -59,7 +60,24 @@ And replace the `YOUR_EMAIL_HERE` placeholder with the email you would like to v
 
 > Note: The above operation might take up to 15s.
 
-### 2. Use the Docker Image
+### 2. Using Docker
+
+The [Docker image](./Dockerfile) is hosted on Docker Hub:
+
+To run it, run the following command:
+
+```bash
+docker run -p 3000:3000 amaurymartiny/check-if-email-exists
+```
+
+You can then send a POST request with the following body (`from_email` is optional) to `http://localhost:3000`:
+
+```json
+{
+	"from_email": "user@example.org",
+	"to_email": "someone@gmail.com"
+}
+```
 
 ### 3. Download the Binary
 
@@ -87,6 +105,15 @@ OPTIONS:
 
 ARGS:
     <TO_EMAIL>    The email to check
+```
+
+If you run with the `--http` flag, `check-if-email-exists` will serve a HTTP server on `http://localhost:3000`. You can then send a POST request with the following body (`from_email` is optional):
+
+```json
+{
+	"from_email": "user@example.org",
+	"to_email": "someone@gmail.com"
+}
 ```
 
 **PRO TIP:** To show debug logs when running the binary, run:
