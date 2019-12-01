@@ -1,9 +1,9 @@
 [![Crate](https://img.shields.io/crates/v/check-if-email-exists.svg)](https://crates.io/crates/check-if-email-exists)
-[![Docs](https://docs.rs/check-if-email-exists/badge.svg)](https://docs.rs/check-if-email-exists/)
-[![](https://img.shields.io/travis/amaurymartiny/check-if-email-exists.svg)](https://travis-ci.org/amaurymartiny/check-if-email-exists)
-[![](https://ci.appveyor.com/api/projects/status/github/amaurymartiny/check-if-email-exists?branch=master&svg=true)](https://ci.appveyor.com/project/amaurymartiny/check-if-email-exists-a08kp)
+[![Docs](https://docs.rs/check-if-email-exists/badge.svg)](https://docs.rs/check-if-email-exists)
+[![Travis](https://img.shields.io/travis/amaurymartiny/check-if-email-exists.svg)](https://travis-ci.org/amaurymartiny/check-if-email-exists)
+[![Appveyor](https://ci.appveyor.com/api/projects/status/github/amaurymartiny/check-if-email-exists?branch=master&svg=true)](https://ci.appveyor.com/project/amaurymartiny/check-if-email-exists-a08kp)
 ![License](https://img.shields.io/github/license/amaurymartiny/check-if-email-exists.svg)
-[![](https://img.shields.io/badge/Buy%20me%20a%20tree-%F0%9F%8C%B3-lightgreen)](https://offset.earth/amaurymartiny)
+[![Tree](https://img.shields.io/badge/Buy%20me%20a%20tree-%F0%9F%8C%B3-lightgreen)](https://offset.earth/amaurymartiny)
 
 <br /><br /><br />
 
@@ -18,7 +18,7 @@ And replace the `YOUR_EMAIL_HERE` placeholder with the email you would like to v
 
 > Note: The above operation might take up to 15s.
 
-## What Does This Tool Check?
+## ✅ What Does This Tool Check?
 
 ✔️ **Syntax validation.** Is the address syntactically valid?
 
@@ -43,17 +43,15 @@ Planned features:
 -   [ ] **Syntax validation, provider-specific.** According to the syntactic rules of the target mail provider, is the address syntactically valid.
 -   [ ] **Honeypot detection.** Does email address under test hide a [honeypot](<https://en.wikipedia.org/wiki/Honeypot_(computing)>)?
 
-## Why?
+## 🤔 Why?
 
 Many online services (https://hunter.io, http://verify-email.org, http://email-checker.net) offer this service for a paid fee. Here is an open-source alternative to those tools.
 
-## Download the binary
-
-## Try it now
+## 🚀 Try It Yourself
 
 There are 4 ways to try `check-if-email-exists`.
 
-### 1. Use the hosted version
+### 1. Use the Hosted Version
 
 Try it here: https://3nbyey1wsi.execute-api.us-east-1.amazonaws.com/dev/?to_email=YOUR_EMAIL_HERE
 
@@ -63,7 +61,7 @@ And replace the `YOUR_EMAIL_HERE` placeholder with the email you would like to v
 
 ### 2. Use the Docker Image
 
-### 3. Download the binary
+### 3. Download the Binary
 
 > Note: The binary doesn't connect to the above `amazonaws.com` backend, it checks the mail directly from your computer.
 
@@ -94,7 +92,7 @@ ARGS:
 **PRO TIP:** To show debug logs when running the binary, run:
 
 ```bash
-RUST_LOG=debug check_if_email_exists [FLAGS] [OPTIONS] <TO_EMAIL>
+RUST_LOG=debug check_if_email_exists [FLAGS] [OPTIONS] [TO_EMAIL]
 ```
 
 ### 4. Usage as a Library (Advanced)
@@ -118,7 +116,9 @@ let checked = email_exists("check.this.email@gmail.com", "user@example.org").awa
 println!({:?}, checked); // `checked` is a SingleEmail struct
 ```
 
-## JSON Output
+The reference docs are hosted on [docs.rs](https://docs.rs/check-if-email-exists).
+
+## ✈️ JSON Output
 
 The output will be a JSON with the below format, the fields should be self-explanatory. For `someone@gmail.com` (note that it is disabled by Gmail), here's the exact output:
 
@@ -150,7 +150,7 @@ The output will be a JSON with the below format, the fields should be self-expla
 }
 ```
 
-## FAQ
+## ❓ FAQ
 
 ### The library hangs/takes a long time/doesn't show anything after 1 minute.
 
@@ -158,13 +158,13 @@ Most ISPs block outgoing SMTP requests through ports 25, 587 and 465, to prevent
 
 To see in details what the binary is doing behind the scenes, run it in [verbose mode](#verbose-mode) to see the logs.
 
-## Legacy Bash Script
+### The output show "connection refused" in the `smtp` field.
 
-The 1st version of this tool was a simple bash script which made a telnet call. If you would like to use that simpler version, have a look at the [`legacy`](https://github.com/amaurymartiny/check-if-email-exists/tree/legacy) branch. The reasons for porting the bash script to the current codebase are explained [in this issue](https://github.com/amaurymartiny/check-if-email-exists/issues/4).
+This also happens when your ISP block SMTP ports, see the above answer.
 
-## Build From Source
+## 🔨 Build From Source
 
-First, [install Rust](https://www.rust-lang.org/tools/install); you'll need Rust 1.37.0 or later. Then, clone the source code locally:
+First, [install Rust](https://www.rust-lang.org/tools/install); you'll need Rust 1.37.0 or later. Then, run the following commands:
 
 ```bash
 # Download the code
@@ -175,9 +175,13 @@ $ cd check-if-email-exists
 $ cargo build --release
 
 # Run the binary
-$ ./target/release/check-if-email-exists --help
+$ ./target/release/check_if_email_exists --help
 ```
 
-## License
+## 👣 Legacy Bash Script
+
+The 1st version of this tool was a simple bash script which made a telnet call. If you would like to use that simpler version, have a look at the [`legacy`](https://github.com/amaurymartiny/check-if-email-exists/tree/legacy) branch. The reasons for porting the bash script to the current codebase are explained [in this issue](https://github.com/amaurymartiny/check-if-email-exists/issues/4).
+
+## 📜 License
 
 GPL-3.0. See the [LICENSE](./LICENSE) file for more info.
