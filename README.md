@@ -1,4 +1,5 @@
 [![Crate](https://img.shields.io/crates/v/check-if-email-exists.svg)](https://crates.io/crates/check-if-email-exists)
+[![Docs](https://docs.rs/check-if-email-exists/badge.svg)](https://docs.rs/check-if-email-exists/)
 [![](https://img.shields.io/travis/amaurymartiny/check-if-email-exists.svg)](https://travis-ci.org/amaurymartiny/check-if-email-exists)
 [![](https://ci.appveyor.com/api/projects/status/github/amaurymartiny/check-if-email-exists?branch=master&svg=true)](https://ci.appveyor.com/project/amaurymartiny/check-if-email-exists-a08kp)
 ![License](https://img.shields.io/github/license/amaurymartiny/check-if-email-exists.svg)
@@ -19,21 +20,21 @@ And replace the `YOUR_EMAIL_HERE` placeholder with the email you would like to v
 
 ## What Does This Tool Check?
 
-✅ **Syntax validation.** Is the address syntactically valid?
+✔️ **Syntax validation.** Is the address syntactically valid?
 
-✅ **DNS records validation.** Does the domain of the email address have valid MX DNS records?
+✔️ **DNS records validation.** Does the domain of the email address have valid MX DNS records?
 
-✅ **Disposable email address (DEA) validation.** Is the address provided by a known [disposable email address](https://en.wikipedia.org/wiki/Disposable_email_address) provider?
+✔️ **Disposable email address (DEA) validation.** Is the address provided by a known [disposable email address](https://en.wikipedia.org/wiki/Disposable_email_address) provider?
 
-✅ **SMTP server validation.** Can the mail exchanger of the email address domain be contacted successfully?
+✔️ **SMTP server validation.** Can the mail exchanger of the email address domain be contacted successfully?
 
-✅ **Mailbox deliverability.** Is mailbox for the email address deliverable?
+✔️ **Mailbox deliverability.** Is mailbox for the email address deliverable?
 
-✅ **Mailbox disabled.** Has this email address been disabled by the email provider?
+✔️ **Mailbox disabled.** Has this email address been disabled by the email provider?
 
-✅ **Full inbox.** Is the inbox of this mailbox full?
+✔️ **Full inbox.** Is the inbox of this mailbox full?
 
-✅ **Catch-all address.** Is this email address a [catch-all](https://debounce.io/blog/help/what-is-a-catch-all-or-accept-all/) address?
+✔️ **Catch-all address.** Is this email address a [catch-all](https://debounce.io/blog/help/what-is-a-catch-all-or-accept-all/) address?
 
 Planned features:
 
@@ -47,8 +48,6 @@ Planned features:
 Many online services (https://hunter.io, http://verify-email.org, http://email-checker.net) offer this service for a paid fee. Here is an open-source alternative to those tools.
 
 ## Download the binary
-
-> Note: The binary doesn't connect to the above `now.sh` backend, it checks the mail directly from your computer.
 
 ## Try it now
 
@@ -65,6 +64,8 @@ And replace the `YOUR_EMAIL_HERE` placeholder with the email you would like to v
 ### 2. Use the Docker Image
 
 ### 3. Download the binary
+
+> Note: The binary doesn't connect to the above `amazonaws.com` backend, it checks the mail directly from your computer.
 
 Head to the [releases page](https://github.com/amaurymartiny/check-if-email-exists/releases) and download the binary for your platform.
 
@@ -93,7 +94,7 @@ ARGS:
 **PRO TIP:** To show debug logs when running the binary, run:
 
 ```bash
-RUST_LOG=debug check_if_email_exists [OPTIONS] <TO_EMAIL>
+RUST_LOG=debug check_if_email_exists [FLAGS] [OPTIONS] <TO_EMAIL>
 ```
 
 ### 4. Usage as a Library (Advanced)
@@ -105,14 +106,14 @@ In your own Rust project, you can add `check-if-email-exists` in your `Cargo.tom
 check-if-email-exists = "0.5"
 ```
 
-And use it in your code as follows:
+And use it in your code as follows (async/await syntax):
 
 ```rust
 
 use check_if_email_exists::email_exists;
 
 // First arg is the email we want to check, second arg is the FROM email used in the SMTP connection
-let checked = email_exists("check.this.email@gmail.com", "user@example.org");
+let checked = email_exists("check.this.email@gmail.com", "user@example.org").await;
 
 println!({:?}, checked); // `checked` is a SingleEmail struct
 ```
