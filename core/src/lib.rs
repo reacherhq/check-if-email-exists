@@ -39,6 +39,8 @@ use syntax::{address_syntax, SyntaxDetails, SyntaxError};
 /// All details about email address, MX records and SMTP responses
 #[derive(Debug)]
 pub struct SingleEmail {
+	/// Input by the user
+	pub input: String,
 	/// Details about the MX host
 	pub mx: Result<MxDetails, MxError>,
 	/// Details about the SMTP responses of the email
@@ -60,6 +62,7 @@ impl Serialize for SingleEmail {
 		}
 
 		let mut map = serializer.serialize_map(Some(1))?;
+		map.serialize_entry("input", &self.input)?;
 		match &self.mx {
 			Ok(t) => map.serialize_entry("mx", &t)?,
 			Err(error) => map.serialize_entry("mx", &MyError { error })?,
@@ -88,6 +91,7 @@ pub async fn email_exists(to_email: &str, from_email: &str) -> SingleEmail {
 		Ok(s) => s,
 		e => {
 			return SingleEmail {
+				input: to_email.into(),
 				mx: Err(MxError::Skipped),
 				smtp: Err(SmtpError::Skipped),
 				syntax: e,
@@ -101,6 +105,7 @@ pub async fn email_exists(to_email: &str, from_email: &str) -> SingleEmail {
 		Ok(m) => m,
 		e => {
 			return SingleEmail {
+				input: to_email.into(),
 				mx: e,
 				smtp: Err(SmtpError::Skipped),
 				syntax: Ok(my_syntax),
@@ -135,6 +140,7 @@ pub async fn email_exists(to_email: &str, from_email: &str) -> SingleEmail {
 	};
 
 	SingleEmail {
+		input: to_email.into(),
 		mx: Ok(my_mx),
 		smtp: my_smtp,
 		syntax: Ok(my_syntax),
