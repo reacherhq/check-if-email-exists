@@ -167,8 +167,10 @@ The output will be a JSON with the below format, the fields should be self-expla
 ```json
 {
 	"input": "someone@gmail.com",
+	"misc": {
+		"is_disposable": false
+	},
 	"mx": {
-		"is_disposable": false,
 		"records": [
 			"alt3.gmail-smtp-in.l.google.com.",
 			"gmail-smtp-in.l.google.com.",
