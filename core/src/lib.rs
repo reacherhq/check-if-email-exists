@@ -23,9 +23,9 @@ extern crate rand;
 extern crate serde;
 extern crate trust_dns_resolver;
 
-mod mx;
-mod smtp;
-mod syntax;
+pub mod mx;
+pub mod smtp;
+pub mod syntax;
 mod util;
 
 use futures::future::select_ok;
