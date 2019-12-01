@@ -1,18 +1,46 @@
-# check-if-email-exists
-
-Check if an email address exists before sending the email.
-
 [![Crate](https://img.shields.io/crates/v/check-if-email-exists.svg)](https://crates.io/crates/check-if-email-exists)
 [![](https://img.shields.io/travis/amaurymartiny/check-if-email-exists.svg)](https://travis-ci.org/amaurymartiny/check-if-email-exists)
 [![](https://ci.appveyor.com/api/projects/status/github/amaurymartiny/check-if-email-exists?branch=master&svg=true)](https://ci.appveyor.com/project/amaurymartiny/check-if-email-exists-a08kp)
 ![License](https://img.shields.io/github/license/amaurymartiny/check-if-email-exists.svg)
 [![](https://img.shields.io/badge/Buy%20me%20a%20tree-%F0%9F%8C%B3-lightgreen)](https://offset.earth/amaurymartiny)
 
+<br /><br /><br />
+
+<h1 align="center">check-if-email-exists</h1>
+<h4 align="center">Check if an email address exists before sending the email.</h4>
+
+<br /><br /><br />
+
 #### 👉 Try it here: https://3nbyey1wsi.execute-api.us-east-1.amazonaws.com/dev/?to_email=YOUR_EMAIL_HERE
 
 And replace the `YOUR_EMAIL_HERE` placeholder with the email you would like to verify.
 
-> Note: The above operation might take up to 1 minute.
+> Note: The above operation might take up to 15s.
+
+## What Does This Tool Check?
+
+✅ **Syntax validation.** Is the address syntactically valid?
+
+✅ **DNS records validation.** Does the domain of the email address have valid MX DNS records?
+
+✅ **Disposable email address (DEA) validation.** Is the address provided by a known [disposable email address](https://en.wikipedia.org/wiki/Disposable_email_address) provider?
+
+✅ **SMTP server validation.** Can the mail exchanger of the email address domain be contacted successfully?
+
+✅ **Mailbox deliverability.** Is mailbox for the email address deliverable?
+
+✅ **Mailbox disabled.** Has this email address been disabled by the email provider?
+
+✅ **Full inbox.** Is the inbox of this mailbox full?
+
+✅ **Catch-all address.** Is this email address a [catch-all](https://debounce.io/blog/help/what-is-a-catch-all-or-accept-all/) address?
+
+Planned features:
+
+-   [ ] **Role account validation.** Is the email address a well-known role account?
+-   [ ] **Free email provider check.** Is the email address bound to a known free email provider?
+-   [ ] **Syntax validation, provider-specific.** According to the syntactic rules of the target mail provider, is the address syntactically valid.
+-   [ ] **Honeypot detection.** Does email address under test hide a [honeypot](<https://en.wikipedia.org/wiki/Honeypot_(computing)>)?
 
 ## Why?
 
@@ -20,33 +48,82 @@ Many online services (https://hunter.io, http://verify-email.org, http://email-c
 
 ## Download the binary
 
-Head to the [releases page](https://github.com/amaurymartiny/check-if-email-exists/releases) and download the binary for your platform.
-
 > Note: The binary doesn't connect to the above `now.sh` backend, it checks the mail directly from your computer.
 
-## CLI Usage
+## Try it now
+
+There are 4 ways to try `check-if-email-exists`.
+
+### 1. Use the hosted version
+
+Try it here: https://3nbyey1wsi.execute-api.us-east-1.amazonaws.com/dev/?to_email=YOUR_EMAIL_HERE
+
+And replace the `YOUR_EMAIL_HERE` placeholder with the email you would like to verify.
+
+> Note: The above operation might take up to 15s.
+
+### 2. Use the Docker Image
+
+### 3. Download the binary
+
+Head to the [releases page](https://github.com/amaurymartiny/check-if-email-exists/releases) and download the binary for your platform.
 
 Make sure you have [`openssl`](https://www.openssl.org/) installed.
 
 ```
+Check if an email address exists without sending any email.
+
 USAGE:
-    check_if_email_exists [OPTIONS] <TO_EMAIL>
+    check_if_email_exists [FLAGS] [OPTIONS] [TO_EMAIL]
 
 FLAGS:
+        --http       Runs a HTTP server
     -h, --help       Prints help information
     -V, --version    Prints version information
 
 OPTIONS:
         --from <FROM_EMAIL>    The from email to use in the SMTP connection [default: user@example.org]
+        --http-port <PORT>     Sets the port on which the HTTP server should bind. Only used when `--http` flag is on
+                               [default: 3000]
 
 ARGS:
     <TO_EMAIL>    The email to check
 ```
 
-The output will be a JSON with the following format, for `someone@gmail.com` (note that it is disabled by Gmail):
+**PRO TIP:** To show debug logs when running the binary, run:
+
+```bash
+RUST_LOG=debug check_if_email_exists [OPTIONS] <TO_EMAIL>
+```
+
+### 4. Usage as a Library (Advanced)
+
+In your own Rust project, you can add `check-if-email-exists` in your `Cargo.toml`:
+
+```toml
+[dependencies]
+check-if-email-exists = "0.5"
+```
+
+And use it in your code as follows:
+
+```rust
+
+use check_if_email_exists::email_exists;
+
+// First arg is the email we want to check, second arg is the FROM email used in the SMTP connection
+let checked = email_exists("check.this.email@gmail.com", "user@example.org");
+
+println!({:?}, checked); // `checked` is a SingleEmail struct
+```
+
+## JSON Output
+
+The output will be a JSON with the below format, the fields should be self-explanatory. For `someone@gmail.com` (note that it is disabled by Gmail), here's the exact output:
 
 ```json
 {
+	"input": "someone@gmail.com",
 	"mx": {
 		"is_disposable": false,
 		"records": [
@@ -70,35 +147,6 @@ The output will be a JSON with the following format, for `someone@gmail.com` (no
 		"valid_format": true
 	}
 }
-```
-
-### Verbose Mode
-
-To show debug logs when running the binary, run:
-
-```bash
-RUST_LOG=debug check_if_email_exists [OPTIONS] <TO_EMAIL>
-```
-
-## Usage as a Library
-
-In your own Rust project, you can add `check-if-email-exists` in your `Cargo.toml`:
-
-```toml
-[dependencies]
-check-if-email-exists = "0.4"
-```
-
-And use it in your code as follows:
-
-```rust
-
-use check_if_email_exists::email_exists;
-
-// First arg is the email we want to check, second arg is the FROM email used in the SMTP connection
-let checked = email_exists("check.this.email@gmail.com", "user@example.org");
-
-println!({:?}, checked); // `checked` is a SingleEmail struct
 ```
 
 ## FAQ
