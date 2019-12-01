@@ -143,7 +143,7 @@ In your own Rust project, you can add `check-if-email-exists` in your `Cargo.tom
 
 ```toml
 [dependencies]
-check-if-email-exists = "0.5"
+check-if-email-exists = "0.6"
 ```
 
 And use it in your code as follows (async/await syntax):
