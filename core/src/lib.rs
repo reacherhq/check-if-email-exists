@@ -23,13 +23,15 @@ extern crate rand;
 extern crate serde;
 extern crate trust_dns_resolver;
 
-mod mx;
-mod smtp;
-mod syntax;
+pub mod misc;
+pub mod mx;
+pub mod smtp;
+pub mod syntax;
 mod util;
 
 use futures::future::select_ok;
 use lettre::{smtp::SMTP_PORT, EmailAddress};
+use misc::{misc_details, MiscDetails, MiscError};
 use mx::{get_mx_lookup, MxDetails, MxError};
 use serde::{ser::SerializeMap, Serialize, Serializer};
 use smtp::{SmtpDetails, SmtpError};
@@ -41,6 +43,8 @@ use syntax::{address_syntax, SyntaxDetails, SyntaxError};
 pub struct SingleEmail {
 	/// Input by the user
 	pub input: String,
+	/// Misc details about the email address
+	pub misc: Result<MiscDetails, MiscError>,
 	/// Details about the MX host
 	pub mx: Result<MxDetails, MxError>,
 	/// Details about the SMTP responses of the email
@@ -63,6 +67,10 @@ impl Serialize for SingleEmail {
 
 		let mut map = serializer.serialize_map(Some(1))?;
 		map.serialize_entry("input", &self.input)?;
+		match &self.misc {
+			Ok(t) => map.serialize_entry("misc", &t)?,
+			Err(error) => map.serialize_entry("misc", &MyError { error })?,
+		}
 		match &self.mx {
 			Ok(t) => map.serialize_entry("mx", &t)?,
 			Err(error) => map.serialize_entry("mx", &MyError { error })?,
@@ -92,6 +100,7 @@ pub async fn email_exists(to_email: &str, from_email: &str) -> SingleEmail {
 		e => {
 			return SingleEmail {
 				input: to_email.into(),
+				misc: Err(MiscError::Skipped),
 				mx: Err(MxError::Skipped),
 				smtp: Err(SmtpError::Skipped),
 				syntax: e,
@@ -106,6 +115,7 @@ pub async fn email_exists(to_email: &str, from_email: &str) -> SingleEmail {
 		e => {
 			return SingleEmail {
 				input: to_email.into(),
+				misc: Err(MiscError::Skipped),
 				mx: e,
 				smtp: Err(SmtpError::Skipped),
 				syntax: Ok(my_syntax),
@@ -113,6 +123,9 @@ pub async fn email_exists(to_email: &str, from_email: &str) -> SingleEmail {
 		}
 	};
 	debug!("Found the following MX hosts {:?}", my_mx);
+
+	debug!("Getting misc details...");
+	let my_misc = misc_details(&my_syntax);
 
 	// Create one future per lookup result
 	let futures = my_mx
@@ -141,6 +154,7 @@ pub async fn email_exists(to_email: &str, from_email: &str) -> SingleEmail {
 
 	SingleEmail {
 		input: to_email.into(),
+		misc: Ok(my_misc),
 		mx: Ok(my_mx),
 		smtp: my_smtp,
 		syntax: Ok(my_syntax),

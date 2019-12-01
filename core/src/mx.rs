@@ -16,7 +16,6 @@
 
 use crate::syntax::SyntaxDetails;
 use crate::util::ser_with_display;
-use mailchecker;
 use serde::{ser::SerializeMap, Serialize, Serializer};
 use std::io::Error;
 use trust_dns_resolver::config::*;
@@ -27,7 +26,7 @@ use trust_dns_resolver::Resolver;
 /// Details about the MX lookup
 #[derive(Debug)]
 pub struct MxDetails {
-	pub is_disposable: bool,
+	/// MX lookup of this DNS
 	pub lookup: MxLookup,
 }
 
@@ -45,7 +44,6 @@ impl Serialize for MxDetails {
 				.map(|host| host.exchange().to_string())
 				.collect::<Vec<_>>(),
 		)?;
-		map.serialize_entry("is_disposable", &self.is_disposable)?;
 		map.end()
 	}
 }
@@ -78,13 +76,7 @@ pub fn get_mx_lookup(syntax: &SyntaxDetails) -> Result<MxDetails, MxError> {
 	// The final dot forces this to be an FQDN, otherwise the search rules as specified
 	// in `ResolverOpts` will take effect. FQDN's are generally cheaper queries.
 	match resolver.mx_lookup(syntax.domain.as_ref()) {
-		Ok(lookup) => Ok(MxDetails {
-			// mailchecker::is_valid checks also if the syntax is valid. But if
-			// we're here, it means we're sure the syntax is valid, so is_valid
-			// actually will only check the disposable email provider.
-			is_disposable: !mailchecker::is_valid(syntax.address.to_string().as_ref()),
-			lookup,
-		}),
+		Ok(lookup) => Ok(MxDetails { lookup }),
 		Err(err) => Err(MxError::ResolveError(err)),
 	}
 }
