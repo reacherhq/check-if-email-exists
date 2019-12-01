@@ -40,37 +40,28 @@ async fn req_handler(req: Request<Body>) -> Result<Response<Body>, hyper::Error>
 		))),
 
 		// Do email_exists check on POST /
-        (&Method::POST, "/echo/reversed") => {
+        (&Method::POST, "/") => {
 			let body = req.into_body().try_concat().await;
 			let body = body.map(move |chunk| {
                 chunk.iter().cloned().collect::<Vec<u8>>()
 
             })?;
 			let body = match serde_json::from_slice::<PostReqBody>(&body) {
-				Ok(b)=>b,
-				_=>{
-					PostReqBody {
-										from_email: None,
-										to_email: "a".into(),
-									}
+				Ok(b) => b,
+				_ => PostReqBody {
+					from_email: None,
+					to_email: "a".into(),
 				}
 			};
 
-			println!("YEAH! {:?}", body);
-
-
-
-			let body =
-					email_exists(
-							&body.to_email,
-							&body.from_email.unwrap_or("user@example.org".into()),
-						).await;
-						let body = serde_json::to_string(&body).unwrap();
-
+			let body = email_exists(
+				&body.to_email,
+				&body.from_email.unwrap_or("user@example.org".into()),
+			).await;
+			let body = serde_json::to_string(&body).unwrap();
 
             Ok(Response::new(Body::from(body)))
         }
-
 
         // Return the 404 Not Found for other routes.
         _ => {
@@ -85,9 +76,7 @@ async fn req_handler(req: Request<Body>) -> Result<Response<Body>, hyper::Error>
 pub async fn run(port: u16) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	// This is our socket address
 	let addr = ([127, 0, 0, 1], port).into();
-
 	let service = make_service_fn(|_| async { Ok::<_, hyper::Error>(service_fn(req_handler)) });
-
 	let server = Server::bind(&addr).serve(service);
 
 	println!("Listening on http://{}", addr);

@@ -19,6 +19,7 @@ extern crate env_logger;
 extern crate futures;
 extern crate hyper;
 extern crate serde;
+extern crate tokio;
 
 mod http;
 
@@ -27,7 +28,8 @@ use clap::App;
 use futures::executor::block_on;
 use serde_json;
 
-fn main() -> serde_json::Result<()> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	env_logger::init();
 
 	// The YAML file is found relative to the current file, similar to how modules are found
@@ -43,8 +45,14 @@ fn main() -> serde_json::Result<()> {
 
 		let result = block_on(email_exists(&to_email, &from_email));
 
-		let output = serde_json::to_string_pretty(&result)?;
-		println!("{}", output);
+		match serde_json::to_string_pretty(&result) {
+			Ok(output) => {
+				println!("{}", output);
+			}
+			Err(err) => {
+				println!("{}", err);
+			}
+		};
 	}
 
 	// Run the web server if flag is on
@@ -53,7 +61,7 @@ fn main() -> serde_json::Result<()> {
 			.value_of("HTTP_PORT")
 			.expect("HTTP_PORT has a default value. qed.");
 
-		http::run(http_port.parse::<u16>().unwrap());
+		http::run(http_port.parse::<u16>().unwrap()).await?
 	}
 
 	Ok(())
