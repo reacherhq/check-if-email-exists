@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.6.0](https://github.com/amaurymartiny/check_if_email_exists/compare/v0.5.1...v0.6.0) (2019-12-01)
+
+
+### ⚠ BREAKING CHANGES
+
+* - The `is_disposable` subfield has been moved from the `mx` field to a separate `misc` field
+
+### Features
+
+* Add a HTTP server behind the `--http` flag ([#85](https://github.com/amaurymartiny/check_if_email_exists/issues/85)) ([d8b733e](https://github.com/amaurymartiny/check_if_email_exists/commit/d8b733e5a571c512644b34219b5f2dfd9dc717b3))
+* Add Dockerfile & `x86_64-unknown-linux-musl` target ([#86](https://github.com/amaurymartiny/check_if_email_exists/issues/86)) ([cba1241](https://github.com/amaurymartiny/check_if_email_exists/commit/cba124110be04d7febfeab68a6b825197b3aa1fb))
+
 # [0.5.0](https://github.com/amaurymartiny/check_if_email_exists/compare/v0.4.0...v0.5.0) (2019-11-16)
 
 
