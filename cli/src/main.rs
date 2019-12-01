@@ -25,7 +25,6 @@ mod http;
 
 use check_if_email_exists::email_exists;
 use clap::App;
-use futures::executor::block_on;
 use serde_json;
 
 #[tokio::main]
@@ -43,7 +42,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 			.value_of("FROM_EMAIL")
 			.expect("FROM_EMAIL has a default value. qed.");
 
-		let result = block_on(email_exists(&to_email, &from_email));
+		let result = email_exists(&to_email, &from_email).await;
 
 		match serde_json::to_string_pretty(&result) {
 			Ok(output) => {
