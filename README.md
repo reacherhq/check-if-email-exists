@@ -66,7 +66,7 @@ And replace the `YOUR_EMAIL_HERE` placeholder with the email you would like to v
 
 ### 2. Use Docker
 
-The [Docker image](./Dockerfile) is hosted on Docker Hub:
+The [Docker image](./Dockerfile) is hosted on Docker Hub: https://hub.docker.com/r/amaurymartiny/check-if-email-exists.
 
 To run it, run the following command:
 
