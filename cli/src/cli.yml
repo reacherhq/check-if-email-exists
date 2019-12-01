@@ -4,11 +4,13 @@ author: Amaury Martiny <amaury.martiny@protonmail.com>
 about: Check if an email address exists without sending any email.
 args:
   - FROM_EMAIL:
-      default_value: user@example.org
-      long: from
-      help: The from email to use in the SMTP connection
-      takes_value: true
+    default_value: user@example.org
+    long: from
+    help: The from email to use in the SMTP connection
+    takes_value: true
+  - HTTP:
+    default_value: true
+    help: Run a HTTP server to listen to check email requests
   - TO_EMAIL:
-      help: The email to check
-      index: 1
-      required: true
+    help: The email to check
+    index: 1

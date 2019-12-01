@@ -16,7 +16,11 @@
 
 extern crate clap;
 extern crate env_logger;
+extern crate futures;
+extern crate hyper;
 extern crate serde;
+
+mod http;
 
 use check_if_email_exists::email_exists;
 use clap::App;
@@ -30,17 +34,27 @@ fn main() -> serde_json::Result<()> {
 	let yaml = clap::load_yaml!("cli.yml");
 	let matches = App::from_yaml(yaml).get_matches();
 
-	let from_email = matches
-		.value_of("FROM_EMAIL")
-		.expect("FROM_EMAIL has a default value. qed.");
-	let to_email = matches
-		.value_of("TO_EMAIL")
-		.expect("TO_EMAIL is required. qed.");
+	let to_email_flag = matches.value_of("TO_EMAIL");
 
-	let result = block_on(email_exists(&to_email, &from_email));
+	if let Some(to_email) = to_email_flag {
+		let from_email = matches
+			.value_of("FROM_EMAIL")
+			.expect("FROM_EMAIL has a default value. qed.");
 
-	let output = serde_json::to_string_pretty(&result)?;
-	println!("{}", output);
+		let result = block_on(email_exists(&to_email, &from_email));
+
+		let output = serde_json::to_string_pretty(&result)?;
+		println!("{}", output);
+	}
+
+	// Run the web server if flag is on
+	if matches.is_present("HTTP") {
+		let http_port = matches
+			.value_of("HTTP_PORT")
+			.expect("HTTP_PORT has a default value. qed.");
+
+		http::run(http_port.parse::<u16>().unwrap());
+	}
 
 	Ok(())
 }
