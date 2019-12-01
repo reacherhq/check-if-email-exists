@@ -22,7 +22,7 @@ And replace the `YOUR_EMAIL_HERE` placeholder with the email you would like to v
 
 The main feature this tool checks is:
 
-✅ **Deliverability:** Is mailbox for the email address deliverable?
+✅ **Email deliverability:** Is an email for this address deliverable?
 
 However, it goes more into details, and checks all the following properties of an email address:
 
