@@ -20,11 +20,9 @@ And replace the `YOUR_EMAIL_HERE` placeholder with the email you would like to v
 
 ## ✅ What Does This Tool Check?
 
-The main feature this tool checks is deliverability:
+The main feature this tool checks is ✔️ **Deliverability:** Is mailbox for the email address deliverable?
 
-✔️ **Deliverability.** Is mailbox for the email address deliverable?
-
-It also checks the following properties of an email address:
+However, it goes more into details, and checks all the following properties of an email address:
 
 ✔️ **Syntax validation.** Is the address syntactically valid?
 
