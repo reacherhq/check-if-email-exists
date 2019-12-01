@@ -48,9 +48,12 @@ async fn req_handler(req: Request<Body>) -> Result<Response<Body>, hyper::Error>
             })?;
 			let body = match serde_json::from_slice::<PostReqBody>(&body) {
 				Ok(b) => b,
-				_ => PostReqBody {
-					from_email: None,
-					to_email: "a".into(),
+				Err(err) => {
+					return Ok(Response::builder()
+						.status(StatusCode::BAD_REQUEST)
+						.body(Body::from(format!("{}", err)))
+						.expect("Response::builder with this body will not throw. qed.")
+					);
 				}
 			};
 
@@ -58,7 +61,16 @@ async fn req_handler(req: Request<Body>) -> Result<Response<Body>, hyper::Error>
 				&body.to_email,
 				&body.from_email.unwrap_or("user@example.org".into()),
 			).await;
-			let body = serde_json::to_string(&body).unwrap();
+			let body = match serde_json::to_string(&body) {
+				Ok(b) => b,
+				Err(err) => {
+					return Ok(Response::builder()
+						.status(StatusCode::BAD_REQUEST)
+						.body(Body::from(format!("{}", err)))
+						.expect("Response::builder with this body will not throw. qed.")
+					);
+				}
+			};
 
             Ok(Response::new(Body::from(body)))
         }
@@ -68,7 +80,8 @@ async fn req_handler(req: Request<Body>) -> Result<Response<Body>, hyper::Error>
             Ok(Response::builder()
 				.status(StatusCode::NOT_FOUND)
 				.body(Body::empty())
-				.unwrap())
+				.expect("Response::builder with this body will not throw. qed.")
+			)
         }
 	}
 }
