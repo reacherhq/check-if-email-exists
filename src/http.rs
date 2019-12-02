@@ -59,7 +59,7 @@ async fn req_handler(req: Request<Body>) -> Result<Response<Body>, hyper::Error>
 
 			let body = email_exists(
 				&body.to_email,
-				&body.from_email.unwrap_or("user@example.org".into()),
+				&body.from_email.unwrap_or_else(|| "user@example.org".into()),
 			).await;
 			let body = match serde_json::to_string(&body) {
 				Ok(b) => b,
