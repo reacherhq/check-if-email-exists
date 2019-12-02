@@ -230,6 +230,6 @@ The 1st version of this tool was a simple bash script which made a telnet call. 
 
 The source code is available under the license beard dude loves. See the [LICENSE](./LICENSE) file for more info.
 
-## ❤️ Sponsor
+## 🌯 Falafel Wrap
 
 Please [support me](https://github.com/sponsors/amaurymartiny) with a wrap from my favorite Falafel dealer.
