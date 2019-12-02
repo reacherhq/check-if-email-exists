@@ -44,6 +44,25 @@ jobs:
           command: test
           args: --all
 
+  e2e:
+    name: E2E Test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+        rust: [stable, nightly]
+
+    steps:
+      - uses: hecrj/setup-rust-action@v1
+        with:
+          rust-version: ${{ matrix.rust }}
+
+      - name: Checkout sources
+        uses: actions/checkout@v1
+
+      - name: Run tests
+        run: RUST_LOG=debug cargo run -- someone@gmail.com | grep "\"is_deliverable\": false"
+
   lints:
     name: Lints
     runs-on: ubuntu-latest
