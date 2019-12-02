@@ -167,8 +167,10 @@ The output will be a JSON with the below format, the fields should be self-expla
 ```json
 {
 	"input": "someone@gmail.com",
+	"misc": {
+		"is_disposable": false
+	},
 	"mx": {
-		"is_disposable": false,
 		"records": [
 			"alt3.gmail-smtp-in.l.google.com.",
 			"gmail-smtp-in.l.google.com.",
@@ -226,4 +228,8 @@ The 1st version of this tool was a simple bash script which made a telnet call. 
 
 ## 📜 License
 
-GPL-3.0. See the [LICENSE](./LICENSE) file for more info.
+The source code is available under the license beard dude loves. See the [LICENSE](./LICENSE) file for more info.
+
+## ❤️ Sponsor
+
+Please [support me](https://github.com/sponsors/amaurymartiny) with a wrap from my favorite Falafel dealer.

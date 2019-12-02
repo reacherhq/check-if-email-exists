@@ -35,9 +35,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	let yaml = clap::load_yaml!("cli.yml");
 	let matches = App::from_yaml(yaml).get_matches();
 
-	let to_email_flag = matches.value_of("TO_EMAIL");
-
-	if let Some(to_email) = to_email_flag {
+	if let Some(to_email) = matches.value_of("TO_EMAIL") {
 		let from_email = matches
 			.value_of("FROM_EMAIL")
 			.expect("FROM_EMAIL has a default value. qed.");
