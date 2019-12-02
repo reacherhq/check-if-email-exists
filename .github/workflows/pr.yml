@@ -1,3 +1,5 @@
+# Based on https://github.com/actions-rs/meta/blob/master/recipes/quickstart.md
+
 on: [pull_request]
 
 name: CI
