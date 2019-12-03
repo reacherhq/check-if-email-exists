@@ -3,7 +3,6 @@
 [![Travis](https://img.shields.io/travis/amaurymartiny/check-if-email-exists.svg)](https://travis-ci.org/amaurymartiny/check-if-email-exists)
 [![Appveyor](https://ci.appveyor.com/api/projects/status/github/amaurymartiny/check-if-email-exists?branch=master&svg=true)](https://ci.appveyor.com/project/amaurymartiny/check-if-email-exists-a08kp)
 ![License](https://img.shields.io/github/license/amaurymartiny/check-if-email-exists.svg)
-[![Tree](https://img.shields.io/badge/Buy%20me%20a%20tree-%F0%9F%8C%B3-lightgreen)](https://offset.earth/amaurymartiny)
 
 <br /><br /><br />
 
@@ -232,6 +231,4 @@ The source code is available under the license beard dude loves. See the [LICENS
 
 ## 🌯 Falafel Wrap
 
-I don't drink coffee, but I'd enjoy wrap from my favorite Falafel dealer.
-
-<a href="https://www.buymeacoffee.com/amaurymartiny" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/lato-blue.png" alt="Buy Me A Coffee" style="height: 51px !important;width: 217px !important;" ></a>
+I don't drink coffee, but I'd enjoy wrap from my favorite Falafel dealer. 👉 [![Sponsor](https://img.shields.io/badge/Github%20Sponsors-%E2%9D%A4%EF%B8%8F-white)](https://github.com/sponsors/amaurymartiny/)
