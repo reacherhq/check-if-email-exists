@@ -154,7 +154,7 @@ use check_if_email_exists::email_exists;
 // First arg is the email we want to check, second arg is the FROM email used in the SMTP connection
 let checked = email_exists("check.this.email@gmail.com", "user@example.org").await;
 
-println!({:?}, checked); // `checked` is a SingleEmail struct, see docs for more info
+println!("{:?}", checked); // `checked` is a SingleEmail struct, see docs for more info
 ```
 
 The reference docs are hosted on [docs.rs](https://docs.rs/check-if-email-exists).
@@ -233,4 +233,4 @@ The source code is available under the license beard dude loves. See the [LICENS
 
 [![Sponsor](https://img.shields.io/badge/Github%20Sponsors-%E2%9D%A4%EF%B8%8F-white)](https://github.com/sponsors/amaurymartiny/)
 
-I don't drink coffee, but I'd enjoy a wrap from my favorite Falafel dealer. 👉 [See which one.](https://github.com/sponsors/amaurymartiny/) 
+I don't drink coffee, but I'd enjoy a wrap from my favorite Falafel dealer. 👉 [See which one.](https://github.com/sponsors/amaurymartiny/)
