@@ -84,7 +84,7 @@ curl -X POST -d'{"from_email":"user@example.org","to_email":"someone@gmail.com"}
 
 ### 3. Download the Binary
 
-> Note: The binary doesn't connect to the above `amazonaws.com` backend, it checks the mail directly from your computer.
+> Note: The binary doesn't connect to any backend, it checks the email directly from your computer.
 
 Head to the [releases page](https://github.com/amaurymartiny/check-if-email-exists/releases) and download the binary for your platform. Make sure you have [`openssl`](https://www.openssl.org/) installed on your local machine.
 
