@@ -53,7 +53,7 @@ There are 4 ways you can try `check-if-email-exists`.
 
 ### 1. Use the Hosted Version
 
-I created a simple static site with this tool hosted on an AWS Lambda serverless backend: http://reacherhq.github.io. The Lambda endpoint is rate-limited to prevent abuse. Also see (issue #155)[https://github.com/amaurymartiny/check-if-email-exists/issues/155].
+I created a simple static site with this tool hosted on an AWS Lambda serverless backend: http://reacherhq.github.io. The Lambda endpoint is rate-limited to prevent abuse. Also see [issue #155](https://github.com/amaurymartiny/check-if-email-exists/issues/155).
 
 If you would like to self-host it yourself and have questions, send me a message.
 
