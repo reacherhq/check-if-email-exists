@@ -13,13 +13,7 @@
 
 #### 👉 Try it here: https://reacherhq.github.io
 
-## ✅ What Does This Tool Check?
-
-The main feature this tool checks is:
-
-✅ **Email deliverability:** Is an email for this address deliverable?
-
-However, it goes more into details, and checks all the following properties of an email address:
+## ✅ This tool also checks...
 
 ✔️ **Syntax validation.** Is the address syntactically valid?
 
