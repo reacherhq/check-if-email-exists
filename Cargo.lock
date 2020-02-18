@@ -113,7 +113,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "check-if-email-exists"
-version = "0.6.0"
+version = "0.6.1"
 dependencies = [
  "futures 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "lettre 0.9.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -128,9 +128,9 @@ dependencies = [
 
 [[package]]
 name = "check-if-email-exists-cli"
-version = "0.6.0"
+version = "0.6.1"
 dependencies = [
- "check-if-email-exists 0.6.0",
+ "check-if-email-exists 0.6.1",
  "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "env_logger 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures-preview 0.3.0-alpha.19 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -142,9 +142,9 @@ dependencies = [
 
 [[package]]
 name = "check-if-email-exists-test-suite"
-version = "0.6.0"
+version = "0.6.1"
 dependencies = [
- "check-if-email-exists 0.6.0",
+ "check-if-email-exists 0.6.1",
  "futures 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.47 (registry+https://github.com/rust-lang/crates.io-index)",

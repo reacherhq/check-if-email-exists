@@ -1,5 +1,5 @@
 name: check_if_email_exists
-version: "0.6.0"
+version: "0.6.1"
 author: Amaury Martiny <amaury.martiny@protonmail.com>
 about: Check if an email address exists without sending any email.
 args:
@@ -11,6 +11,12 @@ args:
   - HTTP:
       long: http
       help: Runs a HTTP server
+  - HTTP_HOST:
+      default_value: "127.0.0.1"
+      long: http-host
+      help: Sets the host IP address on which the HTTP server should bind. Only used when `--http` flag is on
+      takes_value: true
+      value_name: HOST
   - HTTP_PORT:
       default_value: "3000"
       long: http-port

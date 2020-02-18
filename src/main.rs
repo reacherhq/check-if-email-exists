@@ -54,11 +54,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
 	// Run the web server if flag is on
 	if matches.is_present("HTTP") {
+		let http_host = matches
+			.value_of("HTTP_HOST")
+			.expect("HTTP_HOST has a default value. qed.");
 		let http_port = matches
 			.value_of("HTTP_PORT")
 			.expect("HTTP_PORT has a default value. qed.");
 
-		http::run(http_port.parse::<u16>().unwrap()).await?
+		http::run(http_host, http_port.parse::<u16>().unwrap()).await?
 	}
 
 	Ok(())
