@@ -90,6 +90,7 @@ Head to the [releases page](https://github.com/amaurymartiny/check-if-email-exis
 
 ```
 > $ check_if_email_exists --help
+check_if_email_exists 0.6.1
 Check if an email address exists without sending any email.
 
 USAGE:
@@ -102,6 +103,8 @@ FLAGS:
 
 OPTIONS:
         --from <FROM_EMAIL>    The from email to use in the SMTP connection [default: user@example.org]
+        --http-host <HOST>     Sets the host IP address on which the HTTP server should bind. Only used when `--http`
+                               flag is on [default: 127.0.0.1]
         --http-port <PORT>     Sets the port on which the HTTP server should bind. Only used when `--http` flag is on
                                [default: 3000]
 
