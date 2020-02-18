@@ -19,6 +19,7 @@ use futures::stream::TryStreamExt;
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Method, Request, Response, Server, StatusCode};
 use serde::{Deserialize, Serialize};
+use std::net::SocketAddr;
 
 /// JSON Request from POST /
 #[derive(Debug, Deserialize, Serialize)]
@@ -86,9 +87,9 @@ async fn req_handler(req: Request<Body>) -> Result<Response<Body>, hyper::Error>
 	}
 }
 
-pub async fn run(port: u16) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+pub async fn run(host: &str, port: u16) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	// This is our socket address
-	let addr = ([127, 0, 0, 1], port).into();
+	let addr = SocketAddr::new(host.parse()?, port);
 	let service = make_service_fn(|_| async { Ok::<_, hyper::Error>(service_fn(req_handler)) });
 	let server = Server::bind(&addr).serve(service);
 
