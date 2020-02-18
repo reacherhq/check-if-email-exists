@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.6.1](https://github.com/amaurymartiny/check_if_email_exists/compare/v0.6.0...v0.6.1) (2020-02-18)
+
+
+### Features
+
+* Add --http-host flag to CLI ([#197](https://github.com/amaurymartiny/check_if_email_exists/issues/197)) ([55657b2](https://github.com/amaurymartiny/check_if_email_exists/commit/55657b251fcc22fad2ae53da4f62a017ff01d035))
+
 ## [0.6.0](https://github.com/amaurymartiny/check_if_email_exists/compare/v0.5.0...v0.6.0) (2019-12-01)
 
 
