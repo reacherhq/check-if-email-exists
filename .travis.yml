@@ -13,7 +13,7 @@ env:
   global:
     # TODO Update this to match the name of your project.
     - CRATE_NAME=check-if-email-exists
-    - PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig/
+    - OPENSSL_LIB_DIR=/usr/lib/x86_64-linux-gnu
 
 matrix:
   # TODO These are all the build jobs. Adjust as necessary. Comment out what you
