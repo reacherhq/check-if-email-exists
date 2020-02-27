@@ -84,8 +84,6 @@ addons:
   apt:
     packages:
       - apt-file
-      - pkg-config
-      - libssl-dev
 
 before_install:
   - set -e
