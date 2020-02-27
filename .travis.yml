@@ -97,6 +97,15 @@ install:
   - source ~/.cargo/env || true
 
 script:
+  - echo HELLO
+  - echo $OPENSSL_INCLUDE_DIR
+  - pkg-config --libs openssl
+  - pkg-config --cflags openssl
+  - apt-file list libssl-dev | grep libssl.a | awk '{ print $2 }'
+  - apt-file list libssl-dev | grep libcrypto.a | awk '{ print $2 }'
+  - apt-file list libssl-dev | grep libcrypto.so | awk '{ print $2 }'
+  - apt-file list libssl-dev | grep openssl.h | awk '{ print $2 }'
+  - apt-file list libssl-dev | grep libcrypto.so | awk '{ print $2 }'
   - bash ci/script.sh
 
 after_script: set +e
