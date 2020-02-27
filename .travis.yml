@@ -86,9 +86,7 @@ addons:
   apt:
     packages:
       - pkg-config
-      - openssl1.0
-      - libssl1.0.0
-      - libssl1.0-dev
+      - libssl-dev
 
 before_install:
   - set -e
