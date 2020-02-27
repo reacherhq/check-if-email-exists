@@ -1,7 +1,7 @@
 # Based on the "trust" template v0.1.2
 # https://github.com/japaric/trust/tree/v0.1.2
 
-dist: xenial
+dist: bionic
 language: rust
 services: docker
 sudo: required
