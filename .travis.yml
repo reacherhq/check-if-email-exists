@@ -13,6 +13,8 @@ env:
   global:
     # TODO Update this to match the name of your project.
     - CRATE_NAME=check-if-email-exists
+    - OPENSSL_LIB_DIR="/usr/lib/x86_64-linux-gnu"
+    - OPENSSL_INCLUDE_DIR="/usr/include/openssl"
 
 matrix:
   # TODO These are all the build jobs. Adjust as necessary. Comment out what you
@@ -84,7 +86,9 @@ addons:
   apt:
     packages:
       - pkg-config
-      - libssl-dev
+      - openssl1.0
+      - libssl1.0.0
+      - libssl1.0-dev
 
 before_install:
   - set -e
