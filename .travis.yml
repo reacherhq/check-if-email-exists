@@ -1,7 +1,7 @@
 # Based on the "trust" template v0.1.2
 # https://github.com/japaric/trust/tree/v0.1.2
 
-dist: trusty
+dist: xenial
 language: rust
 services: docker
 sudo: required
@@ -128,4 +128,4 @@ branches:
 
 notifications:
   email:
-on_success: never
+    on_success: never
