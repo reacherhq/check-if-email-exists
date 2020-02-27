@@ -98,7 +98,11 @@ install:
 
 script:
   - echo HELLO
+  - echo $OPENSSL_DIR
+  - echo $OPENSSL_LIB_DIR
   - echo $OPENSSL_INCLUDE_DIR
+  - echo $PKG_CONFIG_PATH
+  - ls $PKG_CONFIG_PATH
   - pkg-config --libs openssl
   - pkg-config --cflags openssl
   - apt-file list libssl-dev | grep libssl.a | awk '{ print $2 }'
