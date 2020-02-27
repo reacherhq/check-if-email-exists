@@ -13,6 +13,9 @@ env:
   global:
     # TODO Update this to match the name of your project.
     - CRATE_NAME=check-if-email-exists
+    - OPENSSL_DIR=/usr/include/openssl
+    - OPENSSL_LIB_DIR=/usr/include/openssl
+    - OPENSSL_INCLUDE_DIR=/usr/include/openssl
 
 matrix:
   # TODO These are all the build jobs. Adjust as necessary. Comment out what you
