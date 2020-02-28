@@ -19,8 +19,6 @@ jobs:
       - uses: olegtarasov/get-tag@v2
         id: tag_name
 
-      - run: echo $GIT_TAG_NAME
-
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1.0.0
