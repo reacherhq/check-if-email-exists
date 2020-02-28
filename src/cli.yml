@@ -18,7 +18,7 @@ args:
       value_name: HOST
   - HTTP_PORT:
       long: http-port
-      help: Sets the port on which the HTTP server should bind. Only used when `--http` flag is on. If not set, then it will default to $PORT, or to 3000.
+      help: Sets the port on which the HTTP server should bind. Only used when `--http` flag is on. If not set, then it will use $PORT, or default to 3000.
       takes_value: true
       value_name: PORT
   - TO_EMAIL:
