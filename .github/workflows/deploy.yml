@@ -6,7 +6,7 @@ name: deploy
 
 jobs:
   build:
-    name: Build
+    name: Build & Upload Artifact
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -17,6 +17,9 @@ jobs:
           - os: macOS-latest
             target: x86_64-apple-darwin
     env:
+      BIN_NAME: check_if_email_exists
+      CRATE_NAME: check-if-email-exists
+      OS: ${{ matrix.os }}
       TARGET: ${{ matrix.target }}
 
     steps:
@@ -29,10 +32,10 @@ jobs:
         run: cargo build --release --target $TARGET
 
       - name: Package
-        run: ./ci/before_deploy.sh
+        run: tar czf $CRATE_NAME-$TRAVIS_TAG-$TARGET.tar.gz target/$TARGET/release/$BIN_NAME
 
-      - name: Upload binary
+      - name: Upload artifact
         uses: actions/upload-artifact@v1
         with:
-          name: check-if-email-exists-${GITHUB_REF/refs\/tags\//}-$TARGET
-          path: ./target/release/check-if-email-exists
+          name: $CRATE_NAME-$TRAVIS_TAG-$TARGET.tar.gz
+          path: $CRATE_NAME-$TRAVIS_TAG-$TARGET.tar.gz
