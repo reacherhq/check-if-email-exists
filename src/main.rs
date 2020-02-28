@@ -62,7 +62,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 		// - the value of `--http-port` flag
 		// - if not set, then the $PORT env varialbe
 		// - if not set, then 3000
-		let env_port = env::var("PORT").unwrap_or("3000".into());
+		let env_port = env::var("PORT").unwrap_or_else(|_| "3000".into());
 		let http_port = matches.value_of("HTTP_PORT").unwrap_or(&env_port);
 
 		http::run(http_host, http_port.parse::<u16>().unwrap()).await?
