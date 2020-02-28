@@ -90,6 +90,12 @@ jobs:
       - name: Package
         run: tar czf $CRATE_NAME-$GIT_TAG_NAME-$TARGET.tar.gz target/$TARGET/release/$BIN_NAME
 
+      # https://github.com/actions/create-release/issues/14#issuecomment-555379810
+      - name: Load Release URL File from release job
+        uses: actions/download-artifact@v1
+        with:
+          name: release_url
+
       - name: Get Release File Name & Upload URL
         id: get_release_info
         run: |
