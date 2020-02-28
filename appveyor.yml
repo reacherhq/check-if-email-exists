@@ -8,6 +8,7 @@ environment:
     RUST_VERSION: stable
 
     # TODO Update this to match the name of your project.
+    BIN_NAME: check_if_email_exists
     CRATE_NAME: check-if-email-exists
 
   # TODO These are all the build jobs. Adjust as necessary. Comment out what you
@@ -29,10 +30,10 @@ environment:
 
 install:
   - ps: >-
-      If ($Env:TARGET -eq 'x86_64-pc-windows-gnu') {
-        $Env:PATH += ';C:\msys64\mingw64\bin'
-      } ElseIf ($Env:TARGET -eq 'i686-pc-windows-gnu') {
-        $Env:PATH += ';C:\msys64\mingw32\bin'
+      If ($env:TARGET -eq 'x86_64-pc-windows-gnu') {
+        $env:PATH += ';C:\msys64\mingw64\bin'
+      } ElseIf ($env:TARGET -eq 'i686-pc-windows-gnu') {
+        $env:PATH += ';C:\msys64\mingw32\bin'
       }
   - curl -sSf -o rustup-init.exe https://win.rustup.rs/
   - rustup-init.exe -y --default-host %TARGET% --default-toolchain %RUST_VERSION%
@@ -53,7 +54,7 @@ test_script:
 
 before_deploy:
   # TODO Update this to build the artifacts that matter to you
-  - cargo rustc --target %TARGET% --release --bin check_if_email_exists -- -C lto
+  - cargo rustc --target %TARGET% --release --bin %BIN_NAME% -- -C lto
   - ps: ci\before_deploy.ps1
 
 deploy:
@@ -64,7 +65,7 @@ deploy:
   # - Paste the output down here
   auth_token:
     secure: 3QI2PfimMZglT/OHzM9RG7iHw1LE2uld2vK003XoGXmpsSRWynwztsU5UIqqmRBQ
-  description: ''
+  description: ""
   on:
     # TODO Here you can pick which targets will generate binary releases
     # In this example, there are some targets that are tested using the stable
