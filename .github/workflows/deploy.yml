@@ -32,6 +32,7 @@ jobs:
       - name: Build
         run: cargo build --release --target $TARGET
 
+      # Cache cargo
       # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
       - name: Cache cargo registry
         uses: actions/cache@v1
@@ -49,8 +50,13 @@ jobs:
           path: target
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
 
+      # Get the tag name
+      # https://github.com/olegtarasov/get-tag
+      - uses: olegtarasov/get-tag@v2
+        id: tagName
+
       - name: Package
-        run: tar czf $CRATE_NAME-$TRAVIS_TAG-$TARGET.tar.gz target/$TARGET/release/$BIN_NAME
+        run: tar czf $CRATE_NAME-$GIT_TAG_NAME-$TARGET.tar.gz target/$TARGET/release/$BIN_NAME
 
       - name: LS
         run: ls
@@ -58,5 +64,5 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v1
         with:
-          name: $CRATE_NAME-$TRAVIS_TAG-$TARGET.tar.gz
-          path: $CRATE_NAME-$TRAVIS_TAG-$TARGET.tar.gz
+          name: ${{ env.CRATE_NAME }}-${{ steps.tagName.outputs.tag }}-${{ env.TARGET }}.tar.gz
+          path: ${{ env.CRATE_NAME }}_${{ steps.tagName.outputs.tag }}-${{ env.TARGET }}.tar.gz
