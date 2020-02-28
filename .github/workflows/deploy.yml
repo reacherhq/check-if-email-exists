@@ -1,6 +1,10 @@
 # Based on https://github.com/actions-rs/meta/blob/master/recipes/quickstart.md
 
-on: [pull_request]
+on:
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - v*
 
 name: deploy
 
