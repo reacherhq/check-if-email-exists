@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-### [0.6.4](https://github.com/amaurymartiny/check_if_email_exists/compare/v0.6.3...v0.6.4) (2020-02-28)
+### [0.6.4](https://github.com/amaurymartiny/check_if_email_exists/compare/v0.6.1...v0.6.4) (2020-02-28)
 
 
 ### Bug Fixes
