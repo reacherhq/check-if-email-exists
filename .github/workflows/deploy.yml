@@ -52,6 +52,9 @@ jobs:
       - name: Package
         run: tar czf $CRATE_NAME-$TRAVIS_TAG-$TARGET.tar.gz target/$TARGET/release/$BIN_NAME
 
+      - name: LS
+        run: ls
+
       - name: Upload artifact
         uses: actions/upload-artifact@v1
         with:
