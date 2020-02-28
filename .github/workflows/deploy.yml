@@ -87,8 +87,10 @@ jobs:
       # https://github.com/olegtarasov/get-tag
       - uses: olegtarasov/get-tag@v2
 
-      - name: Package
-        run: tar czf $CRATE_NAME-$GIT_TAG_NAME-$TARGET.tar.gz target/$TARGET/release/$BIN_NAME
+      - name: Package into tar/zip
+        run: |
+          cp target/$TARGET/release/$BIN_NAME .
+          tar czf $CRATE_NAME-$GIT_TAG_NAME-$TARGET.tar.gz $BIN_NAME
 
       # https://github.com/actions/create-release/issues/14#issuecomment-555379810
       - name: Load Release URL File from release job
