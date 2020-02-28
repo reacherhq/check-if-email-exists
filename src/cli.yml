@@ -1,28 +1,26 @@
 name: check_if_email_exists
-version: "0.6.1"
 author: Amaury Martiny <amaury.martiny@protonmail.com>
 about: Check if an email address exists without sending any email.
 args:
   - FROM_EMAIL:
       default_value: user@example.org
       long: from
-      help: The from email to use in the SMTP connection
+      help: The from email to use in the SMTP connection.
       takes_value: true
   - HTTP:
       long: http
-      help: Runs a HTTP server
+      help: Runs a HTTP server.
   - HTTP_HOST:
       default_value: "127.0.0.1"
       long: http-host
-      help: Sets the host IP address on which the HTTP server should bind. Only used when `--http` flag is on
+      help: Sets the host IP address on which the HTTP server should bind. Only used when `--http` flag is on.
       takes_value: true
       value_name: HOST
   - HTTP_PORT:
-      default_value: "3000"
       long: http-port
-      help: Sets the port on which the HTTP server should bind. Only used when `--http` flag is on
+      help: Sets the port on which the HTTP server should bind. Only used when `--http` flag is on. If not set, then it will default to $PORT, or to 3000.
       takes_value: true
       value_name: PORT
   - TO_EMAIL:
-      help: The email to check
+      help: The email to check.
       index: 1

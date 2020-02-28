@@ -24,8 +24,9 @@ extern crate tokio;
 mod http;
 
 use check_if_email_exists::email_exists;
-use clap::App;
+use clap::{crate_version, App};
 use serde_json;
+use std::env;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -33,7 +34,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
 	// The YAML file is found relative to the current file, similar to how modules are found
 	let yaml = clap::load_yaml!("cli.yml");
-	let matches = App::from_yaml(yaml).get_matches();
+	let matches = App::from_yaml(yaml).version(crate_version!()).get_matches();
 
 	if let Some(to_email) = matches.value_of("TO_EMAIL") {
 		let from_email = matches
@@ -57,9 +58,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 		let http_host = matches
 			.value_of("HTTP_HOST")
 			.expect("HTTP_HOST has a default value. qed.");
-		let http_port = matches
-			.value_of("HTTP_PORT")
-			.expect("HTTP_PORT has a default value. qed.");
+		// http_port is, in this order:
+		// - the value of `--http-port` flag
+		// - if not set, then the $PORT env varialbe
+		// - if not set, then 3000
+		let env_port = env::var("PORT").unwrap_or("3000".into());
+		let http_port = matches.value_of("HTTP_PORT").unwrap_or(&env_port);
 
 		http::run(http_host, http_port.parse::<u16>().unwrap()).await?
 	}
