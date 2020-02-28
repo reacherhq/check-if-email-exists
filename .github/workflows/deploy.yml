@@ -4,9 +4,41 @@ on: [pull_request]
 
 name: deploy
 
+env:
+  BIN_NAME: check_if_email_exists
+  CRATE_NAME: check-if-email-exists
+
 jobs:
-  build:
-    name: Deploy new release
+  # Create on Github Release first, then upload all the artifacts
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Get the tag name
+      # https://github.com/olegtarasov/get-tag
+      - uses: olegtarasov/get-tag@v2
+        id: tag_name
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.tag_name.outputs.tag }}
+          release_name: Release ${{steps.tag_name.outputs.tag }}
+
+      - name: Output Release URL File
+        run: echo "${{ steps.create_release.outputs.upload_url }}" > release_url.txt
+
+      - name: Save Release URL File for upload job
+        uses: actions/upload-artifact@v1
+        with:
+          name: release_url
+          path: release_url.txt
+
+  upload:
+    needs: release
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -18,8 +50,6 @@ jobs:
             target: x86_64-apple-darwin
 
     env:
-      BIN_NAME: check_if_email_exists
-      CRATE_NAME: check-if-email-exists
       OS: ${{ matrix.os }}
       TARGET: ${{ matrix.target }}
 
@@ -53,16 +83,25 @@ jobs:
       # Get the tag name
       # https://github.com/olegtarasov/get-tag
       - uses: olegtarasov/get-tag@v2
-        id: tagName
+        id: tag_name
 
       - name: Package
         run: tar czf $CRATE_NAME-$GIT_TAG_NAME-$TARGET.tar.gz target/$TARGET/release/$BIN_NAME
 
-      - name: LS
-        run: ls
+      - name: Get Release File Name & Upload URL
+        id: get_release_info
+        run: |
+          echo ::set-output name=file_name::$CRATE_NAME-$GIT_TAG_NAME
+          value=`cat release_url/release_url.txt`
+          echo ::set-output name=upload_url::$value
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v1
+      - name: Upload Release Asset
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: ${{ env.CRATE_NAME }}-${{ steps.tagName.outputs.tag }}-${{ env.TARGET }}.tar.gz
-          path: ${{ env.CRATE_NAME }}_${{ steps.tagName.outputs.tag }}-${{ env.TARGET }}.tar.gz
+          upload_url: ${{ steps.get_release_info.outputs.upload_url }}
+          asset_path: $CRATE_NAME-$GIT_TAG_NAME-$TARGET.tar.gz
+          asset_name: $CRATE_NAME-$GIT_TAG_NAME-$TARGET.tar.gz
+          asset_content_type: application/gzip

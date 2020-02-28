@@ -6,7 +6,6 @@ name: pr
 
 jobs:
   check:
-    name: Check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
@@ -25,7 +24,6 @@ jobs:
           command: check
 
   test:
-    name: Test Suite
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
@@ -45,7 +43,6 @@ jobs:
           args: --all
 
   e2e:
-    name: E2E Test
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -61,7 +58,6 @@ jobs:
         run: cargo run -- someone@gmail.com | grep "is_deliverable" # If `is_deliverable` shows up, it means that the SMTP checks happened
 
   lints:
-    name: Lints
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
