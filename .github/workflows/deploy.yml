@@ -1,0 +1,22 @@
+# Based on https://github.com/actions-rs/meta/blob/master/recipes/quickstart.md
+
+on: [pull_request]
+
+name: deploy
+
+jobs:
+  build:
+    name: Build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+
+    steps:
+      - uses: hecrj/setup-rust-action@v1
+
+      - name: Checkout sources
+        uses: actions/checkout@v1
+
+      - name: Build
+        run: cargo build --release
