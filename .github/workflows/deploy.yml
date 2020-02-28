@@ -21,7 +21,6 @@ jobs:
       # Get the tag name
       # https://github.com/olegtarasov/get-tag
       - uses: olegtarasov/get-tag@v2
-        id: tag_name
 
       - name: Create Release
         id: create_release
@@ -29,8 +28,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.tag_name.outputs.tag }}
-          release_name: Release ${{steps.tag_name.outputs.tag }}
+          tag_name: ${{ env.GIT_TAG_NAME }}
+          release_name: ${{ env.CRATE_NAME }} ${{ env.GIT_TAG_NAME }}
 
       - name: Output Release URL File
         run: echo "${{ steps.create_release.outputs.upload_url }}" > release_url.txt
@@ -87,7 +86,6 @@ jobs:
       # Get the tag name
       # https://github.com/olegtarasov/get-tag
       - uses: olegtarasov/get-tag@v2
-        id: tag_name
 
       - name: Package
         run: tar czf $CRATE_NAME-$GIT_TAG_NAME-$TARGET.tar.gz target/$TARGET/release/$BIN_NAME
@@ -106,6 +104,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.get_release_info.outputs.upload_url }}
-          asset_path: $CRATE_NAME-$GIT_TAG_NAME-$TARGET.tar.gz
-          asset_name: $CRATE_NAME-$GIT_TAG_NAME-$TARGET.tar.gz
+          asset_path: ${{ env.CRATE_NAME }}-${{ env.GIT_TAG_NAME }}-${{ env.TARGET }}.tar.gz
+          asset_name: ${{ env.CRATE_NAME }}-${{ env.GIT_TAG_NAME }}-${{ env.TARGET }}.tar.gz
           asset_content_type: application/gzip
