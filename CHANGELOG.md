@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.6.4](https://github.com/amaurymartiny/check_if_email_exists/compare/v0.6.3...v0.6.4) (2020-02-28)
+
+
+### Bug Fixes
+
+* Allow http to listen to $PORT env variable ([#215](https://github.com/amaurymartiny/check_if_email_exists/issues/215)) ([3b0c262](https://github.com/amaurymartiny/check_if_email_exists/commit/3b0c262763bc9d52855ced90aa2a435a97d35d8b))
+
 ### [0.6.1](https://github.com/amaurymartiny/check_if_email_exists/compare/v0.6.0...v0.6.1) (2020-02-18)
 
 
