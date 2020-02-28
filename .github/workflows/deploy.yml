@@ -1,0 +1,38 @@
+# Based on https://github.com/actions-rs/meta/blob/master/recipes/quickstart.md
+
+on: [pull_request]
+
+name: deploy
+
+jobs:
+  build:
+    name: Build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macOS-latest]
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: macOS-latest
+            target: x86_64-apple-darwin
+    env:
+      TARGET: ${{ matrix.target }}
+
+    steps:
+      - uses: hecrj/setup-rust-action@v1
+
+      - name: Checkout sources
+        uses: actions/checkout@v1
+
+      - name: Build
+        run: cargo build --release --target $TARGET
+
+      - name: Package
+        run: ./ci/before_deploy.sh
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v1
+        with:
+          name: check-if-email-exists-${GITHUB_REF/refs\/tags\//}-$TARGET
+          path: ./target/release/check-if-email-exists
