@@ -36,11 +36,13 @@ main() {
                        | grep -E '^v[0.1.0-9.]+$' \
                        | $sort --version-sort \
                        | tail -n1)
+    # We use v0.1.9 specifically, starting from v0.2.0, Travis errors
+    # https://github.com/amaurymartiny/check-if-email-exists/issues/211
     curl -LSfs https://japaric.github.io/trust/install.sh | \
         sh -s -- \
            --force \
            --git japaric/cross \
-           --tag $tag \
+           --tag v0.1.9 \
            --target $target
 }
 
