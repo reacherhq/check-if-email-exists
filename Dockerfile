@@ -2,7 +2,8 @@ FROM alpine
 
 # `ciee` stands for check-if-email-exists
 WORKDIR /ciee
-ENV CIEE_VERSION 0.6.4
+# Fetch latest version
+ENV CIEE_VERSION 0.6.6
 
 # Install needed libraries
 RUN apk update && \
