@@ -18,16 +18,19 @@ use crate::syntax::SyntaxDetails;
 use crate::util::ser_with_display;
 use serde::{ser::SerializeMap, Serialize, Serializer};
 use std::io::Error;
-use trust_dns_resolver::config::*;
-use trust_dns_resolver::error::ResolveError;
-use trust_dns_resolver::lookup::MxLookup;
-use trust_dns_resolver::Resolver;
+use trust_dns_resolver::{config::*, error::ResolveError, lookup::MxLookup, TokioAsyncResolver};
 
 /// Details about the MX lookup
 #[derive(Debug)]
 pub struct MxDetails {
 	/// MX lookup of this DNS
 	pub lookup: MxLookup,
+}
+
+impl From<MxLookup> for MxDetails {
+	fn from(lookup: MxLookup) -> Self {
+		MxDetails { lookup }
+	}
 }
 
 impl Serialize for MxDetails {
@@ -62,21 +65,23 @@ pub enum MxError {
 	ResolveError(ResolveError),
 }
 
+impl From<ResolveError> for MxError {
+	fn from(error: ResolveError) -> Self {
+		MxError::ResolveError(error)
+	}
+}
+
 /// Make a MX lookup
-pub fn get_mx_lookup(syntax: &SyntaxDetails) -> Result<MxDetails, MxError> {
+pub async fn get_mx_lookup(syntax: &SyntaxDetails) -> Result<MxDetails, MxError> {
 	// Construct a new Resolver with default configuration options
-	let resolver = match Resolver::new(ResolverConfig::default(), ResolverOpts::default()) {
-		Ok(r) => r,
-		Err(err) => {
-			return Err(MxError::IoError(err));
-		}
-	};
+	let resolver =
+		TokioAsyncResolver::tokio(ResolverConfig::default(), ResolverOpts::default()).await?;
 
 	// Lookup the MX records associated with a name.
 	// The final dot forces this to be an FQDN, otherwise the search rules as specified
 	// in `ResolverOpts` will take effect. FQDN's are generally cheaper queries.
-	match resolver.mx_lookup(syntax.domain.as_ref()) {
-		Ok(lookup) => Ok(MxDetails { lookup }),
+	match resolver.mx_lookup(syntax.domain.as_ref()).await {
+		Ok(lookup) => Ok(MxDetails::from(lookup)),
 		Err(err) => Err(MxError::ResolveError(err)),
 	}
 }

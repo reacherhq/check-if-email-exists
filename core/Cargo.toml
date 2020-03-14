@@ -1,6 +1,6 @@
 [package]
 name = "check-if-email-exists"
-version = "0.6.4"
+version = "0.6.6"
 authors = ["Amaury Martiny <amaury.martiny@protonmail.com>"]
 categories = ["email"]
 description = "Check if an email address exists without sending any email"
@@ -21,8 +21,8 @@ async-smtp = { git = "https://github.com/amaurymartiny/async-smtp", branch = "am
 futures = "0.3"
 log = "0.4"
 mailchecker = "3.3"
-native-tls = "^0.2"
+native-tls = "0.2"
 rand = "0.7"
-trust-dns-resolver = "0.12.0"
+trust-dns-resolver = "0.19"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

@@ -110,7 +110,7 @@ pub async fn email_exists(to_email: &str, from_email: &str) -> SingleEmail {
 	debug!("Details of the email address: {:?}", my_syntax);
 
 	debug!("Getting MX lookup...");
-	let my_mx = match get_mx_lookup(&my_syntax) {
+	let my_mx = match get_mx_lookup(&my_syntax).await {
 		Ok(m) => m,
 		e => {
 			return SingleEmail {

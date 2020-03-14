@@ -15,7 +15,6 @@
 // along with check-if-email-exists.  If not, see <http://www.gnu.org/licenses/>.
 
 use check_if_email_exists::email_exists;
-use futures::stream::TryStreamExt;
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Method, Request, Response, Server, StatusCode};
 use serde::{Deserialize, Serialize};
@@ -42,11 +41,8 @@ async fn req_handler(req: Request<Body>) -> Result<Response<Body>, hyper::Error>
 
 		// Do email_exists check on POST /
 		(&Method::POST, "/") => {
-			let body = req.into_body().try_concat().await;
-			let body = body.map(move |chunk| {
-				chunk.iter().cloned().collect::<Vec<u8>>()
+			let body = hyper::body::to_bytes(req.into_body()).await?;
 
-			})?;
 			let body = match serde_json::from_slice::<PostReqBody>(&body) {
 				Ok(b) => b,
 				Err(err) => {
