@@ -15,11 +15,10 @@
 // along with check-if-email-exists.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::util::ser_with_display;
-use lettre::smtp::client::net::NetworkStream;
-use lettre::smtp::client::InnerClient;
-use lettre::smtp::commands::*;
-use lettre::smtp::error::Error as LettreSmtpError;
-use lettre::smtp::extension::ClientId;
+use async_smtp::{
+	error::Error as AsyncSmtpError, smtp::extension::ClientId, ClientSecurity, Envelope,
+	SendableEmail, SmtpClient, Transport,
+};
 use lettre::EmailAddress;
 use rand::distributions::Alphanumeric;
 use rand::Rng;
@@ -48,7 +47,7 @@ pub enum SmtpError {
 	Skipped,
 	/// Error when communicating with SMTP server
 	#[serde(serialize_with = "ser_with_display")]
-	LettreError(LettreSmtpError),
+	SmtpError(AsyncSmtpError),
 }
 
 /// Try to send an smtp command, close and return Err if fails.
@@ -63,21 +62,17 @@ macro_rules! try_smtp (
 );
 
 /// Attempt to connect to host via SMTP, and return SMTP client on success
-fn connect_to_host(
+async fn connect_to_host(
 	from_email: &EmailAddress,
 	host: &Name,
 	port: u16,
-) -> Result<InnerClient<NetworkStream>, LettreSmtpError> {
+) -> Result<SmtpClient, AsyncSmtpError> {
 	debug!("Connecting to {}:{}", host, port);
-	let mut smtp_client: InnerClient<NetworkStream> = InnerClient::new();
-	let timeout = Some(Duration::new(3, 0)); // Set timeout to 3s
-
-	// Set timeout.
-	if let Err(err) = smtp_client.set_timeout(timeout) {
-		debug!("Closing {}:{}, because of error '{}'.", host, port, err);
-		smtp_client.close();
-		return Err(LettreSmtpError::from(err));
-	}
+	let smtp_client = SmtpClient::new(format!("{}:{}", host, port).as_ref())
+		.await?
+		.hello_name(ClientId::Domain("localhost".into()))
+		.timeout(Some(Duration::new(3, 0))) // Set timeout to 3s
+		.into_transport();
 
 	// Connect to the host.
 	try_smtp!(
