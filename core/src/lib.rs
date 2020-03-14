@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with check-if-email-exists.  If not, see <http://www.gnu.org/licenses/>.
 
-extern crate lettre;
+extern crate async_smtp;
 #[macro_use]
 extern crate log;
 extern crate mailchecker;
@@ -29,8 +29,8 @@ pub mod smtp;
 pub mod syntax;
 mod util;
 
+use async_smtp::{smtp::SMTP_PORT, EmailAddress};
 use futures::future::select_ok;
-use lettre::{smtp::SMTP_PORT, EmailAddress};
 use misc::{misc_details, MiscDetails, MiscError};
 use mx::{get_mx_lookup, MxDetails, MxError};
 use serde::{ser::SerializeMap, Serialize, Serializer};
