@@ -19,11 +19,13 @@
 #[cfg(test)]
 mod tests {
 	use check_if_email_exists::email_exists;
-	use futures::executor::block_on;
+	use tokio::runtime::Runtime;
 
 	#[test]
 	fn should_output_error_for_invalid_email() {
-		let result = block_on(email_exists("foo", "user@example.org"));
+		let result = Runtime::new()
+			.unwrap()
+			.block_on(email_exists("foo", "user@example.org"));
 		assert_eq!(
 			serde_json::to_string(&result).unwrap(),
 			"{\"input\":\"foo\",\"misc\":{\"error\":{\"type\":\"Skipped\"}},\"mx\":{\"error\":{\"type\":\"Skipped\"}},\"smtp\":{\"error\":{\"type\":\"Skipped\"}},\"syntax\":{\"error\":{\"type\":\"SyntaxError\",\"message\":\"invalid email address\"}}}"
@@ -32,7 +34,9 @@ mod tests {
 
 	#[test]
 	fn should_output_error_for_invalid_mx() {
-		let result = block_on(email_exists("foo@bar.baz", "user@example.org"));
+		let result = Runtime::new()
+			.unwrap()
+			.block_on(email_exists("foo@bar.baz", "user@example.org"));
 
 		assert_eq!(
 			serde_json::to_string(&result).unwrap(),

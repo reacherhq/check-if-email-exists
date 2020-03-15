@@ -18,7 +18,6 @@ extern crate async_smtp;
 #[macro_use]
 extern crate log;
 extern crate mailchecker;
-extern crate native_tls;
 extern crate rand;
 extern crate serde;
 extern crate trust_dns_resolver;

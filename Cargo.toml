@@ -13,7 +13,6 @@ path = "src/main.rs"
 check-if-email-exists = { path = "./core" }
 clap = { version = "2.32", features = ["yaml"] }
 env_logger = "0.7"
-futures = "0.3"
 hyper = { version = "0.13" }
 serde = "1.0"
 serde_json = "1.0"

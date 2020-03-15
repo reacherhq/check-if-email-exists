@@ -211,7 +211,6 @@ dependencies = [
  "futures",
  "log",
  "mailchecker",
- "native-tls",
  "rand",
  "serde",
  "serde_json",
@@ -225,7 +224,6 @@ dependencies = [
  "check-if-email-exists",
  "clap",
  "env_logger",
- "futures",
  "hyper",
  "serde",
  "serde_json",
@@ -237,9 +235,9 @@ name = "check-if-email-exists-test-suite"
 version = "0.6.6"
 dependencies = [
  "check-if-email-exists",
- "futures",
  "serde",
  "serde_json",
+ "tokio",
 ]
 
 [[package]]
