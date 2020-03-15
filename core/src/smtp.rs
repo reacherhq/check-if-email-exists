@@ -17,10 +17,9 @@
 use crate::util::ser_with_display;
 use async_smtp::{
 	smtp::{commands::*, error::Error as AsyncSmtpError, extension::ClientId},
-	EmailAddress, SmtpClient, SmtpTransport,
+	ClientSecurity, EmailAddress, SmtpClient, SmtpTransport,
 };
-use rand::distributions::Alphanumeric;
-use rand::Rng;
+use rand::{distributions::Alphanumeric, Rng};
 use serde::Serialize;
 use std::time::Duration;
 use trust_dns_resolver::Name;
@@ -74,24 +73,15 @@ async fn connect_to_host(
 	port: u16,
 ) -> Result<SmtpTransport, AsyncSmtpError> {
 	debug!("Connecting to {}:{}", host, port);
-	let mut smtp_client = SmtpClient::new(format!("{}:{}", host, port).as_ref())
-		.await?
-		.hello_name(ClientId::Domain("localhost".into()))
-		.timeout(Some(Duration::new(3, 0))) // Set timeout to 3s
-		.into_transport();
+	let mut smtp_client =
+		SmtpClient::with_security((host.to_utf8().as_str(), port), ClientSecurity::None)
+			.await?
+			.hello_name(ClientId::Domain("localhost".into()))
+			.timeout(Some(Duration::new(30, 0))) // Set timeout to 30s
+			.into_transport();
 
 	// Connect to the host.
 	try_smtp!(smtp_client.connect().await, smtp_client, host, port);
-
-	// "EHLO localhost"
-	try_smtp!(
-		smtp_client
-			.command(EhloCommand::new(ClientId::new("localhost".to_string())))
-			.await,
-		smtp_client,
-		host,
-		port
-	);
 
 	// "MAIL FROM: user@example.org"
 	// FIXME Do not clone?

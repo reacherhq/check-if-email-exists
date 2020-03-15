@@ -94,7 +94,7 @@ pub async fn email_exists(to_email: &str, from_email: &str) -> SingleEmail {
 		EmailAddress::from_str("user@example.org").expect("This is a valid email. qed.")
 	});
 
-	debug!("Checking email '{}'", to_email);
+	debug!("Checking email \"{}\"", to_email);
 	let my_syntax = match address_syntax(to_email) {
 		Ok(s) => s,
 		e => {
@@ -107,9 +107,8 @@ pub async fn email_exists(to_email: &str, from_email: &str) -> SingleEmail {
 			}
 		}
 	};
-	debug!("Details of the email address: {:?}", my_syntax);
+	debug!("Found the following syntax validation: {:?}", my_syntax);
 
-	debug!("Getting MX lookup...");
 	let my_mx = match get_mx_lookup(&my_syntax).await {
 		Ok(m) => m,
 		e => {
@@ -124,8 +123,8 @@ pub async fn email_exists(to_email: &str, from_email: &str) -> SingleEmail {
 	};
 	debug!("Found the following MX hosts {:?}", my_mx);
 
-	debug!("Getting misc details...");
 	let my_misc = misc_details(&my_syntax);
+	debug!("Found the following misc details: {:?}", my_misc);
 
 	// Create one future per lookup result
 	let futures = my_mx
