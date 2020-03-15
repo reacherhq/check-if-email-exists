@@ -55,7 +55,7 @@ jobs:
         uses: actions/checkout@v1
 
       - name: Run tests
-        run: RUST_LOG=debug cargo run -- someone@gmail.com | grep "is_deliverable" # If `is_deliverable` shows up, it means that the SMTP checks happened
+        run: cargo run -- someone@gmail.com | grep "is_deliverable" # If `is_deliverable` shows up, it means that the SMTP checks happened
 
   lints:
     runs-on: ubuntu-latest
