@@ -15,14 +15,11 @@
 // along with check-if-email-exists.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::util::ser_with_display;
-use lettre::smtp::client::net::NetworkStream;
-use lettre::smtp::client::InnerClient;
-use lettre::smtp::commands::*;
-use lettre::smtp::error::Error as LettreSmtpError;
-use lettre::smtp::extension::ClientId;
-use lettre::EmailAddress;
-use rand::distributions::Alphanumeric;
-use rand::Rng;
+use async_smtp::{
+	smtp::{commands::*, error::Error as AsyncSmtpError, extension::ClientId},
+	ClientSecurity, EmailAddress, SmtpClient, SmtpTransport,
+};
+use rand::{distributions::Alphanumeric, Rng};
 use serde::Serialize;
 use std::time::Duration;
 use trust_dns_resolver::Name;
@@ -48,7 +45,13 @@ pub enum SmtpError {
 	Skipped,
 	/// Error when communicating with SMTP server
 	#[serde(serialize_with = "ser_with_display")]
-	LettreError(LettreSmtpError),
+	SmtpError(AsyncSmtpError),
+}
+
+impl From<AsyncSmtpError> for SmtpError {
+	fn from(error: AsyncSmtpError) -> Self {
+		SmtpError::SmtpError(error)
+	}
 }
 
 /// Try to send an smtp command, close and return Err if fails.
@@ -56,50 +59,37 @@ macro_rules! try_smtp (
     ($res: expr, $client: ident, $host: expr, $port: expr) => ({
 		if let Err(err) = $res {
 			debug!("Closing {}:{}, because of error '{}'.", $host, $port, err);
-			$client.close();
+			$client.close().await?;
+
 			return Err(err);
 		}
     })
 );
 
 /// Attempt to connect to host via SMTP, and return SMTP client on success
-fn connect_to_host(
+async fn connect_to_host(
 	from_email: &EmailAddress,
 	host: &Name,
 	port: u16,
-) -> Result<InnerClient<NetworkStream>, LettreSmtpError> {
+) -> Result<SmtpTransport, AsyncSmtpError> {
 	debug!("Connecting to {}:{}", host, port);
-	let mut smtp_client: InnerClient<NetworkStream> = InnerClient::new();
-	let timeout = Some(Duration::new(3, 0)); // Set timeout to 3s
-
-	// Set timeout.
-	if let Err(err) = smtp_client.set_timeout(timeout) {
-		debug!("Closing {}:{}, because of error '{}'.", host, port, err);
-		smtp_client.close();
-		return Err(LettreSmtpError::from(err));
-	}
+	let mut smtp_client =
+		SmtpClient::with_security((host.to_utf8().as_str(), port), ClientSecurity::None)
+			.await?
+			.hello_name(ClientId::Domain("localhost".into()))
+			.timeout(Some(Duration::new(30, 0))) // Set timeout to 30s
+			.into_transport();
 
 	// Connect to the host.
-	try_smtp!(
-		smtp_client.connect(&(host.to_utf8().as_str(), port), None),
-		smtp_client,
-		host,
-		port
-	);
-
-	// "EHLO localhost"
-	try_smtp!(
-		smtp_client.command(EhloCommand::new(ClientId::new("localhost".to_string()))),
-		smtp_client,
-		host,
-		port
-	);
+	try_smtp!(smtp_client.connect().await, smtp_client, host, port);
 
 	// "MAIL FROM: user@example.org"
 	// FIXME Do not clone?
 	let from_email = from_email.clone();
 	try_smtp!(
-		smtp_client.command(MailCommand::new(Some(from_email), vec![],)),
+		smtp_client
+			.command(MailCommand::new(Some(from_email), vec![],))
+			.await,
 		smtp_client,
 		host,
 		port
@@ -118,14 +108,17 @@ struct Deliverability {
 }
 
 /// Check if `to_email` exists on host server with given port
-fn email_deliverable(
-	smtp_client: &mut InnerClient<NetworkStream>,
+async fn email_deliverable(
+	smtp_client: &mut SmtpTransport,
 	to_email: &EmailAddress,
 ) -> Result<Deliverability, SmtpError> {
 	// "RCPT TO: me@email.com"
 	// FIXME Do not clone?
 	let to_email = to_email.clone();
-	match smtp_client.command(RcptCommand::new(to_email, vec![])) {
+	match smtp_client
+		.command(RcptCommand::new(to_email, vec![]))
+		.await
+	{
 		Ok(response) => match response.first_line() {
 			Some(message) => {
 				if message.contains("2.1.5") {
@@ -136,12 +129,12 @@ fn email_deliverable(
 						is_disabled: false,
 					})
 				} else {
-					Err(SmtpError::LettreError(LettreSmtpError::Client(
+					Err(SmtpError::SmtpError(AsyncSmtpError::Client(
 						"Can't find 2.1.5 in RCPT command",
 					)))
 				}
 			}
-			None => Err(SmtpError::LettreError(LettreSmtpError::Client(
+			None => Err(SmtpError::SmtpError(AsyncSmtpError::Client(
 				"No response on RCPT command",
 			))),
 		},
@@ -193,14 +186,14 @@ fn email_deliverable(
 				});
 			}
 
-			Err(SmtpError::LettreError(err))
+			Err(SmtpError::SmtpError(err))
 		}
 	}
 }
 
 /// Verify the existence of a catch-all email
-fn email_has_catch_all(
-	smtp_client: &mut InnerClient<NetworkStream>,
+async fn email_has_catch_all(
+	smtp_client: &mut SmtpTransport,
 	domain: &str,
 ) -> Result<bool, SmtpError> {
 	// Create a random 15-char alphanumerical string
@@ -214,6 +207,7 @@ fn email_has_catch_all(
 		smtp_client,
 		&random_email.expect("Email is correctly constructed. qed."),
 	)
+	.await
 	.map(|deliverability| deliverability.is_deliverable)
 }
 
@@ -225,15 +219,14 @@ pub async fn smtp_details(
 	port: u16,
 	domain: &str,
 ) -> Result<SmtpDetails, SmtpError> {
-	let mut smtp_client = match connect_to_host(from_email, host, port) {
-		Ok(client) => client,
-		Err(err) => return Err(SmtpError::LettreError(err)),
-	};
+	let mut smtp_client = connect_to_host(from_email, host, port).await?;
 
-	let is_catch_all = email_has_catch_all(&mut smtp_client, domain).unwrap_or(false);
-	let deliverability = email_deliverable(&mut smtp_client, to_email)?;
+	let is_catch_all = email_has_catch_all(&mut smtp_client, domain)
+		.await
+		.unwrap_or(false);
+	let deliverability = email_deliverable(&mut smtp_client, to_email).await?;
 
-	smtp_client.close();
+	smtp_client.close().await?;
 
 	Ok(SmtpDetails {
 		has_full_inbox: deliverability.has_full_inbox,

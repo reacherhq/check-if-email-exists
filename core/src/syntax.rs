@@ -15,15 +15,14 @@
 // along with check-if-email-exists.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::util::ser_with_display;
-use lettre::error::Error as LettreError;
-use lettre::EmailAddress;
+use async_smtp::{error::Error as AsyncSmtpError, EmailAddress};
 use serde::Serialize;
 use std::str::FromStr;
 
 /// Syntax information after parsing an email address
 #[derive(Debug, PartialEq, Serialize)]
 pub struct SyntaxDetails {
-	/// The email address as a lettre EmailAddress
+	/// The email address as a async_smtp EmailAddress
 	pub address: EmailAddress,
 	/// The domain name, after "@"
 	pub domain: String,
@@ -37,15 +36,15 @@ pub struct SyntaxDetails {
 #[serde(tag = "type", content = "message")]
 pub enum SyntaxError {
 	#[serde(serialize_with = "ser_with_display")]
-	SyntaxError(LettreError),
+	SyntaxError(AsyncSmtpError),
 }
 
 impl PartialEq for SyntaxError {
 	fn eq(&self, other: &Self) -> bool {
 		match (self, other) {
 			(
-				SyntaxError::SyntaxError(LettreError::InvalidEmailAddress),
-				SyntaxError::SyntaxError(LettreError::InvalidEmailAddress),
+				SyntaxError::SyntaxError(AsyncSmtpError::InvalidEmailAddress),
+				SyntaxError::SyntaxError(AsyncSmtpError::InvalidEmailAddress),
 			) => true,
 			_ => false,
 		}
@@ -89,7 +88,9 @@ mod tests {
 	fn should_return_error_for_invalid_email() {
 		assert_eq!(
 			address_syntax("foo"),
-			Err(SyntaxError::SyntaxError(LettreError::InvalidEmailAddress))
+			Err(SyntaxError::SyntaxError(
+				AsyncSmtpError::InvalidEmailAddress
+			))
 		);
 	}
 
@@ -97,7 +98,9 @@ mod tests {
 	fn should_return_error_for_invalid_email_with_at() {
 		assert_eq!(
 			address_syntax("foo@bar"),
-			Err(SyntaxError::SyntaxError(LettreError::InvalidEmailAddress))
+			Err(SyntaxError::SyntaxError(
+				AsyncSmtpError::InvalidEmailAddress
+			))
 		);
 	}
 

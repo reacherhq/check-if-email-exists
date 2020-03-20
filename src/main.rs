@@ -16,7 +16,6 @@
 
 extern crate clap;
 extern crate env_logger;
-extern crate futures;
 extern crate hyper;
 extern crate serde;
 extern crate tokio;
