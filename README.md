@@ -90,7 +90,7 @@ Head to the [releases page](https://github.com/amaurymartiny/check-if-email-exis
 
 ```
 > $ check_if_email_exists --help
-check_if_email_exists 0.6.6
+check_if_email_exists 0.6.7
 Check if an email address exists without sending any email.
 
 USAGE:
