@@ -603,9 +603,9 @@ dependencies = [
 
 [[package]]
 name = "hyper"
-version = "0.13.3"
+version = "0.13.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7b15203263d1faa615f9337d79c1d37959439dc46c2b4faab33286fadc2a1c5"
+checksum = "ed6081100e960d9d74734659ffc9cc91daf1c0fc7aceb8eaa94ee1a3f5046f2e"
 dependencies = [
  "bytes",
  "futures-channel",
