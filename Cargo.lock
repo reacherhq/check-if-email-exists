@@ -205,7 +205,7 @@ checksum = "4785bdd1c96b2a846b2bd7cc02e86b6b3dbf14e7e53446c4f54c92a361040822"
 
 [[package]]
 name = "check-if-email-exists"
-version = "0.6.6"
+version = "0.6.7"
 dependencies = [
  "async-smtp",
  "futures",
@@ -219,7 +219,7 @@ dependencies = [
 
 [[package]]
 name = "check-if-email-exists-cli"
-version = "0.6.6"
+version = "0.6.7"
 dependencies = [
  "check-if-email-exists",
  "clap",
@@ -232,7 +232,7 @@ dependencies = [
 
 [[package]]
 name = "check-if-email-exists-test-suite"
-version = "0.6.6"
+version = "0.6.7"
 dependencies = [
  "check-if-email-exists",
  "serde",
@@ -1270,9 +1270,9 @@ checksum = "8ea5119cdb4c55b55d432abb513a0429384878c15dde60cc77b1c99de1a95a6a"
 
 [[package]]
 name = "syn"
-version = "1.0.16"
+version = "1.0.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "123bd9499cfb380418d509322d7a6d52e5315f064fe4b3ad18a53d6b92c07859"
+checksum = "0df0eb663f387145cab623dea85b09c2c5b4b0aef44e945d928e682fce71bb03"
 dependencies = [
  "proc-macro2",
  "quote",
