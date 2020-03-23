@@ -205,7 +205,7 @@ checksum = "4785bdd1c96b2a846b2bd7cc02e86b6b3dbf14e7e53446c4f54c92a361040822"
 
 [[package]]
 name = "check-if-email-exists"
-version = "0.6.6"
+version = "0.6.7"
 dependencies = [
  "async-smtp",
  "futures",
@@ -219,7 +219,7 @@ dependencies = [
 
 [[package]]
 name = "check-if-email-exists-cli"
-version = "0.6.6"
+version = "0.6.7"
 dependencies = [
  "check-if-email-exists",
  "clap",
@@ -232,7 +232,7 @@ dependencies = [
 
 [[package]]
 name = "check-if-email-exists-test-suite"
-version = "0.6.6"
+version = "0.6.7"
 dependencies = [
  "check-if-email-exists",
  "serde",
@@ -603,9 +603,9 @@ dependencies = [
 
 [[package]]
 name = "hyper"
-version = "0.13.3"
+version = "0.13.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7b15203263d1faa615f9337d79c1d37959439dc46c2b4faab33286fadc2a1c5"
+checksum = "ed6081100e960d9d74734659ffc9cc91daf1c0fc7aceb8eaa94ee1a3f5046f2e"
 dependencies = [
  "bytes",
  "futures-channel",
