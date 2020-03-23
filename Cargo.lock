@@ -205,7 +205,7 @@ checksum = "4785bdd1c96b2a846b2bd7cc02e86b6b3dbf14e7e53446c4f54c92a361040822"
 
 [[package]]
 name = "check-if-email-exists"
-version = "0.6.6"
+version = "0.6.7"
 dependencies = [
  "async-smtp",
  "futures",
@@ -219,7 +219,7 @@ dependencies = [
 
 [[package]]
 name = "check-if-email-exists-cli"
-version = "0.6.6"
+version = "0.6.7"
 dependencies = [
  "check-if-email-exists",
  "clap",
@@ -232,7 +232,7 @@ dependencies = [
 
 [[package]]
 name = "check-if-email-exists-test-suite"
-version = "0.6.6"
+version = "0.6.7"
 dependencies = [
  "check-if-email-exists",
  "serde",
@@ -1203,18 +1203,18 @@ checksum = "388a1df253eca08550bef6c72392cfe7c30914bf41df5269b68cbd6ff8f570a3"
 
 [[package]]
 name = "serde"
-version = "1.0.104"
+version = "1.0.105"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "414115f25f818d7dfccec8ee535d76949ae78584fc4f79a6f45a904bf8ab4449"
+checksum = "e707fbbf255b8fc8c3b99abb91e7257a622caeb20a9818cbadbeeede4e0932ff"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.104"
+version = "1.0.105"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "128f9e303a5a29922045a830221b8f78ec74a5f544944f3d5984f8ec3895ef64"
+checksum = "ac5d00fc561ba2724df6758a17de23df5914f20e41cb00f94d5b7ae42fffaff8"
 dependencies = [
  "proc-macro2",
  "quote",
