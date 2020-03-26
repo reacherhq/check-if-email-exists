@@ -37,7 +37,7 @@ async fn req_handler(req: Request<Body>) -> Result<Response<Body>, hyper::Error>
 	match (req.method(), req.uri().path()) {
 		// Serve some instructions at /
 		(&Method::GET, "/") => Ok(Response::new(Body::from(
-			"Send a POST request with JSON `{ \"from_email\": \"<email>\", to_email: \"<email>\" }` in the body",
+			"Send a POST request with JSON `{ \"from_email\"?: \"<email>\", \"hello_name\"?: \"<name>\", to_email: \"<email>\" }` in the body",
 		))),
 
 		// Do email_exists check on POST /
