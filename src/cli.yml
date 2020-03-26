@@ -4,7 +4,7 @@ about: Check if an email address exists without sending any email.
 args:
   - FROM_EMAIL:
       default_value: user@example.org
-      long: from
+      long: from-email
       help: The email to use in the `MAIL FROM:` SMTP command.
       takes_value: true
   - HELLO_NAME:
