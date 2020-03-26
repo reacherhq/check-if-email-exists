@@ -67,11 +67,10 @@ To run it, run the following command:
 docker run -p 3000:3000 amaurymartiny/check-if-email-exists
 ```
 
-You can then send a POST request with the following body (`from_email` is optional) to `http://localhost:3000`:
+You can then send a POST request with the following body to `http://localhost:3000`:
 
 ```json
 {
-	"from_email": "user@example.org",
 	"to_email": "someone@gmail.com"
 }
 ```
@@ -79,8 +78,10 @@ You can then send a POST request with the following body (`from_email` is option
 Here's the equivalent `curl` command:
 
 ```bash
-curl -X POST -d'{"from_email":"user@example.org","to_email":"someone@gmail.com"}' http://localhost:3000
+curl -X POST -d'{"to_email":"someone@gmail.com"}' http://localhost:3000
 ```
+
+Optionally, you can also pass in `from_email` and `hello_name` fields into the JSON object, see the help message below to understand their meanings.
 
 ### 3. Download the Binary
 
@@ -97,26 +98,26 @@ USAGE:
     check_if_email_exists [FLAGS] [OPTIONS] [TO_EMAIL]
 
 FLAGS:
-        --http       Runs a HTTP server
+        --http       Runs a HTTP server.
     -h, --help       Prints help information
     -V, --version    Prints version information
 
 OPTIONS:
-        --from <FROM_EMAIL>    The from email to use in the SMTP connection [default: user@example.org]
-        --http-host <HOST>     Sets the host IP address on which the HTTP server should bind. Only used when `--http`
-                               flag is on [default: 127.0.0.1]
-        --http-port <PORT>     Sets the port on which the HTTP server should bind. Only used when `--http` flag is on
-                               [default: 3000]
+        --from-email <FROM_EMAIL>    The email to use in the `MAIL FROM:` SMTP command. [default: user@example.org]
+        --hello-name <HELLO_NAME>    The name to use in the `EHLO:` SMTP command. [default: localhost]
+        --http-host <HOST>           Sets the host IP address on which the HTTP server should bind. Only used when
+                                     `--http` flag is on. [default: 127.0.0.1]
+        --http-port <PORT>           Sets the port on which the HTTP server should bind. Only used when `--http` flag is
+                                     on. If not set, then it will use $PORT, or default to 3000.
 
 ARGS:
-    <TO_EMAIL>    The email to check
+    <TO_EMAIL>    The email to check.
 ```
 
-If you run with the `--http` flag, `check-if-email-exists` will serve a HTTP server on `http://localhost:3000`. You can then send a POST request with the following body (`from_email` is optional):
+If you run with the `--http` flag, `check-if-email-exists` will serve a HTTP server on `http://localhost:3000`. You can then send a POST request with the following body:
 
 ```json
 {
-	"from_email": "user@example.org",
 	"to_email": "someone@gmail.com"
 }
 ```
@@ -124,8 +125,10 @@ If you run with the `--http` flag, `check-if-email-exists` will serve a HTTP ser
 Here's the equivalent `curl` command:
 
 ```bash
-curl -X POST -d'{"from_email":"user@example.org","to_email":"someone@gmail.com"}' http://localhost:3000
+curl -X POST -d'{"to_email":"someone@gmail.com"}' http://localhost:3000
 ```
+
+Optionally, you can also pass in `from_email` and `hello_name` fields into the JSON object, see the help message above to understand their meanings.
 
 **💡 PRO TIP:** To show debug logs when running the binary, run:
 
@@ -133,7 +136,7 @@ curl -X POST -d'{"from_email":"user@example.org","to_email":"someone@gmail.com"}
 RUST_LOG=debug check_if_email_exists [FLAGS] [OPTIONS] [TO_EMAIL]
 ```
 
-### 4. Usage as a Library (Advanced)
+### 4. Usage as a Rust Library
 
 In your own Rust project, you can add `check-if-email-exists` in your `Cargo.toml`:
 
@@ -145,7 +148,6 @@ check-if-email-exists = "0.6"
 And use it in your code as follows (async/await syntax):
 
 ```rust
-
 use check_if_email_exists::email_exists;
 
 // First arg is the email we want to check, second arg is the FROM email used in the SMTP connection
