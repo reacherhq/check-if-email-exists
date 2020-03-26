@@ -22,7 +22,7 @@ extern crate tokio;
 
 mod http;
 
-use check_if_email_exists::email_exists;
+use check_if_email_exists::{email_exists, EmailInput};
 use clap::{crate_version, App};
 use serde_json;
 use std::env;
@@ -39,8 +39,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 		let from_email = matches
 			.value_of("FROM_EMAIL")
 			.expect("FROM_EMAIL has a default value. qed.");
+		let hello_name = matches
+			.value_of("HELLO_NAME")
+			.expect("HELLO_NAME has a default value. qed.");
 
-		let result = email_exists(&to_email, &from_email).await;
+		let result = email_exists(
+			EmailInput::new(to_email.into())
+				.from_email(from_email.into())
+				.hello_name(hello_name.into()),
+		)
+		.await;
 
 		match serde_json::to_string_pretty(&result) {
 			Ok(output) => {

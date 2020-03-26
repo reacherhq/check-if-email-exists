@@ -37,6 +37,8 @@ use smtp::{SmtpDetails, SmtpError};
 use std::str::FromStr;
 use syntax::{address_syntax, SyntaxDetails, SyntaxError};
 
+pub use util::email_input::*;
+
 /// All details about email address, MX records and SMTP responses
 #[derive(Debug)]
 pub struct SingleEmail {
@@ -88,17 +90,21 @@ impl Serialize for SingleEmail {
 
 /// The main function: checks email format, checks MX records, and checks SMTP
 /// responses to the email inbox.
-pub async fn email_exists(to_email: &str, from_email: &str) -> SingleEmail {
-	let from_email = EmailAddress::from_str(from_email).unwrap_or_else(|_| {
+pub async fn email_exists(email_input: &EmailInput) -> SingleEmail {
+	let from_email = EmailAddress::from_str(email_input.from_email.as_ref()).unwrap_or_else(|_| {
+		warn!(
+			"Inputted from_email \"{}\" is not a valid email, using \"user@example.org\" instead",
+			email_input.from_email
+		);
 		EmailAddress::from_str("user@example.org").expect("This is a valid email. qed.")
 	});
 
-	debug!("Checking email \"{}\"", to_email);
-	let my_syntax = match address_syntax(to_email) {
+	debug!("Checking email \"{}\"", email_input.to_email);
+	let my_syntax = match address_syntax(email_input.to_email.as_ref()) {
 		Ok(s) => s,
 		e => {
 			return SingleEmail {
-				input: to_email.into(),
+				input: email_input.to_email.to_string(),
 				misc: Err(MiscError::Skipped),
 				mx: Err(MxError::Skipped),
 				smtp: Err(SmtpError::Skipped),
@@ -112,7 +118,7 @@ pub async fn email_exists(to_email: &str, from_email: &str) -> SingleEmail {
 		Ok(m) => m,
 		e => {
 			return SingleEmail {
-				input: to_email.into(),
+				input: email_input.to_email.to_string(),
 				misc: Err(MiscError::Skipped),
 				mx: e,
 				smtp: Err(SmtpError::Skipped),
@@ -137,6 +143,7 @@ pub async fn email_exists(to_email: &str, from_email: &str) -> SingleEmail {
 				// We could add ports 465 and 587 too
 				SMTP_PORT,
 				my_syntax.domain.as_str(),
+				email_input.hello_name.as_ref(),
 			);
 
 			// https://rust-lang.github.io/async-book/04_pinning/01_chapter.html
@@ -151,7 +158,7 @@ pub async fn email_exists(to_email: &str, from_email: &str) -> SingleEmail {
 	};
 
 	SingleEmail {
-		input: to_email.into(),
+		input: email_input.to_email.to_string(),
 		misc: Ok(my_misc),
 		mx: Ok(my_mx),
 		smtp: my_smtp,

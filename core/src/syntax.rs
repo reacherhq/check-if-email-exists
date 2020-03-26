@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with check-if-email-exists.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::util::ser_with_display;
+use crate::util::ser_with_display::ser_with_display;
 use async_smtp::{error::Error as AsyncSmtpError, EmailAddress};
 use serde::Serialize;
 use std::str::FromStr;

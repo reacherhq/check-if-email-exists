@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with check-if-email-exists.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::util::ser_with_display;
+use crate::util::ser_with_display::ser_with_display;
 use async_smtp::{
 	smtp::{commands::*, error::Error as AsyncSmtpError, extension::ClientId},
 	ClientSecurity, EmailAddress, SmtpClient, SmtpTransport,
@@ -71,12 +71,13 @@ async fn connect_to_host(
 	from_email: &EmailAddress,
 	host: &Name,
 	port: u16,
+	hello_name: &str,
 ) -> Result<SmtpTransport, AsyncSmtpError> {
 	debug!("Connecting to {}:{}", host, port);
 	let mut smtp_client =
 		SmtpClient::with_security((host.to_utf8().as_str(), port), ClientSecurity::None)
 			.await?
-			.hello_name(ClientId::Domain("localhost".into()))
+			.hello_name(ClientId::Domain(hello_name.into()))
 			.timeout(Some(Duration::new(30, 0))) // Set timeout to 30s
 			.into_transport();
 
@@ -218,8 +219,9 @@ pub async fn smtp_details(
 	host: &Name,
 	port: u16,
 	domain: &str,
+	hello_name: &str,
 ) -> Result<SmtpDetails, SmtpError> {
-	let mut smtp_client = connect_to_host(from_email, host, port).await?;
+	let mut smtp_client = connect_to_host(from_email, host, port, hello_name).await?;
 
 	let is_catch_all = email_has_catch_all(&mut smtp_client, domain)
 		.await

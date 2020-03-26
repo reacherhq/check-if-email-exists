@@ -15,7 +15,7 @@
 // along with check-if-email-exists.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::syntax::SyntaxDetails;
-use crate::util::ser_with_display;
+use crate::util::ser_with_display::ser_with_display;
 use serde::{ser::SerializeMap, Serialize, Serializer};
 use std::io::Error;
 use trust_dns_resolver::{config::*, error::ResolveError, lookup::MxLookup, TokioAsyncResolver};
