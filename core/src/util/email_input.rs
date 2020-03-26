@@ -38,13 +38,13 @@ impl EmailInput {
 	}
 
 	/// Set the email to use in the `MAIL FROM:` SMTP command.
-	pub fn from_email<'a>(&'a mut self, email: String) -> &'a mut EmailInput {
+	pub fn from_email(&mut self, email: String) -> &mut EmailInput {
 		self.from_email = email;
 		self
 	}
 
 	/// Set the name to use in the `EHLO:` SMTP command.
-	pub fn hello_name<'a>(&'a mut self, name: String) -> &'a mut EmailInput {
+	pub fn hello_name(&mut self, name: String) -> &mut EmailInput {
 		self.hello_name = name;
 		self
 	}
