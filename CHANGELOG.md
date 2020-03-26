@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.7.0](https://github.com/amaurymartiny/check_if_email_exists/compare/v0.6.7...v0.7.0) (2020-03-26)
+
+
+### ⚠ BREAKING CHANGES
+
+* `email_exists` only takes one input now, an `EmailInput` which is built using the builder pattern.
+```diff
+- use check_if_email_exists::email_exists;
++ use check_if_email_exists::{email_exists, EmailInput};
+
+- email_exists("someone@gmail.com", "user@example.org");
++ email_exists(
++   EmailInput::new("someone@gmail.com".to_string()).from_email("user@example.org".to_string())
++ )
+```
+
+`EmailInput` additionally takes a `hello_name()` method, which is used to set the name in the EHLO smtp command.
+
+`--from` in CLI has been replaced with `--from-email`.
+
+### Features
+
+* Use builder pattern for EmailInput ([#254](https://github.com/amaurymartiny/check_if_email_exists/issues/254)) ([0c85d36](https://github.com/amaurymartiny/check_if_email_exists/commit/0c85d36cdccb37d8da9566f7e7baf5dbbd266740))
+
 ### [0.6.7](https://github.com/amaurymartiny/check_if_email_exists/compare/v0.6.6...v0.6.7) (2020-03-20)
 
 ### [0.6.6](https://github.com/amaurymartiny/check_if_email_exists/compare/v0.6.1...v0.6.6) (2020-03-01)
