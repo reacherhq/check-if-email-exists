@@ -3,6 +3,7 @@ name = "check-if-email-exists-cli"
 version = "0.7.0"
 default-run = "check_if_email_exists"
 edition = "2018"
+license = "GPL-3.0"
 publish = false
 
 [[bin]]
