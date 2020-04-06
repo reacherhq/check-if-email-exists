@@ -105,9 +105,9 @@ dependencies = [
 
 [[package]]
 name = "async-trait"
-version = "0.1.27"
+version = "0.1.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "991d0a1a3e790c835fd54ab41742a59251338d8c7577fe7d7f0170c7072be708"
+checksum = "bab5c215748dc1ad11a145359b1067107ae0f8ca5e99844fa64067ed5bf198e3"
 dependencies = [
  "proc-macro2",
  "quote",
