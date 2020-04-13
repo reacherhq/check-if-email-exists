@@ -19,6 +19,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "anyhow"
+version = "1.0.28"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d9a60d744a80c30fcb657dfe2c1b22bcb3e814c1a1e3674f32bf5820b570fbff"
+
+[[package]]
 name = "arrayvec"
 version = "0.4.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -48,13 +54,14 @@ dependencies = [
 [[package]]
 name = "async-smtp"
 version = "0.2.0"
-source = "git+https://github.com/amaurymartiny/async-smtp?branch=am-add-command#a33a27428b5fb7674fa367a84a5048684f674e0a"
+source = "git+https://github.com/amaurymartiny/async-smtp?branch=am-stream#0d71f35dbe30603ecbfd3e4df11c3822cd115ead"
 dependencies = [
  "async-native-tls",
  "async-std",
  "async-trait",
  "base64",
  "bufstream",
+ "fast-socks5",
  "fast_chemail",
  "hostname 0.1.5",
  "log",
@@ -208,6 +215,7 @@ name = "check-if-email-exists"
 version = "0.7.0"
 dependencies = [
  "async-smtp",
+ "fast-socks5",
  "futures",
  "log",
  "mailchecker",
@@ -351,6 +359,19 @@ dependencies = [
  "log",
  "regex",
  "termcolor",
+]
+
+[[package]]
+name = "fast-socks5"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "83424040c717f5937e28cbc5821b503b51afc7eb16e9436b1c5a079d95ab58ed"
+dependencies = [
+ "anyhow",
+ "async-std",
+ "futures",
+ "log",
+ "thiserror",
 ]
 
 [[package]]

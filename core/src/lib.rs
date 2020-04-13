@@ -14,13 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with check-if-email-exists.  If not, see <http://www.gnu.org/licenses/>.
 
-extern crate async_smtp;
 #[macro_use]
 extern crate log;
-extern crate mailchecker;
-extern crate rand;
-extern crate serde;
-extern crate trust_dns_resolver;
 
 pub mod misc;
 pub mod mx;
