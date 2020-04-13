@@ -26,6 +26,7 @@ pub struct PostReqBody {
 	from_email: Option<String>,
 	hello_name: Option<String>,
 	to_email: String,
+	// TODO Add fields for proxy
 }
 
 /// Error Response from POST /

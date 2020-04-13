@@ -139,6 +139,7 @@ pub async fn email_exists(email_input: &EmailInput) -> SingleEmail {
 				SMTP_PORT,
 				my_syntax.domain.as_str(),
 				email_input.hello_name.as_ref(),
+				&email_input.proxy,
 			);
 
 			// https://rust-lang.github.io/async-book/04_pinning/01_chapter.html
