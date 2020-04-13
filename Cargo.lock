@@ -105,9 +105,9 @@ dependencies = [
 
 [[package]]
 name = "async-trait"
-version = "0.1.29"
+version = "0.1.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bab5c215748dc1ad11a145359b1067107ae0f8ca5e99844fa64067ed5bf198e3"
+checksum = "da71fef07bc806586090247e971229289f64c210a278ee5ae419314eb386b31d"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1397,9 +1397,9 @@ checksum = "e987b6bf443f4b5b3b6f38704195592cca41c5bb7aedd3c3693c7081f8289860"
 
 [[package]]
 name = "trust-dns-proto"
-version = "0.19.3"
+version = "0.19.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d37cb22a372d86b16673d460fa379da31ace131a04cc3b1e78130607ce7cb85"
+checksum = "67e7e47e6ab54e6a011f88dbffd6d2953c628a116850174d81463e472031381d"
 dependencies = [
  "async-trait",
  "backtrace",
@@ -1417,9 +1417,9 @@ dependencies = [
 
 [[package]]
 name = "trust-dns-resolver"
-version = "0.19.3"
+version = "0.19.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f085d781daf33a804ffd401a41c7d0bbb3506851e7284484802955f3315547c1"
+checksum = "631e8078bf7bb595a0f7aac4ab7d7cf617535adb3c50ecbca7c2c30ef33c3c15"
 dependencies = [
  "backtrace",
  "cfg-if",
