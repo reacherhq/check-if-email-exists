@@ -93,7 +93,7 @@ Head to the [releases page](https://github.com/amaurymartiny/check-if-email-exis
 
 ```
 > $ check_if_email_exists --help
-check_if_email_exists 0.7.0
+check_if_email_exists 0.7.1
 Check if an email address exists without sending any email.
 
 USAGE:
@@ -144,7 +144,7 @@ In your own Rust project, you can add `check-if-email-exists` in your `Cargo.tom
 
 ```toml
 [dependencies]
-check-if-email-exists = "0.6"
+check-if-email-exists = "0.7"
 ```
 
 And use it in your code as follows (async/await syntax):
