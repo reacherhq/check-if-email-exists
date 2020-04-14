@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.7.1](https://github.com/amaurymartiny/check_if_email_exists/compare/v0.7.0...v0.7.1) (2020-04-14)
+
+
+### Features
+
+* Add possibility to verify emails via proxy ([#286](https://github.com/amaurymartiny/check_if_email_exists/issues/286)) ([a0ab93f](https://github.com/amaurymartiny/check_if_email_exists/commit/a0ab93fde5105d594a8280b942d337ff76fbb517))
+
 ## [0.7.0](https://github.com/amaurymartiny/check_if_email_exists/compare/v0.6.7...v0.7.0) (2020-03-26)
 
 
