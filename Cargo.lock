@@ -10,6 +10,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "amaurymartiny-async-smtp"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5e1f1e257ba329a50a48cb897aa9596d742350d041e7fc8ad201c6bef7716892"
+dependencies = [
+ "async-native-tls",
+ "async-std",
+ "async-trait",
+ "base64",
+ "bufstream",
+ "fast-socks5",
+ "fast_chemail",
+ "hostname 0.1.5",
+ "log",
+ "nom",
+ "pin-project",
+ "pin-utils",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
 name = "ansi_term"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -17,6 +41,12 @@ checksum = "ee49baf6cb617b853aa8d93bf420db2383fab46d314482ca2803b40d5fde979b"
 dependencies = [
  "winapi 0.3.8",
 ]
+
+[[package]]
+name = "anyhow"
+version = "1.0.28"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d9a60d744a80c30fcb657dfe2c1b22bcb3e814c1a1e3674f32bf5820b570fbff"
 
 [[package]]
 name = "arrayvec"
@@ -43,28 +73,6 @@ dependencies = [
  "native-tls",
  "thiserror",
  "url",
-]
-
-[[package]]
-name = "async-smtp"
-version = "0.2.0"
-source = "git+https://github.com/amaurymartiny/async-smtp?branch=am-add-command#a33a27428b5fb7674fa367a84a5048684f674e0a"
-dependencies = [
- "async-native-tls",
- "async-std",
- "async-trait",
- "base64",
- "bufstream",
- "fast_chemail",
- "hostname 0.1.5",
- "log",
- "nom",
- "pin-project",
- "pin-utils",
- "serde",
- "serde_derive",
- "serde_json",
- "thiserror",
 ]
 
 [[package]]
@@ -205,9 +213,10 @@ checksum = "4785bdd1c96b2a846b2bd7cc02e86b6b3dbf14e7e53446c4f54c92a361040822"
 
 [[package]]
 name = "check-if-email-exists"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
- "async-smtp",
+ "amaurymartiny-async-smtp",
+ "fast-socks5",
  "futures",
  "log",
  "mailchecker",
@@ -219,7 +228,7 @@ dependencies = [
 
 [[package]]
 name = "check-if-email-exists-cli"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "check-if-email-exists",
  "clap",
@@ -232,7 +241,7 @@ dependencies = [
 
 [[package]]
 name = "check-if-email-exists-test-suite"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "check-if-email-exists",
  "serde",
@@ -351,6 +360,19 @@ dependencies = [
  "log",
  "regex",
  "termcolor",
+]
+
+[[package]]
+name = "fast-socks5"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "83424040c717f5937e28cbc5821b503b51afc7eb16e9436b1c5a079d95ab58ed"
+dependencies = [
+ "anyhow",
+ "async-std",
+ "futures",
+ "log",
+ "thiserror",
 ]
 
 [[package]]

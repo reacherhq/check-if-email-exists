@@ -16,13 +16,22 @@
 
 use crate::util::ser_with_display::ser_with_display;
 use async_smtp::{
-	smtp::{commands::*, error::Error as AsyncSmtpError, extension::ClientId},
+	smtp::{
+		client::net::NetworkStream, commands::*, error::Error as AsyncSmtpError,
+		extension::ClientId,
+	},
 	ClientSecurity, EmailAddress, SmtpClient, SmtpTransport,
+};
+use fast_socks5::{
+	client::{Config, Socks5Stream},
+	Result, SocksError,
 };
 use rand::{distributions::Alphanumeric, Rng};
 use serde::Serialize;
 use std::time::Duration;
 use trust_dns_resolver::Name;
+
+use super::util::email_input::EmailInputProxy;
 
 /// Details that we gathered from connecting to this email via SMTP
 #[derive(Debug, Serialize)]
@@ -43,6 +52,9 @@ pub struct SmtpDetails {
 pub enum SmtpError {
 	/// Skipped checking SMTP details
 	Skipped,
+	/// Error if we're using a SOCKS5 proxy
+	#[serde(serialize_with = "ser_with_display")]
+	SocksError(SocksError),
 	/// Error when communicating with SMTP server
 	#[serde(serialize_with = "ser_with_display")]
 	SmtpError(AsyncSmtpError),
@@ -54,6 +66,12 @@ impl From<AsyncSmtpError> for SmtpError {
 	}
 }
 
+impl From<SocksError> for SmtpError {
+	fn from(error: SocksError) -> Self {
+		SmtpError::SocksError(error)
+	}
+}
+
 /// Try to send an smtp command, close and return Err if fails.
 macro_rules! try_smtp (
     ($res: expr, $client: ident, $host: expr, $port: expr) => ({
@@ -61,7 +79,7 @@ macro_rules! try_smtp (
 			debug!("Closing {}:{}, because of error '{}'.", $host, $port, err);
 			$client.close().await?;
 
-			return Err(err);
+			return Err(err.into());
 		}
     })
 );
@@ -72,8 +90,8 @@ async fn connect_to_host(
 	host: &Name,
 	port: u16,
 	hello_name: &str,
-) -> Result<SmtpTransport, AsyncSmtpError> {
-	debug!("Connecting to {}:{}", host, port);
+	proxy: &Option<EmailInputProxy>,
+) -> Result<SmtpTransport, SmtpError> {
 	let mut smtp_client =
 		SmtpClient::with_security((host.to_utf8().as_str(), port), ClientSecurity::None)
 			.await?
@@ -81,8 +99,28 @@ async fn connect_to_host(
 			.timeout(Some(Duration::new(30, 0))) // Set timeout to 30s
 			.into_transport();
 
-	// Connect to the host.
-	try_smtp!(smtp_client.connect().await, smtp_client, host, port);
+	// Connect to the host. If the proxy argument is set, use it.
+	debug!("Connecting to {}:{}", host, port);
+	if let Some(proxy) = proxy {
+		let stream = Socks5Stream::connect(
+			(proxy.host.as_ref(), proxy.port),
+			host.to_utf8(),
+			port,
+			Config::default(),
+		)
+		.await?;
+
+		try_smtp!(
+			smtp_client
+				.connect_with_stream(NetworkStream::Socks5Stream(stream))
+				.await,
+			smtp_client,
+			host,
+			port
+		);
+	} else {
+		try_smtp!(smtp_client.connect().await, smtp_client, host, port);
+	}
 
 	// "MAIL FROM: user@example.org"
 	// FIXME Do not clone?
@@ -220,8 +258,9 @@ pub async fn smtp_details(
 	port: u16,
 	domain: &str,
 	hello_name: &str,
+	proxy: &Option<EmailInputProxy>,
 ) -> Result<SmtpDetails, SmtpError> {
-	let mut smtp_client = connect_to_host(from_email, host, port, hello_name).await?;
+	let mut smtp_client = connect_to_host(from_email, host, port, hello_name, proxy).await?;
 
 	let is_catch_all = email_has_catch_all(&mut smtp_client, domain)
 		.await
