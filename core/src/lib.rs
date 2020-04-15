@@ -43,8 +43,8 @@
 //!     // Optionally, we can also tweak the configuration parameters used in the
 //!     // verification.
 //!     input
-//!     	.from_email("me@example.org".into()) // Used in the `MAIL FROM:` command
-//!     	.hello_name("example.org".into()); // Used in the `EHLO` command
+//!         .from_email("me@example.org".into()) // Used in the `MAIL FROM:` command
+//!         .hello_name("example.org".into()); // Used in the `EHLO` command
 //!
 //!     // Verify this input, using async/await syntax.
 //!     let result = email_exists(&input).await;
