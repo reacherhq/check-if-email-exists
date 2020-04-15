@@ -26,10 +26,10 @@ pub struct SyntaxDetails {
 	pub address: EmailAddress,
 	/// The domain name, after "@"
 	pub domain: String,
+	/// Does the email have a valid syntax?
+	pub is_valid_syntax: bool,
 	/// The username, before "@"
 	pub username: String,
-	/// Is the email in a valid format?
-	pub valid_format: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -73,8 +73,8 @@ pub fn address_syntax(email_address: &str) -> Result<SyntaxDetails, SyntaxError>
 	let address_details = SyntaxDetails {
 		address: email_address,
 		domain,
+		is_valid_syntax: true,
 		username,
-		valid_format: true,
 	};
 
 	Ok(address_details)
@@ -111,8 +111,8 @@ mod tests {
 			Ok(SyntaxDetails {
 				address: EmailAddress::new("foo@bar.com".into()).unwrap(),
 				domain: "bar.com".into(),
+				is_valid_syntax: true,
 				username: "foo".into(),
-				valid_format: true
 			})
 		);
 	}

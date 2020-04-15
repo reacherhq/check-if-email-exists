@@ -15,7 +15,7 @@
 // along with check-if-email-exists.  If not, see <http://www.gnu.org/licenses/>.
 
 /// Perform the email verification via a specified proxy. The usage of a proxy
-/// is of course optional.
+/// is optional.
 pub struct EmailInputProxy {
 	/// Use the specified SOCKS5 proxy host to perform email verification.
 	pub host: String,
@@ -37,7 +37,7 @@ pub struct EmailInput {
 	/// Defaults to "localhost" (note: "localhost" is not a FQDN).
 	pub hello_name: String,
 	/// Perform the email verification via a specified proxy. The usage of a
-	/// proxy is of course optional.
+	/// proxy is optional.
 	pub proxy: Option<EmailInputProxy>,
 }
 
