@@ -14,6 +14,45 @@
 // You should have received a copy of the GNU General Public License
 // along with check-if-email-exists.  If not, see <http://www.gnu.org/licenses/>.
 
+//! `check-if-email-exists` lets you check if an email address exists without
+//! sending any email.
+//!
+//! Under the hood, it connects to the email address's SMTP server, and,
+//! analyzing the server's responses against some SMTP commands, finds out
+//! information about the email address, such as:
+//! - Email deliverability: Is an email sent to this address deliverable?
+//! - Syntax validation. Is the address syntactically valid?
+//! - DNS records validation. Does the domain of the email address have valid
+//! MX DNS records?
+//! - Disposable email address (DEA) validation. Is the address provided by a
+//! known disposable email address provider?
+//! - SMTP server validation. Can the mail exchanger of the email address
+//! domain be contacted successfully?
+//! - Mailbox disabled. Has this email address been disabled by the email
+//! provider?
+//! - Full inbox. Is the inbox of this mailbox full?
+//! - Catch-all address. Is this email address a catch-all address?
+//!
+//! ```rust
+//! use check_if_email_exists::email_exists;
+//!
+//! // Let's say we want to test the deliverability of someone@gmail.com.
+//! let mut input = EmailInput::new("someone@gmail.com".into());
+//!
+//! // Optionally, we can also tweak the configuration parameters used in the
+//! // verification.
+//! input
+//! 	.from_email("me@example.org".into()) // Used in the `MAIL FROM:` command
+//! 	.hello_name(hello_name.into()); // Used in the `EHLO` command
+//!
+//! // Verify this input, using async/await syntax;
+//! let result = email_exists(&input).await;
+//!
+//! // `result` is a `SingleEmail` struct containing all information about the
+//! // email.
+//! println!("{:?}", result);
+//! ```
+
 #[macro_use]
 extern crate log;
 

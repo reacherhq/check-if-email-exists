@@ -15,35 +15,23 @@
 
 This software is licensed under the GPL-3.0 license, which forbids it being integrated and distributed in closed-source commercials projects. [Message me](mailto:amaury.martiny@protonmail.com) if you wish an alternate licensing.
 
-## ✅ What Does This Tool Check?
+## What Does This Tool Check?
 
-The main feature this tool checks is:
-
-✅ **Email deliverability:** Is an email for this address deliverable?
-
-However, it goes more into details, and checks all the following properties of an email address:
-
-✔️ **Syntax validation.** Is the address syntactically valid?
-
-✔️ **DNS records validation.** Does the domain of the email address have valid MX DNS records?
-
-✔️ **Disposable email address (DEA) validation.** Is the address provided by a known [disposable email address](https://en.wikipedia.org/wiki/Disposable_email_address) provider?
-
-✔️ **SMTP server validation.** Can the mail exchanger of the email address domain be contacted successfully?
-
-✔️ **Mailbox disabled.** Has this email address been disabled by the email provider?
-
-✔️ **Full inbox.** Is the inbox of this mailbox full?
-
-✔️ **Catch-all address.** Is this email address a [catch-all](https://debounce.io/blog/help/what-is-a-catch-all-or-accept-all/) address?
-
-Planned features:
-
--   [ ] **Role account validation.** Is the email address a well-known role account?
--   [ ] **Free email provider check.** Is the email address bound to a known free email provider?
--   [ ] **Syntax validation, provider-specific.** According to the syntactic rules of the target mail provider, is the address syntactically valid?
--   [ ] **Honeypot detection.** Does email address under test hide a [honeypot](https://en.wikipedia.org/wiki/Spamtrap)?
--   [ ] **Gravatar.** Does this email address have a [Gravatar](https://gravatar.com/) profile picture?
+| Included? | Feature                                       | Description                                                                                                                     | JSON field                                                                    |
+| --------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| ✅        | **Email deliverability**                      | Is an email sent to this address deliverable?                                                                                   | `smtp.is_deliverable`                                                         |
+| ✅        | **Syntax validation**                         | Is the address syntactically valid?                                                                                             | `syntax.is_valid_syntax`                                                      |
+| ✅        | **DNS records validation**                    | Does the domain of the email address have valid MX DNS records?                                                                 | `mx.records`                                                                  |
+| ✅        | **Disposable email address (DEA) validation** | Is the address provided by a known [disposable email address](https://en.wikipedia.org/wiki/Disposable_email_address) provider? | `smtp.is_disposable`                                                          |
+| ✅        | **SMTP server validation**                    | Can the mail exchanger of the email address domain be contacted successfully?                                                   | `smtp.*`                                                                      |
+| ✅        | **Mailbox disabled**                          | Has this email address been disabled by the email provider?                                                                     | `smtp.is_disabled`                                                            |
+| ✅        | **Full inbox**                                | Is the inbox of this mailbox full?                                                                                              | `smtp.has_full_inbox`                                                         |
+| ✅        | **Catch-all address**                         | Is this email address a [catch-all](https://debounce.io/blog/help/what-is-a-catch-all-or-accept-all/) address?                  | `smtp.is_catch_all`                                                           |
+| - [ ]     | **Role account validation**                   | Is the email address a well-known role account?                                                                                 | [Issue #88](https://github.com/amaurymartiny/check-if-email-exists/issues/88) |
+| - [ ]     | **Free email provider check**                 | Is the email address bound to a known free email provider?                                                                      | [Issue #89](https://github.com/amaurymartiny/check-if-email-exists/issues/89) |
+| - [ ]     | **Syntax validation, provider-specific**      | According to the syntactic rules of the target mail provider, is the address syntactically valid?                               | [Issue #90](https://github.com/amaurymartiny/check-if-email-exists/issues/90) |
+| - [ ]     | **Honeypot detection**                        | Does email address under test hide a [honeypot](https://en.wikipedia.org/wiki/Spamtrap)?                                        | [Issue #91](https://github.com/amaurymartiny/check-if-email-exists/issues/91) |
+| - [ ]     | **Gravatar**                                  | Does this email address have a [Gravatar](https://gravatar.com/) profile picture?                                               | [Issue #92](https://github.com/amaurymartiny/check-if-email-exists/issues/92) |
 
 ## 🤔 Why?
 
@@ -55,7 +43,7 @@ There are 4 ways you can try `check-if-email-exists`.
 
 ### 1. Use the Hosted Version
 
-I created a simple static site with this tool hosted on an AWS Lambda serverless backend: http://reacherhq.github.io. The Lambda endpoint is rate-limited to prevent abuse. Also see [issue #155](https://github.com/amaurymartiny/check-if-email-exists/issues/155).
+I created a simple static site with this tool hosted on a [fly.io](https://fly.io/) backend: http://reacherhq.github.io. The backend endpoint is rate-limited to prevent abuse. Also see [issue #155](https://github.com/amaurymartiny/check-if-email-exists/issues/155).
 
 If you would like to self-host it yourself and have questions, send me a message.
 
@@ -111,6 +99,9 @@ OPTIONS:
                                      `--http` flag is on. [default: 127.0.0.1]
         --http-port <PORT>           Sets the port on which the HTTP server should bind. Only used when `--http` flag is
                                      on. If not set, then it will use $PORT, or default to 3000.
+        --proxy-host <PROXY_HOST>    Use the specified SOCKS5 proxy host to perform email verification.
+        --proxy-port <PROXY_PORT>    Use the specified SOCKS5 proxy port to perform email verification. Only used when
+                                     `--proxy-host` flag is set. [default: 1080]
 
 ARGS:
     <TO_EMAIL>    The email to check.
@@ -147,15 +138,26 @@ In your own Rust project, you can add `check-if-email-exists` in your `Cargo.tom
 check-if-email-exists = "0.7"
 ```
 
-And use it in your code as follows (async/await syntax):
+And use it in your code as follows:
 
 ```rust
 use check_if_email_exists::email_exists;
 
-// First arg is the email we want to check, second arg is the FROM email used in the SMTP connection
-let checked = email_exists("check.this.email@gmail.com", "user@example.org").await;
+// Let's say we want to test the deliverability of someone@gmail.com.
+let mut input = EmailInput::new("someone@gmail.com".into());
 
-println!("{:?}", checked); // `checked` is a SingleEmail struct, see docs for more info
+// Optionally, we can also tweak the configuration parameters used in the
+// verification.
+input
+	.from_email("me@example.org".into()) // Used in the `MAIL FROM:` command
+	.hello_name(hello_name.into()); // Used in the `EHLO` command
+
+// Verify this input, using async/await syntax;
+let result = email_exists(&input).await;
+
+// `result` is a `SingleEmail` struct containing all information about the
+// email.
+println!("{:?}", result);
 ```
 
 The reference docs are hosted on [docs.rs](https://docs.rs/check-if-email-exists).
@@ -188,8 +190,8 @@ The output will be a JSON with the below format, the fields should be self-expla
 	"syntax": {
 		"address": "someone@gmail.com",
 		"domain": "gmail.com",
-		"username": "someone",
-		"valid_format": true
+		"is_valid_syntax": true,
+		"username": "someone"
 	}
 }
 ```
