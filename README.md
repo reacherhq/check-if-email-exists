@@ -204,7 +204,7 @@ Most ISPs block outgoing SMTP requests through ports 25, 587 and 465, to prevent
 
 To see in details what the binary is doing behind the scenes, run it in [verbose mode](#verbose-mode) to see the logs.
 
-### The output shows `"connection refused"` in the `smtp` field.
+### The output shows `"connection refused"` in the `smtp.error` field.
 
 This also happens when your ISP block SMTP ports, see the above answer.
 
