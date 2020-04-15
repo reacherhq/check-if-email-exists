@@ -41,7 +41,7 @@ mod tests {
 
 		assert_eq!(
 			serde_json::to_string(&result).unwrap(),
-			"{\"input\":\"foo@bar.baz\",\"misc\":{\"error\":{\"type\":\"Skipped\"}},\"mx\":{\"error\":{\"type\":\"ResolveError\",\"message\":\"no record found for name: bar.baz type: MX class: IN\"}},\"smtp\":{\"error\":{\"type\":\"Skipped\"}},\"syntax\":{\"address\":\"foo@bar.baz\",\"domain\":\"bar.baz\",\"username\":\"foo\",\"valid_format\":true}}"
+			"{\"input\":\"foo@bar.baz\",\"misc\":{\"error\":{\"type\":\"Skipped\"}},\"mx\":{\"error\":{\"type\":\"ResolveError\",\"message\":\"no record found for name: bar.baz type: MX class: IN\"}},\"smtp\":{\"error\":{\"type\":\"Skipped\"}},\"syntax\":{\"address\":\"foo@bar.baz\",\"domain\":\"bar.baz\",\"is_valid_syntax\":true,\"username\":\"foo\"}}"
 		);
 	}
 }
