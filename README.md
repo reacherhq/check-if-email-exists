@@ -41,9 +41,9 @@ Many online services (https://hunter.io, http://verify-email.org, http://email-c
 
 There are 4 ways you can try `check-if-email-exists`.
 
-### 1. Use the Hosted Version
+### 1. Use the Hosted Version: http://reacherhq.github.io
 
-I created a simple static site with this tool hosted on a [fly.io](https://fly.io/) backend: http://reacherhq.github.io. The backend endpoint is rate-limited to prevent abuse. Also see [issue #155](https://github.com/amaurymartiny/check-if-email-exists/issues/155).
+I created a simple static site with this tool: http://reacherhq.github.io. The backend is hosted on [fly.io](https://fly.io). The backend endpoint is rate-limited to prevent abuse. Also see [issue #155](https://github.com/amaurymartiny/check-if-email-exists/issues/155).
 
 If you would like to self-host it yourself and have questions, send me a message.
 
