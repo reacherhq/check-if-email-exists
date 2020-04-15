@@ -200,9 +200,9 @@ The output will be a JSON with the below format, the fields should be self-expla
 
 ### The library hangs/takes a long time/doesn't show anything after 1 minute.
 
-Most ISPs block outgoing SMTP requests through ports 25, 587 and 465, to prevent spam. `check-if-email-exists` needs to have these ports open to make a connection to the email's SMTP server, so won't work behind these ISPs, and will instead hang until it times out. There's unfortunately no easy workaround for this problem, see for example [this StackOverflow thread](https://stackoverflow.com/questions/18139102/how-to-get-around-an-isp-block-on-port-25-for-smtp). One solution is to rent a Linux cloud server with a static IP and no blocked ports.
+Most ISPs block outgoing SMTP requests through port 25, to prevent spam. `check-if-email-exists` needs to have this port open to make a connection to the email's SMTP server, so won't work behind these ISPs, and will instead hang until it times out. There's unfortunately no easy workaround for this problem, see for example [this StackOverflow thread](https://stackoverflow.com/questions/18139102/how-to-get-around-an-isp-block-on-port-25-for-smtp). One solution is to rent a Linux cloud server with a static IP and no blocked ports.
 
-To see in details what the binary is doing behind the scenes, run it in [verbose mode](#verbose-mode) to see the logs.
+To see in details what the binary is doing behind the scenes, run it in verbose mode to see the logs.
 
 ### The output shows `"connection refused"` in the `smtp.error` field.
 
@@ -224,7 +224,7 @@ $ cargo build --release
 $ ./target/release/check_if_email_exists --help
 ```
 
-## 👣 Legacy Bash Script
+## Legacy Bash Script
 
 The 1st version of this tool was a simple bash script which made a telnet call. If you would like to use that simpler version, have a look at the [`legacy`](https://github.com/amaurymartiny/check-if-email-exists/tree/legacy) branch. The reasons for porting the bash script to the current codebase are explained [in this issue](https://github.com/amaurymartiny/check-if-email-exists/issues/4).
 
