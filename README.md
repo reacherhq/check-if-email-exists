@@ -142,23 +142,25 @@ check-if-email-exists = "0.7"
 And use it in your code as follows:
 
 ```rust
-use check_if_email_exists::email_exists;
+use check_if_email_exists::{email_exists, EmailInput};
 
-// Let's say we want to test the deliverability of someone@gmail.com.
-let mut input = EmailInput::new("someone@gmail.com".into());
+async fn check() {
+    // Let's say we want to test the deliverability of someone@gmail.com.
+    let mut input = EmailInput::new("someone@gmail.com".into());
 
-// Optionally, we can also tweak the configuration parameters used in the
-// verification.
-input
-	.from_email("me@example.org".into()) // Used in the `MAIL FROM:` command
-	.hello_name(hello_name.into()); // Used in the `EHLO` command
+    // Optionally, we can also tweak the configuration parameters used in the
+    // verification.
+    input
+    	.from_email("me@example.org".into()) // Used in the `MAIL FROM:` command
+    	.hello_name("example.org".into()); // Used in the `EHLO` command
 
-// Verify this input, using async/await syntax;
-let result = email_exists(&input).await;
+    // Verify this input, using async/await syntax.
+    let result = email_exists(&input).await;
 
-// `result` is a `SingleEmail` struct containing all information about the
-// email.
-println!("{:?}", result);
+    // `result` is a `SingleEmail` struct containing all information about the
+    // email.
+    println!("{:?}", result);
+}
 ```
 
 The reference docs are hosted on [docs.rs](https://docs.rs/check-if-email-exists).
