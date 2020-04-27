@@ -15,7 +15,6 @@
 // along with check-if-email-exists.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::syntax::SyntaxDetails;
-use mailchecker;
 use serde::Serialize;
 
 /// Details that we gathered from connecting to this email via SMTP
