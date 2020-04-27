@@ -24,7 +24,6 @@ mod http;
 
 use check_if_email_exists::{email_exists, EmailInput};
 use clap::{crate_version, value_t, App};
-use serde_json;
 use std::env;
 
 #[tokio::main]
