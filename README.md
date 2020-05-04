@@ -199,6 +199,8 @@ The output will be a JSON with the below format, the fields should be self-expla
 }
 ```
 
+You can also take a look at the [OpenAPIv3 specification](https://stoplight.io/p/docs/gh/reacherhq/openapi/openapi.json/components/schemas/EmailResult?srn=gh/reacherhq/openapi/openapi.json/components/schemas/EmailResult) of this JSON object.
+
 ## ❓ FAQ
 
 ### The library hangs/takes a long time/doesn't show anything after 1 minute.
