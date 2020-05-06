@@ -50,7 +50,7 @@ impl Serialize for MxDetails {
 			.unwrap_or_else(|_| vec![]); // In case of a resolve error, we don't serialize the error.
 
 		let mut map = serializer.serialize_map(Some(2))?;
-		map.serialize_entry("accepts_mail", &(records.len() > 0))?;
+		map.serialize_entry("accepts_mail", &records.is_empty())?;
 		map.serialize_entry("records", &records)?;
 		map.end()
 	}
