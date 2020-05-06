@@ -46,16 +46,16 @@ pub struct SmtpDetails {
 	pub is_disabled: bool,
 }
 
-/// Error occured connecting to this email server via SMTP
+/// Error occured connecting to this email server via SMTP.
 #[derive(Debug, Serialize)]
 #[serde(tag = "type", content = "message")]
 pub enum SmtpError {
-	/// Skipped checking SMTP details
+	/// Skipped checking SMTP details.
 	Skipped,
-	/// Error if we're using a SOCKS5 proxy
+	/// Error if we're using a SOCKS5 proxy.
 	#[serde(serialize_with = "ser_with_display")]
 	SocksError(SocksError),
-	/// Error when communicating with SMTP server
+	/// Error when communicating with SMTP server.
 	#[serde(serialize_with = "ser_with_display")]
 	SmtpError(AsyncSmtpError),
 }
@@ -84,7 +84,7 @@ macro_rules! try_smtp (
     })
 );
 
-/// Attempt to connect to host via SMTP, and return SMTP client on success
+/// Attempt to connect to host via SMTP, and return SMTP client on success.
 async fn connect_to_host(
 	from_email: &EmailAddress,
 	host: &Name,
@@ -139,23 +139,22 @@ async fn connect_to_host(
 
 struct Deliverability {
 	/// Is this email account's inbox full?
-	pub has_full_inbox: bool,
+	has_full_inbox: bool,
 	/// Can we send an email to this address?
 	is_deliverable: bool,
 	/// Is the email blocked or disabled by the provider?
 	is_disabled: bool,
 }
 
-/// Check if `to_email` exists on host server with given port
+/// Check if `to_email` exists on host server with given port.
 async fn email_deliverable(
 	smtp_client: &mut SmtpTransport,
 	to_email: &EmailAddress,
 ) -> Result<Deliverability, SmtpError> {
 	// "RCPT TO: me@email.com"
 	// FIXME Do not clone?
-	let to_email = to_email.clone();
 	match smtp_client
-		.command(RcptCommand::new(to_email, vec![]))
+		.command(RcptCommand::new(to_email.clone(), vec![]))
 		.await
 	{
 		Ok(response) => match response.first_line() {
@@ -180,9 +179,9 @@ async fn email_deliverable(
 		Err(err) => {
 			let err_string = err.to_string();
 			// Don't return an error if the error contains anything about the
-			// address being undeliverable
+			// address being undeliverable.
 
-			// Check if the email account has been disabled or blocked
+			// Check if the email account has been disabled or blocked.
 			// e.g. "The email account that you tried to reach is disabled. Learn more at https://support.google.com/mail/?p=DisabledUser"
 			if err_string.contains("disabled") || err_string.contains("blocked") {
 				return Ok(Deliverability {
@@ -192,7 +191,7 @@ async fn email_deliverable(
 				});
 			}
 
-			// Check if the email account has a full inbox
+			// Check if the email account has a full inbox.
 			if err_string.contains("full")
 				|| err_string.contains("insufficient")
 				|| err_string.contains("over quota")
@@ -205,7 +204,7 @@ async fn email_deliverable(
 				});
 			}
 
-			// These are the possible error messages when email account doesn't exist
+			// These are the possible error messages when email account doesn't exist.
 			if err_string.contains("address rejected")
 				|| err_string.contains("does not exist")
 				|| err_string.contains("invalid address")
@@ -230,12 +229,12 @@ async fn email_deliverable(
 	}
 }
 
-/// Verify the existence of a catch-all email
+/// Verify the existence of a catch-all email.
 async fn email_has_catch_all(
 	smtp_client: &mut SmtpTransport,
 	domain: &str,
 ) -> Result<bool, SmtpError> {
-	// Create a random 15-char alphanumerical string
+	// Create a random 15-char alphanumerical string.
 	let random_email = rand::thread_rng()
 		.sample_iter(&Alphanumeric)
 		.take(15)

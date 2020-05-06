@@ -18,14 +18,14 @@
 
 #[cfg(test)]
 mod tests {
-	use check_if_email_exists::{email_exists, EmailInput};
+	use check_if_email_exists::{check_email, EmailInput};
 	use tokio::runtime::Runtime;
 
 	#[test]
 	fn should_output_error_for_invalid_email() {
 		let result = Runtime::new()
 			.unwrap()
-			.block_on(email_exists(&EmailInput::new("foo".to_string())));
+			.block_on(check_email(&EmailInput::new("foo".to_string())));
 		assert_eq!(
 			serde_json::to_string(&result).unwrap(),
 			"{\"input\":\"foo\",\"misc\":{\"error\":{\"type\":\"Skipped\"}},\"mx\":{\"error\":{\"type\":\"Skipped\"}},\"smtp\":{\"error\":{\"type\":\"Skipped\"}},\"syntax\":{\"error\":{\"type\":\"SyntaxError\",\"message\":\"invalid email address\"}}}"
@@ -37,7 +37,7 @@ mod tests {
 	fn should_output_error_for_invalid_mx() {
 		let result = Runtime::new()
 			.unwrap()
-			.block_on(email_exists(&EmailInput::new("foo@bar.baz".to_string())));
+			.block_on(check_email(&EmailInput::new("foo@bar.baz".to_string())));
 
 		assert_eq!(
 			serde_json::to_string(&result).unwrap(),

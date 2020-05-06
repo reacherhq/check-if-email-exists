@@ -22,13 +22,13 @@ use std::str::FromStr;
 /// Syntax information after parsing an email address
 #[derive(Debug, PartialEq, Serialize)]
 pub struct SyntaxDetails {
-	/// The email address as a async_smtp EmailAddress
+	/// The email address as a async_smtp `EmailAddress`.
 	pub address: EmailAddress,
-	/// The domain name, after "@"
+	/// The domain name, after "@".
 	pub domain: String,
 	/// Does the email have a valid syntax?
 	pub is_valid_syntax: bool,
-	/// The username, before "@"
+	/// The username, before "@".
 	pub username: String,
 }
 
@@ -52,7 +52,7 @@ impl PartialEq for SyntaxError {
 }
 
 /// From an `email_address` string, compute syntax information about it, such as
-/// username and domain
+/// username and domain.
 pub fn address_syntax(email_address: &str) -> Result<SyntaxDetails, SyntaxError> {
 	let email_address = match EmailAddress::from_str(email_address) {
 		Ok(m) => m,

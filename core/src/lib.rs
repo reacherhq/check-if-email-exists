@@ -49,7 +49,7 @@
 //!     // Verify this input, using async/await syntax.
 //!     let result = email_exists(&input).await;
 //!
-//!     // `result` is a `SingleEmail` struct containing all information about the
+//!     // `result` is a `CheckEmailResult` struct containing all information about the
 //!     // email.
 //!     println!("{:?}", result);
 //! }
@@ -75,28 +75,28 @@ use syntax::{address_syntax, SyntaxDetails, SyntaxError};
 
 pub use util::email_input::*;
 
-/// All details about email address, MX records and SMTP responses
+/// The result of the [check_email](check_email) function.
 #[derive(Debug)]
-pub struct SingleEmail {
-	/// Input by the user
+pub struct CheckEmailResult {
+	/// Input by the user.
 	pub input: String,
-	/// Misc details about the email address
+	/// Misc details about the email address.
 	pub misc: Result<MiscDetails, MiscError>,
-	/// Details about the MX host
+	/// Details about the MX host.
 	pub mx: Result<MxDetails, MxError>,
-	/// Details about the SMTP responses of the email
-	pub smtp: Result<SmtpDetails, SmtpError>, // TODO Better Err type
-	/// Details about the email address
+	/// Details about the SMTP responses of the email.
+	pub smtp: Result<SmtpDetails, SmtpError>,
+	/// Details about the email address.
 	pub syntax: Result<SyntaxDetails, SyntaxError>,
 }
 
-// Implement a custom serialize
-impl Serialize for SingleEmail {
+// Implement a custom serialize.
+impl Serialize for CheckEmailResult {
 	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
 	where
 		S: Serializer,
 	{
-		// This is just used internally to get the nested error field
+		// This is just used internally to get the nested error field.
 		#[derive(Serialize)]
 		struct MyError<E> {
 			error: E,
@@ -124,9 +124,9 @@ impl Serialize for SingleEmail {
 	}
 }
 
-/// The main function: checks email format, checks MX records, and checks SMTP
-/// responses to the email inbox.
-pub async fn email_exists(email_input: &EmailInput) -> SingleEmail {
+/// The main function: checks email format, checks MX records, checks SMTP
+/// responses to the mailbox, and performs misc checks.
+pub async fn check_email(email_input: &EmailInput) -> CheckEmailResult {
 	let from_email = EmailAddress::from_str(email_input.from_email.as_ref()).unwrap_or_else(|_| {
 		warn!(
 			"Inputted from_email \"{}\" is not a valid email, using \"user@example.org\" instead",
@@ -139,7 +139,7 @@ pub async fn email_exists(email_input: &EmailInput) -> SingleEmail {
 	let my_syntax = match address_syntax(email_input.to_email.as_ref()) {
 		Ok(s) => s,
 		e => {
-			return SingleEmail {
+			return CheckEmailResult {
 				input: email_input.to_email.to_string(),
 				misc: Err(MiscError::Skipped),
 				mx: Err(MxError::Skipped),
@@ -153,7 +153,7 @@ pub async fn email_exists(email_input: &EmailInput) -> SingleEmail {
 	let my_mx = match get_mx_lookup(&my_syntax).await {
 		Ok(m) => m,
 		e => {
-			return SingleEmail {
+			return CheckEmailResult {
 				input: email_input.to_email.to_string(),
 				misc: Err(MiscError::Skipped),
 				mx: e,
@@ -167,34 +167,39 @@ pub async fn email_exists(email_input: &EmailInput) -> SingleEmail {
 	let my_misc = misc_details(&my_syntax);
 	debug!("Found the following misc details: {:?}", my_misc);
 
-	// Create one future per lookup result
+	// Create one future per lookup result.
 	let futures = my_mx
 		.lookup
-		.iter()
-		.map(|host| {
-			let fut = smtp::smtp_details(
-				&from_email,
-				&my_syntax.address,
-				host.exchange(),
-				// We could add ports 465 and 587 too
-				SMTP_PORT,
-				my_syntax.domain.as_str(),
-				email_input.hello_name.as_ref(),
-				&email_input.proxy,
-			);
+		.as_ref()
+		.map(|lookup| {
+			lookup
+				.iter()
+				.map(|host| {
+					let fut = smtp::smtp_details(
+						&from_email,
+						&my_syntax.address,
+						host.exchange(),
+						// We could add ports 465 and 587 too.
+						SMTP_PORT,
+						my_syntax.domain.as_str(),
+						email_input.hello_name.as_ref(),
+						&email_input.proxy,
+					);
 
-			// https://rust-lang.github.io/async-book/04_pinning/01_chapter.html
-			Box::pin(fut)
+					// https://rust-lang.github.io/async-book/04_pinning/01_chapter.html
+					Box::pin(fut)
+				})
+				.collect::<Vec<_>>()
 		})
-		.collect::<Vec<_>>();
+		.unwrap_or_else(|_| vec![]);
 
-	// Race, return the first future that resolves
+	// Race, return the first future that resolves.
 	let my_smtp = match select_ok(futures).await {
 		Ok((details, _)) => Ok(details),
 		Err(err) => Err(err),
 	};
 
-	SingleEmail {
+	CheckEmailResult {
 		input: email_input.to_email.to_string(),
 		misc: Ok(my_misc),
 		mx: Ok(my_mx),

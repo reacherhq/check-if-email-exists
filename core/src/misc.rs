@@ -17,27 +17,27 @@
 use crate::syntax::SyntaxDetails;
 use serde::Serialize;
 
-/// Details that we gathered from connecting to this email via SMTP
+/// Details that we gathered from connecting to this email via SMTP.
 #[derive(Debug, Serialize)]
 pub struct MiscDetails {
 	/// Is this a DEA (disposable email account)?
 	pub is_disposable: bool,
 }
 
-/// Error occured connecting to this email server via SMTP
+/// Error occured connecting to this email server via SMTP.
 #[derive(Debug, Serialize)]
 #[serde(tag = "type", content = "message")]
 pub enum MiscError {
-	/// Skipped checking SMTP details
+	/// Skipped checking SMTP details.
 	Skipped,
 }
 
-/// Fetch misc details about the email address, such as whether it's disposable
+/// Fetch misc details about the email address, such as whether it's disposable.
 pub fn misc_details(syntax: &SyntaxDetails) -> MiscDetails {
 	MiscDetails {
 		// mailchecker::is_valid checks also if the syntax is valid. But if
 		// we're here, it means we're sure the syntax is valid, so is_valid
-		// actually will only check the disposable email Misc.
+		// actually will only check if it's disposable.
 		is_disposable: !mailchecker::is_valid(syntax.address.to_string().as_ref()),
 	}
 }

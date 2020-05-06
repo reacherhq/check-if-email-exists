@@ -22,7 +22,7 @@ extern crate tokio;
 
 mod http;
 
-use check_if_email_exists::{email_exists, EmailInput};
+use check_if_email_exists::{check_email, EmailInput};
 use clap::{crate_version, value_t, App};
 use std::env;
 
@@ -53,7 +53,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 			input.proxy(proxy_host.into(), proxy_port);
 		}
 
-		let result = email_exists(&input).await;
+		let result = check_email(&input).await;
 
 		match serde_json::to_string_pretty(&result) {
 			Ok(output) => {
