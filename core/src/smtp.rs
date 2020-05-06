@@ -36,6 +36,8 @@ use super::util::email_input::EmailInputProxy;
 /// Details that we gathered from connecting to this email via SMTP
 #[derive(Debug, Serialize)]
 pub struct SmtpDetails {
+	/// Are we able to connect to the SMTP server?
+	pub can_connect_smtp: bool,
 	/// Is this email account's inbox full?
 	pub has_full_inbox: bool,
 	/// Does this domain have a catch-all email address?
@@ -259,6 +261,8 @@ pub async fn smtp_details(
 	hello_name: &str,
 	proxy: &Option<EmailInputProxy>,
 ) -> Result<SmtpDetails, SmtpError> {
+	// FIXME If the SMTP is not connectable, we should actually return an
+	// Ok(SmtpDetails { can_connect_smtp: false, ... }).
 	let mut smtp_client = connect_to_host(from_email, host, port, hello_name, proxy).await?;
 
 	let is_catch_all = email_has_catch_all(&mut smtp_client, domain)
@@ -269,6 +273,7 @@ pub async fn smtp_details(
 	smtp_client.close().await?;
 
 	Ok(SmtpDetails {
+		can_connect_smtp: true,
 		has_full_inbox: deliverability.has_full_inbox,
 		is_catch_all,
 		is_deliverable: deliverability.is_deliverable,
