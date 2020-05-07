@@ -34,11 +34,11 @@
 //! - Catch-all address. Is this email address a catch-all address?
 //!
 //! ```rust
-//! use check_if_email_exists::{email_exists, CheckEmailInput};
+//! use check_if_email_exists::{check_emails, CheckEmailInput};
 //!
 //! async fn check() {
 //!     // Let's say we want to test the deliverability of someone@gmail.com.
-//!     let mut input = CheckEmailInput::new("someone@gmail.com".into());
+//!     let mut input = CheckEmailInput::new(vec!["someone@gmail.com".into()]);
 //!
 //!     // Optionally, we can also tweak the configuration parameters used in the
 //!     // verification.
@@ -47,10 +47,10 @@
 //!         .hello_name("example.org".into()); // Used in the `EHLO` command
 //!
 //!     // Verify this input, using async/await syntax.
-//!     let result = email_exists(&input).await;
+//!     let result = check_emails(&input).await;
 //!
-//!     // `result` is a `CheckEmailOutput` struct containing all information about the
-//!     // email.
+//!     // `result` is a `Vec<CheckEmailOutput>`, where the CheckEmailOutput
+//!     // struct contains all information about one email.
 //!     println!("{:?}", result);
 //! }
 //! ```
