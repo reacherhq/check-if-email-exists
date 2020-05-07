@@ -31,7 +31,7 @@ use serde::Serialize;
 use std::time::Duration;
 use trust_dns_resolver::Name;
 
-use super::util::{constants::LOG_TARGET, input::CheckEmailInputProxy};
+use super::util::{constants::LOG_TARGET, input_output::CheckEmailInputProxy};
 
 /// Details that we gathered from connecting to this email via SMTP
 #[derive(Debug, Serialize)]
@@ -48,12 +48,22 @@ pub struct SmtpDetails {
 	pub is_disabled: bool,
 }
 
+impl Default for SmtpDetails {
+	fn default() -> Self {
+		SmtpDetails {
+			can_connect_smtp: false,
+			has_full_inbox: false,
+			is_catch_all: false,
+			is_deliverable: false,
+			is_disabled: false,
+		}
+	}
+}
+
 /// Error occured connecting to this email server via SMTP.
 #[derive(Debug, Serialize)]
 #[serde(tag = "type", content = "message")]
 pub enum SmtpError {
-	/// Skipped checking SMTP details.
-	Skipped,
 	/// Error if we're using a SOCKS5 proxy.
 	#[serde(serialize_with = "ser_with_display")]
 	SocksError(SocksError),
@@ -163,20 +173,12 @@ async fn email_deliverable(
 	{
 		Ok(response) => match response.first_line() {
 			Some(message) => {
-				if message.contains("2.1.5") {
-					// 250 2.1.5 Recipient e-mail address ok.
-					Ok(Deliverability {
-						has_full_inbox: false,
-						is_deliverable: true,
-						is_disabled: false,
-					})
-				} else {
-					Ok(Deliverability {
-						has_full_inbox: false,
-						is_deliverable: true,
-						is_disabled: false,
-					})
-				}
+				let is_deliverable = message.contains("2.1.5");
+				Ok(Deliverability {
+					has_full_inbox: false,
+					is_deliverable,
+					is_disabled: false,
+				})
 			}
 			None => Err(SmtpError::SmtpError(AsyncSmtpError::Client(
 				"No response on RCPT command",

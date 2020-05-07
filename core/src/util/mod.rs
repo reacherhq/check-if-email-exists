@@ -15,5 +15,5 @@
 // along with check-if-email-exists.  If not, see <http://www.gnu.org/licenses/>.
 
 pub mod constants;
-pub mod input;
+pub mod input_output;
 pub mod ser_with_display;

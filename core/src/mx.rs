@@ -27,6 +27,14 @@ pub struct MxDetails {
 	pub lookup: Result<MxLookup, ResolveError>,
 }
 
+impl Default for MxDetails {
+	fn default() -> Self {
+		MxDetails {
+			lookup: Err(ResolveError::from("Skipped")),
+		}
+	}
+}
+
 impl From<MxLookup> for MxDetails {
 	fn from(lookup: MxLookup) -> Self {
 		MxDetails { lookup: Ok(lookup) }
@@ -60,8 +68,6 @@ impl Serialize for MxDetails {
 #[derive(Debug, Serialize)]
 #[serde(tag = "type", content = "message")]
 pub enum MxError {
-	/// Skipped checking MX records.
-	Skipped,
 	/// Error with IO.
 	#[serde(serialize_with = "ser_with_display")]
 	IoError(Error),

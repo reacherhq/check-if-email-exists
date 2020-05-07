@@ -34,6 +34,17 @@ pub struct SyntaxDetails {
 	pub username: String,
 }
 
+impl Default for SyntaxDetails {
+	fn default() -> Self {
+		SyntaxDetails {
+			address: None,
+			domain: "".into(),
+			is_valid_syntax: false,
+			username: "".into(),
+		}
+	}
+}
+
 /// From an `email_address` string, compute syntax information about it, such as
 /// username and domain.
 pub fn check_syntax(email_address: &str) -> SyntaxDetails {

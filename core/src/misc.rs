@@ -23,6 +23,14 @@ pub struct MiscDetails {
 	pub is_disposable: bool,
 }
 
+impl Default for MiscDetails {
+	fn default() -> Self {
+		MiscDetails {
+			is_disposable: false,
+		}
+	}
+}
+
 /// Error occured connecting to this email server via SMTP.
 #[derive(Debug, Serialize)]
 #[serde(tag = "type", content = "message")]

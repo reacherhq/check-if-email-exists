@@ -49,7 +49,7 @@
 //!     // Verify this input, using async/await syntax.
 //!     let result = email_exists(&input).await;
 //!
-//!     // `result` is a `CheckEmailResult` struct containing all information about the
+//!     // `result` is a `CheckEmailOutput` struct containing all information about the
 //!     // email.
 //!     println!("{:?}", result);
 //! }
@@ -66,61 +66,14 @@ mod util;
 
 use async_smtp::{smtp::SMTP_PORT, EmailAddress};
 use futures::future;
-use misc::{check_misc, MiscDetails, MiscError};
-use mx::{check_mx, MxDetails, MxError};
-use serde::{ser::SerializeMap, Serialize, Serializer};
-use smtp::{check_smtp, SmtpDetails, SmtpError};
+use misc::check_misc;
+use mx::check_mx;
+use smtp::check_smtp;
 use std::str::FromStr;
-use syntax::{check_syntax, SyntaxDetails};
+use syntax::check_syntax;
 use util::constants::LOG_TARGET;
 
-pub use util::input::*;
-
-/// The result of the [check_email](check_email) function.
-#[derive(Debug)]
-pub struct CheckEmailResult {
-	/// Input by the user.
-	pub input: String,
-	/// Misc details about the email address.
-	pub misc: Result<MiscDetails, MiscError>,
-	/// Details about the MX host.
-	pub mx: Result<MxDetails, MxError>,
-	/// Details about the SMTP responses of the email.
-	pub smtp: Result<SmtpDetails, SmtpError>,
-	/// Details about the email address.
-	pub syntax: SyntaxDetails,
-}
-
-// Implement a custom serialize.
-impl Serialize for CheckEmailResult {
-	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-	where
-		S: Serializer,
-	{
-		// This is just used internally to get the nested error field.
-		#[derive(Serialize)]
-		struct MyError<E> {
-			error: E,
-		}
-
-		let mut map = serializer.serialize_map(Some(1))?;
-		map.serialize_entry("input", &self.input)?;
-		match &self.misc {
-			Ok(t) => map.serialize_entry("misc", &t)?,
-			Err(error) => map.serialize_entry("misc", &MyError { error })?,
-		}
-		match &self.mx {
-			Ok(t) => map.serialize_entry("mx", &t)?,
-			Err(error) => map.serialize_entry("mx", &MyError { error })?,
-		}
-		match &self.smtp {
-			Ok(t) => map.serialize_entry("smtp", &t)?,
-			Err(error) => map.serialize_entry("smtp", &MyError { error })?,
-		}
-		map.serialize_entry("syntax", &self.syntax)?;
-		map.end()
-	}
-}
+pub use util::input_output::*;
 
 /// Check a single emails. This assumes this `input.check_emails` contains
 /// exactly one element. If it contains more, elements other than the first
@@ -129,7 +82,7 @@ impl Serialize for CheckEmailResult {
 /// # Panics
 ///
 /// This function panics if `input.check_emails` is empty.
-async fn check_single_email(input: CheckEmailInput) -> CheckEmailResult {
+async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 	let from_email = EmailAddress::from_str(input.from_email.as_ref()).unwrap_or_else(|_| {
 		warn!(
 			"Inputted from_email \"{}\" is not a valid email, using \"user@example.org\" instead",
@@ -143,12 +96,10 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailResult {
 	debug!(target: LOG_TARGET, "Checking email \"{}\"", to_email);
 	let my_syntax = check_syntax(to_email.as_ref());
 	if !my_syntax.is_valid_syntax {
-		return CheckEmailResult {
+		return CheckEmailOutput {
 			input: to_email.to_string(),
-			misc: Err(MiscError::Skipped),
-			mx: Err(MxError::Skipped),
-			smtp: Err(SmtpError::Skipped),
 			syntax: my_syntax,
+			..Default::default()
 		};
 	}
 
@@ -160,12 +111,11 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailResult {
 	let my_mx = match check_mx(&my_syntax).await {
 		Ok(m) => m,
 		e => {
-			return CheckEmailResult {
+			return CheckEmailOutput {
 				input: to_email.to_string(),
-				misc: Err(MiscError::Skipped),
 				mx: e,
-				smtp: Err(SmtpError::Skipped),
 				syntax: my_syntax,
+				..Default::default()
 			}
 		}
 	};
@@ -176,12 +126,11 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailResult {
 
 	// Return if we didn't find any MX records.
 	if my_mx.lookup.is_err() {
-		return CheckEmailResult {
+		return CheckEmailOutput {
 			input: to_email.to_string(),
-			misc: Err(MiscError::Skipped),
 			mx: Ok(my_mx),
-			smtp: Err(SmtpError::Skipped),
 			syntax: my_syntax,
+			..Default::default()
 		};
 	}
 
@@ -232,7 +181,7 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailResult {
 		Err(err) => Err(err),
 	};
 
-	CheckEmailResult {
+	CheckEmailOutput {
 		input: to_email.to_string(),
 		misc: Ok(my_misc),
 		mx: Ok(my_mx),
@@ -244,7 +193,7 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailResult {
 /// The main function of this library: takes as input a list of email addresses
 /// to check. Then performs syntax, mx, smtp and misc checks, and outputs a
 /// list of results.
-pub async fn check_emails(inputs: &CheckEmailInput) -> Vec<CheckEmailResult> {
+pub async fn check_emails(inputs: &CheckEmailInput) -> Vec<CheckEmailOutput> {
 	// FIXME Obviously, the below `join_all` is not optimal. Some optimizations
 	// include:
 	// - if multiple email addresses share the same domain, we should only do

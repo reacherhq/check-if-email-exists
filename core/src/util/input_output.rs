@@ -14,6 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with check-if-email-exists.  If not, see <http://www.gnu.org/licenses/>.
 
+use crate::misc::{MiscDetails, MiscError};
+use crate::mx::{MxDetails, MxError};
+use crate::smtp::{SmtpDetails, SmtpError};
+use crate::syntax::SyntaxDetails;
+use serde::{ser::SerializeMap, Serialize, Serializer};
+
 /// Perform the email verification via a specified proxy. The usage of a proxy
 /// is optional.
 #[derive(Debug, Clone)]
@@ -73,5 +79,63 @@ impl CheckEmailInput {
 			port: proxy_port,
 		});
 		self
+	}
+}
+
+/// The result of the [check_email](check_email) function.
+#[derive(Debug)]
+pub struct CheckEmailOutput {
+	/// Input by the user.
+	pub input: String,
+	/// Misc details about the email address.
+	pub misc: Result<MiscDetails, MiscError>,
+	/// Details about the MX host.
+	pub mx: Result<MxDetails, MxError>,
+	/// Details about the SMTP responses of the email.
+	pub smtp: Result<SmtpDetails, SmtpError>,
+	/// Details about the email address.
+	pub syntax: SyntaxDetails,
+}
+
+impl Default for CheckEmailOutput {
+	fn default() -> Self {
+		CheckEmailOutput {
+			input: String::default(),
+			misc: Ok(MiscDetails::default()),
+			mx: Ok(MxDetails::default()),
+			smtp: Ok(SmtpDetails::default()),
+			syntax: SyntaxDetails::default(),
+		}
+	}
+}
+
+// Implement a custom serialize.
+impl Serialize for CheckEmailOutput {
+	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+	where
+		S: Serializer,
+	{
+		// This is just used internally to get the nested error field.
+		#[derive(Serialize)]
+		struct MyError<E> {
+			error: E,
+		}
+
+		let mut map = serializer.serialize_map(Some(1))?;
+		map.serialize_entry("input", &self.input)?;
+		match &self.misc {
+			Ok(t) => map.serialize_entry("misc", &t)?,
+			Err(error) => map.serialize_entry("misc", &MyError { error })?,
+		}
+		match &self.mx {
+			Ok(t) => map.serialize_entry("mx", &t)?,
+			Err(error) => map.serialize_entry("mx", &MyError { error })?,
+		}
+		match &self.smtp {
+			Ok(t) => map.serialize_entry("smtp", &t)?,
+			Err(error) => map.serialize_entry("smtp", &MyError { error })?,
+		}
+		map.serialize_entry("syntax", &self.syntax)?;
+		map.end()
 	}
 }
