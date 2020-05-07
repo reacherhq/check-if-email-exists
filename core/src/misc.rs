@@ -31,13 +31,12 @@ impl Default for MiscDetails {
 	}
 }
 
-/// Error occured connecting to this email server via SMTP.
+/// Error occured connecting to this email server via SMTP. Right now this
+/// enum has no variant, as `check_misc` cannot fail. But putting a placeholder
+/// right now to avoid future breaking changes.
 #[derive(Debug, Serialize)]
 #[serde(tag = "type", content = "message")]
-pub enum MiscError {
-	/// Skipped checking SMTP details.
-	Skipped,
-}
+pub enum MiscError {}
 
 /// Fetch misc details about the email address, such as whether it's disposable.
 pub fn check_misc(address: &str) -> MiscDetails {
