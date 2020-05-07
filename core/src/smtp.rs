@@ -31,7 +31,7 @@ use serde::Serialize;
 use std::time::Duration;
 use trust_dns_resolver::Name;
 
-use super::util::input::CheckEmailInputProxy;
+use super::util::{constants::LOG_TARGET, input::CheckEmailInputProxy};
 
 /// Details that we gathered from connecting to this email via SMTP
 #[derive(Debug, Serialize)]
@@ -78,7 +78,7 @@ impl From<SocksError> for SmtpError {
 macro_rules! try_smtp (
     ($res: expr, $client: ident, $host: expr, $port: expr) => ({
 		if let Err(err) = $res {
-			debug!("Closing {}:{}, because of error '{}'.", $host, $port, err);
+			debug!(target: LOG_TARGET, "Closing {}:{}, because of error '{}'.", $host, $port, err);
 			$client.close().await?;
 
 			return Err(err.into());
@@ -102,7 +102,7 @@ async fn connect_to_host(
 			.into_transport();
 
 	// Connect to the host. If the proxy argument is set, use it.
-	debug!("Connecting to {}:{}", host, port);
+	debug!(target: LOG_TARGET, "Connecting to {}:{}", host, port);
 	if let Some(proxy) = proxy {
 		let stream = Socks5Stream::connect(
 			(proxy.host.as_ref(), proxy.port),
@@ -171,9 +171,11 @@ async fn email_deliverable(
 						is_disabled: false,
 					})
 				} else {
-					Err(SmtpError::SmtpError(AsyncSmtpError::Client(
-						"Can't find 2.1.5 in RCPT command",
-					)))
+					Ok(Deliverability {
+						has_full_inbox: false,
+						is_deliverable: true,
+						is_disabled: false,
+					})
 				}
 			}
 			None => Err(SmtpError::SmtpError(AsyncSmtpError::Client(
@@ -219,7 +221,6 @@ async fn email_deliverable(
 				|| err_string.contains("undeliverable")
 				|| err_string.contains("user unknown")
 				|| err_string.contains("user not found")
-				|| err_string.contains("disabled")
 			{
 				return Ok(Deliverability {
 					has_full_inbox: false,

@@ -72,6 +72,7 @@ use serde::{ser::SerializeMap, Serialize, Serializer};
 use smtp::{check_smtp, SmtpDetails, SmtpError};
 use std::str::FromStr;
 use syntax::{check_syntax, SyntaxDetails};
+use util::constants::LOG_TARGET;
 
 pub use util::input::*;
 
@@ -139,7 +140,7 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailResult {
 
 	let to_email = &input.to_emails[0];
 
-	debug!("Checking email \"{}\"", to_email);
+	debug!(target: LOG_TARGET, "Checking email \"{}\"", to_email);
 	let my_syntax = check_syntax(to_email.as_ref());
 	if !my_syntax.is_valid_syntax {
 		return CheckEmailResult {
@@ -151,7 +152,10 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailResult {
 		};
 	}
 
-	debug!("Found the following syntax validation: {:?}", my_syntax);
+	debug!(
+		target: LOG_TARGET,
+		"Found the following syntax validation: {:?}", my_syntax
+	);
 
 	let my_mx = match check_mx(&my_syntax).await {
 		Ok(m) => m,
@@ -165,7 +169,10 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailResult {
 			}
 		}
 	};
-	debug!("Found the following MX hosts {:?}", my_mx);
+	debug!(
+		target: LOG_TARGET,
+		"Found the following MX hosts {:?}", my_mx
+	);
 
 	// Return if we didn't find any MX records.
 	if my_mx.lookup.is_err() {
@@ -185,7 +192,10 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailResult {
 			.expect("We already checked that the email has valid format. qed.")
 			.as_ref(),
 	);
-	debug!("Found the following misc details: {:?}", my_misc);
+	debug!(
+		target: LOG_TARGET,
+		"Found the following misc details: {:?}", my_misc
+	);
 
 	// Create one future per lookup result.
 	let futures = my_mx

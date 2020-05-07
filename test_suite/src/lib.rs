@@ -48,7 +48,7 @@ mod tests {
 			let actual = serde_json::to_value(&result[0]).unwrap();
 
 			// Uncomment to see the JSON result of `check_emails`.
-			// println!("{}", actual);
+			println!("{}", actual);
 
 			// For the input,misc,smtp,syntax fields, we match exact JSON.
 			assert_eq!(expected.get("input"), actual.get("input"),);
