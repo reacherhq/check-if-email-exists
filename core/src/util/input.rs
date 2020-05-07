@@ -16,7 +16,7 @@
 
 /// Perform the email verification via a specified proxy. The usage of a proxy
 /// is optional.
-pub struct EmailInputProxy {
+pub struct CheckEmailInputProxy {
 	/// Use the specified SOCKS5 proxy host to perform email verification.
 	pub host: String,
 	/// Use the specified SOCKS5 proxy port to perform email verification.
@@ -25,7 +25,7 @@ pub struct EmailInputProxy {
 
 /// Builder pattern for the input argument into the main `email_exists`
 /// function.
-pub struct EmailInput {
+pub struct CheckEmailInput {
 	/// The email to validate.
 	pub to_email: String,
 	/// Email to use in the `MAIL FROM:` SMTP command.
@@ -38,13 +38,13 @@ pub struct EmailInput {
 	pub hello_name: String,
 	/// Perform the email verification via a specified proxy. The usage of a
 	/// proxy is optional.
-	pub proxy: Option<EmailInputProxy>,
+	pub proxy: Option<CheckEmailInputProxy>,
 }
 
-impl EmailInput {
-	/// Create a new EmailInput.
-	pub fn new(email: String) -> EmailInput {
-		EmailInput {
+impl CheckEmailInput {
+	/// Create a new CheckEmailInput.
+	pub fn new(email: String) -> CheckEmailInput {
+		CheckEmailInput {
 			to_email: email,
 			from_email: "user@example.org".into(),
 			hello_name: "localhost".into(),
@@ -53,20 +53,20 @@ impl EmailInput {
 	}
 
 	/// Set the email to use in the `MAIL FROM:` SMTP command.
-	pub fn from_email(&mut self, email: String) -> &mut EmailInput {
+	pub fn from_email(&mut self, email: String) -> &mut CheckEmailInput {
 		self.from_email = email;
 		self
 	}
 
 	/// Set the name to use in the `EHLO:` SMTP command.
-	pub fn hello_name(&mut self, name: String) -> &mut EmailInput {
+	pub fn hello_name(&mut self, name: String) -> &mut CheckEmailInput {
 		self.hello_name = name;
 		self
 	}
 
 	/// Use the specified proxy to perform email verification.
-	pub fn proxy(&mut self, proxy_host: String, proxy_port: u16) -> &mut EmailInput {
-		self.proxy = Some(EmailInputProxy {
+	pub fn proxy(&mut self, proxy_host: String, proxy_port: u16) -> &mut CheckEmailInput {
+		self.proxy = Some(CheckEmailInputProxy {
 			host: proxy_host,
 			port: proxy_port,
 		});

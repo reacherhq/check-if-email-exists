@@ -34,11 +34,11 @@
 //! - Catch-all address. Is this email address a catch-all address?
 //!
 //! ```rust
-//! use check_if_email_exists::{email_exists, EmailInput};
+//! use check_if_email_exists::{email_exists, CheckEmailInput};
 //!
 //! async fn check() {
 //!     // Let's say we want to test the deliverability of someone@gmail.com.
-//!     let mut input = EmailInput::new("someone@gmail.com".into());
+//!     let mut input = CheckEmailInput::new("someone@gmail.com".into());
 //!
 //!     // Optionally, we can also tweak the configuration parameters used in the
 //!     // verification.
@@ -65,7 +65,7 @@ pub mod syntax;
 mod util;
 
 use async_smtp::{smtp::SMTP_PORT, EmailAddress};
-use futures::future::select_ok;
+use futures::future;
 use misc::{check_misc, MiscDetails, MiscError};
 use mx::{check_mx, MxDetails, MxError};
 use serde::{ser::SerializeMap, Serialize, Serializer};
@@ -73,7 +73,7 @@ use smtp::{check_smtp, SmtpDetails, SmtpError};
 use std::str::FromStr;
 use syntax::{check_syntax, SyntaxDetails};
 
-pub use util::email_input::*;
+pub use util::input::*;
 
 /// The result of the [check_email](check_email) function.
 #[derive(Debug)]
@@ -123,7 +123,7 @@ impl Serialize for CheckEmailResult {
 
 /// The main function: checks email format, checks MX records, checks SMTP
 /// responses to the mailbox, and performs misc checks.
-pub async fn check_email(email_input: &EmailInput) -> CheckEmailResult {
+pub async fn check_email(email_input: &CheckEmailInput) -> CheckEmailResult {
 	let from_email = EmailAddress::from_str(email_input.from_email.as_ref()).unwrap_or_else(|_| {
 		warn!(
 			"Inputted from_email \"{}\" is not a valid email, using \"user@example.org\" instead",
@@ -178,11 +178,11 @@ pub async fn check_email(email_input: &EmailInput) -> CheckEmailResult {
 				.iter()
 				.map(|host| {
 					let fut = check_smtp(
-						&from_email,
-						&my_syntax
+						my_syntax
 							.address
 							.as_ref()
 							.expect("We already checked that the email has valid format. qed."),
+						&from_email,
 						host.exchange(),
 						// FIXME We could add ports 465 and 587 too.
 						SMTP_PORT,
@@ -199,7 +199,7 @@ pub async fn check_email(email_input: &EmailInput) -> CheckEmailResult {
 		.unwrap_or_else(|_| vec![]);
 
 	// Race, return the first future that resolves.
-	let my_smtp = match select_ok(futures).await {
+	let my_smtp = match future::select_ok(futures).await {
 		Ok((details, _)) => Ok(details),
 		Err(err) => Err(err),
 	};

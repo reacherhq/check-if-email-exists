@@ -26,12 +26,13 @@ use fast_socks5::{
 	client::{Config, Socks5Stream},
 	Result, SocksError,
 };
+use futures::future;
 use rand::{distributions::Alphanumeric, Rng};
 use serde::Serialize;
 use std::time::Duration;
 use trust_dns_resolver::Name;
 
-use super::util::email_input::EmailInputProxy;
+use super::util::input::CheckEmailInputProxy;
 
 /// Details that we gathered from connecting to this email via SMTP
 #[derive(Debug, Serialize)]
@@ -92,7 +93,7 @@ async fn connect_to_host(
 	host: &Name,
 	port: u16,
 	hello_name: &str,
-	proxy: &Option<EmailInputProxy>,
+	proxy: &Option<CheckEmailInputProxy>,
 ) -> Result<SmtpTransport, SmtpError> {
 	let mut smtp_client =
 		SmtpClient::with_security((host.to_utf8().as_str(), port), ClientSecurity::None)
@@ -138,6 +139,8 @@ async fn connect_to_host(
 	Ok(smtp_client)
 }
 
+/// Description of the deliverability information we can gather from
+/// communicating with the SMTP server.
 struct Deliverability {
 	/// Is this email account's inbox full?
 	has_full_inbox: bool,
@@ -147,7 +150,8 @@ struct Deliverability {
 	is_disabled: bool,
 }
 
-/// Check if `to_email` exists on host server with given port.
+/// Check if `to_email` exists on host SMTP server. This is the core logic of
+/// this tool.
 async fn email_deliverable(
 	smtp_client: &mut SmtpTransport,
 	to_email: &EmailAddress,
@@ -230,8 +234,8 @@ async fn email_deliverable(
 	}
 }
 
-/// Verify the existence of a catch-all email.
-async fn email_has_catch_all(
+/// Verify the existence of a catch-all on the domain.
+async fn smtp_is_catch_all(
 	smtp_client: &mut SmtpTransport,
 	domain: &str,
 ) -> Result<bool, SmtpError> {
@@ -250,21 +254,21 @@ async fn email_has_catch_all(
 	.map(|deliverability| deliverability.is_deliverable)
 }
 
-/// Get all email details we can.
-pub async fn check_smtp(
-	from_email: &EmailAddress,
+/// Get all email details we can from one single `EmailAddress`.
+pub async fn check_single_smtp(
 	to_email: &EmailAddress,
+	from_email: &EmailAddress,
 	host: &Name,
 	port: u16,
 	domain: &str,
 	hello_name: &str,
-	proxy: &Option<EmailInputProxy>,
+	proxy: &Option<CheckEmailInputProxy>,
 ) -> Result<SmtpDetails, SmtpError> {
 	// FIXME If the SMTP is not connectable, we should actually return an
 	// Ok(SmtpDetails { can_connect_smtp: false, ... }).
 	let mut smtp_client = connect_to_host(from_email, host, port, hello_name, proxy).await?;
 
-	let is_catch_all = email_has_catch_all(&mut smtp_client, domain)
+	let is_catch_all = smtp_is_catch_all(&mut smtp_client, domain)
 		.await
 		.unwrap_or(false);
 	let deliverability = email_deliverable(&mut smtp_client, to_email).await?;
@@ -278,4 +282,33 @@ pub async fn check_smtp(
 		is_deliverable: deliverability.is_deliverable,
 		is_disabled: deliverability.is_disabled,
 	})
+}
+
+/// Get all email details we can from multiple `EmailAddress`es.
+///
+/// # Important
+///
+/// This assumes that all the `EmailAddress`es in the `to_emails` Vec have the
+/// same domain. Without this assumption, the results are not guaranteed to be
+/// correct.
+pub async fn check_smtp(
+	to_emails: &Vec<EmailAddress>,
+	from_email: &EmailAddress,
+	host: &Name,
+	port: u16,
+	domain: &str,
+	hello_name: &str,
+	proxy: &Option<CheckEmailInputProxy>,
+) -> Vec<Result<SmtpDetails, SmtpError>> {
+	let futures = to_emails.iter().map(|to_email| {
+		let fut = check_single_smtp(to_email, from_email, host, port, domain, hello_name, proxy);
+
+		// https://rust-lang.github.io/async-book/04_pinning/01_chapter.html
+		Box::pin(fut)
+	});
+
+	// FIXME Instead of spawning n SMTP connections, we should probably reuse
+	// the same `smtp_client`.
+	// https://github.com/amaurymartiny/check-if-email-exists/issues/65
+	future::join_all(futures).await
 }
