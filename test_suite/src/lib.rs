@@ -35,17 +35,56 @@ mod tests {
 			let path = path.unwrap().path();
 			let file = fs::File::open(path.clone()).unwrap();
 			let filename = path.file_stem().unwrap().to_str().unwrap();
-			let json: serde_json::Value = serde_json::from_reader(file).unwrap();
+			if filename.starts_with(".") {
+				// Don't process hidden files.
+				continue;
+			}
+			let expected: serde_json::Value = serde_json::from_reader(file).unwrap();
 
 			println!("Check {}", filename);
 			let mut input = CheckEmailInput::new(vec![filename.into()]);
 			input.proxy("127.0.0.1".into(), 9050);
 			let result = runtime.block_on(check_emails(&input));
+			let actual = serde_json::to_value(&result[0]).unwrap();
 
 			// Uncomment to see the JSON result of `check_emails`.
-			println!("{}", serde_json::to_string(&result[0]).unwrap());
+			// println!("{}", actual);
 
-			assert_eq!(json, serde_json::to_value(&result[0]).unwrap());
+			// For the input,misc,smtp,syntax fields, we match exact JSON.
+			assert_eq!(expected.get("input"), actual.get("input"),);
+			assert_eq!(expected.get("misc"), actual.get("misc"),);
+			assert_eq!(expected.get("smtp"), actual.get("smtp"),);
+			assert_eq!(expected.get("syntax"), actual.get("syntax"),);
+
+			// For the mx field, the `records` field array can contain elements
+			// in different order. We only check length in that case
+			if expected.get("mx").unwrap().get("error").is_some() {
+				assert_eq!(expected.get("mx"), actual.get("mx"));
+			} else {
+				assert_eq!(
+					expected.get("mx").unwrap().get("accepts_mail"),
+					actual.get("mx").unwrap().get("accepts_mail")
+				);
+
+				assert_eq!(
+					expected
+						.get("mx")
+						.unwrap()
+						.get("records")
+						.unwrap()
+						.as_array()
+						.unwrap()
+						.len(),
+					actual
+						.get("mx")
+						.unwrap()
+						.get("records")
+						.unwrap()
+						.as_array()
+						.unwrap()
+						.len()
+				);
+			}
 		}
 	}
 
