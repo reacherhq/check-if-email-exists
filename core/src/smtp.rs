@@ -125,11 +125,10 @@ async fn connect_to_host(
 	}
 
 	// "MAIL FROM: user@example.org"
-	// FIXME Do not clone?
-	let from_email = from_email.clone();
 	try_smtp!(
 		smtp_client
-			.command(MailCommand::new(Some(from_email), vec![],))
+			// FIXME Do not clone?
+			.command(MailCommand::new(Some(from_email.clone()), vec![],))
 			.await,
 		smtp_client,
 		host,
@@ -252,7 +251,7 @@ async fn email_has_catch_all(
 }
 
 /// Get all email details we can.
-pub async fn smtp_details(
+pub async fn check_smtp(
 	from_email: &EmailAddress,
 	to_email: &EmailAddress,
 	host: &Name,

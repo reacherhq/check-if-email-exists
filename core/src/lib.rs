@@ -66,12 +66,12 @@ mod util;
 
 use async_smtp::{smtp::SMTP_PORT, EmailAddress};
 use futures::future::select_ok;
-use misc::{misc_details, MiscDetails, MiscError};
-use mx::{get_mx_lookup, MxDetails, MxError};
+use misc::{check_misc, MiscDetails, MiscError};
+use mx::{check_mx, MxDetails, MxError};
 use serde::{ser::SerializeMap, Serialize, Serializer};
-use smtp::{SmtpDetails, SmtpError};
+use smtp::{check_smtp, SmtpDetails, SmtpError};
 use std::str::FromStr;
-use syntax::{address_syntax, SyntaxDetails, SyntaxError};
+use syntax::{check_syntax, SyntaxDetails};
 
 pub use util::email_input::*;
 
@@ -87,7 +87,7 @@ pub struct CheckEmailResult {
 	/// Details about the SMTP responses of the email.
 	pub smtp: Result<SmtpDetails, SmtpError>,
 	/// Details about the email address.
-	pub syntax: Result<SyntaxDetails, SyntaxError>,
+	pub syntax: SyntaxDetails,
 }
 
 // Implement a custom serialize.
@@ -116,10 +116,7 @@ impl Serialize for CheckEmailResult {
 			Ok(t) => map.serialize_entry("smtp", &t)?,
 			Err(error) => map.serialize_entry("smtp", &MyError { error })?,
 		}
-		match &self.syntax {
-			Ok(t) => map.serialize_entry("syntax", &t)?,
-			Err(error) => map.serialize_entry("syntax", &MyError { error })?,
-		}
+		map.serialize_entry("syntax", &self.syntax)?;
 		map.end()
 	}
 }
@@ -136,21 +133,20 @@ pub async fn check_email(email_input: &EmailInput) -> CheckEmailResult {
 	});
 
 	debug!("Checking email \"{}\"", email_input.to_email);
-	let my_syntax = match address_syntax(email_input.to_email.as_ref()) {
-		Ok(s) => s,
-		e => {
-			return CheckEmailResult {
-				input: email_input.to_email.to_string(),
-				misc: Err(MiscError::Skipped),
-				mx: Err(MxError::Skipped),
-				smtp: Err(SmtpError::Skipped),
-				syntax: e,
-			}
-		}
-	};
+	let my_syntax = check_syntax(email_input.to_email.as_ref());
+	if !my_syntax.is_valid_syntax {
+		return CheckEmailResult {
+			input: email_input.to_email.to_string(),
+			misc: Err(MiscError::Skipped),
+			mx: Err(MxError::Skipped),
+			smtp: Err(SmtpError::Skipped),
+			syntax: my_syntax,
+		};
+	}
+
 	debug!("Found the following syntax validation: {:?}", my_syntax);
 
-	let my_mx = match get_mx_lookup(&my_syntax).await {
+	let my_mx = match check_mx(&my_syntax).await {
 		Ok(m) => m,
 		e => {
 			return CheckEmailResult {
@@ -158,13 +154,19 @@ pub async fn check_email(email_input: &EmailInput) -> CheckEmailResult {
 				misc: Err(MiscError::Skipped),
 				mx: e,
 				smtp: Err(SmtpError::Skipped),
-				syntax: Ok(my_syntax),
+				syntax: my_syntax,
 			}
 		}
 	};
 	debug!("Found the following MX hosts {:?}", my_mx);
 
-	let my_misc = misc_details(&my_syntax);
+	let my_misc = check_misc(
+		&my_syntax
+			.address
+			.as_ref()
+			.expect("We already checked that the email has valid format. qed.")
+			.as_ref(),
+	);
 	debug!("Found the following misc details: {:?}", my_misc);
 
 	// Create one future per lookup result.
@@ -175,13 +177,16 @@ pub async fn check_email(email_input: &EmailInput) -> CheckEmailResult {
 			lookup
 				.iter()
 				.map(|host| {
-					let fut = smtp::smtp_details(
+					let fut = check_smtp(
 						&from_email,
-						&my_syntax.address,
+						&my_syntax
+							.address
+							.as_ref()
+							.expect("We already checked that the email has valid format. qed."),
 						host.exchange(),
-						// We could add ports 465 and 587 too.
+						// FIXME We could add ports 465 and 587 too.
 						SMTP_PORT,
-						my_syntax.domain.as_str(),
+						my_syntax.domain.as_ref(),
 						email_input.hello_name.as_ref(),
 						&email_input.proxy,
 					);
@@ -204,6 +209,6 @@ pub async fn check_email(email_input: &EmailInput) -> CheckEmailResult {
 		misc: Ok(my_misc),
 		mx: Ok(my_mx),
 		smtp: my_smtp,
-		syntax: Ok(my_syntax),
+		syntax: my_syntax,
 	}
 }

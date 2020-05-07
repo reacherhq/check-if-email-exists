@@ -77,7 +77,7 @@ impl From<ResolveError> for MxError {
 }
 
 /// Make a MX lookup.
-pub async fn get_mx_lookup(syntax: &SyntaxDetails) -> Result<MxDetails, MxError> {
+pub async fn check_mx(syntax: &SyntaxDetails) -> Result<MxDetails, MxError> {
 	// Construct a new Resolver with default configuration options
 	let resolver =
 		TokioAsyncResolver::tokio(ResolverConfig::default(), ResolverOpts::default()).await?;
