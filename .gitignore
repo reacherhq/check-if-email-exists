@@ -1,3 +1,6 @@
 /target
 **/*.rs.bk
 .DS_Store
+
+# sensitive data
+/test_suite/src/sensitive_fixtures/*.json

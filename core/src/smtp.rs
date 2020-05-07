@@ -26,7 +26,6 @@ use fast_socks5::{
 	client::{Config, Socks5Stream},
 	Result, SocksError,
 };
-use futures::future;
 use rand::{distributions::Alphanumeric, Rng};
 use serde::Serialize;
 use std::time::Duration;
@@ -255,7 +254,7 @@ async fn smtp_is_catch_all(
 }
 
 /// Get all email details we can from one single `EmailAddress`.
-pub async fn check_single_smtp(
+pub async fn check_smtp(
 	to_email: &EmailAddress,
 	from_email: &EmailAddress,
 	host: &Name,
@@ -282,33 +281,4 @@ pub async fn check_single_smtp(
 		is_deliverable: deliverability.is_deliverable,
 		is_disabled: deliverability.is_disabled,
 	})
-}
-
-/// Get all email details we can from multiple `EmailAddress`es.
-///
-/// # Important
-///
-/// This assumes that all the `EmailAddress`es in the `to_emails` Vec have the
-/// same domain. Without this assumption, the results are not guaranteed to be
-/// correct.
-pub async fn check_smtp(
-	to_emails: &Vec<EmailAddress>,
-	from_email: &EmailAddress,
-	host: &Name,
-	port: u16,
-	domain: &str,
-	hello_name: &str,
-	proxy: &Option<CheckEmailInputProxy>,
-) -> Vec<Result<SmtpDetails, SmtpError>> {
-	let futures = to_emails.iter().map(|to_email| {
-		let fut = check_single_smtp(to_email, from_email, host, port, domain, hello_name, proxy);
-
-		// https://rust-lang.github.io/async-book/04_pinning/01_chapter.html
-		Box::pin(fut)
-	});
-
-	// FIXME Instead of spawning n SMTP connections, we should probably reuse
-	// the same `smtp_client`.
-	// https://github.com/amaurymartiny/check-if-email-exists/issues/65
-	future::join_all(futures).await
 }

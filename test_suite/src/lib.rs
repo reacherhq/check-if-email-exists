@@ -18,30 +18,46 @@
 
 #[cfg(test)]
 mod tests {
-	use check_if_email_exists::{check_email, EmailInput};
+	use check_if_email_exists::{check_emails, CheckEmailInput};
+	use serde_json;
+	use std::fs;
 	use tokio::runtime::Runtime;
 
-	#[test]
-	fn should_output_error_for_invalid_email() {
-		let result = Runtime::new()
-			.unwrap()
-			.block_on(check_email(&EmailInput::new("foo".to_string())));
-		assert_eq!(
-			serde_json::to_string(&result).unwrap(),
-			"{\"input\":\"foo\",\"misc\":{\"error\":{\"type\":\"Skipped\"}},\"mx\":{\"error\":{\"type\":\"Skipped\"}},\"smtp\":{\"error\":{\"type\":\"Skipped\"}},\"syntax\":{\"error\":{\"type\":\"SyntaxError\",\"message\":\"invalid email address\"}}}"
-		);
+	/// Function to test all fixtures from a folder.
+	fn test_all_from_folder(folder: &str) {
+		let mut runtime = Runtime::new().unwrap();
+		let paths = fs::read_dir(folder).unwrap();
+
+		// For every fixture file, we compare:
+		// - the result of `check_emails` with the email in the filename
+		// - the contents of the file
+		for path in paths {
+			let path = path.unwrap().path();
+			let file = fs::File::open(path.clone()).unwrap();
+			let filename = path.file_stem().unwrap().to_str().unwrap();
+			let json: serde_json::Value = serde_json::from_reader(file).unwrap();
+
+			println!("Check {}", filename);
+			let mut input = CheckEmailInput::new(vec![filename.into()]);
+			input.proxy("127.0.0.1".into(), 9050);
+			let result = runtime.block_on(check_emails(&input));
+
+			// Uncomment to see the JSON result of `check_emails`.
+			println!("{}", serde_json::to_string(&result[0]).unwrap());
+
+			assert_eq!(json, serde_json::to_value(&result[0]).unwrap());
+		}
 	}
 
-	/// Note: this test requires an internet connection.
 	#[test]
-	fn should_output_error_for_invalid_mx() {
-		let result = Runtime::new()
-			.unwrap()
-			.block_on(check_email(&EmailInput::new("foo@bar.baz".to_string())));
+	fn should_pass_fixtures() {
+		test_all_from_folder("./src/fixtures");
+	}
 
-		assert_eq!(
-			serde_json::to_string(&result).unwrap(),
-			"{\"input\":\"foo@bar.baz\",\"misc\":{\"error\":{\"type\":\"Skipped\"}},\"mx\":{\"error\":{\"type\":\"ResolveError\",\"message\":\"no record found for name: bar.baz type: MX class: IN\"}},\"smtp\":{\"error\":{\"type\":\"Skipped\"}},\"syntax\":{\"address\":\"foo@bar.baz\",\"domain\":\"bar.baz\",\"is_valid_syntax\":true,\"username\":\"foo\"}}"
-		);
+	#[test]
+	fn should_pass_sensitive_fixtures() {
+		// These fixtures contain real-file emails, they are not committed to
+		// git.
+		test_all_from_folder("./src/sensitive_fixtures");
 	}
 }

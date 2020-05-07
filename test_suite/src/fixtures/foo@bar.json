@@ -1,0 +1,12 @@
+{
+	"input": "foo@bar",
+	"misc": { "error": { "type": "Skipped" } },
+	"mx": { "error": { "type": "Skipped" } },
+	"smtp": { "error": { "type": "Skipped" } },
+	"syntax": {
+		"address": null,
+		"domain": "",
+		"is_valid_syntax": false,
+		"username": ""
+	}
+}

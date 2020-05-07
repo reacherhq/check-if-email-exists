@@ -1,0 +1,12 @@
+{
+	"input": "foo@bar.baz",
+	"misc": { "error": { "type": "Skipped" } },
+	"mx": { "accepts_mail": false, "records": [] },
+	"smtp": { "error": { "type": "Skipped" } },
+	"syntax": {
+		"address": "foo@bar.baz",
+		"domain": "bar.baz",
+		"is_valid_syntax": true,
+		"username": "foo"
+	}
+}

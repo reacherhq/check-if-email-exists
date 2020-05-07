@@ -31,7 +31,7 @@ args:
       long: proxy-host
       takes_value: true
   - PROXY_PORT:
-      default_value: '1080'
+      default_value: "1080"
       help: Use the specified SOCKS5 proxy port to perform email verification. Only used when `--proxy-host` flag is set.
       long: proxy-port
       takes_value: true

@@ -16,6 +16,7 @@
 
 /// Perform the email verification via a specified proxy. The usage of a proxy
 /// is optional.
+#[derive(Debug, Clone)]
 pub struct CheckEmailInputProxy {
 	/// Use the specified SOCKS5 proxy host to perform email verification.
 	pub host: String,
@@ -25,9 +26,10 @@ pub struct CheckEmailInputProxy {
 
 /// Builder pattern for the input argument into the main `email_exists`
 /// function.
+#[derive(Debug, Clone)]
 pub struct CheckEmailInput {
 	/// The email to validate.
-	pub to_email: String,
+	pub to_emails: Vec<String>,
 	/// Email to use in the `MAIL FROM:` SMTP command.
 	///
 	/// Defaults to "user@example.org".
@@ -43,9 +45,9 @@ pub struct CheckEmailInput {
 
 impl CheckEmailInput {
 	/// Create a new CheckEmailInput.
-	pub fn new(email: String) -> CheckEmailInput {
+	pub fn new(to_emails: Vec<String>) -> CheckEmailInput {
 		CheckEmailInput {
-			to_email: email,
+			to_emails,
 			from_email: "user@example.org".into(),
 			hello_name: "localhost".into(),
 			proxy: None,
