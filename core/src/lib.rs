@@ -58,10 +58,10 @@
 #[macro_use]
 extern crate log;
 
-pub mod misc;
-pub mod mx;
-pub mod smtp;
-pub mod syntax;
+mod misc;
+mod mx;
+mod smtp;
+mod syntax;
 mod util;
 
 use async_smtp::{smtp::SMTP_PORT, EmailAddress};
