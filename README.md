@@ -127,7 +127,7 @@ Optionally, you can also pass in `from_email` and `hello_name` fields into the J
 **💡 PRO TIP:** To show debug logs when running the binary, run:
 
 ```bash
-RUST_LOG=check-if-email-exists check_if_email_exists [FLAGS] [OPTIONS] [TO_EMAIL]
+RUST_LOG=debug check_if_email_exists [FLAGS] [OPTIONS] [TO_EMAIL]
 ```
 
 ### 4. Usage as a Rust Library
