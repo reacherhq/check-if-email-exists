@@ -20,16 +20,24 @@ use serde::{ser::SerializeMap, Serialize, Serializer};
 use std::io::Error;
 use trust_dns_resolver::{config::*, error::ResolveError, lookup::MxLookup, TokioAsyncResolver};
 
-/// Details about the MX lookup
+/// Details about the MX lookup.
 #[derive(Debug)]
 pub struct MxDetails {
-	/// MX lookup of this DNS
-	pub lookup: MxLookup,
+	/// MX lookup of this DNS.
+	pub lookup: Result<MxLookup, ResolveError>,
+}
+
+impl Default for MxDetails {
+	fn default() -> Self {
+		MxDetails {
+			lookup: Err(ResolveError::from("Skipped")),
+		}
+	}
 }
 
 impl From<MxLookup> for MxDetails {
 	fn from(lookup: MxLookup) -> Self {
-		MxDetails { lookup }
+		MxDetails { lookup: Ok(lookup) }
 	}
 }
 
@@ -38,29 +46,32 @@ impl Serialize for MxDetails {
 	where
 		S: Serializer,
 	{
-		let mut map = serializer.serialize_map(Some(1))?;
-		map.serialize_entry(
-			"records",
-			&self
-				.lookup
-				.iter()
-				.map(|host| host.exchange().to_string())
-				.collect::<Vec<_>>(),
-		)?;
+		let records = self
+			.lookup
+			.as_ref()
+			.map(|lookup| {
+				lookup
+					.iter()
+					.map(|host| host.exchange().to_string())
+					.collect::<Vec<_>>()
+			})
+			.unwrap_or_else(|_| vec![]); // In case of a resolve error, we don't serialize the error.
+
+		let mut map = serializer.serialize_map(Some(2))?;
+		map.serialize_entry("accepts_mail", &!records.is_empty())?;
+		map.serialize_entry("records", &records)?;
 		map.end()
 	}
 }
 
-/// Errors that can happen on MX lookups
+/// Errors that can happen on MX lookups.
 #[derive(Debug, Serialize)]
 #[serde(tag = "type", content = "message")]
 pub enum MxError {
-	/// Skipped checking MX records
-	Skipped,
-	/// Error with IO
+	/// Error with IO.
 	#[serde(serialize_with = "ser_with_display")]
 	IoError(Error),
-	/// Error while resolving MX lookups
+	/// Error while resolving MX lookups.
 	#[serde(serialize_with = "ser_with_display")]
 	ResolveError(ResolveError),
 }
@@ -71,8 +82,8 @@ impl From<ResolveError> for MxError {
 	}
 }
 
-/// Make a MX lookup
-pub async fn get_mx_lookup(syntax: &SyntaxDetails) -> Result<MxDetails, MxError> {
+/// Make a MX lookup.
+pub async fn check_mx(syntax: &SyntaxDetails) -> Result<MxDetails, MxError> {
 	// Construct a new Resolver with default configuration options
 	let resolver =
 		TokioAsyncResolver::tokio(ResolverConfig::default(), ResolverOpts::default()).await?;
@@ -82,6 +93,6 @@ pub async fn get_mx_lookup(syntax: &SyntaxDetails) -> Result<MxDetails, MxError>
 	// in `ResolverOpts` will take effect. FQDN's are generally cheaper queries.
 	match resolver.mx_lookup(syntax.domain.as_ref()).await {
 		Ok(lookup) => Ok(MxDetails::from(lookup)),
-		Err(err) => Err(MxError::ResolveError(err)),
+		Err(err) => Ok(MxDetails { lookup: Err(err) }),
 	}
 }

@@ -11,16 +11,15 @@ main() {
         return
     fi
 
-    cross test --all --target $TARGET
-    cross test --all --target $TARGET --release
-
-    # Run the binary with a $TEST_EMAIL, to test that the tool actually works.
-    # aka some quick e2e test on the binary itself
-    # TODO This only works on osx now, see #11
+    # FIXME This only works on osx now
+    # See https://github.com/amaurymartiny/check-if-email-exists/issues/11
     if [ $TRAVIS_OS_NAME = osx ]; then
-        cross run --target $TARGET $TEST_EMAIL | grep "\"is_deliverable\": true"
-        cross run --target $TARGET --release $TEST_EMAIL | grep "\"is_deliverable\": true"
+        cross test --all --target $TARGET
+        cross test --all --target $TARGET --release
     fi
+
+    cross run --target $TARGET
+    cross run --target $TARGET --release
 }
 
 # we don't run the "test phase" when doing deploys

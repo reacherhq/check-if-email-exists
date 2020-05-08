@@ -34,11 +34,11 @@
 //! - Catch-all address. Is this email address a catch-all address?
 //!
 //! ```rust
-//! use check_if_email_exists::{email_exists, EmailInput};
+//! use check_if_email_exists::{check_email, CheckEmailInput};
 //!
 //! async fn check() {
 //!     // Let's say we want to test the deliverability of someone@gmail.com.
-//!     let mut input = EmailInput::new("someone@gmail.com".into());
+//!     let mut input = CheckEmailInput::new(vec!["someone@gmail.com".into()]);
 //!
 //!     // Optionally, we can also tweak the configuration parameters used in the
 //!     // verification.
@@ -47,10 +47,10 @@
 //!         .hello_name("example.org".into()); // Used in the `EHLO` command
 //!
 //!     // Verify this input, using async/await syntax.
-//!     let result = email_exists(&input).await;
+//!     let result = check_email(&input).await;
 //!
-//!     // `result` is a `SingleEmail` struct containing all information about the
-//!     // email.
+//!     // `result` is a `Vec<CheckEmailOutput>`, where the CheckEmailOutput
+//!     // struct contains all information about one email.
 //!     println!("{:?}", result);
 //! }
 //! ```
@@ -58,147 +58,157 @@
 #[macro_use]
 extern crate log;
 
-pub mod misc;
-pub mod mx;
-pub mod smtp;
-pub mod syntax;
+mod misc;
+mod mx;
+mod smtp;
+mod syntax;
 mod util;
 
 use async_smtp::{smtp::SMTP_PORT, EmailAddress};
-use futures::future::select_ok;
-use misc::{misc_details, MiscDetails, MiscError};
-use mx::{get_mx_lookup, MxDetails, MxError};
-use serde::{ser::SerializeMap, Serialize, Serializer};
-use smtp::{SmtpDetails, SmtpError};
+use futures::future;
+use misc::check_misc;
+use mx::check_mx;
+use smtp::check_smtp;
 use std::str::FromStr;
-use syntax::{address_syntax, SyntaxDetails, SyntaxError};
+use syntax::check_syntax;
+use util::constants::LOG_TARGET;
 
-pub use util::email_input::*;
+pub use util::input_output::*;
 
-/// All details about email address, MX records and SMTP responses
-#[derive(Debug)]
-pub struct SingleEmail {
-	/// Input by the user
-	pub input: String,
-	/// Misc details about the email address
-	pub misc: Result<MiscDetails, MiscError>,
-	/// Details about the MX host
-	pub mx: Result<MxDetails, MxError>,
-	/// Details about the SMTP responses of the email
-	pub smtp: Result<SmtpDetails, SmtpError>, // TODO Better Err type
-	/// Details about the email address
-	pub syntax: Result<SyntaxDetails, SyntaxError>,
-}
-
-// Implement a custom serialize
-impl Serialize for SingleEmail {
-	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-	where
-		S: Serializer,
-	{
-		// This is just used internally to get the nested error field
-		#[derive(Serialize)]
-		struct MyError<E> {
-			error: E,
-		}
-
-		let mut map = serializer.serialize_map(Some(1))?;
-		map.serialize_entry("input", &self.input)?;
-		match &self.misc {
-			Ok(t) => map.serialize_entry("misc", &t)?,
-			Err(error) => map.serialize_entry("misc", &MyError { error })?,
-		}
-		match &self.mx {
-			Ok(t) => map.serialize_entry("mx", &t)?,
-			Err(error) => map.serialize_entry("mx", &MyError { error })?,
-		}
-		match &self.smtp {
-			Ok(t) => map.serialize_entry("smtp", &t)?,
-			Err(error) => map.serialize_entry("smtp", &MyError { error })?,
-		}
-		match &self.syntax {
-			Ok(t) => map.serialize_entry("syntax", &t)?,
-			Err(error) => map.serialize_entry("syntax", &MyError { error })?,
-		}
-		map.end()
-	}
-}
-
-/// The main function: checks email format, checks MX records, and checks SMTP
-/// responses to the email inbox.
-pub async fn email_exists(email_input: &EmailInput) -> SingleEmail {
-	let from_email = EmailAddress::from_str(email_input.from_email.as_ref()).unwrap_or_else(|_| {
+/// Check a single emails. This assumes this `input.check_email` contains
+/// exactly one element. If it contains more, elements other than the first
+/// one will be ignored.
+///
+/// # Panics
+///
+/// This function panics if `input.check_email` is empty.
+async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
+	let from_email = EmailAddress::from_str(input.from_email.as_ref()).unwrap_or_else(|_| {
 		warn!(
 			"Inputted from_email \"{}\" is not a valid email, using \"user@example.org\" instead",
-			email_input.from_email
+			input.from_email
 		);
 		EmailAddress::from_str("user@example.org").expect("This is a valid email. qed.")
 	});
 
-	debug!("Checking email \"{}\"", email_input.to_email);
-	let my_syntax = match address_syntax(email_input.to_email.as_ref()) {
-		Ok(s) => s,
-		e => {
-			return SingleEmail {
-				input: email_input.to_email.to_string(),
-				misc: Err(MiscError::Skipped),
-				mx: Err(MxError::Skipped),
-				smtp: Err(SmtpError::Skipped),
-				syntax: e,
-			}
-		}
-	};
-	debug!("Found the following syntax validation: {:?}", my_syntax);
+	let to_email = &input.to_emails[0];
 
-	let my_mx = match get_mx_lookup(&my_syntax).await {
+	debug!(target: LOG_TARGET, "Checking email \"{}\"", to_email);
+	let my_syntax = check_syntax(to_email.as_ref());
+	if !my_syntax.is_valid_syntax {
+		return CheckEmailOutput {
+			input: to_email.to_string(),
+			syntax: my_syntax,
+			..Default::default()
+		};
+	}
+
+	debug!(
+		target: LOG_TARGET,
+		"Found the following syntax validation: {:?}", my_syntax
+	);
+
+	let my_mx = match check_mx(&my_syntax).await {
 		Ok(m) => m,
 		e => {
-			return SingleEmail {
-				input: email_input.to_email.to_string(),
-				misc: Err(MiscError::Skipped),
+			return CheckEmailOutput {
+				input: to_email.to_string(),
 				mx: e,
-				smtp: Err(SmtpError::Skipped),
-				syntax: Ok(my_syntax),
+				syntax: my_syntax,
+				..Default::default()
 			}
 		}
 	};
-	debug!("Found the following MX hosts {:?}", my_mx);
+	debug!(
+		target: LOG_TARGET,
+		"Found the following MX hosts {:?}", my_mx
+	);
 
-	let my_misc = misc_details(&my_syntax);
-	debug!("Found the following misc details: {:?}", my_misc);
+	// Return if we didn't find any MX records.
+	if my_mx.lookup.is_err() {
+		return CheckEmailOutput {
+			input: to_email.to_string(),
+			mx: Ok(my_mx),
+			syntax: my_syntax,
+			..Default::default()
+		};
+	}
 
-	// Create one future per lookup result
+	let my_misc = check_misc(
+		&my_syntax
+			.address
+			.as_ref()
+			.expect("We already checked that the email has valid format. qed.")
+			.as_ref(),
+	);
+	debug!(
+		target: LOG_TARGET,
+		"Found the following misc details: {:?}", my_misc
+	);
+
+	// Create one future per lookup result.
 	let futures = my_mx
 		.lookup
-		.iter()
-		.map(|host| {
-			let fut = smtp::smtp_details(
-				&from_email,
-				&my_syntax.address,
-				host.exchange(),
-				// We could add ports 465 and 587 too
-				SMTP_PORT,
-				my_syntax.domain.as_str(),
-				email_input.hello_name.as_ref(),
-				&email_input.proxy,
-			);
+		.as_ref()
+		.map(|lookup| {
+			lookup
+				.iter()
+				.map(|host| {
+					let fut = check_smtp(
+						my_syntax
+							.address
+							.as_ref()
+							.expect("We already checked that the email has valid format. qed."),
+						&from_email,
+						host.exchange(),
+						// FIXME We could add ports 465 and 587 too.
+						SMTP_PORT,
+						my_syntax.domain.as_ref(),
+						input.hello_name.as_ref(),
+						&input.proxy,
+					);
 
-			// https://rust-lang.github.io/async-book/04_pinning/01_chapter.html
-			Box::pin(fut)
+					// https://rust-lang.github.io/async-book/04_pinning/01_chapter.html
+					Box::pin(fut)
+				})
+				.collect::<Vec<_>>()
 		})
-		.collect::<Vec<_>>();
+		.expect("If lookup is empty, we already returned. qed.");
 
-	// Race, return the first future that resolves
-	let my_smtp = match select_ok(futures).await {
+	// Race, return the first future that resolves.
+	let my_smtp = match future::select_ok(futures).await {
 		Ok((details, _)) => Ok(details),
 		Err(err) => Err(err),
 	};
 
-	SingleEmail {
-		input: email_input.to_email.to_string(),
+	CheckEmailOutput {
+		input: to_email.to_string(),
 		misc: Ok(my_misc),
 		mx: Ok(my_mx),
 		smtp: my_smtp,
-		syntax: Ok(my_syntax),
+		syntax: my_syntax,
 	}
+}
+
+/// The main function of this library: takes as input a list of email addresses
+/// to check. Then performs syntax, mx, smtp and misc checks, and outputs a
+/// list of results.
+pub async fn check_email(inputs: &CheckEmailInput) -> Vec<CheckEmailOutput> {
+	// FIXME Obviously, the below `join_all` is not optimal. Some optimizations
+	// include:
+	// - if multiple email addresses share the same domain, we should only do
+	// `check_mx` call for all these email addresses.
+	// - if multiple email addresses share the same domain, we should call
+	// `check_smtp` with grouped email addresses, to share a SMTP connection.
+	// Also see https://github.com/amaurymartiny/check-if-email-exists/issues/65.
+	let inputs = inputs.to_emails.iter().map(|email| {
+		// Create n `CheckEmailInput`s, each with one email address.
+		CheckEmailInput {
+			to_emails: vec![email.clone()],
+			from_email: inputs.from_email.clone(),
+			hello_name: inputs.hello_name.clone(),
+			proxy: inputs.proxy.clone(),
+		}
+	});
+	future::join_all(inputs.map(check_single_email)).await
 }

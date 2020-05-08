@@ -1,0 +1,18 @@
+{
+	"input": "foo@bar",
+	"misc": { "is_disposable": false },
+	"mx": { "accepts_mail": false, "records": [] },
+	"smtp": {
+		"can_connect_smtp": false,
+		"has_full_inbox": false,
+		"is_catch_all": false,
+		"is_deliverable": false,
+		"is_disabled": false
+	},
+	"syntax": {
+		"address": null,
+		"domain": "",
+		"is_valid_syntax": false,
+		"username": ""
+	}
+}

@@ -14,30 +14,36 @@
 // You should have received a copy of the GNU General Public License
 // along with check-if-email-exists.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::syntax::SyntaxDetails;
 use serde::Serialize;
 
-/// Details that we gathered from connecting to this email via SMTP
+/// Details that we gathered from connecting to this email via SMTP.
 #[derive(Debug, Serialize)]
 pub struct MiscDetails {
 	/// Is this a DEA (disposable email account)?
 	pub is_disposable: bool,
 }
 
-/// Error occured connecting to this email server via SMTP
-#[derive(Debug, Serialize)]
-#[serde(tag = "type", content = "message")]
-pub enum MiscError {
-	/// Skipped checking SMTP details
-	Skipped,
+impl Default for MiscDetails {
+	fn default() -> Self {
+		MiscDetails {
+			is_disposable: false,
+		}
+	}
 }
 
-/// Fetch misc details about the email address, such as whether it's disposable
-pub fn misc_details(syntax: &SyntaxDetails) -> MiscDetails {
+/// Error occured connecting to this email server via SMTP. Right now this
+/// enum has no variant, as `check_misc` cannot fail. But putting a placeholder
+/// right now to avoid future breaking changes.
+#[derive(Debug, Serialize)]
+#[serde(tag = "type", content = "message")]
+pub enum MiscError {}
+
+/// Fetch misc details about the email address, such as whether it's disposable.
+pub fn check_misc(address: &str) -> MiscDetails {
 	MiscDetails {
 		// mailchecker::is_valid checks also if the syntax is valid. But if
 		// we're here, it means we're sure the syntax is valid, so is_valid
-		// actually will only check the disposable email Misc.
-		is_disposable: !mailchecker::is_valid(syntax.address.to_string().as_ref()),
+		// actually will only check if it's disposable.
+		is_disposable: !mailchecker::is_valid(address),
 	}
 }

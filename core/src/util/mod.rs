@@ -14,5 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with check-if-email-exists.  If not, see <http://www.gnu.org/licenses/>.
 
-pub mod email_input;
+pub mod constants;
+pub mod input_output;
 pub mod ser_with_display;

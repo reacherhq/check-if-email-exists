@@ -1,6 +1,6 @@
 # Based on https://github.com/actions-rs/meta/blob/master/recipes/quickstart.md
 
-name: pr
+name: CI
 
 on: [pull_request]
 
@@ -24,7 +24,11 @@ jobs:
           command: check
 
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+
     steps:
       - name: Checkout sources
         uses: actions/checkout@v1
@@ -41,21 +45,6 @@ jobs:
         with:
           command: test
           args: --all
-
-  e2e:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
-
-    steps:
-      - uses: hecrj/setup-rust-action@v1
-
-      - name: Checkout sources
-        uses: actions/checkout@v1
-
-      - name: Run tests
-        run: cargo run -- someone@gmail.com | grep "is_deliverable" # If `is_deliverable` shows up, it means that the SMTP checks happened
 
   lints:
     runs-on: ubuntu-latest
