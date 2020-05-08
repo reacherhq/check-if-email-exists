@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with check-if-email-exists.  If not, see <http://www.gnu.org/licenses/>.
 
-use check_if_email_exists::{check_emails, CheckEmailInput};
+use check_if_email_exists::{check_email, CheckEmailInput};
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Method, Request, Response, Server, StatusCode};
 use serde::{Deserialize, Serialize};
@@ -60,7 +60,7 @@ async fn req_handler(req: Request<Body>) -> Result<Response<Body>, hyper::Error>
 			let mut input = CheckEmailInput::new(body.to_email);
 			input.from_email(body.from_email.unwrap_or_else(|| "user@example.org".into())).hello_name(body.hello_name.unwrap_or_else(|| "localhost".into()));
 
-			let body = check_emails(&input).await;
+			let body = check_email(&input).await;
 			let body = match serde_json::to_string(&body) {
 				Ok(b) => b,
 				Err(err) => {

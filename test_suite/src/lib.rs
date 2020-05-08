@@ -18,7 +18,7 @@
 
 #[cfg(test)]
 mod tests {
-	use check_if_email_exists::{check_emails, CheckEmailInput};
+	use check_if_email_exists::{check_email, CheckEmailInput};
 	use serde_json;
 	use std::fs;
 	use tokio::runtime::Runtime;
@@ -29,7 +29,7 @@ mod tests {
 		let paths = fs::read_dir(folder).unwrap();
 
 		// For every fixture file, we compare:
-		// - the result of `check_emails` with the email in the filename
+		// - the result of `check_email` with the email in the filename
 		// - the contents of the file
 		for path in paths {
 			let path = path.unwrap().path();
@@ -43,10 +43,10 @@ mod tests {
 
 			println!("Check {}", filename);
 			let input = CheckEmailInput::new(vec![filename.into()]);
-			let result = runtime.block_on(check_emails(&input));
+			let result = runtime.block_on(check_email(&input));
 			let actual = serde_json::to_value(&result[0]).unwrap();
 
-			// Uncomment to see the JSON result of `check_emails`.
+			// Uncomment to see the JSON result of `check_email`.
 			// println!("{}", actual);
 
 			// For the input,misc,smtp,syntax fields, we match exact JSON.

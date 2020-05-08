@@ -34,7 +34,7 @@
 //! - Catch-all address. Is this email address a catch-all address?
 //!
 //! ```rust
-//! use check_if_email_exists::{check_emails, CheckEmailInput};
+//! use check_if_email_exists::{check_email, CheckEmailInput};
 //!
 //! async fn check() {
 //!     // Let's say we want to test the deliverability of someone@gmail.com.
@@ -47,7 +47,7 @@
 //!         .hello_name("example.org".into()); // Used in the `EHLO` command
 //!
 //!     // Verify this input, using async/await syntax.
-//!     let result = check_emails(&input).await;
+//!     let result = check_email(&input).await;
 //!
 //!     // `result` is a `Vec<CheckEmailOutput>`, where the CheckEmailOutput
 //!     // struct contains all information about one email.
@@ -75,13 +75,13 @@ use util::constants::LOG_TARGET;
 
 pub use util::input_output::*;
 
-/// Check a single emails. This assumes this `input.check_emails` contains
+/// Check a single emails. This assumes this `input.check_email` contains
 /// exactly one element. If it contains more, elements other than the first
 /// one will be ignored.
 ///
 /// # Panics
 ///
-/// This function panics if `input.check_emails` is empty.
+/// This function panics if `input.check_email` is empty.
 async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 	let from_email = EmailAddress::from_str(input.from_email.as_ref()).unwrap_or_else(|_| {
 		warn!(
@@ -193,7 +193,7 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 /// The main function of this library: takes as input a list of email addresses
 /// to check. Then performs syntax, mx, smtp and misc checks, and outputs a
 /// list of results.
-pub async fn check_emails(inputs: &CheckEmailInput) -> Vec<CheckEmailOutput> {
+pub async fn check_email(inputs: &CheckEmailInput) -> Vec<CheckEmailOutput> {
 	// FIXME Obviously, the below `join_all` is not optimal. Some optimizations
 	// include:
 	// - if multiple email addresses share the same domain, we should only do
