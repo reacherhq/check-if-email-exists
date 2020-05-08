@@ -2,6 +2,52 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.8.0](https://github.com/amaurymartiny/check_if_email_exists/compare/v0.7.1...v0.8.0) (2020-05-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* This new version includes an overhaul of the codebase, mainly to prepare the groundwork for the upcoming work on bulk validation. These changes include:
+
+- The main function `email_exists` has been renamed to `check_email`:
+
+```diff
+- email_exists(&input).await;
++ check_email(&input).await;
+```
+
+- The input `EmailInput` has been renamed to `CheckEmailInput`. Its `::new()` method, instead of taking a single `String`, now takes `Vec<String>`.
+
+- The output `SingleEmail` has been renamed to `CheckEmailOutput`. The main function `check_emails` now returns a `Vec<CheckEmailOutput>`.
+
+```rust
+pub async fn check_email(inputs: &CheckEmailInput) -> Vec<CheckEmailOutput>
+```
+
+- The `syntax` field in `CheckEmailOutput` is no longer a `Result<SyntaxDetails, SyntaxError>`, but only `SyntaxDetails`. Error cases are guaranteed not to happen for syntax validation.
+
+- The `misc`, `mx`, and `smtp` fields' signatures stay the same: `Result<{Misc,Mx,Smtp}Details, {Misc,Mx,Smtp}Error>`. However, the `Result` is an `Err` only when an internal error arrives. In case of errors due to user input (e.g. incorrect email inputted), the `Default` trait has been implemented on `{Misc,Mx,Smtp}Details` and will be returned. As such, the `Skipped` variant of error enums has been removed.
+
+```diff
+{
+  "input": "foo@bar.baz",
+  "mx": {
+-    "error": { "cannot resolve" }
++    "accepts_mail": false, // This is Default
++    "records": [] // This is Default
+  }
+```
+
+- The `misc`, `mx`, `smtp`, `syntax` modules have been made private.
+* The field `syntax.valid_format` has been renamed to `syntax.is_valid_syntax`.
+
+### Bug Fixes
+
+* Rename valid_format to is_valid_syntax ([#288](https://github.com/amaurymartiny/check_if_email_exists/issues/288)) ([eae6482](https://github.com/amaurymartiny/check_if_email_exists/commit/eae64821c31d0193f77d9137ec4e7d6131f91ccb))
+
+
+* Rename main function to `check_email` ([#319](https://github.com/amaurymartiny/check_if_email_exists/issues/319)) ([bd12b7d](https://github.com/amaurymartiny/check_if_email_exists/commit/bd12b7dbbd6c090fcdf80e3d6bbe475cd1d82b9a))
+
 ### [0.7.1](https://github.com/amaurymartiny/check_if_email_exists/compare/v0.7.0...v0.7.1) (2020-04-14)
 
 
