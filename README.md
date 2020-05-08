@@ -18,21 +18,22 @@ This software is licensed under the GPL-3.0 license, which forbids it being inte
 
 ## What Does This Tool Check?
 
-| Included? | Feature                                       | Description                                                                                                                     | JSON field                                                                    |
-| --------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| ✅        | **Email deliverability**                      | Is an email sent to this address deliverable?                                                                                   | `smtp.is_deliverable`                                                         |
-| ✅        | **Syntax validation**                         | Is the address syntactically valid?                                                                                             | `syntax.is_valid_syntax`                                                      |
-| ✅        | **DNS records validation**                    | Does the domain of the email address have valid MX DNS records?                                                                 | `mx.records`                                                                  |
-| ✅        | **Disposable email address (DEA) validation** | Is the address provided by a known [disposable email address](https://en.wikipedia.org/wiki/Disposable_email_address) provider? | `misc.is_disposable`                                                          |
-| ✅        | **SMTP server validation**                    | Can the mail exchanger of the email address domain be contacted successfully?                                                   | `smtp.*`                                                                      |
-| ✅        | **Mailbox disabled**                          | Has this email address been disabled by the email provider?                                                                     | `smtp.is_disabled`                                                            |
-| ✅        | **Full inbox**                                | Is the inbox of this mailbox full?                                                                                              | `smtp.has_full_inbox`                                                         |
-| ✅        | **Catch-all address**                         | Is this email address a [catch-all](https://debounce.io/blog/help/what-is-a-catch-all-or-accept-all/) address?                  | `smtp.is_catch_all`                                                           |
-| 🔜        | **Role account validation**                   | Is the email address a well-known role account?                                                                                 | [Issue #88](https://github.com/amaurymartiny/check-if-email-exists/issues/88) |
-| 🔜        | **Free email provider check**                 | Is the email address bound to a known free email provider?                                                                      | [Issue #89](https://github.com/amaurymartiny/check-if-email-exists/issues/89) |
-| 🔜        | **Syntax validation, provider-specific**      | According to the syntactic rules of the target mail provider, is the address syntactically valid?                               | [Issue #90](https://github.com/amaurymartiny/check-if-email-exists/issues/90) |
-| 🔜        | **Honeypot detection**                        | Does email address under test hide a [honeypot](https://en.wikipedia.org/wiki/Spamtrap)?                                        | [Issue #91](https://github.com/amaurymartiny/check-if-email-exists/issues/91) |
-| 🔜        | **Gravatar**                                  | Does this email address have a [Gravatar](https://gravatar.com/) profile picture?                                               | [Issue #92](https://github.com/amaurymartiny/check-if-email-exists/issues/92) |
+| Included? | Feature                                       | Description                                                                                                                     | JSON field                                                                      |
+| --------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| ✅        | **Email deliverability**                      | Is an email sent to this address deliverable?                                                                                   | `smtp.is_deliverable`                                                           |
+| ✅        | **Syntax validation**                         | Is the address syntactically valid?                                                                                             | `syntax.is_valid_syntax`                                                        |
+| ✅        | **DNS records validation**                    | Does the domain of the email address have valid MX DNS records?                                                                 | `mx.accepts_mail`                                                               |
+| ✅        | **Disposable email address (DEA) validation** | Is the address provided by a known [disposable email address](https://en.wikipedia.org/wiki/Disposable_email_address) provider? | `misc.is_disposable`                                                            |
+| ✅        | **SMTP server validation**                    | Can the mail exchanger of the email address domain be contacted successfully?                                                   | `smtp.can_connect_smtp`                                                         |
+| ✅        | **Mailbox disabled**                          | Has this email address been disabled by the email provider?                                                                     | `smtp.is_disabled`                                                              |
+| ✅        | **Full inbox**                                | Is the inbox of this mailbox full?                                                                                              | `smtp.has_full_inbox`                                                           |
+| ✅        | **Catch-all address**                         | Is this email address a [catch-all](https://debounce.io/blog/help/what-is-a-catch-all-or-accept-all/) address?                  | `smtp.is_catch_all`                                                             |
+| 🔜        | **Role account validation**                   | Is the email address a well-known role account?                                                                                 | [Issue #88](https://github.com/amaurymartiny/check-if-email-exists/issues/88)   |
+| 🔜        | **Free email provider check**                 | Is the email address bound to a known free email provider?                                                                      | [Issue #89](https://github.com/amaurymartiny/check-if-email-exists/issues/89)   |
+| 🔜        | **Syntax validation, provider-specific**      | According to the syntactic rules of the target mail provider, is the address syntactically valid?                               | [Issue #90](https://github.com/amaurymartiny/check-if-email-exists/issues/90)   |
+| 🔜        | **Honeypot detection**                        | Does email address under test hide a [honeypot](https://en.wikipedia.org/wiki/Spamtrap)?                                        | [Issue #91](https://github.com/amaurymartiny/check-if-email-exists/issues/91)   |
+| 🔜        | **Gravatar**                                  | Does this email address have a [Gravatar](https://gravatar.com/) profile picture?                                               | [Issue #92](https://github.com/amaurymartiny/check-if-email-exists/issues/92)   |
+| 🔜        | **Have I Been Pwned?**                        | Has this email been compromised in a [data breach](https://haveibeenpwned.com/)?                                                | [Issue #289](https://github.com/amaurymartiny/check-if-email-exists/issues/289) |
 
 ## 🤔 Why?
 
@@ -82,7 +83,7 @@ Head to the [releases page](https://github.com/amaurymartiny/check-if-email-exis
 
 ```
 > $ check_if_email_exists --help
-check_if_email_exists 0.7.1
+check_if_email_exists 0.8.0
 Check if an email address exists without sending any email.
 
 USAGE:
@@ -136,29 +137,29 @@ In your own Rust project, you can add `check-if-email-exists` in your `Cargo.tom
 
 ```toml
 [dependencies]
-check-if-email-exists = "0.7"
+check-if-email-exists = "0.8"
 ```
 
 And use it in your code as follows:
 
 ```rust
-use check_if_email_exists::{email_exists, EmailInput};
+use check_if_email_exists::{check_email, CheckEmailInput};
 
 async fn check() {
     // Let's say we want to test the deliverability of someone@gmail.com.
-    let mut input = EmailInput::new("someone@gmail.com".into());
+    let mut input = CheckEmailInput::new(vec!["someone@gmail.com".into()]);
 
     // Optionally, we can also tweak the configuration parameters used in the
     // verification.
     input
-    	.from_email("me@example.org".into()) // Used in the `MAIL FROM:` command
-    	.hello_name("example.org".into()); // Used in the `EHLO` command
+        .from_email("me@example.org".into()) // Used in the `MAIL FROM:` command
+        .hello_name("example.org".into()); // Used in the `EHLO` command
 
     // Verify this input, using async/await syntax.
-    let result = email_exists(&input).await;
+    let result = check_email(&input).await;
 
-    // `result` is a `SingleEmail` struct containing all information about the
-    // email.
+    // `result` is a `Vec<CheckEmailOutput>`, where the CheckEmailOutput
+    // struct contains all information about our email.
     println!("{:?}", result);
 }
 ```
