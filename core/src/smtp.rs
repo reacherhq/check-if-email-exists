@@ -190,8 +190,12 @@ async fn email_deliverable(
 			let err_string = err.to_string().to_lowercase();
 
 			// Check if the email account has been disabled or blocked.
-			// e.g. "The email account that you tried to reach is disabled. Learn more at https://support.google.com/mail/?p=DisabledUser"
-			if err_string.contains("disabled") || err_string.contains("blocked") {
+			// 554 The email account that you tried to reach is disabled. Learn more at https://support.google.com/mail/?p=DisabledUser"
+			if err_string.contains("disabled")
+				|| err_string.contains("blocked")
+				// 554 delivery error: Sorry your message to [email] cannot be delivered. This account has been disabled or discontinued
+				|| err_string.contains("discontinued")
+			{
 				return Ok(Deliverability {
 					has_full_inbox: false,
 					is_deliverable: false,
@@ -204,6 +208,8 @@ async fn email_deliverable(
 				|| err_string.contains("insufficient")
 				|| err_string.contains("over quota")
 				|| err_string.contains("space")
+				// 550 user has too many messages on the server
+				|| err_string.contains("too many messages")
 			{
 				return Ok(Deliverability {
 					has_full_inbox: true,
@@ -213,17 +219,45 @@ async fn email_deliverable(
 			}
 
 			// These are the possible error messages when email account doesn't exist.
+			// 550 Address rejected
+			// 550 5.1.1 : Recipient address rejected
+			// 550 5.1.1 : Recipient address rejected: User unknown in virtual alias table
+			// 550 5.1.1 <user@domain.com>: Recipient address rejected: User unknown in relay recipient table
 			if err_string.contains("address rejected")
+				// 550 5.1.1 : Unrouteable address
+				|| err_string.contains("unrouteable")
+				// 550 5.1.1 : The email account that you tried to reach does not exist
 				|| err_string.contains("does not exist")
+				// 550 invalid address
+				// 550 User not local or invalid address – Relay denied
 				|| err_string.contains("invalid address")
+				// 550 Invalid recipient
+				|| err_string.contains("invalid recipient")
 				|| err_string.contains("may not exist")
-				|| err_string.contains("no mailbox")
 				|| err_string.contains("recipient invalid")
+				// 550 5.1.1 : Recipient rejected
 				|| err_string.contains("recipient rejected")
 				|| err_string.contains("undeliverable")
+				// 550 User unknown
+				// 550 5.1.1 <EMAIL> User unknown
+				// 550 recipient address rejected: user unknown in local recipient table
 				|| err_string.contains("user unknown")
-				|| err_string.contains("user not found")
+				// 550 5.1.1 : Mailbox not found
+				// 550 Unknown address error ‘MAILBOX NOT FOUND’
+				|| err_string.contains("not found")
+				// 550 5.1.1 No such user - pp
+				// 550 No such user here
 				|| err_string.contains("no such user")
+				// 550 5.1.1 : Invalid mailbox
+				|| err_string.contains("invalid mailbox")
+				// 550 5.1.1 Sorry, no mailbox here by that name
+				|| err_string.contains("no mailbox")
+				// 550 Requested action not taken: mailbox unavailable
+				|| err_string.contains("mailbox unavailable")
+				// 550 5.1.1 Is not a valid mailbox
+				|| err_string.contains("not a valid mailbox")
+				// 554 delivery error: This user doesn’t have an account
+				|| err_string.contains("have an account")
 			{
 				return Ok(Deliverability {
 					has_full_inbox: false,
