@@ -177,6 +177,7 @@ The output will be a JSON with the below format, the fields should be self-expla
 		"is_disposable": false
 	},
 	"mx": {
+		"accepts_mail": true,
 		"records": [
 			"alt3.gmail-smtp-in.l.google.com.",
 			"gmail-smtp-in.l.google.com.",
@@ -186,13 +187,13 @@ The output will be a JSON with the below format, the fields should be self-expla
 		]
 	},
 	"smtp": {
+		"can_connect_smtp": true,
 		"has_full_inbox": false,
 		"is_catch_all": false,
 		"is_deliverable": false,
 		"is_disabled": true
 	},
 	"syntax": {
-		"address": "someone@gmail.com",
 		"domain": "gmail.com",
 		"is_valid_syntax": true,
 		"username": "someone"

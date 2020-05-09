@@ -185,9 +185,9 @@ async fn email_deliverable(
 			))),
 		},
 		Err(err) => {
-			let err_string = err.to_string();
-			// Don't return an error if the error contains anything about the
-			// address being undeliverable.
+			// We cast to lowercase, because our matched strings below are all
+			// lowercase.
+			let err_string = err.to_string().to_lowercase();
 
 			// Check if the email account has been disabled or blocked.
 			// e.g. "The email account that you tried to reach is disabled. Learn more at https://support.google.com/mail/?p=DisabledUser"
@@ -223,6 +223,7 @@ async fn email_deliverable(
 				|| err_string.contains("undeliverable")
 				|| err_string.contains("user unknown")
 				|| err_string.contains("user not found")
+				|| err_string.contains("no such user")
 			{
 				return Ok(Deliverability {
 					has_full_inbox: false,
