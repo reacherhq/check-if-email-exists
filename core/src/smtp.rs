@@ -242,12 +242,14 @@ async fn email_deliverable(
 				// 550 5.1.1 <EMAIL> User unknown
 				// 550 recipient address rejected: user unknown in local recipient table
 				|| err_string.contains("user unknown")
-				// 550 5.1.1 : Mailbox not found
-				// 550 Unknown address error ‘MAILBOX NOT FOUND’
-				|| err_string.contains("not found")
+				// 550 Unknown user
+				|| err_string.contains("unknown user")
 				// 550 5.1.1 No such user - pp
 				// 550 No such user here
 				|| err_string.contains("no such user")
+				// 550 5.1.1 : Mailbox not found
+				// 550 Unknown address error ‘MAILBOX NOT FOUND’
+				|| err_string.contains("not found")
 				// 550 5.1.1 : Invalid mailbox
 				|| err_string.contains("invalid mailbox")
 				// 550 5.1.1 Sorry, no mailbox here by that name
