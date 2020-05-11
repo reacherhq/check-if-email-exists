@@ -1,6 +1,6 @@
 [![Crate](https://img.shields.io/crates/v/check-if-email-exists.svg)](https://crates.io/crates/check-if-email-exists)
 [![Docs](https://docs.rs/check-if-email-exists/badge.svg)](https://docs.rs/check-if-email-exists)
-[![Actions Status](https://github.com/amaurymartiny/check-if-email-exists/workflows/pr/badge.svg)](https://github.com/amaurymartiny/check-if-email-exists/actions)
+[![Actions Status](https://github.com/amaurymartiny/check-if-email-exists/workflows/CI/badge.svg)](https://github.com/amaurymartiny/check-if-email-exists/actions)
 [![Travis](https://img.shields.io/travis/amaurymartiny/check-if-email-exists.svg)](https://travis-ci.org/amaurymartiny/check-if-email-exists)
 [![Appveyor](https://ci.appveyor.com/api/projects/status/github/amaurymartiny/check-if-email-exists?branch=master&svg=true)](https://ci.appveyor.com/project/amaurymartiny/check-if-email-exists-a08kp)
 ![License](https://img.shields.io/github/license/amaurymartiny/check-if-email-exists.svg)
@@ -12,7 +12,7 @@
 
 <br /><br /><br />
 
-#### 👉 Try it here: https://reacherhq.github.io
+#### 👉 Try it here: https://reacher.email
 
 This software is licensed under the GPL-3.0 license, which forbids it being integrated and distributed in closed-source commercials projects. [Message me](mailto:amaury.martiny@protonmail.com) if you wish an alternate licensing.
 
@@ -43,9 +43,9 @@ Many online services (https://hunter.io, http://verify-email.org, http://email-c
 
 There are 4 ways you can try `check-if-email-exists`.
 
-### 1. Use the Hosted Version: http://reacherhq.github.io
+### 1. Use the Hosted Version: http://reacher.email
 
-I created a simple static site with this tool: http://reacherhq.github.io. The check-if-email-exists is hosted on [fly.io](https://fly.io). The check-if-email-exists endpoint is rate-limited to prevent abuse. Also see [issue #155](https://github.com/amaurymartiny/check-if-email-exists/issues/155).
+I created a simple static site with this tool: http://reacher.email. The backend is hosted on [fly.io](https://fly.io), the free tier endpoint is rate-limited to prevent abuse. Also see [issue #155](https://github.com/amaurymartiny/check-if-email-exists/issues/155).
 
 If you would like to self-host it yourself and have questions, send me a message.
 
@@ -77,7 +77,7 @@ Optionally, you can also pass in `from_email` and `hello_name` fields into the J
 
 ### 3. Download the Binary
 
-> Note: The binary doesn't connect to any check-if-email-exists, it checks the email directly from your computer.
+> Note: The binary doesn't connect to any backend, it checks the email directly from your computer.
 
 Head to the [releases page](https://github.com/amaurymartiny/check-if-email-exists/releases) and download the binary for your platform. Make sure you have [`openssl`](https://www.openssl.org/) installed on your local machine.
 
