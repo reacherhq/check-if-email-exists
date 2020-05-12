@@ -134,13 +134,7 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 		};
 	}
 
-	let my_misc = check_misc(
-		&my_syntax
-			.address
-			.as_ref()
-			.expect("We already checked that the email has valid format. qed.")
-			.as_ref(),
-	);
+	let my_misc = check_misc(&my_syntax);
 	debug!(
 		target: LOG_TARGET,
 		"Found the following misc details: {:?}", my_misc

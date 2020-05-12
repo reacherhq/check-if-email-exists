@@ -192,7 +192,6 @@ async fn email_deliverable(
 			// Check if the email account has been disabled or blocked.
 			// 554 The email account that you tried to reach is disabled. Learn more at https://support.google.com/mail/?p=DisabledUser"
 			if err_string.contains("disabled")
-				|| err_string.contains("blocked")
 				// 554 delivery error: Sorry your message to [email] cannot be delivered. This account has been disabled or discontinued
 				|| err_string.contains("discontinued")
 			{

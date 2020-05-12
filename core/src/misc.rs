@@ -14,19 +14,25 @@
 // You should have received a copy of the GNU General Public License
 // along with check-if-email-exists.  If not, see <http://www.gnu.org/licenses/>.
 
+use super::syntax::SyntaxDetails;
 use serde::Serialize;
 
-/// Details that we gathered from connecting to this email via SMTP.
+const ROLE_ACCOUNTS: &str = include_str!("./util/roles.json");
+
+/// Miscelleanous details about the email address.
 #[derive(Debug, Serialize)]
 pub struct MiscDetails {
 	/// Is this a DEA (disposable email account)?
 	pub is_disposable: bool,
+	/// Is this email a role-based account?
+	pub is_role_account: bool,
 }
 
 impl Default for MiscDetails {
 	fn default() -> Self {
 		MiscDetails {
 			is_disposable: false,
+			is_role_account: false,
 		}
 	}
 }
@@ -39,11 +45,22 @@ impl Default for MiscDetails {
 pub enum MiscError {}
 
 /// Fetch misc details about the email address, such as whether it's disposable.
-pub fn check_misc(address: &str) -> MiscDetails {
+pub fn check_misc(syntax: &SyntaxDetails) -> MiscDetails {
+	let role_accounts: Vec<&str> =
+		serde_json::from_str(ROLE_ACCOUNTS).expect("roles.json is a valid json. qed.");
+
 	MiscDetails {
 		// mailchecker::is_valid checks also if the syntax is valid. But if
 		// we're here, it means we're sure the syntax is valid, so is_valid
 		// actually will only check if it's disposable.
-		is_disposable: !mailchecker::is_valid(address),
+		is_disposable: !mailchecker::is_valid(
+			syntax
+				.address
+				.as_ref()
+				.expect("We already checked that the syntax was valid. qed.")
+				.to_string()
+				.as_ref(),
+		),
+		is_role_account: role_accounts.contains(&syntax.username.to_lowercase().as_ref()),
 	}
 }

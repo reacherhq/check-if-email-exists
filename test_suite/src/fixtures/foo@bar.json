@@ -1,6 +1,6 @@
 {
 	"input": "foo@bar",
-	"misc": { "is_disposable": false },
+	"misc": { "is_disposable": false, "is_role_account": false },
 	"mx": { "accepts_mail": false, "records": [] },
 	"smtp": {
 		"can_connect_smtp": false,
