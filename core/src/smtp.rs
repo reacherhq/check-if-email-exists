@@ -88,7 +88,7 @@ impl From<SocksError> for SmtpError {
 macro_rules! try_smtp (
     ($res: expr, $client: ident, $host: expr, $port: expr) => ({
 		if let Err(err) = $res {
-			debug!(target: LOG_TARGET, "Closing {}:{}, because of error '{}'.", $host, $port, err);
+			log::debug!(target: LOG_TARGET, "Closing {}:{}, because of error '{}'.", $host, $port, err);
 			$client.close().await?;
 
 			return Err(err.into());
@@ -112,7 +112,7 @@ async fn connect_to_host(
 			.into_transport();
 
 	// Connect to the host. If the proxy argument is set, use it.
-	debug!(target: LOG_TARGET, "Connecting to {}:{}", host, port);
+	log::debug!(target: LOG_TARGET, "Connecting to {}:{}", host, port);
 	if let Some(proxy) = proxy {
 		let stream = Socks5Stream::connect(
 			(proxy.host.as_ref(), proxy.port),

@@ -55,9 +55,6 @@
 //! }
 //! ```
 
-#[macro_use]
-extern crate log;
-
 mod misc;
 mod mx;
 mod smtp;
@@ -102,7 +99,7 @@ fn calculate_reachable(misc: &MiscDetails, smtp: &Result<SmtpDetails, SmtpError>
 /// This function panics if `input.check_email` is empty.
 async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 	let from_email = EmailAddress::from_str(input.from_email.as_ref()).unwrap_or_else(|_| {
-		warn!(
+		log::warn!(
 			"Inputted from_email \"{}\" is not a valid email, using \"user@example.org\" instead",
 			input.from_email
 		);
@@ -111,7 +108,7 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 
 	let to_email = &input.to_emails[0];
 
-	debug!(target: LOG_TARGET, "Checking email \"{}\"", to_email);
+	log::debug!(target: LOG_TARGET, "Checking email \"{}\"", to_email);
 	let my_syntax = check_syntax(to_email.as_ref());
 	if !my_syntax.is_valid_syntax {
 		return CheckEmailOutput {
@@ -121,9 +118,10 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 		};
 	}
 
-	debug!(
+	log::debug!(
 		target: LOG_TARGET,
-		"Found the following syntax validation: {:?}", my_syntax
+		"Found the following syntax validation: {:?}",
+		my_syntax
 	);
 
 	let my_mx = match check_mx(&my_syntax).await {
@@ -140,9 +138,10 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 			};
 		}
 	};
-	debug!(
+	log::debug!(
 		target: LOG_TARGET,
-		"Found the following MX hosts {:?}", my_mx
+		"Found the following MX hosts {:?}",
+		my_mx
 	);
 
 	// Return if we didn't find any MX records.
@@ -157,9 +156,10 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 	}
 
 	let my_misc = check_misc(&my_syntax);
-	debug!(
+	log::debug!(
 		target: LOG_TARGET,
-		"Found the following misc details: {:?}", my_misc
+		"Found the following misc details: {:?}",
+		my_misc
 	);
 
 	// Create one future per lookup result.
