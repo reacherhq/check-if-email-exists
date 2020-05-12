@@ -82,11 +82,33 @@ impl CheckEmailInput {
 	}
 }
 
+/// An enum to describe how confident we are that the recipient address is
+/// real.
+#[derive(Debug, Serialize)]
+pub enum Reachable {
+	/// The email is safe to send.
+	Safe,
+	/// The email address appears to exist, but has quality issues that may
+	/// result in low engagement or a bounce. Emails are classified as risky
+	/// when one of the following happens:
+	/// - catch-all email,
+	/// - disposable email,
+	/// - role-based address,
+	/// - full inbox.
+	Risky,
+	/// Emails that don't exist or are syntactically incorrect. Do not send to
+	/// these emails.
+	Invalid,
+	/// We're unable to get a valid response from the recipient's email server.
+	Unknown,
+}
+
 /// The result of the [check_email](check_email) function.
 #[derive(Debug)]
 pub struct CheckEmailOutput {
 	/// Input by the user.
 	pub input: String,
+	pub is_reachable: Reachable,
 	/// Misc details about the email address.
 	pub misc: Result<MiscDetails, MiscError>,
 	/// Details about the MX host.
@@ -101,6 +123,7 @@ impl Default for CheckEmailOutput {
 	fn default() -> Self {
 		CheckEmailOutput {
 			input: String::default(),
+			is_reachable: Reachable::Unknown,
 			misc: Ok(MiscDetails::default()),
 			mx: Ok(MxDetails::default()),
 			smtp: Ok(SmtpDetails::default()),
@@ -123,6 +146,7 @@ impl Serialize for CheckEmailOutput {
 
 		let mut map = serializer.serialize_map(Some(1))?;
 		map.serialize_entry("input", &self.input)?;
+		map.serialize_entry("is_reachable", &self.is_reachable)?;
 		match &self.misc {
 			Ok(t) => map.serialize_entry("misc", &t)?,
 			Err(error) => map.serialize_entry("misc", &MyError { error })?,

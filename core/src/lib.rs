@@ -66,14 +66,32 @@ mod util;
 
 use async_smtp::{smtp::SMTP_PORT, EmailAddress};
 use futures::future;
-use misc::check_misc;
+use misc::{check_misc, MiscDetails};
 use mx::check_mx;
-use smtp::check_smtp;
+use smtp::{check_smtp, SmtpDetails, SmtpError};
 use std::str::FromStr;
 use syntax::check_syntax;
 use util::constants::LOG_TARGET;
 
 pub use util::input_output::*;
+
+/// Given an email's misc and smtp details, calculate an estimate of our
+/// confidence on how reachable the email is.
+fn calculate_reachable(misc: &MiscDetails, smtp: &Result<SmtpDetails, SmtpError>) -> Reachable {
+	if let Ok(smtp) = smtp {
+		if misc.is_disposable || misc.is_role_account || smtp.is_catch_all || smtp.has_full_inbox {
+			return Reachable::Risky;
+		}
+
+		if !smtp.is_deliverable || !smtp.can_connect_smtp {
+			return Reachable::Invalid;
+		}
+
+		return Reachable::Safe;
+	} else {
+		Reachable::Unknown
+	}
+}
 
 /// Check a single emails. This assumes this `input.check_email` contains
 /// exactly one element. If it contains more, elements other than the first
@@ -111,12 +129,15 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 	let my_mx = match check_mx(&my_syntax).await {
 		Ok(m) => m,
 		e => {
+			// This happens when there's an internal error while checking MX
+			// records.
 			return CheckEmailOutput {
 				input: to_email.to_string(),
+				is_reachable: Reachable::Unknown,
 				mx: e,
 				syntax: my_syntax,
 				..Default::default()
-			}
+			};
 		}
 	};
 	debug!(
@@ -128,6 +149,7 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 	if my_mx.lookup.is_err() {
 		return CheckEmailOutput {
 			input: to_email.to_string(),
+			is_reachable: Reachable::Invalid,
 			mx: Ok(my_mx),
 			syntax: my_syntax,
 			..Default::default()
@@ -177,6 +199,7 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 
 	CheckEmailOutput {
 		input: to_email.to_string(),
+		is_reachable: calculate_reachable(&my_misc, &my_smtp),
 		misc: Ok(my_misc),
 		mx: Ok(my_mx),
 		smtp: my_smtp,
