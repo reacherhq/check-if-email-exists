@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.8.2](https://github.com/amaurymartiny/check_if_email_exists/compare/v0.8.1...v0.8.2) (2020-05-12)
+
+
+### Features
+
+* Add `is_reachable` top field ([#350](https://github.com/amaurymartiny/check_if_email_exists/issues/350)) ([e7abb17](https://github.com/amaurymartiny/check_if_email_exists/commit/e7abb17ef29610fbe9210f42830c0ba02bb130b7))
+* Detect role-based accounts ([#348](https://github.com/amaurymartiny/check_if_email_exists/issues/348)) ([7c612fd](https://github.com/amaurymartiny/check_if_email_exists/commit/7c612fda110729ece094d0b022db05fa4e6b27b4))
+
+
+### Bug Fixes
+
+* Add "Unknown user" smtp error check ([#347](https://github.com/amaurymartiny/check_if_email_exists/issues/347)) ([47eb578](https://github.com/amaurymartiny/check_if_email_exists/commit/47eb5780f692f54aadf264b107996bb2d1a31a56))
+* Add more error strings matching ([#323](https://github.com/amaurymartiny/check_if_email_exists/issues/323)) ([f5392d4](https://github.com/amaurymartiny/check_if_email_exists/commit/f5392d4befcee6e4d935e1585066eae3b57ec6fa))
+
 ### [0.8.1](https://github.com/amaurymartiny/check_if_email_exists/compare/v0.8.0...v0.8.1) (2020-05-09)
 
 
