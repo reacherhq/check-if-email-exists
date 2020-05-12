@@ -37,15 +37,15 @@ This software is licensed under the GPL-3.0 license, which forbids it being inte
 
 ## 🤔 Why?
 
-Many online services (https://hunter.io, http://verify-email.org, http://email-checker.net) offer this service for a paid fee. Here is an open-source alternative to those tools.
+Many online services (https://hunter.io, https://verify-email.org, https://email-checker.net) offer this service for a paid fee. Here is an open-source alternative to those tools.
 
 ## 🚀 Try It Yourself
 
 There are 4 ways you can try `check-if-email-exists`.
 
-### 1. Use the Hosted Version: http://reacher.email
+### 1. Use the Hosted Version: https://reacher.email
 
-I created a simple static site with this tool: http://reacher.email. The backend is hosted on [fly.io](https://fly.io), the free tier endpoint is rate-limited to prevent abuse. Also see [issue #155](https://github.com/amaurymartiny/check-if-email-exists/issues/155).
+I created a simple static site with this tool: https://reacher.email. The backend is hosted on [fly.io](https://fly.io), the free tier endpoint is rate-limited to prevent abuse. Also see [issue #155](https://github.com/amaurymartiny/check-if-email-exists/issues/155).
 
 If you would like to self-host it yourself and have questions, send me a message.
 
