@@ -84,7 +84,8 @@ impl CheckEmailInput {
 
 /// An enum to describe how confident we are that the recipient address is
 /// real.
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
+#[serde(rename_all = "lowercase")]
 pub enum Reachable {
 	/// The email is safe to send.
 	Safe,
