@@ -55,9 +55,6 @@
 //! }
 //! ```
 
-#[macro_use]
-extern crate log;
-
 mod misc;
 mod mx;
 mod smtp;
@@ -66,14 +63,32 @@ mod util;
 
 use async_smtp::{smtp::SMTP_PORT, EmailAddress};
 use futures::future;
-use misc::check_misc;
+use misc::{check_misc, MiscDetails};
 use mx::check_mx;
-use smtp::check_smtp;
+use smtp::{check_smtp, SmtpDetails, SmtpError};
 use std::str::FromStr;
 use syntax::check_syntax;
 use util::constants::LOG_TARGET;
 
 pub use util::input_output::*;
+
+/// Given an email's misc and smtp details, calculate an estimate of our
+/// confidence on how reachable the email is.
+fn calculate_reachable(misc: &MiscDetails, smtp: &Result<SmtpDetails, SmtpError>) -> Reachable {
+	if let Ok(smtp) = smtp {
+		if misc.is_disposable || misc.is_role_account || smtp.is_catch_all || smtp.has_full_inbox {
+			return Reachable::Risky;
+		}
+
+		if !smtp.is_deliverable || !smtp.can_connect_smtp || smtp.is_disabled {
+			return Reachable::Invalid;
+		}
+
+		Reachable::Safe
+	} else {
+		Reachable::Unknown
+	}
+}
 
 /// Check a single emails. This assumes this `input.check_email` contains
 /// exactly one element. If it contains more, elements other than the first
@@ -84,7 +99,7 @@ pub use util::input_output::*;
 /// This function panics if `input.check_email` is empty.
 async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 	let from_email = EmailAddress::from_str(input.from_email.as_ref()).unwrap_or_else(|_| {
-		warn!(
+		log::warn!(
 			"Inputted from_email \"{}\" is not a valid email, using \"user@example.org\" instead",
 			input.from_email
 		);
@@ -93,7 +108,7 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 
 	let to_email = &input.to_emails[0];
 
-	debug!(target: LOG_TARGET, "Checking email \"{}\"", to_email);
+	log::debug!(target: LOG_TARGET, "Checking email \"{}\"", to_email);
 	let my_syntax = check_syntax(to_email.as_ref());
 	if !my_syntax.is_valid_syntax {
 		return CheckEmailOutput {
@@ -103,31 +118,37 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 		};
 	}
 
-	debug!(
+	log::debug!(
 		target: LOG_TARGET,
-		"Found the following syntax validation: {:?}", my_syntax
+		"Found the following syntax validation: {:?}",
+		my_syntax
 	);
 
 	let my_mx = match check_mx(&my_syntax).await {
 		Ok(m) => m,
 		e => {
+			// This happens when there's an internal error while checking MX
+			// records.
 			return CheckEmailOutput {
 				input: to_email.to_string(),
+				is_reachable: Reachable::Unknown,
 				mx: e,
 				syntax: my_syntax,
 				..Default::default()
-			}
+			};
 		}
 	};
-	debug!(
+	log::debug!(
 		target: LOG_TARGET,
-		"Found the following MX hosts {:?}", my_mx
+		"Found the following MX hosts {:?}",
+		my_mx
 	);
 
 	// Return if we didn't find any MX records.
 	if my_mx.lookup.is_err() {
 		return CheckEmailOutput {
 			input: to_email.to_string(),
+			is_reachable: Reachable::Invalid,
 			mx: Ok(my_mx),
 			syntax: my_syntax,
 			..Default::default()
@@ -135,9 +156,10 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 	}
 
 	let my_misc = check_misc(&my_syntax);
-	debug!(
+	log::debug!(
 		target: LOG_TARGET,
-		"Found the following misc details: {:?}", my_misc
+		"Found the following misc details: {:?}",
+		my_misc
 	);
 
 	// Create one future per lookup result.
@@ -177,6 +199,7 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 
 	CheckEmailOutput {
 		input: to_email.to_string(),
+		is_reachable: calculate_reachable(&my_misc, &my_smtp),
 		misc: Ok(my_misc),
 		mx: Ok(my_mx),
 		smtp: my_smtp,
