@@ -46,7 +46,7 @@ There are 4 ways you can try `check-if-email-exists`.
 
 ### 1. Use the Hosted Version: https://reacher.email
 
-I created a simple static site with this tool: https://reacher.email. The backend is hosted on [fly.io](https://fly.io), the free tier endpoint is rate-limited to prevent abuse. Also see [issue #155](https://github.com/amaurymartiny/check-if-email-exists/issues/155).
+This web app is also open-source, at https://github.com/reacherhq/.
 
 If you would like to self-host it yourself and have questions, send me a message.
 
@@ -60,18 +60,18 @@ To run it, run the following command:
 docker run -p 3000:3000 amaurymartiny/check-if-email-exists
 ```
 
-You can then send a POST request with the following body to `http://localhost:3000`:
+You can then send a POST request with the following body to `http://localhost:3000` to test multiple emails at once:
 
 ```json
 {
-	"to_email": "someone@gmail.com"
+	"to_emails": ["someone@gmail.com"]
 }
 ```
 
 Here's the equivalent `curl` command:
 
 ```bash
-curl -X POST -d'{"to_email":"someone@gmail.com"}' http://localhost:3000
+curl -X POST -d'{"to_emails":["someone@gmail.com"]}' http://localhost:3000
 ```
 
 Optionally, you can also pass in `from_email` and `hello_name` fields into the JSON object, see the help message below to understand their meanings.
@@ -110,18 +110,18 @@ ARGS:
     <TO_EMAIL>    The email to check.
 ```
 
-If you run with the `--http` flag, `check-if-email-exists` will serve a HTTP server on `http://localhost:3000`. You can then send a POST request with the following body:
+If you run with the `--http` flag, `check-if-email-exists` will serve a HTTP server on `http://localhost:3000`. You can then send a POST request with the following body to test multiple emails at once:
 
 ```json
 {
-	"to_email": "someone@gmail.com"
+	"to_emails": ["someone@gmail.com"]
 }
 ```
 
 Here's the equivalent `curl` command:
 
 ```bash
-curl -X POST -d'{"to_email":"someone@gmail.com"}' http://localhost:3000
+curl -X POST -d'{"to_emails":["someone@gmail.com"]}' http://localhost:3000
 ```
 
 Optionally, you can also pass in `from_email` and `hello_name` fields into the JSON object, see the help message above to understand their meanings.
@@ -174,6 +174,7 @@ The output will be a JSON with the below format, the fields should be self-expla
 ```json
 {
 	"input": "someone@gmail.com",
+	"is_reachable": "invalid",
 	"misc": {
 		"is_disposable": false,
 		"is_role_account": false
@@ -203,7 +204,7 @@ The output will be a JSON with the below format, the fields should be self-expla
 }
 ```
 
-You can also take a look at the [OpenAPIv3 specification](https://stoplight.io/p/docs/gh/reacherhq/openapi/openapi.json/components/schemas/EmailResult?srn=gh/reacherhq/backend/openapi.json/components/schemas/EmailResult) of this JSON object.
+You can also take a look at the [OpenAPIv3 specification](https://reacher.email/docs#operation/post-check-email) of this JSON object.
 
 ## ❓ FAQ
 

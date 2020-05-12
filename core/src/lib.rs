@@ -80,7 +80,7 @@ fn calculate_reachable(misc: &MiscDetails, smtp: &Result<SmtpDetails, SmtpError>
 			return Reachable::Risky;
 		}
 
-		if !smtp.is_deliverable || !smtp.can_connect_smtp {
+		if !smtp.is_deliverable || !smtp.can_connect_smtp || smtp.is_disabled {
 			return Reachable::Invalid;
 		}
 
