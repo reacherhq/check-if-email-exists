@@ -87,7 +87,7 @@ fn calculate_reachable(misc: &MiscDetails, smtp: &Result<SmtpDetails, SmtpError>
 			return Reachable::Invalid;
 		}
 
-		return Reachable::Safe;
+		Reachable::Safe
 	} else {
 		Reachable::Unknown
 	}
