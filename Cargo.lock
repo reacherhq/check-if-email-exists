@@ -228,7 +228,7 @@ dependencies = [
 
 [[package]]
 name = "check-if-email-exists-cli"
-version = "0.8.3"
+version = "0.8.4"
 dependencies = [
  "check-if-email-exists",
  "clap",
