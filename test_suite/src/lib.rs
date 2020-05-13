@@ -51,6 +51,7 @@ mod tests {
 
 			// For the input,misc,smtp,syntax fields, we match exact JSON.
 			assert_eq!(expected.get("input"), actual.get("input"),);
+			assert_eq!(expected.get("is_reachable"), actual.get("is_reachable"),);
 			assert_eq!(expected.get("misc"), actual.get("misc"),);
 			assert_eq!(expected.get("smtp"), actual.get("smtp"),);
 			assert_eq!(expected.get("syntax"), actual.get("syntax"),);
