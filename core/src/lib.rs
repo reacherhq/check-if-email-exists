@@ -113,6 +113,7 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 	if !my_syntax.is_valid_syntax {
 		return CheckEmailOutput {
 			input: to_email.to_string(),
+			is_reachable: Reachable::Invalid,
 			syntax: my_syntax,
 			..Default::default()
 		};
@@ -128,7 +129,7 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 		Ok(m) => m,
 		e => {
 			// This happens when there's an internal error while checking MX
-			// records.
+			// records. Should happen fairly rarely.
 			return CheckEmailOutput {
 				input: to_email.to_string(),
 				is_reachable: Reachable::Unknown,
