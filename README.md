@@ -14,7 +14,7 @@
 
 #### 👉 Try it here: https://reacher.email
 
-This software is licensed under the GPL-3.0 license, which forbids it being integrated and distributed in closed-source commercials projects. [Message me](mailto:amaury.martiny@protonmail.com) if you wish an alternate licensing.
+This software is licensed under the AGPL-3.0 license, which forbids it being integrated and distributed in closed-source commercials projects. [Message me](mailto:amaury.martiny@protonmail.com) if you wish an alternate licensing.
 
 ## What Does This Tool Check?
 
