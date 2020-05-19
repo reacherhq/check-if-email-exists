@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.8.4](https://github.com/amaurymartiny/check_if_email_exists/compare/v0.8.3...v0.8.4) (2020-05-19)
+
+
+### Bug Fixes
+
+* Fix is_reachable with wrong syntax ([#352](https://github.com/amaurymartiny/check_if_email_exists/issues/352)) ([b0f0209](https://github.com/amaurymartiny/check_if_email_exists/commit/b0f02090edc0bb8947ab826415fa3bf8b5db55f0))
+
 ### [0.8.3](https://github.com/amaurymartiny/check_if_email_exists/compare/v0.8.2...v0.8.3) (2020-05-12)
 
 
