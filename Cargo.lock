@@ -19,30 +19,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "amaurymartiny-async-smtp"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5e1f1e257ba329a50a48cb897aa9596d742350d041e7fc8ad201c6bef7716892"
-dependencies = [
- "async-native-tls",
- "async-std",
- "async-trait",
- "base64",
- "bufstream",
- "fast-socks5",
- "fast_chemail",
- "hostname 0.1.5",
- "log",
- "nom",
- "pin-project",
- "pin-utils",
- "serde",
- "serde_derive",
- "serde_json",
- "thiserror",
-]
-
-[[package]]
 name = "ansi_term"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -82,6 +58,30 @@ dependencies = [
  "native-tls",
  "thiserror",
  "url",
+]
+
+[[package]]
+name = "async-smtp"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bb010dac8f81ceb798b089c522766c0427b54253789194b5c7de9720aeb7f091"
+dependencies = [
+ "async-native-tls",
+ "async-std",
+ "async-trait",
+ "base64",
+ "bufstream",
+ "fast-socks5",
+ "fast_chemail",
+ "hostname 0.1.5",
+ "log",
+ "nom",
+ "pin-project",
+ "pin-utils",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "thiserror",
 ]
 
 [[package]]
@@ -215,7 +215,7 @@ checksum = "4785bdd1c96b2a846b2bd7cc02e86b6b3dbf14e7e53446c4f54c92a361040822"
 name = "check-if-email-exists"
 version = "0.8.4"
 dependencies = [
- "amaurymartiny-async-smtp",
+ "async-smtp",
  "fast-socks5",
  "futures",
  "log",

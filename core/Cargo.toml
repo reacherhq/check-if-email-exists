@@ -17,7 +17,7 @@ appveyor = { repository = "amaurymartiny/check-if-email-exists", service = "gith
 travis-ci = { repository = "amaurymartiny/check-if-email-exists", service = "github" }
 
 [dependencies]
-async-smtp = { package = "amaurymartiny-async-smtp", version = "0.1" }
+async-smtp = { version = "0.3", features = ["socks5"] }
 fast-socks5 = "0.3"
 futures = "0.3"
 log = "0.4"
