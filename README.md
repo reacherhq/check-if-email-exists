@@ -12,7 +12,7 @@
 
 <br /><br /><br />
 
-## 👉 Try it here: https://reacher.email
+## 👉 Live Demo: https://reacher.email
 
 You can also:
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/amaurymartiny/check-if-email-exists)
@@ -85,7 +85,7 @@ curl -X POST -d'{"to_emails":["someone@gmail.com"]}' http://localhost:3000
 
 Optionally, you can also pass in `from_email` and `hello_name` fields into the JSON object, see the help message below to understand their meanings.
 
-### 3. Download the Binary
+### 4. Download the Binary
 
 > Note: The binary doesn't connect to any backend, it checks the email directly from your computer.
 
@@ -141,7 +141,7 @@ Optionally, you can also pass in `from_email` and `hello_name` fields into the J
 RUST_LOG=debug check_if_email_exists [FLAGS] [OPTIONS] [TO_EMAIL]
 ```
 
-### 4. Usage as a Rust Library
+### 5. Usage as a Rust Library
 
 In your own Rust project, you can add `check-if-email-exists` in your `Cargo.toml`:
 
