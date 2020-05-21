@@ -14,7 +14,7 @@
 
 ## 👉 Try it here: https://reacher.email
 
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/amaurymartiny/check-if-email-exists)
+Or: [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/amaurymartiny/check-if-email-exists)
 
 **IMPORTANT:** This software is licensed under the AGPL-3.0 license, which forbids it being integrated and distributed in closed-source commercials projects. [Message me](mailto:amaury.martiny@protonmail.com) if you wish an alternate licensing.
 
@@ -56,7 +56,7 @@ If you would like to self-host it yourself and have questions, send me a message
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/amaurymartiny/check-if-email-exists)
 
-Heroku's servers have SMTP port 25 open, and should have servers with static IPs able to connect to most email providers (unless you start heavily spamming these providers).
+Heroku's servers have SMTP port 25 open, and have static IPs able to connect to most email providers (unless of course if you start heavily spamming these providers).
 
 ### 3. Use Docker
 
