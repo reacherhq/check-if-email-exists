@@ -48,7 +48,7 @@ There are 5 ways you can try `check-if-email-exists`.
 
 ### 1. Use the Hosted Version: https://reacher.email
 
-This web app is also open-source, at https://github.com/reacherhq/.
+This simple SaaS is also open-source by the way: https://github.com/reacherhq.
 
 If you would like to self-host it yourself and have questions, send me a message.
 
@@ -92,7 +92,7 @@ Head to the [releases page](https://github.com/amaurymartiny/check-if-email-exis
 
 ```
 > $ check_if_email_exists --help
-check_if_email_exists 0.8.4
+check_if_email_exists 0.8.5
 Check if an email address exists without sending any email.
 
 USAGE:
@@ -218,7 +218,7 @@ You can also take a look at the [OpenAPIv3 specification](https://reacher.email/
 
 ### What does `is_reachable: "unknown"` mean?
 
-This means that the server does not allow real-time verification of an email right now. If may happen for multiple reasons: your IP is blacklisted, the email account is momentarily receiving too many emails (spam protection), or the email provider simply does not allow real-time verification at all. The details of this `"unknown"` case can be found in the `smtp.error` and `mx.error` fields.
+This means that the server does not allow real-time verification of an email right now. It may happen for multiple reasons: your IP is blacklisted, the SMTP port 25 is blocked, the email account is momentarily receiving too many emails (spam protection)... or the email provider simply does not allow real-time verification at all. The details of this `"unknown"` case can be found in the `smtp.error` and `mx.error` fields.
 
 ### The library hangs/takes a long time/doesn't show anything after 1 minute.
 

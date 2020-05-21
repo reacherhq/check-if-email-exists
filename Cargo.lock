@@ -213,7 +213,7 @@ checksum = "4785bdd1c96b2a846b2bd7cc02e86b6b3dbf14e7e53446c4f54c92a361040822"
 
 [[package]]
 name = "check-if-email-exists"
-version = "0.8.4"
+version = "0.8.5"
 dependencies = [
  "async-smtp",
  "fast-socks5",
@@ -228,7 +228,7 @@ dependencies = [
 
 [[package]]
 name = "check-if-email-exists-cli"
-version = "0.8.4"
+version = "0.8.5"
 dependencies = [
  "check-if-email-exists",
  "clap",
@@ -241,7 +241,7 @@ dependencies = [
 
 [[package]]
 name = "check-if-email-exists-test-suite"
-version = "0.8.4"
+version = "0.8.5"
 dependencies = [
  "check-if-email-exists",
  "serde",
