@@ -47,7 +47,7 @@ Many online services (https://hunter.io, https://verify-email.org, https://email
 
 There are 5 ways you can try `check-if-email-exists`.
 
-### 1. 🥇Use the Hosted Version: https://reacher.email
+### 1. Use the Hosted Version: https://reacher.email 🥇
 
 This simple SaaS is also open-source by the way: https://github.com/reacherhq.
 
