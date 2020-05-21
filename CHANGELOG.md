@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.8.5](https://github.com/amaurymartiny/check_if_email_exists/compare/v0.8.4...v0.8.5) (2020-05-21)
+
+
+### Features
+
+* Expose misc, syntax, mx, smtp modules ([#373](https://github.com/amaurymartiny/check_if_email_exists/issues/373)) ([7c1d741](https://github.com/amaurymartiny/check_if_email_exists/commit/7c1d741f00b3a807b190140a1d91a42bce29470c))
+
 ### [0.8.4](https://github.com/amaurymartiny/check_if_email_exists/compare/v0.8.3...v0.8.4) (2020-05-19)
 
 
