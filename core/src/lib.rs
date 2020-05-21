@@ -55,10 +55,10 @@
 //! }
 //! ```
 
-mod misc;
-mod mx;
-mod smtp;
-mod syntax;
+pub mod misc;
+pub mod mx;
+pub mod smtp;
+pub mod syntax;
 mod util;
 
 use async_smtp::{smtp::SMTP_PORT, EmailAddress};
