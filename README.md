@@ -12,9 +12,11 @@
 
 <br /><br /><br />
 
-#### 👉 Try it here: https://reacher.email
+## 👉 Try it here: https://reacher.email
 
-This software is licensed under the AGPL-3.0 license, which forbids it being integrated and distributed in closed-source commercials projects. [Message me](mailto:amaury.martiny@protonmail.com) if you wish an alternate licensing.
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/amaurymartiny/check-if-email-exists)
+
+**IMPORTANT:** This software is licensed under the AGPL-3.0 license, which forbids it being integrated and distributed in closed-source commercials projects. [Message me](mailto:amaury.martiny@protonmail.com) if you wish an alternate licensing.
 
 ## What Does This Tool Check?
 
@@ -42,7 +44,7 @@ Many online services (https://hunter.io, https://verify-email.org, https://email
 
 ## 🚀 Try It Yourself
 
-There are 4 ways you can try `check-if-email-exists`.
+There are 5 ways you can try `check-if-email-exists`.
 
 ### 1. Use the Hosted Version: https://reacher.email
 
@@ -50,7 +52,13 @@ This web app is also open-source, at https://github.com/reacherhq/.
 
 If you would like to self-host it yourself and have questions, send me a message.
 
-### 2. Use Docker
+### 2. Deploy to Heroku
+
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/amaurymartiny/check-if-email-exists)
+
+Heroku's servers have SMTP port 25 open, and should have servers with static IPs able to connect to most email providers (unless you start heavily spamming these providers).
+
+### 3. Use Docker
 
 The [Docker image](./Dockerfile) is hosted on Docker Hub: https://hub.docker.com/r/amaurymartiny/check-if-email-exists.
 
@@ -208,9 +216,13 @@ You can also take a look at the [OpenAPIv3 specification](https://reacher.email/
 
 ## ❓ FAQ
 
+### What does `is_reachable: "unknown"` mean?
+
+This means that the server does not allow real-time verification of an email right now. If may happen for multiple reasons: your IP is blacklisted, the email account is momentarily receiving too many emails (spam protection), or the email provider simply does not allow real-time verification at all. The details of this `"unknown"` case can be found in the `smtp.error` and `mx.error` fields.
+
 ### The library hangs/takes a long time/doesn't show anything after 1 minute.
 
-Most ISPs block outgoing SMTP requests through port 25, to prevent spam. `check-if-email-exists` needs to have this port open to make a connection to the email's SMTP server, so won't work behind these ISPs, and will instead hang until it times out. There's unfortunately no easy workaround for this problem, see for example [this StackOverflow thread](https://stackoverflow.com/questions/18139102/how-to-get-around-an-isp-block-on-port-25-for-smtp). One solution is to rent a Linux cloud server with a static IP and no blocked ports.
+Most ISPs block outgoing SMTP requests through port 25, to prevent spam. `check-if-email-exists` needs to have this port open to make a connection to the email's SMTP server, so won't work behind these ISPs, and will instead hang until it times out. There's unfortunately no easy workaround for this problem, see for example [this StackOverflow thread](https://stackoverflow.com/questions/18139102/how-to-get-around-an-isp-block-on-port-25-for-smtp). One solution is to rent a Linux cloud server with a static IP and no blocked ports, see for example our [Deploy to Heroku](#deploy-to-heroku) section.
 
 To see in details what the binary is doing behind the scenes, run it in verbose mode to see the logs.
 
