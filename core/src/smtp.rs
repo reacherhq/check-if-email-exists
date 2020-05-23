@@ -246,6 +246,8 @@ async fn email_deliverable(
 				// 550 5.1.1 No such user - pp
 				// 550 No such user here
 				|| err_string.contains("no such user")
+				// 4.2.1 The user you are trying to contact is receiving mail at a rate...
+				|| err_string.contains("is receiving mail at a rate")
 				// 550 5.1.1 : Mailbox not found
 				// 550 Unknown address error ‘MAILBOX NOT FOUND’
 				|| err_string.contains("not found")
