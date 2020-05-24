@@ -16,7 +16,7 @@
 
 use crate::syntax::SyntaxDetails;
 use crate::util::ser_with_display::ser_with_display;
-use async_std_resolver::{config, lookup::MxLookup, ResolveError, resolver};
+use async_std_resolver::{config, lookup::MxLookup, resolver, ResolveError};
 use serde::{ser::SerializeMap, Serialize, Serializer};
 use std::io::Error;
 

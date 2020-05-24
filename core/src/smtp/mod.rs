@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use super::util::{constants::LOG_TARGET, input_output::CheckEmailInputProxy};
 use crate::util::ser_with_display::ser_with_display;
 use async_smtp::{
 	smtp::{
@@ -29,8 +30,7 @@ use fast_socks5::{
 use rand::{distributions::Alphanumeric, Rng};
 use serde::Serialize;
 use std::time::Duration;
-
-use super::util::{constants::LOG_TARGET, input_output::CheckEmailInputProxy};
+use trust_dns_proto::rr::Name;
 
 /// Details that we gathered from connecting to this email via SMTP
 #[derive(Debug, Serialize)]
@@ -98,23 +98,24 @@ macro_rules! try_smtp (
 /// Attempt to connect to host via SMTP, and return SMTP client on success.
 async fn connect_to_host(
 	from_email: &EmailAddress,
-	host: String,
+	host: &Name,
 	port: u16,
 	hello_name: &str,
 	proxy: &Option<CheckEmailInputProxy>,
 ) -> Result<SmtpTransport, SmtpError> {
-	let mut smtp_client = SmtpClient::with_security((host.as_ref(), port), ClientSecurity::None)
-		.await?
-		.hello_name(ClientId::Domain(hello_name.into()))
-		.timeout(Some(Duration::new(30, 0))) // Set timeout to 30s
-		.into_transport();
+	let mut smtp_client =
+		SmtpClient::with_security((host.to_utf8().as_ref(), port), ClientSecurity::None)
+			.await?
+			.hello_name(ClientId::Domain(hello_name.into()))
+			.timeout(Some(Duration::new(30, 0))) // Set timeout to 30s
+			.into_transport();
 
 	// Connect to the host. If the proxy argument is set, use it.
 	log::debug!(target: LOG_TARGET, "Connecting to {}:{}", host, port);
 	if let Some(proxy) = proxy {
 		let stream = Socks5Stream::connect(
 			(proxy.host.as_ref(), proxy.port),
-			host.clone(),
+			host.to_utf8(),
 			port,
 			Config::default(),
 		)
@@ -296,7 +297,7 @@ async fn smtp_is_catch_all(
 pub async fn check_smtp(
 	to_email: &EmailAddress,
 	from_email: &EmailAddress,
-	host: String,
+	host: &Name,
 	port: u16,
 	domain: &str,
 	hello_name: &str,

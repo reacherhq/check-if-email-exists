@@ -236,6 +236,7 @@ dependencies = [
  "rand",
  "serde",
  "serde_json",
+ "trust-dns-proto",
 ]
 
 [[package]]
@@ -1461,6 +1462,7 @@ dependencies = [
  "rand",
  "smallvec",
  "thiserror",
+ "tokio",
  "url",
 ]
 
