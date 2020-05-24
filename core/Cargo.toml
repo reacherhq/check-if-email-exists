@@ -18,11 +18,12 @@ travis-ci = { repository = "amaurymartiny/check-if-email-exists", service = "git
 
 [dependencies]
 async-smtp = { version = "0.3", features = ["socks5"] }
+async-std-resolver = "0.19"
 fast-socks5 = "0.3"
 futures = "0.3"
 log = "0.4"
 mailchecker = "3.3"
 rand = "0.7"
-trust-dns-resolver = "0.19"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+trust-dns-proto = "0.19"

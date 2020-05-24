@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use super::util::{constants::LOG_TARGET, input_output::CheckEmailInputProxy};
 use crate::util::ser_with_display::ser_with_display;
 use async_smtp::{
 	smtp::{
@@ -29,9 +30,7 @@ use fast_socks5::{
 use rand::{distributions::Alphanumeric, Rng};
 use serde::Serialize;
 use std::time::Duration;
-use trust_dns_resolver::Name;
-
-use super::util::{constants::LOG_TARGET, input_output::CheckEmailInputProxy};
+use trust_dns_proto::rr::Name;
 
 /// Details that we gathered from connecting to this email via SMTP
 #[derive(Debug, Serialize)]
@@ -105,7 +104,7 @@ async fn connect_to_host(
 	proxy: &Option<CheckEmailInputProxy>,
 ) -> Result<SmtpTransport, SmtpError> {
 	let mut smtp_client =
-		SmtpClient::with_security((host.to_utf8().as_str(), port), ClientSecurity::None)
+		SmtpClient::with_security((host.to_utf8().as_ref(), port), ClientSecurity::None)
 			.await?
 			.hello_name(ClientId::Domain(hello_name.into()))
 			.timeout(Some(Duration::new(30, 0))) // Set timeout to 30s
