@@ -16,9 +16,9 @@
 
 use crate::syntax::SyntaxDetails;
 use crate::util::ser_with_display::ser_with_display;
+use async_std_resolver::{config, lookup::MxLookup, ResolveError, resolver};
 use serde::{ser::SerializeMap, Serialize, Serializer};
 use std::io::Error;
-use trust_dns_resolver::{config::*, error::ResolveError, lookup::MxLookup, TokioAsyncResolver};
 
 /// Details about the MX lookup.
 #[derive(Debug)]
@@ -85,8 +85,11 @@ impl From<ResolveError> for MxError {
 /// Make a MX lookup.
 pub async fn check_mx(syntax: &SyntaxDetails) -> Result<MxDetails, MxError> {
 	// Construct a new Resolver with default configuration options
-	let resolver =
-		TokioAsyncResolver::tokio(ResolverConfig::default(), ResolverOpts::default()).await?;
+	let resolver = resolver(
+		config::ResolverConfig::default(),
+		config::ResolverOpts::default(),
+	)
+	.await?;
 
 	// Lookup the MX records associated with a name.
 	// The final dot forces this to be an FQDN, otherwise the search rules as specified
