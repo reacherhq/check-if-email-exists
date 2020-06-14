@@ -117,7 +117,7 @@ pub async fn check_yahoo(to_email: &EmailAddress) -> Result<SmtpDetails, YahooEr
 
 	let to_email = to_email.to_string();
 	let username = to_email
-		.split("@")
+		.split('@')
 		.next()
 		.expect("The email is well-formed. qed.");
 
@@ -153,8 +153,7 @@ pub async fn check_yahoo(to_email: &EmailAddress) -> Result<SmtpDetails, YahooEr
 	let username_exists = response
 		.errors
 		.iter()
-		.find(|item| item.name == "yid" && item.error == "IDENTIFIER_EXISTS")
-		.is_some();
+		.any(|item| item.name == "yid" && item.error == "IDENTIFIER_EXISTS");
 
 	Ok(SmtpDetails {
 		can_connect_smtp: true,
