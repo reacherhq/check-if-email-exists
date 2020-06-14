@@ -55,6 +55,7 @@ impl FormRequest {
 	}
 }
 
+/// One item in the response of the HTTP form request.
 #[derive(Debug, Deserialize)]
 struct FormResponseItem {
 	error: String,
@@ -67,6 +68,7 @@ struct FormResponse {
 	errors: Vec<FormResponseItem>,
 }
 
+/// Possible errors when checking Yahoo email addresses.
 #[derive(Debug, Serialize)]
 pub enum YahooError {
 	/// Error when sending an HTTP request. Used to verify Yahoo emails.

@@ -73,7 +73,6 @@ pub enum SmtpError {
 	#[serde(serialize_with = "ser_with_display")]
 	SmtpError(AsyncSmtpError),
 	/// Error when verifying a Yahoo email.
-	#[serde(serialize_with = "ser_with_display")]
 	YahooError(YahooError),
 }
 
