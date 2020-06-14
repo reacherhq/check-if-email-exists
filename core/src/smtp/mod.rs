@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+mod yahoo;
+
 use super::util::{constants::LOG_TARGET, input_output::CheckEmailInputProxy};
 use crate::util::ser_with_display::ser_with_display;
 use async_smtp::{
@@ -31,6 +33,7 @@ use rand::{distributions::Alphanumeric, Rng};
 use serde::Serialize;
 use std::time::Duration;
 use trust_dns_proto::rr::Name;
+use yahoo::YahooError;
 
 /// Details that we gathered from connecting to this email via SMTP
 #[derive(Debug, Serialize)]
@@ -69,6 +72,8 @@ pub enum SmtpError {
 	/// Error when communicating with SMTP server.
 	#[serde(serialize_with = "ser_with_display")]
 	SmtpError(AsyncSmtpError),
+	/// Error when verifying a Yahoo email.
+	YahooError(YahooError),
 }
 
 impl From<AsyncSmtpError> for SmtpError {
@@ -80,6 +85,12 @@ impl From<AsyncSmtpError> for SmtpError {
 impl From<SocksError> for SmtpError {
 	fn from(error: SocksError) -> Self {
 		SmtpError::SocksError(error)
+	}
+}
+
+impl From<YahooError> for SmtpError {
+	fn from(error: YahooError) -> Self {
+		SmtpError::YahooError(error)
 	}
 }
 
@@ -303,6 +314,11 @@ pub async fn check_smtp(
 	hello_name: &str,
 	proxy: &Option<CheckEmailInputProxy>,
 ) -> Result<SmtpDetails, SmtpError> {
+	// FIXME Is this `contains` too lenient?
+	if domain.to_lowercase().contains("yahoo") {
+		return yahoo::check_yahoo(to_email).await.map_err(|err| err.into());
+	}
+
 	// FIXME If the SMTP is not connectable, we should actually return an
 	// Ok(SmtpDetails { can_connect_smtp: false, ... }).
 	let mut smtp_client = connect_to_host(from_email, host, port, hello_name, proxy).await?;
