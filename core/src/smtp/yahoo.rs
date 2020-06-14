@@ -100,6 +100,8 @@ impl From<SerdeError> for YahooError {
 	}
 }
 
+/// Use well-crafted HTTP requests to verify if a Yahoo email address exists.
+/// Inspired by https://github.com/hbattat/verifyEmail.
 pub async fn check_yahoo(to_email: &EmailAddress) -> Result<SmtpDetails, YahooError> {
 	let response = surf::get(SIGNUP_PAGE).await?;
 

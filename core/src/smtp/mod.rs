@@ -315,6 +315,7 @@ pub async fn check_smtp(
 	hello_name: &str,
 	proxy: &Option<CheckEmailInputProxy>,
 ) -> Result<SmtpDetails, SmtpError> {
+	// FIXME Is this `contains` too lenient?
 	if domain.to_lowercase().contains("yahoo") {
 		return yahoo::check_yahoo(to_email).await.map_err(|err| err.into());
 	}
