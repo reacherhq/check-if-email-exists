@@ -2220,9 +2220,9 @@ dependencies = [
 
 [[package]]
 name = "vcpkg"
-version = "0.2.9"
+version = "0.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "55d1e41d56121e07f1e223db0a4def204e45c85425f6a16d462fd07c8d10d74c"
+checksum = "6454029bf181f092ad1b853286f23e2c507d8e8194d01d92da4a55c274a5508c"
 
 [[package]]
 name = "vec_map"
