@@ -253,6 +253,8 @@ async fn email_deliverable(
 				|| err_string.contains("user unknown")
 				// 550 Unknown user
 				|| err_string.contains("unknown user")
+				// 5.1.1 Recipient unknown <EMAIL>
+				|| err_string.contains("recipient unknown")
 				// 550 5.1.1 No such user - pp
 				// 550 No such user here
 				|| err_string.contains("no such user")
