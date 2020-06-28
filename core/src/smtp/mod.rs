@@ -227,6 +227,19 @@ async fn email_deliverable(
 				});
 			}
 
+			// Check error messages that say that user can actually receive
+			// emails.
+			// 4.2.1 The user you are trying to contact is receiving mail at a rate that
+			if err_string
+				.contains("The user you are trying to contact is receiving mail at a rate that")
+			{
+				return Ok(Deliverability {
+					has_full_inbox: false,
+					is_deliverable: true,
+					is_disabled: false,
+				});
+			}
+
 			// These are the possible error messages when email account doesn't exist.
 			// 550 Address rejected
 			// 550 5.1.1 : Recipient address rejected
@@ -253,6 +266,8 @@ async fn email_deliverable(
 				|| err_string.contains("user unknown")
 				// 550 Unknown user
 				|| err_string.contains("unknown user")
+				// 5.1.1 Recipient unknown <EMAIL>
+				|| err_string.contains("recipient unknown")
 				// 550 5.1.1 No such user - pp
 				// 550 No such user here
 				|| err_string.contains("no such user")
