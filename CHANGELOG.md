@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.8.8](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.7...v0.8.8) (2020-06-28)
+
+
+### Bug Fixes
+
+* Add debug logs for Yahoo ([e534670](https://github.com/amaurymartiny/check-if-email-exists/commit/e53467006f9fa435993ea58b1753ce5baa059d2a))
+
 ### [0.8.7](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.6...v0.8.7) (2020-06-28)
 
 
