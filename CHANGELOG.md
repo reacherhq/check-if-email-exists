@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.8.7](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.6...v0.8.7) (2020-06-28)
+
+
+### Bug Fixes
+
+* Add "recipient unknown" check ([#446](https://github.com/amaurymartiny/check-if-email-exists/issues/446)) ([deca071](https://github.com/amaurymartiny/check-if-email-exists/commit/deca071583e34bb9c5836d5238dd51975f827cdc))
+
 ### [0.8.6](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.5...v0.8.6) (2020-06-28)
 
 
