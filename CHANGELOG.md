@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.8.6](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.5...v0.8.6) (2020-06-28)
+
+
+### Bug Fixes
+
+* Add additional error check for undeliverable ([#374](https://github.com/amaurymartiny/check-if-email-exists/issues/374)) ([e52a8f0](https://github.com/amaurymartiny/check-if-email-exists/commit/e52a8f0941fd53c9b087e6e59a7018d11af72dff))
+* Use HTTP requests to verify Yahoo emails ([#412](https://github.com/amaurymartiny/check-if-email-exists/issues/412)) ([5fad57d](https://github.com/amaurymartiny/check-if-email-exists/commit/5fad57d88ef92d65c7d493cdcb45eff347d6a286))
+
 ### [0.8.5](https://github.com/amaurymartiny/check_if_email_exists/compare/v0.8.4...v0.8.5) (2020-05-21)
 
 
