@@ -15,6 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use super::SmtpDetails;
+use crate::util::constants::LOG_TARGET;
 use crate::util::ser_with_display::ser_with_display;
 use async_smtp::EmailAddress;
 use http_types::Error as HttpError;
@@ -114,6 +115,8 @@ pub async fn check_yahoo(to_email: &EmailAddress) -> Result<SmtpDetails, YahooEr
 			return Err(YahooError::NoCookie);
 		}
 	};
+	log::debug!(target: LOG_TARGET, "Yahoo 1st response: {:?}", response);
+	log::debug!(target: LOG_TARGET, "Yahoo cookies: {:?}", cookies);
 
 	let to_email = to_email.to_string();
 	let username = to_email
@@ -149,6 +152,8 @@ pub async fn check_yahoo(to_email: &EmailAddress) -> Result<SmtpDetails, YahooEr
     .body_json(&FormRequest::new(acrumb["acrumb"].to_string(), username.into()))?
     .recv_json::<FormResponse>()
     .await?;
+
+	log::debug!(target: LOG_TARGET, "Yahoo 2nd response: {:?}", response);
 
 	let username_exists = response
 		.errors
