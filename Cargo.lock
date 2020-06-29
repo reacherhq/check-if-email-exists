@@ -514,9 +514,9 @@ dependencies = [
 
 [[package]]
 name = "curl"
-version = "0.4.29"
+version = "0.4.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "762e34611d2d5233a506a79072be944fddd057db2f18e04c0d6fa79e3fd466fd"
+checksum = "b0447a642435be046540f042950d874a4907f9fee28c0513a0beb3ba89f91eb7"
 dependencies = [
  "curl-sys",
  "libc",
@@ -529,9 +529,9 @@ dependencies = [
 
 [[package]]
 name = "curl-sys"
-version = "0.4.31+curl-7.70.0"
+version = "0.4.32+curl-7.70.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dcd62757cc4f5ab9404bc6ca9f0ae447e729a1403948ce5106bd588ceac6a3b0"
+checksum = "834425a2f22fdd621434196965bf99fbfd9eaed96348488e27b7ac40736c560b"
 dependencies = [
  "cc",
  "libc",
@@ -1071,9 +1071,9 @@ dependencies = [
 
 [[package]]
 name = "isahc"
-version = "0.9.4"
+version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2494793ea0eaa3a17154ca8aa0a02b941abd269b7eb904f5f0a4de3bbbe6b7fa"
+checksum = "f54e7cf252df9a36605ccfabea2a754ad30c24b51b77f830486e555ac8e76bce"
 dependencies = [
  "bytes 0.5.4",
  "crossbeam-channel",
