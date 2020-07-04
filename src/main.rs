@@ -53,6 +53,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 			input.proxy(proxy_host.into(), proxy_port);
 		}
 
+		if let Ok(yahoo_use_api) = value_t!(matches.value_of("YAHOO_USE_API"), bool) {
+			input.yahoo_use_api(yahoo_use_api);
+		}
+
 		let result = check_email(&input).await;
 
 		match serde_json::to_string_pretty(&result) {

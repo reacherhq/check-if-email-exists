@@ -38,3 +38,7 @@ args:
   - TO_EMAIL:
       help: The email to check.
       index: 1
+  - YAHOO_USE_API:
+      default_value: "true"
+      help: For Yahoo email addresses, use Yahoo's API instead of connecting directly to their SMTP servers.
+      long: yahoo-use-api

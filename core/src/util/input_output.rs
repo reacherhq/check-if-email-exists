@@ -47,6 +47,23 @@ pub struct CheckEmailInput {
 	/// Perform the email verification via a specified proxy. The usage of a
 	/// proxy is optional.
 	pub proxy: Option<CheckEmailInputProxy>,
+	/// For Yahoo email addresses, use Yahoo's API instead of connecting
+	/// directly to their SMTP servers.
+	///
+	/// Defaults to true.
+	pub yahoo_use_api: bool,
+}
+
+impl Default for CheckEmailInput {
+	fn default() -> Self {
+		CheckEmailInput {
+			to_emails: vec![],
+			from_email: "user@example.org".into(),
+			hello_name: "localhost".into(),
+			proxy: None,
+			yahoo_use_api: true,
+		}
+	}
 }
 
 impl CheckEmailInput {
@@ -54,9 +71,7 @@ impl CheckEmailInput {
 	pub fn new(to_emails: Vec<String>) -> CheckEmailInput {
 		CheckEmailInput {
 			to_emails,
-			from_email: "user@example.org".into(),
-			hello_name: "localhost".into(),
-			proxy: None,
+			..Default::default()
 		}
 	}
 
@@ -78,6 +93,13 @@ impl CheckEmailInput {
 			host: proxy_host,
 			port: proxy_port,
 		});
+		self
+	}
+
+	/// Set whether to use Yahoo's API or connecting directly to their SMTP
+	/// servers.
+	pub fn yahoo_use_api(&mut self, use_api: bool) -> &mut CheckEmailInput {
+		self.yahoo_use_api = use_api;
 		self
 	}
 }

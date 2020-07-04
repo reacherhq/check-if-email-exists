@@ -183,6 +183,7 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 						my_syntax.domain.as_ref(),
 						input.hello_name.as_ref(),
 						&input.proxy,
+						input.yahoo_use_api,
 					);
 
 					// https://rust-lang.github.io/async-book/04_pinning/01_chapter.html
@@ -226,6 +227,7 @@ pub async fn check_email(inputs: &CheckEmailInput) -> Vec<CheckEmailOutput> {
 			from_email: inputs.from_email.clone(),
 			hello_name: inputs.hello_name.clone(),
 			proxy: inputs.proxy.clone(),
+			yahoo_use_api: inputs.yahoo_use_api,
 		}
 	});
 	future::join_all(inputs.map(check_single_email)).await
