@@ -61,12 +61,11 @@ pub mod smtp;
 pub mod syntax;
 mod util;
 
-use async_smtp::{smtp::SMTP_PORT, EmailAddress};
+use async_smtp::smtp::SMTP_PORT;
 use futures::future;
 use misc::{check_misc, MiscDetails};
 use mx::check_mx;
 use smtp::{check_smtp, SmtpDetails, SmtpError};
-use std::str::FromStr;
 use syntax::check_syntax;
 use util::constants::LOG_TARGET;
 
@@ -98,14 +97,6 @@ fn calculate_reachable(misc: &MiscDetails, smtp: &Result<SmtpDetails, SmtpError>
 ///
 /// This function panics if `input.check_email` is empty.
 async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
-	let from_email = EmailAddress::from_str(input.from_email.as_ref()).unwrap_or_else(|_| {
-		log::warn!(
-			"Inputted from_email \"{}\" is not a valid email, using \"user@example.org\" instead",
-			input.from_email
-		);
-		EmailAddress::from_str("user@example.org").expect("This is a valid email. qed.")
-	});
-
 	let to_email = &input.to_emails[0];
 
 	log::debug!(target: LOG_TARGET, "Checking email \"{}\"", to_email);
@@ -176,14 +167,11 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 							.address
 							.as_ref()
 							.expect("We already checked that the email has valid format. qed."),
-						&from_email,
 						host.exchange(),
 						// FIXME We could add ports 465 and 587 too.
 						SMTP_PORT,
 						my_syntax.domain.as_ref(),
-						input.hello_name.as_ref(),
-						&input.proxy,
-						input.yahoo_use_api,
+						&input,
 					);
 
 					// https://rust-lang.github.io/async-book/04_pinning/01_chapter.html

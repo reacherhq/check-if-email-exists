@@ -16,7 +16,7 @@
 
 mod yahoo;
 
-use super::util::{constants::LOG_TARGET, input_output::CheckEmailInputProxy};
+use super::util::{constants::LOG_TARGET, input_output::CheckEmailInput};
 use crate::util::ser_with_display::ser_with_display;
 use async_smtp::{
 	smtp::{
@@ -31,6 +31,7 @@ use fast_socks5::{
 };
 use rand::{distributions::Alphanumeric, Rng};
 use serde::Serialize;
+use std::str::FromStr;
 use std::time::Duration;
 use trust_dns_proto::rr::Name;
 use yahoo::YahooError;
@@ -108,22 +109,21 @@ macro_rules! try_smtp (
 
 /// Attempt to connect to host via SMTP, and return SMTP client on success.
 async fn connect_to_host(
-	from_email: &EmailAddress,
 	host: &Name,
 	port: u16,
-	hello_name: &str,
-	proxy: &Option<CheckEmailInputProxy>,
+	input: &CheckEmailInput,
 ) -> Result<SmtpTransport, SmtpError> {
 	let mut smtp_client =
 		SmtpClient::with_security((host.to_utf8().as_ref(), port), ClientSecurity::None)
 			.await?
-			.hello_name(ClientId::Domain(hello_name.into()))
+			// FIXME Do not clone?
+			.hello_name(ClientId::Domain(input.hello_name.clone()))
 			.timeout(Some(Duration::new(30, 0))) // Set timeout to 30s
 			.into_transport();
 
 	// Connect to the host. If the proxy argument is set, use it.
 	log::debug!(target: LOG_TARGET, "Connecting to {}:{}", host, port);
-	if let Some(proxy) = proxy {
+	if let Some(proxy) = &input.proxy {
 		let stream = Socks5Stream::connect(
 			(proxy.host.as_ref(), proxy.port),
 			host.to_utf8(),
@@ -145,6 +145,13 @@ async fn connect_to_host(
 	}
 
 	// "MAIL FROM: user@example.org"
+	let from_email = EmailAddress::from_str(input.from_email.as_ref()).unwrap_or_else(|_| {
+		log::warn!(
+			"Inputted from_email \"{}\" is not a valid email, using \"user@example.org\" instead",
+			input.from_email
+		);
+		EmailAddress::from_str("user@example.org").expect("This is a valid email. qed.")
+	});
 	try_smtp!(
 		smtp_client
 			// FIXME Do not clone?
@@ -322,22 +329,19 @@ async fn smtp_is_catch_all(
 /// Get all email details we can from one single `EmailAddress`.
 pub async fn check_smtp(
 	to_email: &EmailAddress,
-	from_email: &EmailAddress,
 	host: &Name,
 	port: u16,
 	domain: &str,
-	hello_name: &str,
-	proxy: &Option<CheckEmailInputProxy>,
-	yahoo_use_api: bool,
+	input: &CheckEmailInput,
 ) -> Result<SmtpDetails, SmtpError> {
 	// FIXME Is this `contains` too lenient?
-	if yahoo_use_api && domain.to_lowercase().contains("yahoo") {
+	if input.yahoo_use_api && domain.to_lowercase().contains("yahoo") {
 		return yahoo::check_yahoo(to_email).await.map_err(|err| err.into());
 	}
 
 	// FIXME If the SMTP is not connectable, we should actually return an
 	// Ok(SmtpDetails { can_connect_smtp: false, ... }).
-	let mut smtp_client = connect_to_host(from_email, host, port, hello_name, proxy).await?;
+	let mut smtp_client = connect_to_host(host, port, input).await?;
 
 	let is_catch_all = smtp_is_catch_all(&mut smtp_client, domain)
 		.await
