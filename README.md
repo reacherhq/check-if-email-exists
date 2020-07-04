@@ -93,7 +93,7 @@ Head to the [releases page](https://github.com/amaurymartiny/check-if-email-exis
 
 ```
 > $ check_if_email_exists --help
-check_if_email_exists 0.8.8
+check_if_email_exists 0.8.9
 Check if an email address exists without sending any email.
 
 USAGE:
@@ -105,15 +105,18 @@ FLAGS:
     -V, --version    Prints version information
 
 OPTIONS:
-        --from-email <FROM_EMAIL>    The email to use in the `MAIL FROM:` SMTP command. [default: user@example.org]
-        --hello-name <HELLO_NAME>    The name to use in the `EHLO:` SMTP command. [default: localhost]
-        --http-host <HOST>           Sets the host IP address on which the HTTP server should bind. Only used when
-                                     `--http` flag is on. [default: 127.0.0.1]
-        --http-port <PORT>           Sets the port on which the HTTP server should bind. Only used when `--http` flag is
-                                     on. If not set, then it will use $PORT, or default to 3000.
-        --proxy-host <PROXY_HOST>    Use the specified SOCKS5 proxy host to perform email verification.
-        --proxy-port <PROXY_PORT>    Use the specified SOCKS5 proxy port to perform email verification. Only used when
-                                     `--proxy-host` flag is set. [default: 1080]
+        --from-email <FROM_EMAIL>          The email to use in the `MAIL FROM:` SMTP command. [default:
+                                           user@example.org]
+        --hello-name <HELLO_NAME>          The name to use in the `EHLO:` SMTP command. [default: localhost]
+        --http-host <HOST>                 Sets the host IP address on which the HTTP server should bind. Only used when
+                                           `--http` flag is on. [default: 127.0.0.1]
+        --http-port <PORT>                 Sets the port on which the HTTP server should bind. Only used when `--http`
+                                           flag is on. If not set, then it will use $PORT, or default to 3000.
+        --proxy-host <PROXY_HOST>          Use the specified SOCKS5 proxy host to perform email verification.
+        --proxy-port <PROXY_PORT>          Use the specified SOCKS5 proxy port to perform email verification. Only used
+                                           when `--proxy-host` flag is set. [default: 1080]
+        --yahoo-use-api <YAHOO_USE_API>    For Yahoo email addresses, use Yahoo's API instead of connecting directly to
+                                           their SMTP servers. [default: true]
 
 ARGS:
     <TO_EMAIL>    The email to check.
