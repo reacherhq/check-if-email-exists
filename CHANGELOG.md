@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.8.10](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.9...v0.8.10) (2020-07-04)
+
+
+### Bug Fixes
+
+* Correct message parsing for "receiving at a rate" error ([#462](https://github.com/amaurymartiny/check-if-email-exists/issues/462)) ([4b31706](https://github.com/amaurymartiny/check-if-email-exists/commit/4b31706228a6e81852505ec21a0f70d5472b1385))
+
 ### [0.8.9](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.8...v0.8.9) (2020-07-04)
 
 
