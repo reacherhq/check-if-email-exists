@@ -106,7 +106,16 @@ impl From<SerdeError> for YahooError {
 /// Use well-crafted HTTP requests to verify if a Yahoo email address exists.
 /// Inspired by https://github.com/hbattat/verifyEmail.
 pub async fn check_yahoo(to_email: &EmailAddress) -> Result<SmtpDetails, YahooError> {
-	let response = surf::get(SIGNUP_PAGE).await?;
+	let response = surf::get(SIGNUP_PAGE)
+		.set_header("Origin","https://login.yahoo.com")
+		.set_header("X-Requested-With","XMLHttpRequest")
+		.set_header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36")
+		.set_header("Content-type", "application/x-www-form-urlencoded; charset=UTF-8")
+		.set_header("Accept", "*/*")
+		.set_header("Referer", SIGNUP_PAGE)
+		.set_header("Accept-Encoding", "gzip, deflate, br")
+		.set_header("Accept-Language", "en-US,en;q=0.8,ar;q=0.6")
+		.await?;
 
 	// Get the cookies from the response.
 	let cookies = match response.header("Set-Cookie") {
@@ -140,18 +149,19 @@ pub async fn check_yahoo(to_email: &EmailAddress) -> Result<SmtpDetails, YahooEr
 	};
 
 	// Mimic a real HTTP request.
-	let response = surf::post(SIGNUP_API).set_header("Origin","https://login.yahoo.com")
-    .set_header("X-Requested-With","XMLHttpRequest")
-    .set_header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36")
-    .set_header("Content-type", "application/x-www-form-urlencoded; charset=UTF-8")
-    .set_header("Accept", "*/*")
-    .set_header("Referer", SIGNUP_PAGE)
-    .set_header("Accept-Encoding", "gzip, deflate, br")
-    .set_header("Accept-Language", "en-US,en;q=0.8,ar;q=0.6")
-    .set_header("Cookie", cookies)
-    .body_json(&FormRequest::new(acrumb["acrumb"].to_string(), username.into()))?
-    .recv_json::<FormResponse>()
-    .await?;
+	let response = surf::post(SIGNUP_API)
+		.set_header("Origin","https://login.yahoo.com")
+		.set_header("X-Requested-With","XMLHttpRequest")
+		.set_header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36")
+		.set_header("Content-type", "application/x-www-form-urlencoded; charset=UTF-8")
+		.set_header("Accept", "*/*")
+		.set_header("Referer", SIGNUP_PAGE)
+		.set_header("Accept-Encoding", "gzip, deflate, br")
+		.set_header("Accept-Language", "en-US,en;q=0.8,ar;q=0.6")
+		.set_header("Cookie", cookies)
+		.body_json(&FormRequest::new(acrumb["acrumb"].to_string(), username.into()))?
+		.recv_json::<FormResponse>()
+		.await?;
 
 	log::debug!(target: LOG_TARGET, "Yahoo 2nd response: {:?}", response);
 
