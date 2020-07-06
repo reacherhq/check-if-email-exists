@@ -1,6 +1,6 @@
 [package]
 name = "check-if-email-exists-cli"
-version = "0.8.10"
+version = "0.8.11"
 default-run = "check_if_email_exists"
 edition = "2018"
 license = "AGPL-3.0"
