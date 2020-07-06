@@ -260,6 +260,8 @@ async fn email_deliverable(
 				// 550 invalid address
 				// 550 User not local or invalid address – Relay denied
 				|| err_string.contains("invalid address")
+				// 5.1.1 Invalid email address
+				|| err_string.contains("invalid email address")
 				// 550 Invalid recipient
 				|| err_string.contains("invalid recipient")
 				|| err_string.contains("may not exist")
