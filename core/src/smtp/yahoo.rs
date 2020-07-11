@@ -125,7 +125,7 @@ fn create_client(input: &CheckEmailInput) -> Result<reqwest::Client, ReqwestErro
 			proxy.port
 		);
 
-		let proxy = reqwest::Proxy::all(&format!("socks://{}:{}", proxy.host, proxy.port))?;
+		let proxy = reqwest::Proxy::all(&format!("socks5://{}:{}", proxy.host, proxy.port))?;
 		reqwest::Client::builder().proxy(proxy).build()
 	} else {
 		Ok(reqwest::Client::new())
