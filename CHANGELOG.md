@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.8.11](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.10...v0.8.11) (2020-07-11)
+
+
+### Bug Fixes
+
+* Add "Invalid email address" check ([#471](https://github.com/amaurymartiny/check-if-email-exists/issues/471)) ([3b03617](https://github.com/amaurymartiny/check-if-email-exists/commit/3b03617b81a1f9f6bc1bc6edc8c5d6d9f87eabbb))
+* Add possibility to use proxy in Yahoo API request ([#472](https://github.com/amaurymartiny/check-if-email-exists/issues/472)) ([aafcedf](https://github.com/amaurymartiny/check-if-email-exists/commit/aafcedf9b9135a6550e7aa2da5d7ca5898da9b53))
+
 ### [0.8.10](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.9...v0.8.10) (2020-07-04)
 
 
