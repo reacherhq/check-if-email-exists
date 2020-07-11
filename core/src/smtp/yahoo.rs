@@ -15,17 +15,20 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use super::SmtpDetails;
-use crate::util::constants::LOG_TARGET;
-use crate::util::ser_with_display::ser_with_display;
+use crate::util::{
+	constants::LOG_TARGET, input_output::CheckEmailInput, ser_with_display::ser_with_display,
+};
 use async_smtp::EmailAddress;
 use http_types::Error as HttpError;
 use regex::Regex;
+use reqwest::Error as ReqwestError;
 use serde::{Deserialize, Serialize};
 use serde_json::error::Error as SerdeError;
 use std::fmt;
 
 const SIGNUP_PAGE: &str = "https://login.yahoo.com/account/create?specId=yidReg&lang=en-US&src=&done=https%3A%2F%2Fwww.yahoo.com&display=login";
 const SIGNUP_API: &str = "https://login.yahoo.com/account/module/create?validateField=yid";
+const USER_AGENT: &str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36"; // Fake one to use in API requests
 
 /// The form inputs to pass into the HTTP request.
 #[derive(Serialize)]
@@ -81,6 +84,9 @@ pub enum YahooError {
 	NoCookie,
 	/// Error when serializing or deserializing HTTP requests and responses.
 	#[serde(serialize_with = "ser_with_display")]
+	ReqwestError(ReqwestError),
+	/// Error when serializing or deserializing HTTP requests and responses.
+	#[serde(serialize_with = "ser_with_display")]
 	SerdeError(SerdeError),
 }
 
@@ -103,15 +109,43 @@ impl From<SerdeError> for YahooError {
 	}
 }
 
+impl From<ReqwestError> for YahooError {
+	fn from(error: ReqwestError) -> Self {
+		YahooError::ReqwestError(error)
+	}
+}
+
+/// Helper function to create a reqwest client, with optional proxy.
+fn create_client(input: &CheckEmailInput) -> Result<reqwest::Client, ReqwestError> {
+	if let Some(proxy) = &input.proxy {
+		log::debug!(
+			target: LOG_TARGET,
+			"Using proxy socks://{}:{} for Yahoo API",
+			proxy.host,
+			proxy.port
+		);
+
+		let proxy = reqwest::Proxy::all(&format!("socks://{}:{}", proxy.host, proxy.port))?;
+		reqwest::Client::builder().proxy(proxy).build()
+	} else {
+		Ok(reqwest::Client::new())
+	}
+}
+
 /// Use well-crafted HTTP requests to verify if a Yahoo email address exists.
 /// Inspired by https://github.com/hbattat/verifyEmail.
-pub async fn check_yahoo(to_email: &EmailAddress) -> Result<SmtpDetails, YahooError> {
-	let response = surf::get(SIGNUP_PAGE)
-		.set_header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36")
+pub async fn check_yahoo(
+	to_email: &EmailAddress,
+	input: &CheckEmailInput,
+) -> Result<SmtpDetails, YahooError> {
+	let response = create_client(input)?
+		.get(SIGNUP_PAGE)
+		.header("User-Agent", USER_AGENT)
+		.send()
 		.await?;
 
 	// Get the cookies from the response.
-	let cookies = match response.header("Set-Cookie") {
+	let cookies = match response.headers().get("Set-Cookie") {
 		Some(x) => x,
 		_ => {
 			return Err(YahooError::NoCookie);
@@ -127,8 +161,8 @@ pub async fn check_yahoo(to_email: &EmailAddress) -> Result<SmtpDetails, YahooEr
 		.expect("The email is well-formed. qed.");
 
 	// From the cookies, fetch the "acrumb" field.
-	let acrumb = match cookies.into_iter().next() {
-		Some(x) => x.to_string(),
+	let acrumb = match cookies.to_str() {
+		Ok(x) => x.to_string(),
 		_ => {
 			return Err(YahooError::NoAcrumb);
 		}
@@ -142,17 +176,27 @@ pub async fn check_yahoo(to_email: &EmailAddress) -> Result<SmtpDetails, YahooEr
 	};
 
 	// Mimic a real HTTP request.
-	let response = surf::post(SIGNUP_API).set_header("Origin","https://login.yahoo.com")
-		.set_header("X-Requested-With","XMLHttpRequest")
-		.set_header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36")
-		.set_header("Content-type", "application/x-www-form-urlencoded; charset=UTF-8")
-		.set_header("Accept", "*/*")
-		.set_header("Referer", SIGNUP_PAGE)
-		.set_header("Accept-Encoding", "gzip, deflate, br")
-		.set_header("Accept-Language", "en-US,en;q=0.8,ar;q=0.6")
-		.set_header("Cookie", cookies)
-		.body_json(&FormRequest::new(acrumb["acrumb"].to_string(), username.into()))?
-		.recv_json::<FormResponse>()
+	let response = create_client(input)?
+		.post(SIGNUP_API)
+		.header("Origin", "https://login.yahoo.com")
+		.header("X-Requested-With", "XMLHttpRequest")
+		.header("User-Agent", USER_AGENT)
+		.header(
+			"Content-type",
+			"application/x-www-form-urlencoded; charset=UTF-8",
+		)
+		.header("Accept", "*/*")
+		.header("Referer", SIGNUP_PAGE)
+		.header("Accept-Encoding", "gzip, deflate, br")
+		.header("Accept-Language", "en-US,en;q=0.8,ar;q=0.6")
+		.header("Cookie", cookies)
+		.json(&FormRequest::new(
+			acrumb["acrumb"].to_string(),
+			username.into(),
+		))
+		.send()
+		.await?
+		.json::<FormResponse>()
 		.await?;
 
 	log::debug!(target: LOG_TARGET, "Yahoo 2nd response: {:?}", response);
