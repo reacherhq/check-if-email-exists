@@ -336,7 +336,9 @@ pub async fn check_smtp(
 ) -> Result<SmtpDetails, SmtpError> {
 	// FIXME Is this `contains` too lenient?
 	if input.yahoo_use_api && domain.to_lowercase().contains("yahoo") {
-		return yahoo::check_yahoo(to_email).await.map_err(|err| err.into());
+		return yahoo::check_yahoo(to_email, input)
+			.await
+			.map_err(|err| err.into());
 	}
 
 	// FIXME If the SMTP is not connectable, we should actually return an
