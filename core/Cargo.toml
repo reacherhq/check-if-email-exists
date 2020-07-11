@@ -21,7 +21,6 @@ async-smtp = { version = "0.3", features = ["socks5"] }
 async-std-resolver = "0.19"
 fast-socks5 = "0.3"
 futures = "0.3"
-http-types = "2.2"
 log = "0.4"
 mailchecker = "3.3"
 rand = "0.7"

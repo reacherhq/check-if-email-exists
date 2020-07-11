@@ -19,7 +19,6 @@ use crate::util::{
 	constants::LOG_TARGET, input_output::CheckEmailInput, ser_with_display::ser_with_display,
 };
 use async_smtp::EmailAddress;
-use http_types::Error as HttpError;
 use regex::Regex;
 use reqwest::Error as ReqwestError;
 use serde::{Deserialize, Serialize};
@@ -75,9 +74,6 @@ struct FormResponse {
 /// Possible errors when checking Yahoo email addresses.
 #[derive(Debug, Serialize)]
 pub enum YahooError {
-	/// Error when sending an HTTP request. Used to verify Yahoo emails.
-	#[serde(serialize_with = "ser_with_display")]
-	HttpError(HttpError),
 	/// Cannot find "acrumb" field in cookie.
 	NoAcrumb,
 	/// Cannot find cookie in Yahoo response.
@@ -94,12 +90,6 @@ impl fmt::Display for YahooError {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		// Customize so only `x` and `y` are denoted.
 		write!(f, "{:?}", self)
-	}
-}
-
-impl From<HttpError> for YahooError {
-	fn from(error: HttpError) -> Self {
-		YahooError::HttpError(error)
 	}
 }
 
