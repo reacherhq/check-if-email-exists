@@ -93,15 +93,15 @@ impl fmt::Display for YahooError {
 	}
 }
 
-impl From<SerdeError> for YahooError {
-	fn from(error: SerdeError) -> Self {
-		YahooError::SerdeError(error)
-	}
-}
-
 impl From<ReqwestError> for YahooError {
 	fn from(error: ReqwestError) -> Self {
 		YahooError::ReqwestError(error)
+	}
+}
+
+impl From<SerdeError> for YahooError {
+	fn from(error: SerdeError) -> Self {
+		YahooError::SerdeError(error)
 	}
 }
 
@@ -152,13 +152,13 @@ pub async fn check_yahoo(
 
 	// From the cookies, fetch the "acrumb" field.
 	let acrumb = match cookies.to_str() {
-		Ok(x) => x.to_string(),
+		Ok(x) => x,
 		_ => {
 			return Err(YahooError::NoAcrumb);
 		}
 	};
 	let re = Regex::new(r"s=(?P<acrumb>[^;]*)").expect("Correct regex. qed.");
-	let acrumb = match re.captures(acrumb.as_ref()) {
+	let acrumb = match re.captures(acrumb) {
 		Some(x) => x,
 		_ => {
 			return Err(YahooError::NoAcrumb);
