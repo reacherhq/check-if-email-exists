@@ -8,7 +8,7 @@
 <br /><br /><br />
 
 <h1 align="center">check-if-email-exists</h1>
-<h4 align="center">Check if an email address exists before sending the email.</h4>
+<h4 align="center">Check if an email address exists without sending any email.</h4>
 
 <br /><br /><br />
 
@@ -258,8 +258,8 @@ The 1st version of this tool was a simple bash script which made a telnet call. 
 
 The source code is available under the license beard dude loves. See the [LICENSE](./LICENSE) file for more info.
 
-## 🌯 Falafel Wrap
-
-[![Sponsor](https://img.shields.io/badge/Github%20Sponsors-%E2%9D%A4%EF%B8%8F-white)](https://github.com/sponsors/amaurymartiny/)
+## 🌯 Sponsor me
 
 I don't drink coffee, but I'd enjoy a wrap from my favorite Falafel dealer. 👉 [See which one.](https://github.com/sponsors/amaurymartiny/)
+
+[![Sponsor](https://img.shields.io/badge/Github%20Sponsors-%E2%9D%A4%EF%B8%8F-white)](https://github.com/sponsors/amaurymartiny/)

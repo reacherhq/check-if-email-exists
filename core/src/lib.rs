@@ -154,38 +154,29 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 		my_misc
 	);
 
-	// Create one future per lookup result.
-	let futures = my_mx
+	// We simply take the first lookup result, and connect to that SMTP server.
+	// FIXME Add retry mechanism to other lookup results.
+	let my_smtp = my_mx
 		.lookup
 		.as_ref()
-		.map(|lookup| {
-			lookup
-				.iter()
-				.map(|host| {
-					let fut = check_smtp(
-						my_syntax
-							.address
-							.as_ref()
-							.expect("We already checked that the email has valid format. qed."),
-						host.exchange(),
-						// FIXME We could add ports 465 and 587 too.
-						SMTP_PORT,
-						my_syntax.domain.as_ref(),
-						&input,
-					);
-
-					// https://rust-lang.github.io/async-book/04_pinning/01_chapter.html
-					Box::pin(fut)
-				})
-				.collect::<Vec<_>>()
+		.expect("If lookup is error, we already returned. qed.")
+		.iter()
+		.next()
+		.map(|host| {
+			check_smtp(
+				my_syntax
+					.address
+					.as_ref()
+					.expect("We already checked that the email has valid format. qed."),
+				host.exchange(),
+				// FIXME We could add ports 465 and 587 too.
+				SMTP_PORT,
+				my_syntax.domain.as_ref(),
+				&input,
+			)
 		})
-		.expect("If lookup is empty, we already returned. qed.");
-
-	// Race, return the first future that resolves.
-	let my_smtp = match future::select_ok(futures).await {
-		Ok((details, _)) => Ok(details),
-		Err(err) => Err(err),
-	};
+		.expect("Lookup cannot be empty. qed.")
+		.await;
 
 	CheckEmailOutput {
 		input: to_email.to_string(),

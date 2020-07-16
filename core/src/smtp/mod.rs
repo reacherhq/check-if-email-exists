@@ -190,7 +190,10 @@ async fn email_deliverable(
 	{
 		Ok(response) => match response.first_line() {
 			Some(message) => {
-				let is_deliverable = message.contains("2.1.5");
+				let message = message.to_lowercase();
+				let is_deliverable = message.contains("2.1.5") || 
+					// 250 Recipient address accepted
+					message.contains("recipient address accepted");
 				Ok(Deliverability {
 					has_full_inbox: false,
 					is_deliverable,
