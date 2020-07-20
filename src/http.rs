@@ -25,7 +25,7 @@ use std::net::SocketAddr;
 pub struct PostReqBody {
 	from_email: Option<String>,
 	hello_name: Option<String>,
-	to_email: Vec<String>,
+	to_emails: Vec<String>,
 	// FIXME Add fields for proxy
 }
 
@@ -38,7 +38,7 @@ async fn req_handler(req: Request<Body>) -> Result<Response<Body>, hyper::Error>
 	match (req.method(), req.uri().path()) {
 		// Serve some instructions at /
 		(&Method::GET, "/") => Ok(Response::new(Body::from(
-			"Send a POST request with JSON `{ \"from_email\"?: \"<email>\", \"hello_name\"?: \"<name>\", to_email: \"<email>\" }` in the body",
+			"Send a POST request with JSON `{ \"from_email\"?: \"<email>\", \"hello_name\"?: \"<name>\", to_emails: \"<email>\" }` in the body",
 		))),
 
 		// Do email_exists check on POST /
@@ -57,7 +57,7 @@ async fn req_handler(req: Request<Body>) -> Result<Response<Body>, hyper::Error>
 			};
 
 			// Create EmailInput from body
-			let mut input = CheckEmailInput::new(body.to_email);
+			let mut input = CheckEmailInput::new(body.to_emails);
 			input.from_email(body.from_email.unwrap_or_else(|| "user@example.org".into())).hello_name(body.hello_name.unwrap_or_else(|| "localhost".into()));
 
 			let body = check_email(&input).await;
