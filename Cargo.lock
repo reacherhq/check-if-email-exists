@@ -526,15 +526,17 @@ checksum = "de27142b013a8e869c14957e6d2edeef89e97c289e69d042ee3a49acd8b51789"
 
 [[package]]
 name = "futures-lite"
-version = "0.1.5"
+version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "08e706d5c313fd50778b4d2fd779b90ca79d474eebe4b4cb3e44b5f84ea799fe"
+checksum = "8cc8771bd1bb4c7be3c5f072a1d5e18086ef220f100a0a4efece41076e87b9f2"
 dependencies = [
  "fastrand",
  "futures-core",
  "futures-io",
  "memchr",
+ "parking",
  "pin-project-lite",
+ "waker-fn",
 ]
 
 [[package]]
