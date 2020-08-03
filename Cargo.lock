@@ -407,9 +407,9 @@ dependencies = [
 
 [[package]]
 name = "event-listener"
-version = "2.2.1"
+version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "829694371bd7bbc6aee17c4ff624aad8bf9f4dc06c6f9f6071eaa08c89530d10"
+checksum = "298f00c3b04c1d9b4cb86aefaaa35348af0957d98b30a5306fc635f8e718923d"
 
 [[package]]
 name = "fast-socks5"
