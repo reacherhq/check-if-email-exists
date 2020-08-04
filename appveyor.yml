@@ -54,7 +54,7 @@ test_script:
 
 before_deploy:
   # TODO Update this to build the artifacts that matter to you
-  - cargo rustc --target %TARGET% --release --bin %BIN_NAME% -- -C lto
+  - cargo rustc --target %TARGET% --release --bin %BIN_NAME%
   - ps: ci\before_deploy.ps1
 
 deploy:
