@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.8.13](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.12...v0.8.13) (2020-08-04)
+
+
+### Bug Fixes
+
+* **ci:** Put lto flag in cargo.toml ([#531](https://github.com/amaurymartiny/check-if-email-exists/issues/531)) ([00cbc1f](https://github.com/amaurymartiny/check-if-email-exists/commit/00cbc1fd46743c7579809a09b3897259213af496))
+
 ### [0.8.12](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.11...v0.8.12) (2020-08-04)
 
 
