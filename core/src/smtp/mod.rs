@@ -290,10 +290,14 @@ async fn email_deliverable(
 				|| err_string.contains("invalid mailbox")
 				// 550 5.1.1 Sorry, no mailbox here by that name
 				|| err_string.contains("no mailbox")
+				// 5.2.0 No such mailbox
+				|| err_string.contains("no such mailbox")
 				// 550 Requested action not taken: mailbox unavailable
 				|| err_string.contains("mailbox unavailable")
 				// 550 5.1.1 Is not a valid mailbox
 				|| err_string.contains("not a valid mailbox")
+				// No such recipient here
+				|| err_string.contains("no such recipient")
 				// 554 delivery error: This user doesn’t have an account
 				|| err_string.contains("have an account")
 			{
