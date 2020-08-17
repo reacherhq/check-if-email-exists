@@ -260,4 +260,4 @@ The 1st version of this tool was a simple bash script which made a telnet call. 
 
 The source code is available under the license beard dude loves. See the [LICENSE](./LICENSE) file for more info.
 
-> If you would like a higher free tier to test Reacher, consider [sponsoring me](https://github.com/sponsors/amaurymartiny/)! You'll get from 8000 free emails every month, and a this contribution would mean A WHOLE LOT to me.
+> If you would like a higher free tier to test https://reacher.email, consider [sponsoring me](https://github.com/sponsors/amaurymartiny/)! You'll get from 8000 free emails every month, and a this contribution would mean A WHOLE LOT to me.
