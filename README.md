@@ -17,7 +17,9 @@
 You can also:
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/amaurymartiny/check-if-email-exists)
 
-**IMPORTANT:** This software is licensed under the AGPL-3.0 license, which forbids it being integrated and distributed in closed-source commercials projects. [Message me](mailto:amaury.martiny@protonmail.com) if you wish an alternate licensing.
+## Commercial Licensing
+
+This software is licensed under the AGPL-3.0 license, which forbids it being integrated and distributed in closed-source commercials projects. [Message me](mailto:amaury.martiny@protonmail.com) if you wish an alternate licensing.
 
 ## What Does This Tool Check?
 
@@ -258,8 +260,4 @@ The 1st version of this tool was a simple bash script which made a telnet call. 
 
 The source code is available under the license beard dude loves. See the [LICENSE](./LICENSE) file for more info.
 
-## 🌯 Sponsor me
-
-I don't drink coffee, but I'd enjoy a wrap from my favorite Falafel dealer. 👉 [See which one.](https://github.com/sponsors/amaurymartiny/)
-
-[![Sponsor](https://img.shields.io/badge/Github%20Sponsors-%E2%9D%A4%EF%B8%8F-white)](https://github.com/sponsors/amaurymartiny/)
+> If you would like a higher free tier to test Reacher, consider [sponsoring me](https://github.com/sponsors/amaurymartiny/)! You'll get from 8000 free emails every month, and a this contribution would mean A WHOLE LOT to me.
