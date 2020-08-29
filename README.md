@@ -3,7 +3,7 @@
 [![Actions Status](https://github.com/amaurymartiny/check-if-email-exists/workflows/CI/badge.svg)](https://github.com/amaurymartiny/check-if-email-exists/actions)
 [![Travis](https://img.shields.io/travis/amaurymartiny/check-if-email-exists.svg)](https://travis-ci.org/amaurymartiny/check-if-email-exists)
 [![Appveyor](https://ci.appveyor.com/api/projects/status/github/amaurymartiny/check-if-email-exists?branch=master&svg=true)](https://ci.appveyor.com/project/amaurymartiny/check-if-email-exists-a08kp)
-![License](https://img.shields.io/github/license/amaurymartiny/check-if-email-exists.svg)
+[![Github Sponsor](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&link=https://github.com/sponsors/amaurymartiny)](https://github.com/sponsors/amaurymartiny)
 
 <br /><br /><br />
 
@@ -16,10 +16,6 @@
 
 You can also:
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/amaurymartiny/check-if-email-exists)
-
-## Commercial Licensing
-
-This software is licensed under the AGPL-3.0 license, which forbids it being integrated and distributed in closed-source commercials projects. [Message me](mailto:amaury.martiny@protonmail.com) if you wish an alternate licensing.
 
 ## What Does This Tool Check?
 
@@ -45,21 +41,25 @@ This software is licensed under the AGPL-3.0 license, which forbids it being int
 
 Many online services (https://hunter.io, https://verify-email.org, https://email-checker.net) offer this service for a paid fee. Here is an open-source alternative to those tools.
 
+## License
+
+This library has a dual license, a commercial one suitable for closed-source commercial projects and an AGPL-3.0 license that can be used in open-source software. See the [LICENSE](./LICENSE.md) file for more info.
+
 ## Try It Yourself
 
 There are 5 ways you can try `check-if-email-exists`.
 
 ### 1. Use the Hosted Version: https://reacher.email 🥇
 
-This simple SaaS is also open-source by the way: https://github.com/reacherhq.
+Reacher is a simple SaaS using this library, also [open-source](https://github.com/reacherhq/backend)!
 
-If you would like to self-host it yourself and have questions, send me a message.
+> If you would like a high free tier to test Reacher, consider [sponsoring me](https://github.com/sponsors/amaurymartiny/)! You'll get 8000 free email verifications every month, and a this contribution would mean A WHOLE LOT to me.
 
 ### 2. Deploy to Heroku
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/amaurymartiny/check-if-email-exists)
 
-Heroku's servers have SMTP port 25 open, and have static IPs able to connect to most email providers (unless of course if you start heavily spamming these providers).
+Heroku's servers have SMTP port 25 open, and have static IPs able to connect to most email providers (unless if you start heavily spamming these providers).
 
 ### 3. Use Docker
 
@@ -218,21 +218,21 @@ The output will be a JSON with the below format, the fields should be self-expla
 }
 ```
 
-You can also take a look at the [OpenAPIv3 specification](https://reacher.email/docs#operation/post-check-email) of this JSON object.
+You can also take a look at the [documentation](https://reacher.email/docs#operation/post-check-email) of this JSON object.
 
 ## ❓ FAQ
 
-### What does `is_reachable: "unknown"` mean?
+#### What does `is_reachable: "unknown"` mean?
 
 This means that the server does not allow real-time verification of an email right now. It may happen for multiple reasons: your IP is blacklisted, the SMTP port 25 is blocked, the email account is momentarily receiving too many emails (spam protection)... or the email provider simply does not allow real-time verification at all. The details of this `"unknown"` case can be found in the `smtp.error` and `mx.error` fields.
 
-### The library hangs/takes a long time/doesn't show anything after 1 minute.
+#### The library hangs/takes a long time/doesn't show anything after 1 minute.
 
 Most ISPs block outgoing SMTP requests through port 25, to prevent spam. `check-if-email-exists` needs to have this port open to make a connection to the email's SMTP server, so won't work behind these ISPs, and will instead hang until it times out. There's unfortunately no easy workaround for this problem, see for example [this StackOverflow thread](https://stackoverflow.com/questions/18139102/how-to-get-around-an-isp-block-on-port-25-for-smtp). One solution is to rent a Linux cloud server with a static IP and no blocked ports, see for example our [Deploy to Heroku](#2-deploy-to-heroku) section.
 
 To see in details what the binary is doing behind the scenes, run it in verbose mode to see the logs.
 
-### The output shows `"connection refused"` in the `smtp.error` field.
+#### The output shows `"connection refused"` in the `smtp.error` field.
 
 This also happens when your ISP block SMTP ports, see the above answer.
 
@@ -254,10 +254,4 @@ $ ./target/release/check_if_email_exists --help
 
 ## Legacy Bash Script
 
-The 1st version of this tool was a simple bash script which made a telnet call. If you would like to use that simpler version, have a look at the [`legacy`](https://github.com/amaurymartiny/check-if-email-exists/tree/legacy) branch. The reasons for porting the bash script to the current codebase are explained [in this issue](https://github.com/amaurymartiny/check-if-email-exists/issues/4).
-
-## 📜 License
-
-The source code is available under the license beard dude loves. See the [LICENSE](./LICENSE) file for more info.
-
-> If you would like a higher free tier to test https://reacher.email, consider [sponsoring me](https://github.com/sponsors/amaurymartiny/)! You'll get from 8000 free emails every month, and a this contribution would mean A WHOLE LOT to me.
+The 1st version of this tool was a simple bash script which made a telnet call. If you would like to use that simpler version, have a look at the [`legacy`](https://github.com/amaurymartiny/check-if-email-exists/tree/legacy) branch. The reasons for porting the bash script to the current codebase are explained [in issue #4](https://github.com/amaurymartiny/check-if-email-exists/issues/4).

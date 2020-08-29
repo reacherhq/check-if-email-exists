@@ -198,7 +198,7 @@ pub async fn check_email(inputs: &CheckEmailInput) -> Vec<CheckEmailOutput> {
 	// `check_mx` call for all these email addresses.
 	// - if multiple email addresses share the same domain, we should call
 	// `check_smtp` with grouped email addresses, to share a SMTP connection.
-	// Also see https://github.com/amaurymartiny/check-if-email-exists/issues/65.
+	// ref: https://github.com/amaurymartiny/check-if-email-exists/issues/65.
 	let inputs = inputs.to_emails.iter().map(|email| {
 		// Create n `CheckEmailInput`s, each with one email address.
 		CheckEmailInput {
