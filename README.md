@@ -59,7 +59,7 @@ Reacher is a simple SaaS using this library, also [open-source](https://github.c
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/amaurymartiny/check-if-email-exists)
 
-Heroku's servers have SMTP port 25 open, and have static IPs able to connect to most email providers (unless of course if you start heavily spamming these providers).
+Heroku's servers have SMTP port 25 open, and have static IPs able to connect to most email providers (unless if you start heavily spamming these providers).
 
 ### 3. Use Docker
 
