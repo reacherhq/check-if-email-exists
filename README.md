@@ -258,6 +258,6 @@ The 1st version of this tool was a simple bash script which made a telnet call. 
 
 ## License
 
-This library has a dual license, a commercial one suitable for closed-source commercial projects and an AGPL license that can be used in open-source software. See the [LICENSE](./LICENSE) file for more info.
+This library has a dual license, a commercial one suitable for closed-source commercial projects and an AGPL license that can be used in open-source software. See the [LICENSE](./LICENSE.md) file for more info.
 
 > If you would like a higher free tier to test https://reacher.email, consider [sponsoring me](https://github.com/sponsors/amaurymartiny/)! You'll get 8000 free emails every month, and a this contribution would mean A WHOLE LOT to me.

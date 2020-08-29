@@ -10,4 +10,4 @@ In brief, purchasing a license is mandatory as soon as you develop activities di
 -   creating/manipulating documents for users in a web/server/cloud application,
 -   shipping `check-if-email-exists` with a closed source product.
 
-Please visit [this page](https://reacher.email/commercial-license) to purchase a commercial license or contact Reacher support at support@reacher.email for more info.
+Please visit [Reacher's dedicated page](https://reacher.email/commercial-license) to purchase a commercial license or contact Reacher support at support@reacher.email for more info.
