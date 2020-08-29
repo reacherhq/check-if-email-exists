@@ -17,9 +17,9 @@
 You can also:
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/amaurymartiny/check-if-email-exists)
 
-## Commercial Licensing
+## Dual Licensing: AGPL-3.0 and Commercial License
 
-This software is licensed under the AGPL-3.0 license, which forbids it being integrated and distributed in closed-source commercials projects. [Message me](mailto:amaury.martiny@protonmail.com) if you wish an alternate licensing.
+This library has a dual license, a commercial one suitable for closed-source commercial projects and an AGPL-3.0 license that can be used in open-source software. See the [LICENSE](./LICENSE.md) file for more info.
 
 ## What Does This Tool Check?
 
@@ -53,7 +53,7 @@ There are 5 ways you can try `check-if-email-exists`.
 
 This simple SaaS is also open-source by the way: https://github.com/reacherhq.
 
-If you would like to self-host it yourself and have questions, send me a message.
+> If you would like a higher free tier to test https://reacher.email, consider [sponsoring me](https://github.com/sponsors/amaurymartiny/)! You'll get 8000 free emails every month, and a this contribution would mean A WHOLE LOT to me.
 
 ### 2. Deploy to Heroku
 
@@ -255,9 +255,3 @@ $ ./target/release/check_if_email_exists --help
 ## Legacy Bash Script
 
 The 1st version of this tool was a simple bash script which made a telnet call. If you would like to use that simpler version, have a look at the [`legacy`](https://github.com/amaurymartiny/check-if-email-exists/tree/legacy) branch. The reasons for porting the bash script to the current codebase are explained [in this issue](https://github.com/amaurymartiny/check-if-email-exists/issues/4).
-
-## License
-
-This library has a dual license, a commercial one suitable for closed-source commercial projects and an AGPL license that can be used in open-source software. See the [LICENSE](./LICENSE.md) file for more info.
-
-> If you would like a higher free tier to test https://reacher.email, consider [sponsoring me](https://github.com/sponsors/amaurymartiny/)! You'll get 8000 free emails every month, and a this contribution would mean A WHOLE LOT to me.
