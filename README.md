@@ -53,7 +53,7 @@ There are 5 ways you can try `check-if-email-exists`.
 
 Reacher is a simple SaaS using this library, also [open-source](https://github.com/reacherhq/backend)!
 
-> If you would like a higher free tier to test https://reacher.email, consider [sponsoring me](https://github.com/sponsors/amaurymartiny/)! You'll get 8000 free emails every month, and a this contribution would mean A WHOLE LOT to me.
+> If you would like a higher free tier to test functionalities, consider [sponsoring me](https://github.com/sponsors/amaurymartiny/)! You'll get 8000 free emails to test every month, and a this contribution would mean A WHOLE LOT to me.
 
 ### 2. Deploy to Heroku
 
