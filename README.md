@@ -256,8 +256,8 @@ $ ./target/release/check_if_email_exists --help
 
 The 1st version of this tool was a simple bash script which made a telnet call. If you would like to use that simpler version, have a look at the [`legacy`](https://github.com/amaurymartiny/check-if-email-exists/tree/legacy) branch. The reasons for porting the bash script to the current codebase are explained [in this issue](https://github.com/amaurymartiny/check-if-email-exists/issues/4).
 
-## 📜 License
+## License
 
-The source code is available under the license beard dude loves. See the [LICENSE](./LICENSE) file for more info.
+This library (`check-if-email-exists`) has a dual license, a commercial one suitable for closed-source commercial projects and an AGPL license that can be used in open-source software. See the [LICENSE](./LICENSE) file for more info.
 
-> If you would like a higher free tier to test https://reacher.email, consider [sponsoring me](https://github.com/sponsors/amaurymartiny/)! You'll get from 8000 free emails every month, and a this contribution would mean A WHOLE LOT to me.
+> If you would like a higher free tier to test https://reacher.email, consider [sponsoring me](https://github.com/sponsors/amaurymartiny/)! You'll get 8000 free emails every month, and a this contribution would mean A WHOLE LOT to me.
