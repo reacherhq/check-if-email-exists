@@ -17,10 +17,6 @@
 You can also:
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/amaurymartiny/check-if-email-exists)
 
-## Dual Licensing: AGPL-3.0 and Commercial License
-
-This library has a dual license, a commercial one suitable for closed-source commercial projects and an AGPL-3.0 license that can be used in open-source software. See the [LICENSE](./LICENSE.md) file for more info.
-
 ## What Does This Tool Check?
 
 | Included? | Feature                                       | Description                                                                                                                     | JSON field                                                                      |
@@ -44,6 +40,10 @@ This library has a dual license, a commercial one suitable for closed-source com
 ## 🤔 Why?
 
 Many online services (https://hunter.io, https://verify-email.org, https://email-checker.net) offer this service for a paid fee. Here is an open-source alternative to those tools.
+
+## License
+
+This library has a dual license, a commercial one suitable for closed-source commercial projects and an AGPL-3.0 license that can be used in open-source software. See the [LICENSE](./LICENSE.md) file for more info.
 
 ## Try It Yourself
 
