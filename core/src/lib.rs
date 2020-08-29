@@ -55,9 +55,6 @@
 //! }
 //! ```
 
-// ref: https://github.com/amaurymartiny/check-if-email-exists/issues/568
-#![type_length_limit = "2097152000000000"]
-
 pub mod misc;
 pub mod mx;
 pub mod smtp;

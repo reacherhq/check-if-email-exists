@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+// ref: https://github.com/amaurymartiny/check-if-email-exists/issues/568
+#![type_length_limit = "2097152000000000"]
+
 extern crate clap;
 extern crate env_logger;
 extern crate hyper;
