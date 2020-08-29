@@ -51,7 +51,7 @@ There are 5 ways you can try `check-if-email-exists`.
 
 ### 1. Use the Hosted Version: https://reacher.email 🥇
 
-This simple SaaS is also open-source by the way: https://github.com/reacherhq.
+Reacher is a simple SaaS using this library, also [open-source](https://github.com/reacherhq/backend)!
 
 > If you would like a higher free tier to test https://reacher.email, consider [sponsoring me](https://github.com/sponsors/amaurymartiny/)! You'll get 8000 free emails every month, and a this contribution would mean A WHOLE LOT to me.
 
@@ -218,21 +218,21 @@ The output will be a JSON with the below format, the fields should be self-expla
 }
 ```
 
-You can also take a look at the [OpenAPIv3 specification](https://reacher.email/docs#operation/post-check-email) of this JSON object.
+You can also take a look at the [documentation](https://reacher.email/docs#operation/post-check-email) of this JSON object.
 
 ## ❓ FAQ
 
-### What does `is_reachable: "unknown"` mean?
+#### What does `is_reachable: "unknown"` mean?
 
 This means that the server does not allow real-time verification of an email right now. It may happen for multiple reasons: your IP is blacklisted, the SMTP port 25 is blocked, the email account is momentarily receiving too many emails (spam protection)... or the email provider simply does not allow real-time verification at all. The details of this `"unknown"` case can be found in the `smtp.error` and `mx.error` fields.
 
-### The library hangs/takes a long time/doesn't show anything after 1 minute.
+#### The library hangs/takes a long time/doesn't show anything after 1 minute.
 
 Most ISPs block outgoing SMTP requests through port 25, to prevent spam. `check-if-email-exists` needs to have this port open to make a connection to the email's SMTP server, so won't work behind these ISPs, and will instead hang until it times out. There's unfortunately no easy workaround for this problem, see for example [this StackOverflow thread](https://stackoverflow.com/questions/18139102/how-to-get-around-an-isp-block-on-port-25-for-smtp). One solution is to rent a Linux cloud server with a static IP and no blocked ports, see for example our [Deploy to Heroku](#2-deploy-to-heroku) section.
 
 To see in details what the binary is doing behind the scenes, run it in verbose mode to see the logs.
 
-### The output shows `"connection refused"` in the `smtp.error` field.
+#### The output shows `"connection refused"` in the `smtp.error` field.
 
 This also happens when your ISP block SMTP ports, see the above answer.
 
