@@ -3,7 +3,7 @@
 [![Actions Status](https://github.com/amaurymartiny/check-if-email-exists/workflows/CI/badge.svg)](https://github.com/amaurymartiny/check-if-email-exists/actions)
 [![Travis](https://img.shields.io/travis/amaurymartiny/check-if-email-exists.svg)](https://travis-ci.org/amaurymartiny/check-if-email-exists)
 [![Appveyor](https://ci.appveyor.com/api/projects/status/github/amaurymartiny/check-if-email-exists?branch=master&svg=true)](https://ci.appveyor.com/project/amaurymartiny/check-if-email-exists-a08kp)
-![License](https://img.shields.io/github/license/amaurymartiny/check-if-email-exists.svg)
+[![Github Sponsor](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&link=https://github.com/sponsors/amaurymartiny)](https://github.com/sponsors/amaurymartiny)
 
 <br /><br /><br />
 
@@ -258,6 +258,6 @@ The 1st version of this tool was a simple bash script which made a telnet call. 
 
 ## License
 
-This library (`check-if-email-exists`) has a dual license, a commercial one suitable for closed-source commercial projects and an AGPL license that can be used in open-source software. See the [LICENSE](./LICENSE) file for more info.
+This library has a dual license, a commercial one suitable for closed-source commercial projects and an AGPL license that can be used in open-source software. See the [LICENSE](./LICENSE) file for more info.
 
 > If you would like a higher free tier to test https://reacher.email, consider [sponsoring me](https://github.com/sponsors/amaurymartiny/)! You'll get 8000 free emails every month, and a this contribution would mean A WHOLE LOT to me.
