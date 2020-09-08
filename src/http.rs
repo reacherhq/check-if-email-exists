@@ -26,6 +26,8 @@ pub struct PostReqBody {
 	from_email: Option<String>,
 	hello_name: Option<String>,
 	to_emails: Vec<String>,
+	proxy_host: Option<String>,
+	proxy_port:Option<u16>
 }
 
 /// Error Response from POST /
@@ -59,6 +61,14 @@ async fn req_handler(req: Request<Body>) -> Result<Response<Body>, hyper::Error>
 			let mut input = CheckEmailInput::new(body.to_emails);
 			input.from_email(body.from_email.unwrap_or_else(|| "user@example.org".into())).hello_name(body.hello_name.unwrap_or_else(|| "localhost".into()));
 
+
+			if let Some(proxy_host) = body.proxy_host {
+
+                let port = body.proxy_port.unwrap();
+				input.proxy(proxy_host.into(), port);		
+			
+			}
+			
 			let body = check_email(&input).await;
 			let body = match serde_json::to_string(&body) {
 				Ok(b) => b,
