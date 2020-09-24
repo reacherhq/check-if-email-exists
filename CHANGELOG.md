@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.8.14](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.13...v0.8.14) (2020-09-24)
+
+
+### Features
+
+* Add optional timeout on smtp verification ([#611](https://github.com/amaurymartiny/check-if-email-exists/issues/611)) ([c70de7d](https://github.com/amaurymartiny/check-if-email-exists/commit/c70de7dcac1811596c78e14888a4258e9db408ed))
+
+
+### Bug Fixes
+
+* Add more known errors for invalid email ([#543](https://github.com/amaurymartiny/check-if-email-exists/issues/543)) ([ad209c7](https://github.com/amaurymartiny/check-if-email-exists/commit/ad209c7ecb3f5aa466f31e293a05734b5edf5f6a))
+
 ### [0.8.13](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.12...v0.8.13) (2020-08-04)
 
 
