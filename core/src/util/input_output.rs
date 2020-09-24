@@ -19,6 +19,7 @@ use crate::mx::{MxDetails, MxError};
 use crate::smtp::{SmtpDetails, SmtpError};
 use crate::syntax::SyntaxDetails;
 use serde::{ser::SerializeMap, Serialize, Serializer};
+use std::time::Duration;
 
 /// Perform the email verification via a specified proxy. The usage of a proxy
 /// is optional.
@@ -47,6 +48,8 @@ pub struct CheckEmailInput {
 	/// Perform the email verification via a specified proxy. The usage of a
 	/// proxy is optional.
 	pub proxy: Option<CheckEmailInputProxy>,
+	/// Add optional timeout for the SMTP verification step.
+	pub smtp_timeout: Option<Duration>,
 	/// For Yahoo email addresses, use Yahoo's API instead of connecting
 	/// directly to their SMTP servers.
 	///
@@ -61,6 +64,7 @@ impl Default for CheckEmailInput {
 			from_email: "user@example.org".into(),
 			hello_name: "localhost".into(),
 			proxy: None,
+			smtp_timeout: None,
 			yahoo_use_api: true,
 		}
 	}
@@ -93,6 +97,12 @@ impl CheckEmailInput {
 			host: proxy_host,
 			port: proxy_port,
 		});
+		self
+	}
+
+	/// Add optional timeout for the SMTP verification step.
+	pub fn smtp_timeout(&mut self, duration: Duration) -> &mut CheckEmailInput {
+		self.smtp_timeout = Some(duration);
 		self
 	}
 
