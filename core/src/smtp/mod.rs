@@ -25,6 +25,7 @@ use async_smtp::{
 	},
 	ClientSecurity, EmailAddress, SmtpClient, SmtpTransport,
 };
+use async_std::future;
 use fast_socks5::{
 	client::{Config, Socks5Stream},
 	Result, SocksError,
@@ -73,6 +74,9 @@ pub enum SmtpError {
 	/// Error when communicating with SMTP server.
 	#[serde(serialize_with = "ser_with_display")]
 	SmtpError(AsyncSmtpError),
+	/// Time-out error.
+	#[serde(serialize_with = "ser_with_display")]
+	TimeoutError(future::TimeoutError),
 	/// Error when verifying a Yahoo email.
 	YahooError(YahooError),
 }
@@ -86,6 +90,12 @@ impl From<AsyncSmtpError> for SmtpError {
 impl From<SocksError> for SmtpError {
 	fn from(error: SocksError) -> Self {
 		SmtpError::SocksError(error)
+	}
+}
+
+impl From<future::TimeoutError> for SmtpError {
+	fn from(error: future::TimeoutError) -> Self {
+		SmtpError::TimeoutError(error)
 	}
 }
 
@@ -333,6 +343,27 @@ async fn smtp_is_catch_all(
 	.map(|deliverability| deliverability.is_deliverable)
 }
 
+async fn create_smtp_future(
+	to_email: &EmailAddress,
+	host: &Name,
+	port: u16,
+	domain: &str,
+	input: &CheckEmailInput,
+) -> Result<(bool, Deliverability), SmtpError> {
+	// FIXME If the SMTP is not connectable, we should actually return an
+	// Ok(SmtpDetails { can_connect_smtp: false, ... }).
+	let mut smtp_client = connect_to_host(host, port, input).await?;
+
+	let is_catch_all = smtp_is_catch_all(&mut smtp_client, domain)
+		.await
+		.unwrap_or(false);
+	let deliverability = email_deliverable(&mut smtp_client, to_email).await?;
+
+	smtp_client.close().await?;
+
+	Ok((is_catch_all, deliverability))
+}
+
 /// Get all email details we can from one single `EmailAddress`.
 pub async fn check_smtp(
 	to_email: &EmailAddress,
@@ -348,16 +379,12 @@ pub async fn check_smtp(
 			.map_err(|err| err.into());
 	}
 
-	// FIXME If the SMTP is not connectable, we should actually return an
-	// Ok(SmtpDetails { can_connect_smtp: false, ... }).
-	let mut smtp_client = connect_to_host(host, port, input).await?;
-
-	let is_catch_all = smtp_is_catch_all(&mut smtp_client, domain)
-		.await
-		.unwrap_or(false);
-	let deliverability = email_deliverable(&mut smtp_client, to_email).await?;
-
-	smtp_client.close().await?;
+	let fut = create_smtp_future(to_email, host, port, domain, input);
+	let (is_catch_all, deliverability) = if let Some(smtp_timeout) = input.smtp_timeout {
+		future::timeout(smtp_timeout, fut).await??
+	} else {
+		fut.await?
+	};
 
 	Ok(SmtpDetails {
 		can_connect_smtp: true,
@@ -366,4 +393,29 @@ pub async fn check_smtp(
 		is_deliverable: deliverability.is_deliverable,
 		is_disabled: deliverability.is_disabled,
 	})
+}
+
+#[cfg(test)]
+mod tests {
+	use super::{check_smtp, CheckEmailInput, SmtpError};
+	use async_smtp::EmailAddress;
+	use std::{str::FromStr, time::Duration};
+	use tokio::runtime::Runtime;
+	use trust_dns_proto::rr::Name;
+
+	#[test]
+	fn should_timeout() {
+		let mut runtime = Runtime::new().unwrap();
+
+		let to_email = EmailAddress::from_str("foo@gmail.com").unwrap();
+		let host = Name::from_str("gmail.com").unwrap();
+		let mut input = CheckEmailInput::default();
+		input.smtp_timeout(Duration::from_millis(1));
+
+		let res = runtime.block_on(check_smtp(&to_email, &host, 25, "gmail.com", &input));
+		match res {
+			Err(SmtpError::TimeoutError(_)) => (),
+			_ => panic!("check_smtp did not time out"),
+		}
+	}
 }
