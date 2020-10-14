@@ -195,9 +195,9 @@ dependencies = [
 
 [[package]]
 name = "async-task"
-version = "4.0.0"
+version = "4.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c37ba09c1b5185eb9897a5cef32770031f58fa92d9a5f79eb50cae5030b39c1"
+checksum = "8ab27c1aa62945039e44edaeee1dc23c74cc0c303dd5fe0fb462a184f1c3a518"
 
 [[package]]
 name = "async-trait"
