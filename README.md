@@ -18,6 +18,8 @@
 
 If you don't have time to waste configuring, hosting, debugging and maintaining your own email verifier, we offer a **SaaS** solution that has all of the capabilities `check-if-email-exists` provides, plus a lot more, and all that packaged in a nice friendly web interface. If you are interested, find out more at [Reacher](https://reacher.email/?ref=github). If you have any questions, you can contact us at support@reacher.email.
 
+<br />
+
 ## What Does This Tool Check?
 
 | Included? | Feature                                       | Description                                                                                                                     | JSON field                                                                      |
