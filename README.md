@@ -16,7 +16,7 @@
 
 <a href="https://www.hookdoo.com/?github"><img src="https://storage.googleapis.com/saasify-uploads-prod/696e287ad79f0e0352bc201b36d701849f7d55e7.svg" height="96" alt="hookdoo" align="left" /></a>
 
-If you don't have time to waste configuring, hosting, debugging and maintaining your email verification backend, we offer a **SaaS** solution that has all of the capabilities `check-if-email-exists` provides, plus a lot more, and all that packaged in a nice friendly web interface. If you are interested, find out more at [Reacher website](https://reacher.email/?ref=github). If you have any questions, you can contact us at support@reacher.email.
+If you don't have time to waste configuring, hosting, debugging and maintaining your own email verifier, we offer a **SaaS** solution that has all of the capabilities `check-if-email-exists` provides, plus a lot more, and all that packaged in a nice friendly web interface. If you are interested, find out more at [Reacher](https://reacher.email/?ref=github). If you have any questions, you can contact us at support@reacher.email.
 
 ## What Does This Tool Check?
 
