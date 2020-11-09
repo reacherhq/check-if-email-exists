@@ -18,7 +18,7 @@ travis-ci = { repository = "amaurymartiny/check-if-email-exists", service = "git
 
 [dependencies]
 async-smtp = { version = "0.3", features = ["socks5"] }
-async-std = "1.6"
+async-std = "1.7"
 async-std-resolver = "0.19"
 fast-socks5 = "0.3"
 futures = "0.3"
