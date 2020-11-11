@@ -358,11 +358,11 @@ async fn create_smtp_future(
 	let is_catch_all = smtp_is_catch_all(&mut smtp_client, domain)
 		.await
 		.unwrap_or(false);
-	let deliverability =  if is_catch_all {
-		Deliverability{
-			has_full_inbox:false,
+	let deliverability = if is_catch_all {
+		Deliverability {
+			has_full_inbox: false,
 			is_deliverable: true,
-			is_disabled: false
+			is_disabled: false,
 		}
 	} else {
 		email_deliverable(&mut smtp_client, to_email).await?
