@@ -203,7 +203,8 @@ async fn email_deliverable(
 				let message = message.to_lowercase();
 				let is_deliverable = message.contains("2.1.5") || 
 					// 250 Recipient address accepted
-					message.contains("recipient address accepted");
+					// 250 Accepted
+					message.contains("accepted");
 				Ok(Deliverability {
 					has_full_inbox: false,
 					is_deliverable,
@@ -357,7 +358,15 @@ async fn create_smtp_future(
 	let is_catch_all = smtp_is_catch_all(&mut smtp_client, domain)
 		.await
 		.unwrap_or(false);
-	let deliverability = email_deliverable(&mut smtp_client, to_email).await?;
+	let deliverability = if is_catch_all {
+		Deliverability {
+			has_full_inbox: false,
+			is_deliverable: true,
+			is_disabled: false,
+		}
+	} else {
+		email_deliverable(&mut smtp_client, to_email).await?
+	};
 
 	smtp_client.close().await?;
 
