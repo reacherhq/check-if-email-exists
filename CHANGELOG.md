@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.8.15](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.14...v0.8.15) (2020-11-11)
+
+
+### Bug Fixes
+
+* Don't check inputted email if catch-all ([#714](https://github.com/amaurymartiny/check-if-email-exists/issues/714)) ([5129dd1](https://github.com/amaurymartiny/check-if-email-exists/commit/5129dd1374d3ef93db632f6d7e140e3ce69369b2))
+* Fix 'reached the type-length limit while instantiating' ([#665](https://github.com/amaurymartiny/check-if-email-exists/issues/665)) ([fa040fd](https://github.com/amaurymartiny/check-if-email-exists/commit/fa040fda8b16ca4d540829ee72f9d7b07ef77fdd))
+
 ### [0.8.14](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.13...v0.8.14) (2020-09-24)
 
 
