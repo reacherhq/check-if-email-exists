@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.8.16](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.15...v0.8.16) (2020-12-07)
+
+
+### Features
+
+* Add proxy_host and proxy_port info to HTTP ([#770](https://github.com/amaurymartiny/check-if-email-exists/issues/770)) ([123f431](https://github.com/amaurymartiny/check-if-email-exists/commit/123f431e10e90339e030783582d6e4c4919c1a33))
+
 ### [0.8.15](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.14...v0.8.15) (2020-11-11)
 
 
