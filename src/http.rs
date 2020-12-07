@@ -63,7 +63,7 @@ async fn req_handler(req: Request<Body>) -> Result<Response<Body>, hyper::Error>
 
 			// Add proxy if both fields `proxy_host` and `proxy_port` are set.
 			if let (Some(proxy_host), Some(proxy_port)) = (body.proxy_host, body.proxy_port) {
-				input.proxy(proxy_host.into(), proxy_port);
+				input.proxy(proxy_host, proxy_port);
 			}
 
 			let body = check_email(&input).await;
