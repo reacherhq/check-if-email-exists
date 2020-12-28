@@ -14,7 +14,7 @@ path = "src/main.rs"
 check-if-email-exists = { path = "./core" }
 clap = { version = "2.33", features = ["yaml"] }
 env_logger = "0.8"
-hyper = { version = "0.13" }
+hyper = { version = "0.14" }
 serde = "1.0"
 serde_json = "1.0"
 tokio = { version = "0.2", features = ["macros", "tcp", "dns", "io-util"] }
