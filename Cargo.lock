@@ -997,9 +997,9 @@ dependencies = [
 
 [[package]]
 name = "mailchecker"
-version = "4.0.1"
+version = "4.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da57b836d9f70ab939e1fc6e5f3d1d8cc373304c11eb0dd5398151e31440f88c"
+checksum = "23c0d75f7acfc8fae5183ca1a0a4ef611d8e527bda76ef76113a1d1b5a12014d"
 dependencies = [
  "fast_chemail",
 ]
