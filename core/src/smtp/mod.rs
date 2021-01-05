@@ -204,7 +204,10 @@ async fn email_deliverable(
 				let is_deliverable = message.contains("2.1.5") || 
 					// 250 Recipient address accepted
 					// 250 Accepted
-					message.contains("accepted");
+					message.contains("accepted")||
+					// 250 OK
+					// 250 Recipient <email> OK
+					message.contains("ok");
 				Ok(Deliverability {
 					has_full_inbox: false,
 					is_deliverable,
