@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.8.18](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.17...v0.8.18) (2021-01-07)
+
+
+### Bug Fixes
+
+* Check deliverability using successful response code instead of message parsing ([#822](https://github.com/amaurymartiny/check-if-email-exists/issues/822)) ([39d0ecd](https://github.com/amaurymartiny/check-if-email-exists/commit/39d0ecdeaf078dce5cdb59cba95ab9e02bce11ee))
+
 ### [0.8.17](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.16...v0.8.17) (2021-01-05)
 
 
