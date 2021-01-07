@@ -198,26 +198,23 @@ async fn email_deliverable(
 		.command(RcptCommand::new(to_email.clone(), vec![]))
 		.await
 	{
-		Ok(response) => match response.first_line() {
-			Some(message) => {
-				let message = message.to_lowercase();
-				let is_deliverable = message.contains("2.1.5") || 
-					// 250 Recipient address accepted
-					// 250 Accepted
-					message.contains("accepted")||
-					// 250 OK
-					// 250 Recipient <email> OK
-					message.contains("ok");
-				Ok(Deliverability {
-					has_full_inbox: false,
-					is_deliverable,
-					is_disabled: false,
-				})
-			}
-			None => Err(SmtpError::SmtpError(AsyncSmtpError::Client(
-				"No response on RCPT command",
-			))),
-		},
+		Ok(_) => {
+			// According to RFC 5321, `RCPT TO` command succeeds only with
+			// 250 and 251 codes: https://tools.ietf.org/html/rfc5321#page-56
+			//
+			// Where the 251 code is used for forwarding, which is not our case,
+			// because we always deliver to the SMTP server hosting the address
+			// itself.
+			//
+			// So, if `response.is_positive()` (which is a condition for
+			// returning `Ok` from the `command()` method above), then delivery
+			// succeeds, accordingly to RFC 5321.
+			Ok(Deliverability {
+				has_full_inbox: false,
+				is_deliverable: true, // response.is_positive()
+				is_disabled: false,
+			})
+		}
 		Err(err) => {
 			// We cast to lowercase, because our matched strings below are all
 			// lowercase.
