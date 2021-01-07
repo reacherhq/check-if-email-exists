@@ -1,6 +1,6 @@
 [package]
 name = "check-if-email-exists-test-suite"
-version = "0.8.17"
+version = "0.8.18"
 edition = "2018"
 publish = false
 
