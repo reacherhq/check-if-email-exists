@@ -199,8 +199,9 @@ async fn email_deliverable(
 		.await
 	{
 		Ok(_) => {
-			// According to RFC 5321, `RCPT TO` command succeeds only with
-			// 250 and 251 codes: https://tools.ietf.org/html/rfc5321#page-56
+			// According to RFC 5321, `RCPT TO` command succeeds with 250 and
+			// 251 codes only (no 3xx codes at all):
+			// https://tools.ietf.org/html/rfc5321#page-56
 			//
 			// Where the 251 code is used for forwarding, which is not our case,
 			// because we always deliver to the SMTP server hosting the address
