@@ -68,7 +68,7 @@ pub struct Cli {
 }
 
 /// Global config of this application.
-pub(crate) static CONF: Lazy<Cli> = Lazy::new(|| Cli::parse());
+pub(crate) static CONF: Lazy<Cli> = Lazy::new(Cli::parse);
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
