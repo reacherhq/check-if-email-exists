@@ -14,47 +14,74 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-extern crate clap;
-extern crate env_logger;
-extern crate hyper;
-extern crate serde;
-extern crate tokio;
-
 mod http;
 
+use std::net::IpAddr;
+
 use check_if_email_exists::{check_email, CheckEmailInput};
-use clap::{crate_version, value_t, App};
-use std::env;
+use clap::Clap;
+use once_cell::sync::Lazy;
+
+/// CLI options of this binary.
+#[derive(Clap, Debug)]
+#[clap(author, version, about)]
+pub struct Cli {
+	/// The email to use in the `MAIL FROM:` SMTP command.
+	#[clap(long, env, default_value = "user@example.org")]
+	pub from_email: String,
+
+	/// The name to use in the `EHLO:` SMTP command.
+	#[clap(long, env, default_value = "localhost")]
+	pub hello_name: String,
+
+	/// Use the specified SOCKS5 proxy host to perform email verification.
+	#[clap(long, env)]
+	pub proxy_host: Option<String>,
+
+	/// Use the specified SOCKS5 proxy port to perform email verification.
+	/// Only used when `--proxy-host` flag is set.
+	#[clap(long, env, default_value = "1080")]
+	pub proxy_port: u16,
+
+	/// For Yahoo email addresses, use Yahoo's API instead of connecting
+	/// directly to their SMTP servers.
+	#[clap(long, env, default_value = "true", parse(try_from_str))]
+	pub yahoo_use_api: bool,
+
+	/// The email to check.
+	pub to_email: Option<String>,
+
+	/// Runs a HTTP server.
+	#[clap(long)]
+	pub http: bool,
+
+	/// Sets the host IP address on which the HTTP server should bind.
+	/// Only used when `--http` flag is on.
+	#[clap(long, env = "HOST", default_value = "127.0.0.1")]
+	pub http_host: IpAddr,
+
+	/// Sets the port on which the HTTP server should bind.
+	/// Only used when `--http` flag is on.
+	/// If not set, then it will use $PORT, or default to 3000.
+	#[clap(long, env = "PORT", default_value = "3000")]
+	pub http_port: u16,
+}
+
+/// Global config of this application.
+pub(crate) static CONF: Lazy<Cli> = Lazy::new(|| Cli::parse());
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	env_logger::init();
 
-	// The YAML file is found relative to the current file, similar to how modules are found
-	let yaml = clap::load_yaml!("cli.yml");
-	let matches = App::from_yaml(yaml).version(crate_version!()).get_matches();
-
-	if let Some(to_email) = matches.value_of("TO_EMAIL") {
-		let from_email = matches
-			.value_of("FROM_EMAIL")
-			.expect("FROM_EMAIL has a default value. qed.");
-		let hello_name = matches
-			.value_of("HELLO_NAME")
-			.expect("HELLO_NAME has a default value. qed.");
-
-		let mut input = CheckEmailInput::new(vec![to_email.into()]);
+	if let Some(to_email) = &CONF.to_email {
+		let mut input = CheckEmailInput::new(vec![to_email.clone()]);
 		input
-			.from_email(from_email.into())
-			.hello_name(hello_name.into());
-
-		if let Some(proxy_host) = matches.value_of("PROXY_HOST") {
-			let proxy_port = value_t!(matches.value_of("PROXY_PORT"), u16)
-				.expect("PROXY_PORT has a default value of type u16. qed.");
-			input.proxy(proxy_host.into(), proxy_port);
-		}
-
-		if let Ok(yahoo_use_api) = value_t!(matches.value_of("YAHOO_USE_API"), bool) {
-			input.yahoo_use_api(yahoo_use_api);
+			.from_email(CONF.from_email.clone())
+			.hello_name(CONF.hello_name.clone())
+			.yahoo_use_api(CONF.yahoo_use_api);
+		if let Some(proxy_host) = &CONF.proxy_host {
+			input.proxy(proxy_host.clone(), CONF.proxy_port);
 		}
 
 		let result = check_email(&input).await;
@@ -70,18 +97,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	}
 
 	// Run the web server if flag is on
-	if matches.is_present("HTTP") {
-		let http_host = matches
-			.value_of("HTTP_HOST")
-			.expect("HTTP_HOST has a default value. qed.");
-		// http_port is, in this order:
-		// - the value of `--http-port` flag
-		// - if not set, then the $PORT env varialbe
-		// - if not set, then 3000
-		let env_port = env::var("PORT").unwrap_or_else(|_| "3000".into());
-		let http_port = matches.value_of("HTTP_PORT").unwrap_or(&env_port);
-
-		http::run(http_host, http_port.parse::<u16>().unwrap()).await?
+	if CONF.http {
+		http::run((CONF.http_host, CONF.http_port)).await?;
 	}
 
 	Ok(())
