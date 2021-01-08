@@ -366,12 +366,36 @@ async fn create_smtp_future(
 			is_disabled: false,
 		}
 	} else {
-		email_deliverable(&mut smtp_client, to_email).await?
+		let mut result = email_deliverable(&mut smtp_client, to_email).await;
+
+		// Some SMTP servers automatically close the connection after an error,
+		// so we should reconnect to perform a next command.
+		//
+		// Unfortunately `smtp_client.is_connected()` doesn't report about this,
+		// so we can only check for "io: incomplete" SMTP error being returned.
+		// https://github.com/async-email/async-smtp/issues/37
+		if is_io_incomplete_smtp_error(&result) {
+			let _ = smtp_client.close().await;
+			smtp_client = connect_to_host(host, port, input).await?;
+			result = email_deliverable(&mut smtp_client, to_email).await;
+		}
+
+		result?
 	};
 
 	smtp_client.close().await?;
 
 	Ok((is_catch_all, deliverability))
+}
+
+/// Indicates whether the given [`Result`] represents an `io: incomplete`
+/// [`SmtpError::SmtpError`].
+fn is_io_incomplete_smtp_error<T>(result: &Result<T, SmtpError>) -> bool {
+	if let Err(SmtpError::SmtpError(AsyncSmtpError::Io(err))) = result {
+		err.to_string().as_str() == "incomplete"
+	} else {
+		false
+	}
 }
 
 /// Get all email details we can from one single `EmailAddress`.
