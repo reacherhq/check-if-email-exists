@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.8.19](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.18...v0.8.19) (2021-01-10)
+
+
+### Features
+
+* Consider CLI config parameters in HTTP request checks ([#827](https://github.com/amaurymartiny/check-if-email-exists/issues/827)) ([88b751a](https://github.com/amaurymartiny/check-if-email-exists/commit/88b751a17f4367c990e8a54661e3872898afd10f))
+
+
+### Bug Fixes
+
+* Reconnect auto-closed SMTP connections by foreign server ([#825](https://github.com/amaurymartiny/check-if-email-exists/issues/825)) ([01ccf0d](https://github.com/amaurymartiny/check-if-email-exists/commit/01ccf0d2363475d486bb9827e3e3b9d6954bc032))
+
 ### [0.8.18](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.17...v0.8.18) (2021-01-07)
 
 
