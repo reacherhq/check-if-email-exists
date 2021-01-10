@@ -348,7 +348,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "check-if-email-exists"
-version = "0.8.18"
+version = "0.8.19"
 dependencies = [
  "async-smtp",
  "async-std",
@@ -368,7 +368,7 @@ dependencies = [
 
 [[package]]
 name = "check-if-email-exists-cli"
-version = "0.8.18"
+version = "0.8.19"
 dependencies = [
  "check-if-email-exists",
  "clap",
@@ -382,7 +382,7 @@ dependencies = [
 
 [[package]]
 name = "check-if-email-exists-test-suite"
-version = "0.8.18"
+version = "0.8.19"
 dependencies = [
  "check-if-email-exists",
  "serde",
