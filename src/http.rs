@@ -14,11 +14,14 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use std::{borrow::Cow, net::SocketAddr};
+
 use check_if_email_exists::{check_email, CheckEmailInput};
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Method, Request, Response, Server, StatusCode};
 use serde::{Deserialize, Serialize};
-use std::net::SocketAddr;
+
+use crate::CONF;
 
 /// JSON Request from POST /
 #[derive(Debug, Deserialize, Serialize)]
@@ -59,11 +62,15 @@ async fn req_handler(req: Request<Body>) -> Result<Response<Body>, hyper::Error>
 
 			// Create EmailInput from body
 			let mut input = CheckEmailInput::new(body.to_emails);
-			input.from_email(body.from_email.unwrap_or_else(|| "user@example.org".into())).hello_name(body.hello_name.unwrap_or_else(|| "localhost".into()));
-
-			// Add proxy if both fields `proxy_host` and `proxy_port` are set.
-			if let (Some(proxy_host), Some(proxy_port)) = (body.proxy_host, body.proxy_port) {
-				input.proxy(proxy_host, proxy_port);
+			input
+				.from_email(body.from_email.unwrap_or_else(|| CONF.from_email.clone()))
+				.hello_name(body.hello_name.unwrap_or_else(|| CONF.hello_name.clone()))
+				.yahoo_use_api(CONF.yahoo_use_api);
+			if let Some(proxy_host) = body.proxy_host.map(Cow::Owned).or_else(|| CONF.proxy_host.as_ref().map(Cow::Borrowed)) {
+				input.proxy(
+					proxy_host.into_owned(),
+					body.proxy_port.unwrap_or(CONF.proxy_port),
+				);
 			}
 
 			let body = check_email(&input).await;
@@ -92,10 +99,12 @@ async fn req_handler(req: Request<Body>) -> Result<Response<Body>, hyper::Error>
 	}
 }
 
-pub async fn run(host: &str, port: u16) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-	// This is our socket address
-	let addr = SocketAddr::new(host.parse()?, port);
+pub async fn run<A: Into<SocketAddr>>(
+	addr: A,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	let service = make_service_fn(|_| async { Ok::<_, hyper::Error>(service_fn(req_handler)) });
+
+	let addr = addr.into();
 	let server = Server::bind(&addr).serve(service);
 
 	println!("Listening on http://{}", addr);
