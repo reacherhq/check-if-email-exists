@@ -50,13 +50,14 @@ Many online services (https://hunter.io, https://verify-email.org, https://email
 
 If you want to use this library to build closed-sourced commercial sites and applications, then you'll need to purchase a commercial license. This allows you to keep your software proprietary whilst still using `check-if-email-exists`. You can [purchase a commercial license here](https://reacher.email/pricing). A commercial license grants you:
 
-- Priority support on issues and features.
-- On-premise running as well as running on public cloud providers for commercial purposes for proprietary systems.
-- Ability to modify the source (forking) for your own purposes.
+-   On-premise running as well as running on public cloud providers for commercial purposes for proprietary systems.
+-   Ability to modify the source (forking) for your own purposes.
 
 Not only does it grant you a license to run such a critical piece of infrastructure, but you are also supporting further innovation in this space and our ability to contribute to it!
 
 If you are creating an open source application under a license compatible with the Affero GNU GPL license v3, you may use `check-if-email-exists` under the terms of the AGPLv3. You can read more about this license [here](./LICENSE.AGPL).
+
+Please read the [LICENSE](./LICENSE.md) file for more information.
 
 ## Try It Yourself
 
