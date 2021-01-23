@@ -48,7 +48,7 @@ Many online services (https://hunter.io, https://verify-email.org, https://email
 
 `check-if-email-exists`'s source code is provided under a **dual license model** designed to meet the development and distribution needs of both commercial and open-source projects.
 
-If you want to use this libray to build closed-sourced commercial sites and applications, then you'll need to purchase a commercial license. This allows you to keep your software proprietary whilst still using `check-if-email-exists`. You can [purchase a commercial license here](https://reacher.email/pricing). A commercial license grants you:
+If you want to use this library to build closed-sourced commercial sites and applications, then you'll need to purchase a commercial license. This allows you to keep your software proprietary whilst still using `check-if-email-exists`. You can [purchase a commercial license here](https://reacher.email/pricing). A commercial license grants you:
 
 - Priority support on issues and features.
 - On-premise running as well as running on public cloud providers for commercial purposes for proprietary systems.
