@@ -10,4 +10,7 @@ In brief, purchasing a license is mandatory as soon as you develop activities di
 -   creating/manipulating documents for users in a web/server/cloud application,
 -   shipping `check-if-email-exists` with a closed source product.
 
-Please visit [Reacher's dedicated page](https://reacher.email/commercial-license) to purchase a commercial license or contact Reacher support at support@reacher.email for more info.
+Please visit [Reacher's dedicated page on the Commercial License](https://reacher.email/self-host) to purchase a commercial license or contact Reacher support at amaury@reacher.email for more info.
+
+`SPDX-License-Identifier: AGPL-3.0 OR Reacher Commercial License`
+
