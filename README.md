@@ -57,7 +57,7 @@ Not only does it grant you a license to run such a critical piece of infrastruct
 
 If you are creating an open source application under a license compatible with the Affero GNU GPL license v3, you may use `check-if-email-exists` under the terms of the AGPLv3. You can read more about this license [here](./LICENSE.AGPL).
 
-Please read the [LICENSE](./LICENSE.md) file for more information.
+Please read the [LICENSE](./LICENSE.md) file for more information about the dual license.
 
 ## Try It Yourself
 
