@@ -160,7 +160,7 @@ dependencies = [
  "async-trait",
  "base64 0.12.3",
  "bufstream",
- "fast-socks5",
+ "fast-socks5 0.3.3",
  "fast_chemail",
  "hostname 0.1.5",
  "log",
@@ -370,7 +370,7 @@ dependencies = [
  "async-smtp",
  "async-std",
  "async-std-resolver",
- "fast-socks5",
+ "fast-socks5 0.4.1",
  "futures",
  "log",
  "mailchecker",
@@ -536,6 +536,19 @@ name = "fast-socks5"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "43f7b17f9bd907903a2da3bfe78110e327585857c8b481b016f73e4a568fb9b1"
+dependencies = [
+ "anyhow",
+ "async-std",
+ "futures",
+ "log",
+ "thiserror",
+]
+
+[[package]]
+name = "fast-socks5"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "328ba88e476621a99b0b7fad7ede5ebe2cd0c0db0be7971d3bd7ec0303c68d61"
 dependencies = [
  "anyhow",
  "async-std",
