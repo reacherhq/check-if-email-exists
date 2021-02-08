@@ -25,7 +25,7 @@ mod tests {
 
 	/// Function to test all fixtures from a folder.
 	fn test_all_from_folder(folder: &str) {
-		let mut runtime = Runtime::new().unwrap();
+		let runtime = Runtime::new().unwrap();
 		let paths = fs::read_dir(folder).unwrap();
 
 		// For every fixture file, we compare:
@@ -88,12 +88,12 @@ mod tests {
 		}
 	}
 
-	#[tokio::test]
+	#[test]
 	fn should_pass_fixtures() {
 		test_all_from_folder("./src/fixtures");
 	}
 
-	#[tokio::test]
+	#[test]
 	fn should_pass_sensitive_fixtures() {
 		// These fixtures contain real-file emails, they are not committed to
 		// git.
