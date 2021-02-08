@@ -12,7 +12,7 @@ main() {
     fi
 
     # FIXME This only works on osx now
-    # ref: https://github.com/amaurymartiny/check-if-email-exists/issues/11
+    # ref: https://github.com/reacherhq/check-if-email-exists/issues/11
     if [ $TRAVIS_OS_NAME = osx ]; then
         cross test --all --target $TARGET
         cross test --all --target $TARGET --release
