@@ -30,7 +30,8 @@ use fast_socks5::{
 	client::{Config, Socks5Stream},
 	Result, SocksError,
 };
-use rand::{distributions::Alphanumeric, Rng};
+use rand::{Rng, SeedableRng, distributions::Alphanumeric};
+use rand::rngs::SmallRng;
 use serde::Serialize;
 use std::str::FromStr;
 use std::time::Duration;
@@ -332,7 +333,7 @@ async fn smtp_is_catch_all(
 	domain: &str,
 ) -> Result<bool, SmtpError> {
 	// Create a random 15-char alphanumerical string.
-	let mut rng = rand::thread_rng();
+	let mut rng = SmallRng::from_entropy();
 	let random_email: String = iter::repeat(())
 			.map(|()| rng.sample(Alphanumeric))
 			.map(char::from)
