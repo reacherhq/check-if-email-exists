@@ -1,8 +1,8 @@
 [![Crate](https://img.shields.io/crates/v/check-if-email-exists.svg)](https://crates.io/crates/check-if-email-exists)
 [![Docs](https://docs.rs/check-if-email-exists/badge.svg)](https://docs.rs/check-if-email-exists)
-[![Actions Status](https://github.com/amaurymartiny/check-if-email-exists/workflows/CI/badge.svg?branch=master)](https://github.com/amaurymartiny/check-if-email-exists/actions)
-[![Travis](https://img.shields.io/travis/amaurymartiny/check-if-email-exists.svg)](https://travis-ci.org/amaurymartiny/check-if-email-exists)
-[![Appveyor](https://ci.appveyor.com/api/projects/status/github/amaurymartiny/check-if-email-exists?branch=master&svg=true)](https://ci.appveyor.com/project/amaurymartiny/check-if-email-exists-a08kp)
+[![Actions Status](https://github.com/reacherhq/check-if-email-exists/workflows/CI/badge.svg?branch=master)](https://github.com/reacherhq/check-if-email-exists/actions)
+[![Travis](https://img.shields.io/travis/reacherhq/check-if-email-exists.svg)](https://travis-ci.org/reacherhq/check-if-email-exists)
+[![Appveyor](https://ci.appveyor.com/api/projects/status/github/reacherhq/check-if-email-exists?branch=master&svg=true)](https://ci.appveyor.com/project/reacherhq/check-if-email-exists-a08kp)
 [![Github Sponsor](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&link=https://github.com/sponsors/amaurymartiny)](https://github.com/sponsors/amaurymartiny)
 
 <br /><br /><br />
@@ -22,23 +22,23 @@ If you don't have time to waste configuring, hosting, debugging and maintaining 
 
 ## What Does This Tool Check?
 
-| Included? | Feature                                       | Description                                                                                                                     | JSON field                                                                      |
-| --------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| ✅        | **Email reachability**                        | How confident are we in sending an email to this address? Can be one of `safe`, `risky`, `invalid` or `unknown`.                | `is_reachable`                                                                  |
-| ✅        | **Syntax validation**                         | Is the address syntactically valid?                                                                                             | `syntax.is_valid_syntax`                                                        |
-| ✅        | **DNS records validation**                    | Does the domain of the email address have valid MX DNS records?                                                                 | `mx.accepts_mail`                                                               |
-| ✅        | **Disposable email address (DEA) validation** | Is the address provided by a known [disposable email address](https://en.wikipedia.org/wiki/Disposable_email_address) provider? | `misc.is_disposable`                                                            |
-| ✅        | **SMTP server validation**                    | Can the mail exchanger of the email address domain be contacted successfully?                                                   | `smtp.can_connect_smtp`                                                         |
-| ✅        | **Email deliverability**                      | Is an email sent to this address deliverable?                                                                                   | `smtp.is_deliverable`                                                           |
-| ✅        | **Mailbox disabled**                          | Has this email address been disabled by the email provider?                                                                     | `smtp.is_disabled`                                                              |
-| ✅        | **Full inbox**                                | Is the inbox of this mailbox full?                                                                                              | `smtp.has_full_inbox`                                                           |
-| ✅        | **Catch-all address**                         | Is this email address a [catch-all](https://debounce.io/blog/help/what-is-a-catch-all-or-accept-all/) address?                  | `smtp.is_catch_all`                                                             |
-| ✅        | **Role account validation**                   | Is the email address a well-known role account?                                                                                 | `misc.is_role_account`                                                          |
-| 🔜        | **Free email provider check**                 | Is the email address bound to a known free email provider?                                                                      | [Issue #89](https://github.com/amaurymartiny/check-if-email-exists/issues/89)   |
-| 🔜        | **Syntax validation, provider-specific**      | According to the syntactic rules of the target mail provider, is the address syntactically valid?                               | [Issue #90](https://github.com/amaurymartiny/check-if-email-exists/issues/90)   |
-| 🔜        | **Honeypot detection**                        | Does email address under test hide a [honeypot](https://en.wikipedia.org/wiki/Spamtrap)?                                        | [Issue #91](https://github.com/amaurymartiny/check-if-email-exists/issues/91)   |
-| 🔜        | **Gravatar**                                  | Does this email address have a [Gravatar](https://gravatar.com/) profile picture?                                               | [Issue #92](https://github.com/amaurymartiny/check-if-email-exists/issues/92)   |
-| 🔜        | **Have I Been Pwned?**                        | Has this email been compromised in a [data breach](https://haveibeenpwned.com/)?                                                | [Issue #289](https://github.com/amaurymartiny/check-if-email-exists/issues/289) |
+| Included? | Feature                                       | Description                                                                                                                     | JSON field                                                                  |
+| --------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| ✅        | **Email reachability**                        | How confident are we in sending an email to this address? Can be one of `safe`, `risky`, `invalid` or `unknown`.                | `is_reachable`                                                              |
+| ✅        | **Syntax validation**                         | Is the address syntactically valid?                                                                                             | `syntax.is_valid_syntax`                                                    |
+| ✅        | **DNS records validation**                    | Does the domain of the email address have valid MX DNS records?                                                                 | `mx.accepts_mail`                                                           |
+| ✅        | **Disposable email address (DEA) validation** | Is the address provided by a known [disposable email address](https://en.wikipedia.org/wiki/Disposable_email_address) provider? | `misc.is_disposable`                                                        |
+| ✅        | **SMTP server validation**                    | Can the mail exchanger of the email address domain be contacted successfully?                                                   | `smtp.can_connect_smtp`                                                     |
+| ✅        | **Email deliverability**                      | Is an email sent to this address deliverable?                                                                                   | `smtp.is_deliverable`                                                       |
+| ✅        | **Mailbox disabled**                          | Has this email address been disabled by the email provider?                                                                     | `smtp.is_disabled`                                                          |
+| ✅        | **Full inbox**                                | Is the inbox of this mailbox full?                                                                                              | `smtp.has_full_inbox`                                                       |
+| ✅        | **Catch-all address**                         | Is this email address a [catch-all](https://debounce.io/blog/help/what-is-a-catch-all-or-accept-all/) address?                  | `smtp.is_catch_all`                                                         |
+| ✅        | **Role account validation**                   | Is the email address a well-known role account?                                                                                 | `misc.is_role_account`                                                      |
+| 🔜        | **Free email provider check**                 | Is the email address bound to a known free email provider?                                                                      | [Issue #89](https://github.com/reacherhq/check-if-email-exists/issues/89)   |
+| 🔜        | **Syntax validation, provider-specific**      | According to the syntactic rules of the target mail provider, is the address syntactically valid?                               | [Issue #90](https://github.com/reacherhq/check-if-email-exists/issues/90)   |
+| 🔜        | **Honeypot detection**                        | Does email address under test hide a [honeypot](https://en.wikipedia.org/wiki/Spamtrap)?                                        | [Issue #91](https://github.com/reacherhq/check-if-email-exists/issues/91)   |
+| 🔜        | **Gravatar**                                  | Does this email address have a [Gravatar](https://gravatar.com/) profile picture?                                               | [Issue #92](https://github.com/reacherhq/check-if-email-exists/issues/92)   |
+| 🔜        | **Have I Been Pwned?**                        | Has this email been compromised in a [data breach](https://haveibeenpwned.com/)?                                                | [Issue #289](https://github.com/reacherhq/check-if-email-exists/issues/289) |
 
 ## 🤔 Why?
 
@@ -71,18 +71,18 @@ Reacher is a simple SaaS using this library, also [open-source](https://github.c
 
 ### 2. Deploy to Heroku
 
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/amaurymartiny/check-if-email-exists)
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/reacherhq/check-if-email-exists)
 
 Heroku's servers have SMTP port 25 open, and have static IPs able to connect to most email providers (unless if you start heavily spamming these providers).
 
 ### 3. Use Docker
 
-The [Docker image](./Dockerfile) is hosted on Docker Hub: https://hub.docker.com/r/amaurymartiny/check-if-email-exists.
+The [Docker image](./Dockerfile) is hosted on Docker Hub: https://hub.docker.com/r/reacherhq/check-if-email-exists.
 
 To run it, run the following command:
 
 ```bash
-docker run -p 3000:3000 amaurymartiny/check-if-email-exists
+docker run -p 3000:3000 reacherhq/check-if-email-exists
 ```
 
 You can then send a POST request with the following body to `http://localhost:3000` to test multiple emails at once:
@@ -105,7 +105,7 @@ Optionally, you can also pass in `from_email` and `hello_name` fields into the J
 
 > Note: The binary doesn't connect to any backend, it checks the email directly from your computer.
 
-Head to the [releases page](https://github.com/amaurymartiny/check-if-email-exists/releases) and download the binary for your platform. Make sure you have [`openssl`](https://www.openssl.org/) installed on your local machine.
+Head to the [releases page](https://github.com/reacherhq/check-if-email-exists/releases) and download the binary for your platform. Make sure you have [`openssl`](https://www.openssl.org/) installed on your local machine.
 
 ```
 > $ check_if_email_exists --help
@@ -256,7 +256,7 @@ First, [install Rust](https://www.rust-lang.org/tools/install); you'll need Rust
 
 ```bash
 # Download the code
-$ git clone https://github.com/amaurymartiny/check-if-email-exists
+$ git clone https://github.com/reacherhq/check-if-email-exists
 $ cd check-if-email-exists
 
 # Build in release mode
@@ -268,4 +268,4 @@ $ ./target/release/check_if_email_exists --help
 
 ## Legacy Bash Script
 
-The 1st version of this tool was a simple bash script which made a telnet call. If you would like to use that simpler version, have a look at the [`legacy`](https://github.com/amaurymartiny/check-if-email-exists/tree/legacy) branch. The reasons for porting the bash script to the current codebase are explained [in issue #4](https://github.com/amaurymartiny/check-if-email-exists/issues/4).
+The 1st version of this tool was a simple bash script which made a telnet call. If you would like to use that simpler version, have a look at the [`legacy`](https://github.com/reacherhq/check-if-email-exists/tree/legacy) branch. The reasons for porting the bash script to the current codebase are explained [in issue #4](https://github.com/reacherhq/check-if-email-exists/issues/4).
