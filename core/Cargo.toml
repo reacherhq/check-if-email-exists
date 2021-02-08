@@ -29,7 +29,7 @@ regex = "1.4"
 reqwest = { version = "0.10", features = ["json", "socks"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-trust-dns-proto = "0.19"
+trust-dns-proto = "0.20"
 
 [dev-dependencies]
 tokio = { version = "0.2", features = ["blocking"] }
