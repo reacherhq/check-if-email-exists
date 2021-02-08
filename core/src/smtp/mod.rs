@@ -30,12 +30,12 @@ use fast_socks5::{
 	client::{Config, Socks5Stream},
 	Result, SocksError,
 };
-use rand::{Rng, SeedableRng, distributions::Alphanumeric};
 use rand::rngs::SmallRng;
+use rand::{distributions::Alphanumeric, Rng, SeedableRng};
 use serde::Serialize;
+use std::iter;
 use std::str::FromStr;
 use std::time::Duration;
-use std::iter;
 use trust_dns_proto::rr::Name;
 use yahoo::YahooError;
 
@@ -335,10 +335,10 @@ async fn smtp_is_catch_all(
 	// Create a random 15-char alphanumerical string.
 	let mut rng = SmallRng::from_entropy();
 	let random_email: String = iter::repeat(())
-			.map(|()| rng.sample(Alphanumeric))
-			.map(char::from)
-			.take(15)
-			.collect();
+		.map(|()| rng.sample(Alphanumeric))
+		.map(char::from)
+		.take(15)
+		.collect();
 	let random_email = EmailAddress::new(format!("{}@{}", random_email, domain));
 
 	email_deliverable(
