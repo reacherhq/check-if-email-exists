@@ -25,7 +25,7 @@ mod tests {
 
 	/// Function to test all fixtures from a folder.
 	fn test_all_from_folder(folder: &str) {
-		let mut runtime = Runtime::new().unwrap();
+		let runtime = Runtime::new().unwrap();
 		let paths = fs::read_dir(folder).unwrap();
 
 		// For every fixture file, we compare:

@@ -30,8 +30,10 @@ use fast_socks5::{
 	client::{Config, Socks5Stream},
 	Result, SocksError,
 };
-use rand::{distributions::Alphanumeric, Rng};
+use rand::rngs::SmallRng;
+use rand::{distributions::Alphanumeric, Rng, SeedableRng};
 use serde::Serialize;
+use std::iter;
 use std::str::FromStr;
 use std::time::Duration;
 use trust_dns_proto::rr::Name;
@@ -331,10 +333,12 @@ async fn smtp_is_catch_all(
 	domain: &str,
 ) -> Result<bool, SmtpError> {
 	// Create a random 15-char alphanumerical string.
-	let random_email = rand::thread_rng()
-		.sample_iter(&Alphanumeric)
+	let mut rng = SmallRng::from_entropy();
+	let random_email: String = iter::repeat(())
+		.map(|()| rng.sample(Alphanumeric))
+		.map(char::from)
 		.take(15)
-		.collect::<String>();
+		.collect();
 	let random_email = EmailAddress::new(format!("{}@{}", random_email, domain));
 
 	email_deliverable(
@@ -439,7 +443,7 @@ mod tests {
 
 	#[test]
 	fn should_timeout() {
-		let mut runtime = Runtime::new().unwrap();
+		let runtime = Runtime::new().unwrap();
 
 		let to_email = EmailAddress::from_str("foo@gmail.com").unwrap();
 		let host = Name::from_str("gmail.com").unwrap();
