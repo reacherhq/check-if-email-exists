@@ -88,12 +88,12 @@ mod tests {
 		}
 	}
 
-	#[test]
+	#[tokio::test]
 	fn should_pass_fixtures() {
 		test_all_from_folder("./src/fixtures");
 	}
 
-	#[test]
+	#[tokio::test]
 	fn should_pass_sensitive_fixtures() {
 		// These fixtures contain real-file emails, they are not committed to
 		// git.
