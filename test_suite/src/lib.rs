@@ -16,7 +16,6 @@
 
 //! E2E tests
 
-
 #[cfg(test)]
 mod tests {
 	use check_if_email_exists::{check_email, CheckEmailInput};
