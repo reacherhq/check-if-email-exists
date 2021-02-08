@@ -10,11 +10,11 @@ keywords = ["email", "smtp", "mx", "verification"]
 license = "AGPL-3.0"
 publish = true
 readme = "../README.md"
-repository = "https://github.com/amaurymartiny/check-if-email-exists"
+repository = "https://github.com/reacherhq/check-if-email-exists"
 
 [badges]
-appveyor = { repository = "amaurymartiny/check-if-email-exists", service = "github" }
-travis-ci = { repository = "amaurymartiny/check-if-email-exists", service = "github" }
+appveyor = { repository = "reacherhq/check-if-email-exists", service = "github" }
+travis-ci = { repository = "reacherhq/check-if-email-exists", service = "github" }
 
 [dependencies]
 async-smtp = { version = "0.3", features = ["socks5"] }
