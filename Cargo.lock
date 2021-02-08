@@ -374,7 +374,7 @@ dependencies = [
  "futures",
  "log",
  "mailchecker",
- "rand 0.7.3",
+ "rand 0.8.2",
  "regex",
  "reqwest",
  "serde",
