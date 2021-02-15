@@ -69,11 +69,13 @@ Reacher is a simple SaaS using this library, also [open-source](https://github.c
 
 > If you would like a high free tier to test Reacher, consider [sponsoring me](https://github.com/sponsors/amaurymartiny/)! You'll get 8000 free email verifications every month, and a this contribution would mean A WHOLE LOT to me.
 
-### 2. Deploy to Heroku
+### 2. One-Click Deploy to Heroku
 
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/reacherhq/check-if-email-exists)
+Reacher provides a fully-fledged REST backend at https://github.com/reacherhq/backend. It is the same backend running for our main product https://reacher.email.
 
-Heroku's servers have SMTP port 25 open, and have static IPs able to connect to most email providers (unless if you start heavily spamming these providers).
+The beckend is built using the fast web framework [warp](https://github.com/seanmonstar/warp), and exposes an API endpoint for making email verifications.
+
+For an one-click deploy to [Heroku](https://heroku.com), click on the purple Heroku button at [reacherhq/backend](https://github.com/reacherhq/backend#get-started).
 
 ### 3. Use Docker
 
