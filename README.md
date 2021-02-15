@@ -248,9 +248,9 @@ Most ISPs block outgoing SMTP requests through port 25, to prevent spam. `check-
 
 To see in details what the binary is doing behind the scenes, run it in verbose mode to see the logs.
 
-#### The output shows `"connection refused"` in the `smtp.error` field.
+#### I have another question
 
-This also happens when your ISP block SMTP ports, see the above answer.
+Feel free to check out Reacher's [FAQ](https://help.reacher.email/faq).
 
 ## 🔨 Build From Source
 
