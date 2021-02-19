@@ -1,7 +1,7 @@
 [package]
 name = "check-if-email-exists"
 version = "0.8.19"
-authors = ["Amaury Martiny <amaury.martiny@protonmail.com>"]
+authors = ["Amaury <amaurym10@protonmail.com>"]
 categories = ["email"]
 description = "Check if an email address exists without sending any email"
 documentation = "http://docs.rs/check-if-email-exists"
@@ -17,7 +17,7 @@ appveyor = { repository = "reacherhq/check-if-email-exists", service = "github" 
 travis-ci = { repository = "reacherhq/check-if-email-exists", service = "github" }
 
 [dependencies]
-async-smtp = { git="https://github.com/amaurymartiny/async-smtp", branch="am-fast-socks", features = ["socks5"] }
+async-smtp = { git="https://github.com/amaurym/async-smtp", branch="am-fast-socks", features = ["socks5"] }
 async-std = "1.9.0"
 async-std-resolver = "0.20.0"
 fast-socks5 = "0.4.2"

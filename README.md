@@ -1,9 +1,9 @@
 [![Crate](https://img.shields.io/crates/v/check-if-email-exists.svg)](https://crates.io/crates/check-if-email-exists)
 [![Docs](https://docs.rs/check-if-email-exists/badge.svg)](https://docs.rs/check-if-email-exists)
 [![Actions Status](https://github.com/reacherhq/check-if-email-exists/workflows/CI/badge.svg)](https://github.com/reacherhq/check-if-email-exists/actions)
-[![Travis](https://img.shields.io/travis/amaurymartiny/check-if-email-exists.svg)](https://travis-ci.org/amaurymartiny/check-if-email-exists)
-[![Appveyor](https://ci.appveyor.com/api/projects/status/github/amaurymartiny/check-if-email-exists?branch=master&svg=true)](https://ci.appveyor.com/project/amaurymartiny/check-if-email-exists-a08kp)
-[![Github Sponsor](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&link=https://github.com/sponsors/amaurymartiny)](https://github.com/sponsors/amaurymartiny)
+[![Travis](https://img.shields.io/travis/amaurym/check-if-email-exists.svg)](https://travis-ci.org/amaurym/check-if-email-exists)
+[![Appveyor](https://ci.appveyor.com/api/projects/status/github/amaurym/check-if-email-exists?branch=master&svg=true)](https://ci.appveyor.com/project/amaurym/check-if-email-exists-a08kp)
+[![Github Sponsor](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&link=https://github.com/sponsors/amaurym)](https://github.com/sponsors/amaurym)
 
 <br /><br /><br />
 
@@ -67,7 +67,7 @@ There are 5 ways you can try `check-if-email-exists`.
 
 Reacher is a simple SaaS using this library, also [open-source](https://github.com/reacherhq/backend)!
 
-> If you would like a high free tier to test Reacher, consider [sponsoring me](https://github.com/sponsors/amaurymartiny/)! You'll get 8000 free email verifications every month, and a this contribution would mean A WHOLE LOT to me.
+> If you would like a high free tier to test Reacher, consider [sponsoring me](https://github.com/sponsors/amaurym/)! You'll get 8000 free email verifications every month, and a this contribution would mean A WHOLE LOT to me.
 
 ### 2. One-Click Deploy to Heroku
 
