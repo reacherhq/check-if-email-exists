@@ -21,7 +21,7 @@ async-smtp = { git="https://github.com/amaurym/async-smtp", branch="am-fast-sock
 async-std = "1.9.0"
 async-std-resolver = "0.20.0"
 fast-socks5 = "0.4.2"
-futures = "0.3.12"
+futures = "0.3.13"
 log = "0.4.14"
 mailchecker = "4.0.3"
 rand = {version = "0.8.3", features = ["small_rng"] }
