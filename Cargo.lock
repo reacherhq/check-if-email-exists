@@ -137,7 +137,7 @@ dependencies = [
 [[package]]
 name = "async-smtp"
 version = "0.3.4"
-source = "git+https://github.com/amaurym/async-smtp?branch=am-fast-socks#eac57391b68a144d7dfb8b74ee49827164f46d9b"
+source = "git+https://github.com/async-email/async-smtp?branch=master#0f1c4c6a565833f8c7fc314de84c4cbbc8da2b4a"
 dependencies = [
  "async-native-tls",
  "async-std",
