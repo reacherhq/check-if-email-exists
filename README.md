@@ -44,20 +44,19 @@ If you don't have time to waste configuring, hosting, debugging and maintaining 
 
 Many online services (https://hunter.io, https://verify-email.org, https://email-checker.net) offer this service for a paid fee. Here is an open-source alternative to those tools.
 
-## Licensing
+## License
 
-`check-if-email-exists`'s source code is provided under a **dual license model** designed to meet the development and distribution needs of both commercial and open-source projects.
+`check-if-email-exists`'s source code is provided under a **dual license model** .
 
-If you want to use this library to build closed-sourced commercial sites and applications, then you'll need to purchase a commercial license. This allows you to keep your software proprietary whilst still using `check-if-email-exists`. You can [purchase a commercial license here](https://reacher.email/pricing). A commercial license grants you:
+### Commercial license
 
--   On-premise running as well as running on public cloud providers for commercial purposes for proprietary systems.
--   Ability to modify the source (forking) for your own purposes.
+If you want to use `check-if-email-exists` to develop commercial sites, tools, and applications, the Commercial License is the appropriate license. With this option, your source code is kept proprietary. Purchase an `check-if-email-exists` Commercial License at https://reacher.email/pricing.
 
-Not only does it grant you a license to run such a critical piece of infrastructure, but you are also supporting further innovation in this space and our ability to contribute to it!
+### Open source license
 
-If you are creating an open source application under a license compatible with the Affero GNU GPL license v3, you may use `check-if-email-exists` under the terms of the AGPLv3. You can read more about this license [here](./LICENSE.AGPL).
+If you are creating an open source application under a license compatible with the GNU Affero GPL license v3, you may use `check-if-email-exists` under the terms of the [AGPL-3.0](./LICENSE.AGPL).
 
-Please read the [LICENSE](./LICENSE.md) file for more information about the dual license.
+[Read more](https://help.reacher.email/reacher-licenses) about Reacher's license.
 
 ## Try It Yourself
 
