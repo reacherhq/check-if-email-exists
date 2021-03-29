@@ -6,6 +6,6 @@ publish = false
 
 [dependencies]
 check-if-email-exists = { path = "../core" }
-serde = "1.0.124"
+serde = "1.0.125"
 serde_json = "1.0.64"
 tokio = { version = "1.3.0", features = ["rt"] }
