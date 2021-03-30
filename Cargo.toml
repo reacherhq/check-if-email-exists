@@ -5,7 +5,7 @@ default-run = "check_if_email_exists"
 edition = "2018"
 description = "Check if an email address exists without sending any email."
 authors = ["Amaury <amaurym10@protonmail.com>"]
-license = "AGPL-3.0 OR Reacher Commercial Lciense"
+license = "AGPL-3.0"
 publish = false
 
 [[bin]]
