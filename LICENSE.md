@@ -1,15 +1,11 @@
-# Licensing Information
+`check-if-email-exists`'s source code is provided under a **dual license model**.
 
-This library (`check-if-email-exists`) has a dual license, a commercial one suitable for closed-source commercial projects and an AGPL license that can be used in open-source software.
+### Commercial license
 
-Depending on your needs, you must choose one of them and follow its policies. A detail of the policies and agreements for each license type are available in the [LICENSE.COMMERCIAL](./LICENSE.COMMERCIAL) and [LICENSE.AGPL](./LICENSE.AGPL) files.
+If you want to use `check-if-email-exists` to develop commercial sites, tools, and applications, the Commercial License is the appropriate license. With this option, your source code is kept proprietary. Purchase an `check-if-email-exists` Commercial License at https://reacher.email/pricing.
 
-In brief, purchasing a license is mandatory as soon as you develop activities distributing the `check-if-email-exists` software inside your product or deploying it on a network without disclosing the source code of your own applications under the AGPL license. These activities include:
+### Open source license
 
--   offering services as an application service provider or over-network application programming interface (API),
--   creating/manipulating documents for users in a web/server/cloud application,
--   shipping `check-if-email-exists` with a closed source product.
+If you are creating an open source application under a license compatible with the GNU Affero GPL license v3, you may use `check-if-email-exists` under the terms of the [AGPL-3.0](./LICENSE.AGPL).
 
-Please visit [Reacher's dedicated page on the Commercial License](https://help.reacher.email/commercial-license-for-oems-isvs-and-vars) to purchase a commercial license or contact Reacher support at amaury@reacher.email for more info.
-
-`SPDX-License-Identifier: AGPL-3.0 OR Reacher Commercial License`
+[Read more](https://help.reacher.email/reacher-licenses) about Reacher's license.

@@ -1,9 +1,9 @@
 [![Crate](https://img.shields.io/crates/v/check-if-email-exists.svg)](https://crates.io/crates/check-if-email-exists)
 [![Docs](https://docs.rs/check-if-email-exists/badge.svg)](https://docs.rs/check-if-email-exists)
 [![Actions Status](https://github.com/reacherhq/check-if-email-exists/workflows/CI/badge.svg)](https://github.com/reacherhq/check-if-email-exists/actions)
-[![Travis](https://img.shields.io/travis/amaurymartiny/check-if-email-exists.svg)](https://travis-ci.org/amaurymartiny/check-if-email-exists)
-[![Appveyor](https://ci.appveyor.com/api/projects/status/github/amaurymartiny/check-if-email-exists?branch=master&svg=true)](https://ci.appveyor.com/project/amaurymartiny/check-if-email-exists-a08kp)
-[![Github Sponsor](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&link=https://github.com/sponsors/amaurymartiny)](https://github.com/sponsors/amaurymartiny)
+[![Travis](https://img.shields.io/travis/amaurym/check-if-email-exists.svg)](https://travis-ci.org/amaurym/check-if-email-exists)
+[![Appveyor](https://ci.appveyor.com/api/projects/status/github/amaurym/check-if-email-exists?branch=master&svg=true)](https://ci.appveyor.com/project/amaurym/check-if-email-exists-a08kp)
+[![Github Sponsor](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&link=https://github.com/sponsors/amaurym)](https://github.com/sponsors/amaurym)
 
 <br /><br /><br />
 
@@ -44,20 +44,19 @@ If you don't have time to waste configuring, hosting, debugging and maintaining 
 
 Many online services (https://hunter.io, https://verify-email.org, https://email-checker.net) offer this service for a paid fee. Here is an open-source alternative to those tools.
 
-## Licensing
+## License
 
-`check-if-email-exists`'s source code is provided under a **dual license model** designed to meet the development and distribution needs of both commercial and open-source projects.
+`check-if-email-exists`'s source code is provided under a **dual license model** .
 
-If you want to use this library to build closed-sourced commercial sites and applications, then you'll need to purchase a commercial license. This allows you to keep your software proprietary whilst still using `check-if-email-exists`. You can [purchase a commercial license here](https://reacher.email/pricing). A commercial license grants you:
+### Commercial license
 
--   On-premise running as well as running on public cloud providers for commercial purposes for proprietary systems.
--   Ability to modify the source (forking) for your own purposes.
+If you want to use `check-if-email-exists` to develop commercial sites, tools, and applications, the Commercial License is the appropriate license. With this option, your source code is kept proprietary. Purchase an `check-if-email-exists` Commercial License at https://reacher.email/pricing.
 
-Not only does it grant you a license to run such a critical piece of infrastructure, but you are also supporting further innovation in this space and our ability to contribute to it!
+### Open source license
 
-If you are creating an open source application under a license compatible with the Affero GNU GPL license v3, you may use `check-if-email-exists` under the terms of the AGPLv3. You can read more about this license [here](./LICENSE.AGPL).
+If you are creating an open source application under a license compatible with the GNU Affero GPL license v3, you may use `check-if-email-exists` under the terms of the [AGPL-3.0](./LICENSE.AGPL).
 
-Please read the [LICENSE](./LICENSE.md) file for more information about the dual license.
+[Read more](https://help.reacher.email/reacher-licenses) about Reacher's license.
 
 ## Try It Yourself
 
@@ -67,7 +66,7 @@ There are 5 ways you can try `check-if-email-exists`.
 
 Reacher is a simple SaaS using this library, also [open-source](https://github.com/reacherhq/backend)!
 
-> If you would like a high free tier to test Reacher, consider [sponsoring me](https://github.com/sponsors/amaurymartiny/)! You'll get 8000 free email verifications every month, and a this contribution would mean A WHOLE LOT to me.
+> If you would like a high free tier to test Reacher, consider [sponsoring me](https://github.com/sponsors/amaurym/)! You'll get 8000 free email verifications every month, and a this contribution would mean A WHOLE LOT to me.
 
 ### 2. One-Click Deploy to Heroku
 
