@@ -136,20 +136,21 @@ dependencies = [
 
 [[package]]
 name = "async-smtp"
-version = "0.3.4"
-source = "git+https://github.com/async-email/async-smtp?branch=master#0f1c4c6a565833f8c7fc314de84c4cbbc8da2b4a"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "472a081e9e3a92f9201237f07b51c0bab657336ca6600fd2f243c9cc3c9c81ff"
 dependencies = [
  "async-native-tls",
  "async-std",
  "async-trait",
- "base64 0.12.3",
+ "base64",
  "bufstream",
  "fast-socks5",
  "fast_chemail",
  "hostname 0.1.5",
  "log",
  "nom",
- "pin-project 0.4.27",
+ "pin-project 1.0.1",
  "pin-utils",
  "serde",
  "serde_derive",
@@ -241,12 +242,6 @@ checksum = "cdb031dd78e28731d87d56cc8ffef4a8f36ca26c38fe2de700543e627f8a464a"
 
 [[package]]
 name = "base64"
-version = "0.12.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3441f0f7b02788e948e47f457ca01f1d7e6d92c693bc132c22b087d3141c03ff"
-
-[[package]]
-name = "base64"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "904dfeac50f3cdaba28fc6f57fdcddb75f49ed61346676a78c4ffe55877802fd"
@@ -315,7 +310,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "check-if-email-exists"
-version = "0.8.19"
+version = "0.8.20"
 dependencies = [
  "async-smtp",
  "async-std",
@@ -335,7 +330,7 @@ dependencies = [
 
 [[package]]
 name = "check-if-email-exists-cli"
-version = "0.8.19"
+version = "0.8.20"
 dependencies = [
  "check-if-email-exists",
  "clap",
@@ -349,7 +344,7 @@ dependencies = [
 
 [[package]]
 name = "check-if-email-exists-test-suite"
-version = "0.8.19"
+version = "0.8.20"
 dependencies = [
  "check-if-email-exists",
  "serde",
@@ -1372,7 +1367,7 @@ version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bf12057f289428dbf5c591c74bf10392e4a8003f993405a902f20117019022d4"
 dependencies = [
- "base64 0.13.0",
+ "base64",
  "bytes",
  "encoding_rs",
  "futures-core",

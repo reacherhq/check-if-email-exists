@@ -7,7 +7,7 @@ description = "Check if an email address exists without sending any email"
 documentation = "http://docs.rs/check-if-email-exists"
 edition = "2018"
 keywords = ["email", "smtp", "mx", "verification"]
-license = "AGPL-3.0"
+license = "AGPL-3.0 OR Reacher Commercial Lciense"
 publish = true
 readme = "../README.md"
 repository = "https://github.com/reacherhq/check-if-email-exists"
@@ -17,7 +17,7 @@ appveyor = { repository = "reacherhq/check-if-email-exists", service = "github" 
 travis-ci = { repository = "reacherhq/check-if-email-exists", service = "github" }
 
 [dependencies]
-async-smtp = { git="https://github.com/async-email/async-smtp", branch="master", features = ["socks5"] }
+async-smtp = { version = "0.4.0", features = ["socks5"] }
 async-std = "1.9.0"
 async-std-resolver = "0.20.0"
 fast-socks5 = "0.4.2"
