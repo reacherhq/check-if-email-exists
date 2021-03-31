@@ -1,13 +1,13 @@
 [package]
 name = "check-if-email-exists"
-version = "0.8.20"
+version = "0.8.21"
 authors = ["Amaury <amaurym10@protonmail.com>"]
 categories = ["email"]
 description = "Check if an email address exists without sending any email"
 documentation = "http://docs.rs/check-if-email-exists"
 edition = "2018"
 keywords = ["email", "smtp", "mx", "verification"]
-license = "AGPL-3.0 OR Reacher Commercial Lciense"
+license = "AGPL-3.0"
 publish = true
 readme = "../README.md"
 repository = "https://github.com/reacherhq/check-if-email-exists"
