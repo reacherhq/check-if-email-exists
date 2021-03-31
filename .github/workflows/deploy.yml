@@ -132,35 +132,35 @@ jobs:
           # WASM, off by default as most rust projects aren't compatible yet.
           # - wasm32-unknown-emscripten
           # Linux
-          - aarch64-unknown-linux-gnu
-          - arm-unknown-linux-gnueabi
-          - armv7-unknown-linux-gnueabihf
-          - i686-unknown-linux-gnu
-          - i686-unknown-linux-musl
-          - mips-unknown-linux-gnu
-          - mips64-unknown-linux-gnuabi64
-          - mips64el-unknown-linux-gnuabi64
-          - mipsel-unknown-linux-gnu
-          - powerpc-unknown-linux-gnu
-          - powerpc64-unknown-linux-gnu
-          - powerpc64le-unknown-linux-gnu
-          - s390x-unknown-linux-gnu
+          # - aarch64-unknown-linux-gnu
+          # - arm-unknown-linux-gnueabi
+          # - armv7-unknown-linux-gnueabihf
+          # - i686-unknown-linux-gnu
+          # - i686-unknown-linux-musl
+          # - mips-unknown-linux-gnu
+          # - mips64-unknown-linux-gnuabi64
+          # - mips64el-unknown-linux-gnuabi64
+          # - mipsel-unknown-linux-gnu
+          # - powerpc-unknown-linux-gnu
+          # - powerpc64-unknown-linux-gnu
+          # - powerpc64le-unknown-linux-gnu
+          # - s390x-unknown-linux-gnu
           - x86_64-unknown-linux-gnu
           - x86_64-unknown-linux-musl
           # Android
-          - aarch64-linux-android
-          - arm-linux-androideabi
-          - armv7-linux-androideabi
-          - i686-linux-android
-          - x86_64-linux-android
+          # - aarch64-linux-android
+          # - arm-linux-androideabi
+          # - armv7-linux-androideabi
+          # - i686-linux-android
+          # - x86_64-linux-android
           # *BSD
           # The FreeBSD targets can have issues linking so they are disabled
           # by default.
           # - i686-unknown-freebsd
           # - x86_64-unknown-freebsd
-          - x86_64-unknown-netbsd
+          # - x86_64-unknown-netbsd
           # Solaris
-          - sparcv9-sun-solaris
+          # - sparcv9-sun-solaris
           # Bare Metal
           # These are no-std embedded targets, so they will only build if your
           # crate is `no_std` compatible.
