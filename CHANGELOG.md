@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [0.8.20](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.19...v0.8.20) (2021-03-30)
 
+
+### Updates
+
+* This release only bumps versions of dependencies, and does not introduce any bugfix or improvements.
+
 ### [0.8.19](https://github.com/reacherhq/check-if-email-exists/compare/v0.8.18...v0.8.19) (2021-01-10)
 
 
