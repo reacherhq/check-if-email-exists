@@ -1,8 +1,8 @@
 [![Crate](https://img.shields.io/crates/v/check-if-email-exists.svg)](https://crates.io/crates/check-if-email-exists)
 [![Docs](https://docs.rs/check-if-email-exists/badge.svg)](https://docs.rs/check-if-email-exists)
 [![Actions Status](https://github.com/reacherhq/check-if-email-exists/workflows/CI/badge.svg)](https://github.com/reacherhq/check-if-email-exists/actions)
-[![Travis](https://img.shields.io/travis/amaurym/check-if-email-exists.svg)](https://travis-ci.org/amaurym/check-if-email-exists)
-[![Appveyor](https://ci.appveyor.com/api/projects/status/github/amaurym/check-if-email-exists?branch=master&svg=true)](https://ci.appveyor.com/project/amaurym/check-if-email-exists-a08kp)
+[![Travis](https://img.shields.io/travis/reacherhq/check-if-email-exists.svg)](https://travis-ci.com/reacherhq/check-if-email-exists)
+[![Appveyor](https://ci.appveyor.com/api/projects/status/github/reacherhq/check-if-email-exists?branch=master&svg=true)](https://ci.appveyor.com/project/amaurym/check-if-email-exists)
 [![Github Sponsor](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&link=https://github.com/sponsors/amaurym)](https://github.com/sponsors/amaurym)
 
 <br /><br /><br />
@@ -110,7 +110,7 @@ Head to the [releases page](https://github.com/reacherhq/check-if-email-exists/r
 
 ```
 > $ check_if_email_exists --help
-check_if_email_exists 0.8.21
+check_if_email_exists 0.8.22
 Check if an email address exists without sending any email.
 
 USAGE:
