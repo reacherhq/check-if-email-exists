@@ -73,12 +73,12 @@ pub enum MxError {
 	IoError(Error),
 	/// Error while resolving MX lookups.
 	#[serde(serialize_with = "ser_with_display")]
-	ResolveError(ResolveError),
+	ResolveError(Box<ResolveError>),
 }
 
 impl From<ResolveError> for MxError {
 	fn from(error: ResolveError) -> Self {
-		MxError::ResolveError(error)
+		MxError::ResolveError(Box::new(error))
 	}
 }
 
