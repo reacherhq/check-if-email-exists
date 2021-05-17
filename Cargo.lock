@@ -188,9 +188,9 @@ dependencies = [
 
 [[package]]
 name = "async-std-resolver"
-version = "0.20.0"
+version = "0.20.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1ecc7e0c04d9ac4e9f7e4c77c418891264179f2a7ae728112af0f093e743ef5f"
+checksum = "4d613d619c2886fc0f4b5a777eceab405b23de82d73f0fc61ae402fdb9bc6fb2"
 dependencies = [
  "async-std",
  "async-trait",
@@ -1624,9 +1624,9 @@ dependencies = [
 
 [[package]]
 name = "tinyvec"
-version = "1.1.0"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ccf8dbc19eb42fba10e8feaaec282fb50e2c14b2726d6301dbfeed0f73306a6f"
+checksum = "5b5220f05bb7de7f3f53c7c065e1199b3172696fe2db9f9c4d8ad9b4ee74c342"
 dependencies = [
  "tinyvec_macros",
 ]
@@ -1738,9 +1738,9 @@ dependencies = [
 
 [[package]]
 name = "trust-dns-proto"
-version = "0.20.0"
+version = "0.20.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "98a0381b2864c2978db7f8e17c7b23cca5a3a5f99241076e13002261a8ecbabd"
+checksum = "952a078337565ba39007de99b151770f41039253a31846f0a3d5cd5a4ac8eedf"
 dependencies = [
  "async-trait",
  "cfg-if 1.0.0",
@@ -1756,15 +1756,16 @@ dependencies = [
  "rand",
  "smallvec",
  "thiserror",
+ "tinyvec",
  "tokio",
  "url",
 ]
 
 [[package]]
 name = "trust-dns-resolver"
-version = "0.20.0"
+version = "0.20.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3072d18c10bd621cb00507d59cfab5517862285c353160366e37fbf4c74856e4"
+checksum = "da9c97f7d103e0f94dbe384a57908833505ae5870126492f166821b7cf685589"
 dependencies = [
  "cfg-if 1.0.0",
  "futures-util",
