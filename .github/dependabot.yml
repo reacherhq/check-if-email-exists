@@ -7,16 +7,3 @@ updates:
     time: "02:00"
     timezone: Europe/Berlin
   open-pull-requests-limit: 10
-  ignore:
-  - dependency-name: async-std-resolver
-    versions:
-    - 0.20.1
-  - dependency-name: trust-dns-proto
-    versions:
-    - 0.20.1
-  - dependency-name: hyper
-    versions:
-    - 0.14.4
-  - dependency-name: fast-socks5
-    versions:
-    - 0.4.2
