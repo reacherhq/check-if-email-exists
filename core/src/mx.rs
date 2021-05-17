@@ -55,7 +55,7 @@ impl Serialize for MxDetails {
 					.map(|host| host.exchange().to_string())
 					.collect::<Vec<_>>()
 			})
-			.unwrap_or_else(|_| vec![]); // In case of a resolve error, we don't serialize the error.
+			.unwrap_or_else(|_| Vec::new()); // In case of a resolve error, we don't serialize the error.
 
 		let mut map = serializer.serialize_map(Some(2))?;
 		map.serialize_entry("accepts_mail", &!records.is_empty())?;
