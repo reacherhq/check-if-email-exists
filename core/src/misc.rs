@@ -15,12 +15,12 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use super::syntax::SyntaxDetails;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 const ROLE_ACCOUNTS: &str = include_str!("./util/roles.json");
 
 /// Miscelleanous details about the email address.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct MiscDetails {
 	/// Is this a DEA (disposable email account)?
 	pub is_disposable: bool,

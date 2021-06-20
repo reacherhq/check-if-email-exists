@@ -14,4 +14,5 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+/// The target where to log check-if-email-exists logs.
 pub const LOG_TARGET: &str = "check-if-email-exists";
