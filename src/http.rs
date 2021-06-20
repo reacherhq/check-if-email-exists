@@ -63,11 +63,11 @@ async fn req_handler(req: Request<Body>) -> Result<Response<Body>, hyper::Error>
 			// Create EmailInput from body
 			let mut input = CheckEmailInput::new(body.to_emails);
 			input
-				.with_from_email(body.from_email.unwrap_or_else(|| CONF.from_email.clone()))
-				.with_hello_name(body.hello_name.unwrap_or_else(|| CONF.hello_name.clone()))
-				.with_yahoo_use_api(CONF.yahoo_use_api);
+				.set_from_email(body.from_email.unwrap_or_else(|| CONF.from_email.clone()))
+				.set_hello_name(body.hello_name.unwrap_or_else(|| CONF.hello_name.clone()))
+				.set_yahoo_use_api(CONF.yahoo_use_api);
 			if let Some(proxy_host) = body.proxy_host.map(Cow::Owned).or_else(|| CONF.proxy_host.as_ref().map(Cow::Borrowed)) {
-				input.with_proxy(CheckEmailInputProxy{
+				input.set_proxy(CheckEmailInputProxy{
 					host:proxy_host.into_owned(),
 					port: body.proxy_port.unwrap_or(CONF.proxy_port)
 				});

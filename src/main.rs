@@ -77,11 +77,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	if let Some(to_email) = &CONF.to_email {
 		let mut input = CheckEmailInput::new(vec![to_email.clone()]);
 		input
-			.with_from_email(CONF.from_email.clone())
-			.with_hello_name(CONF.hello_name.clone())
-			.with_yahoo_use_api(CONF.yahoo_use_api);
+			.set_from_email(CONF.from_email.clone())
+			.set_hello_name(CONF.hello_name.clone())
+			.set_yahoo_use_api(CONF.yahoo_use_api);
 		if let Some(proxy_host) = &CONF.proxy_host {
-			input.with_proxy(CheckEmailInputProxy {
+			input.set_proxy(CheckEmailInputProxy {
 				host: proxy_host.clone(),
 				port: CONF.proxy_port,
 			});

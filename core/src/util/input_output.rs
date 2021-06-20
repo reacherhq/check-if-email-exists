@@ -81,7 +81,7 @@ impl CheckEmailInput {
 
 	/// Set the email to use in the `MAIL FROM:` SMTP command. Defaults to
 	/// `user@example.org` if not explicitly set.
-	#[deprecated(since = "0.8.24", note = "Please with with_from_email instead")]
+	#[deprecated(since = "0.8.24", note = "Please with set_from_email instead")]
 	pub fn from_email(&mut self, email: String) -> &mut CheckEmailInput {
 		self.from_email = email;
 		self
@@ -89,14 +89,14 @@ impl CheckEmailInput {
 
 	/// Set the email to use in the `MAIL FROM:` SMTP command. Defaults to
 	/// `user@example.org` if not explicitly set.
-	pub fn with_from_email(&mut self, email: String) -> &mut CheckEmailInput {
+	pub fn set_from_email(&mut self, email: String) -> &mut CheckEmailInput {
 		self.from_email = email;
 		self
 	}
 
 	/// Set the name to use in the `EHLO:` SMTP command. Defaults to `localhost`
 	/// if not explicitly set.
-	#[deprecated(since = "0.8.24", note = "Please with with_hello_name instead")]
+	#[deprecated(since = "0.8.24", note = "Please with set_hello_name instead")]
 	pub fn hello_name(&mut self, name: String) -> &mut CheckEmailInput {
 		self.hello_name = name;
 		self
@@ -104,13 +104,13 @@ impl CheckEmailInput {
 
 	/// Set the name to use in the `EHLO:` SMTP command. Defaults to `localhost`
 	/// if not explicitly set.
-	pub fn with_hello_name(&mut self, name: String) -> &mut CheckEmailInput {
+	pub fn set_hello_name(&mut self, name: String) -> &mut CheckEmailInput {
 		self.hello_name = name;
 		self
 	}
 
 	/// Use the specified SOCK5 proxy to perform email verification.
-	#[deprecated(since = "0.8.24", note = "Please with with_proxy instead")]
+	#[deprecated(since = "0.8.24", note = "Please with set_proxy instead")]
 	pub fn proxy(&mut self, proxy_host: String, proxy_port: u16) -> &mut CheckEmailInput {
 		self.proxy = Some(CheckEmailInputProxy {
 			host: proxy_host,
@@ -120,27 +120,27 @@ impl CheckEmailInput {
 	}
 
 	/// Use the specified SOCK5 proxy to perform email verification.
-	pub fn with_proxy(&mut self, proxy: CheckEmailInputProxy) -> &mut CheckEmailInput {
+	pub fn set_proxy(&mut self, proxy: CheckEmailInputProxy) -> &mut CheckEmailInput {
 		self.proxy = Some(proxy);
 		self
 	}
 
 	/// Add optional timeout for the SMTP verification step.
-	#[deprecated(since = "0.8.24", note = "Please with with_smtp_timeout instead")]
+	#[deprecated(since = "0.8.24", note = "Please with set_smtp_timeout instead")]
 	pub fn smtp_timeout(&mut self, duration: Duration) -> &mut CheckEmailInput {
 		self.smtp_timeout = Some(duration);
 		self
 	}
 
 	/// Add optional timeout for the SMTP verification step.
-	pub fn with_smtp_timeout(&mut self, duration: Duration) -> &mut CheckEmailInput {
+	pub fn set_smtp_timeout(&mut self, duration: Duration) -> &mut CheckEmailInput {
 		self.smtp_timeout = Some(duration);
 		self
 	}
 
 	/// Set whether to use Yahoo's API or connecting directly to their SMTP
 	/// servers. Defaults to true.
-	#[deprecated(since = "0.8.24", note = "Please with with_yahoo_use_api instead")]
+	#[deprecated(since = "0.8.24", note = "Please with set_yahoo_use_api instead")]
 	pub fn yahoo_use_api(&mut self, use_api: bool) -> &mut CheckEmailInput {
 		self.yahoo_use_api = use_api;
 		self
@@ -148,7 +148,7 @@ impl CheckEmailInput {
 
 	/// Set whether to use Yahoo's API or connecting directly to their SMTP
 	/// servers. Defaults to true.
-	pub fn with_yahoo_use_api(&mut self, use_api: bool) -> &mut CheckEmailInput {
+	pub fn set_yahoo_use_api(&mut self, use_api: bool) -> &mut CheckEmailInput {
 		self.yahoo_use_api = use_api;
 		self
 	}
