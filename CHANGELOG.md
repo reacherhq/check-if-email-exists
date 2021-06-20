@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.8.23](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.22...v0.8.23) (2021-06-20)
+
+
+### Bug Fixes
+
+* Add serde (De)Serialize to pub structs ([#931](https://github.com/amaurymartiny/check-if-email-exists/issues/931)) ([949475d](https://github.com/amaurymartiny/check-if-email-exists/commit/949475dee4a1ed96e873688e7432c702eb30af62))
+
 ### [0.8.22](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.21...v0.8.22) (2021-03-31)
 
 

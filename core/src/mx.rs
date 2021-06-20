@@ -55,7 +55,7 @@ impl Serialize for MxDetails {
 					.map(|host| host.exchange().to_string())
 					.collect::<Vec<_>>()
 			})
-			.unwrap_or_else(|_| vec![]); // In case of a resolve error, we don't serialize the error.
+			.unwrap_or_else(|_| Vec::new()); // In case of a resolve error, we don't serialize the error.
 
 		let mut map = serializer.serialize_map(Some(2))?;
 		map.serialize_entry("accepts_mail", &!records.is_empty())?;
@@ -73,12 +73,12 @@ pub enum MxError {
 	IoError(Error),
 	/// Error while resolving MX lookups.
 	#[serde(serialize_with = "ser_with_display")]
-	ResolveError(ResolveError),
+	ResolveError(Box<ResolveError>),
 }
 
 impl From<ResolveError> for MxError {
 	fn from(error: ResolveError) -> Self {
-		MxError::ResolveError(error)
+		MxError::ResolveError(Box::new(error))
 	}
 }
 

@@ -32,7 +32,7 @@ use fast_socks5::{
 };
 use rand::rngs::SmallRng;
 use rand::{distributions::Alphanumeric, Rng, SeedableRng};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::iter;
 use std::str::FromStr;
 use std::time::Duration;
@@ -40,7 +40,7 @@ use trust_dns_proto::rr::Name;
 use yahoo::YahooError;
 
 /// Details that we gathered from connecting to this email via SMTP
-#[derive(Debug, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct SmtpDetails {
 	/// Are we able to connect to the SMTP server?
 	pub can_connect_smtp: bool,
