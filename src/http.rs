@@ -16,7 +16,7 @@
 
 use std::{borrow::Cow, net::SocketAddr};
 
-use check_if_email_exists::{check_email, CheckEmailInput};
+use check_if_email_exists::{check_email, CheckEmailInput, CheckEmailInputProxy};
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Method, Request, Response, Server, StatusCode};
 use serde::{Deserialize, Serialize};
@@ -63,14 +63,14 @@ async fn req_handler(req: Request<Body>) -> Result<Response<Body>, hyper::Error>
 			// Create EmailInput from body
 			let mut input = CheckEmailInput::new(body.to_emails);
 			input
-				.from_email(body.from_email.unwrap_or_else(|| CONF.from_email.clone()))
-				.hello_name(body.hello_name.unwrap_or_else(|| CONF.hello_name.clone()))
-				.yahoo_use_api(CONF.yahoo_use_api);
+				.with_from_email(body.from_email.unwrap_or_else(|| CONF.from_email.clone()))
+				.with_hello_name(body.hello_name.unwrap_or_else(|| CONF.hello_name.clone()))
+				.with_yahoo_use_api(CONF.yahoo_use_api);
 			if let Some(proxy_host) = body.proxy_host.map(Cow::Owned).or_else(|| CONF.proxy_host.as_ref().map(Cow::Borrowed)) {
-				input.proxy(
-					proxy_host.into_owned(),
-					body.proxy_port.unwrap_or(CONF.proxy_port),
-				);
+				input.with_proxy(CheckEmailInputProxy{
+					host:proxy_host.into_owned(),
+					port: body.proxy_port.unwrap_or(CONF.proxy_port)
+				});
 			}
 
 			let body = check_email(&input).await;

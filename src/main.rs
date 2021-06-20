@@ -18,7 +18,7 @@ mod http;
 
 use std::net::IpAddr;
 
-use check_if_email_exists::{check_email, CheckEmailInput};
+use check_if_email_exists::{check_email, CheckEmailInput, CheckEmailInputProxy};
 use clap::Clap;
 use once_cell::sync::Lazy;
 
@@ -77,11 +77,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	if let Some(to_email) = &CONF.to_email {
 		let mut input = CheckEmailInput::new(vec![to_email.clone()]);
 		input
-			.from_email(CONF.from_email.clone())
-			.hello_name(CONF.hello_name.clone())
-			.yahoo_use_api(CONF.yahoo_use_api);
+			.with_from_email(CONF.from_email.clone())
+			.with_hello_name(CONF.hello_name.clone())
+			.with_yahoo_use_api(CONF.yahoo_use_api);
 		if let Some(proxy_host) = &CONF.proxy_host {
-			input.proxy(proxy_host.clone(), CONF.proxy_port);
+			input.with_proxy(CheckEmailInputProxy {
+				host: proxy_host.clone(),
+				port: CONF.proxy_port,
+			});
 		}
 
 		let result = check_email(&input).await;
