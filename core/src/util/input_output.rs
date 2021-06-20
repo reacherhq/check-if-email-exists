@@ -18,12 +18,12 @@ use crate::misc::{MiscDetails, MiscError};
 use crate::mx::{MxDetails, MxError};
 use crate::smtp::{SmtpDetails, SmtpError};
 use crate::syntax::SyntaxDetails;
-use serde::{ser::SerializeMap, Serialize, Serializer};
+use serde::{ser::SerializeMap, Deserialize, Serialize, Serializer};
 use std::time::Duration;
 
 /// Perform the email verification via a specified proxy. The usage of a proxy
 /// is optional.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CheckEmailInputProxy {
 	/// Use the specified SOCKS5 proxy host to perform email verification.
 	pub host: String,
@@ -33,7 +33,7 @@ pub struct CheckEmailInputProxy {
 
 /// Builder pattern for the input argument into the main `email_exists`
 /// function.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CheckEmailInput {
 	/// The email to validate.
 	pub to_emails: Vec<String>,
@@ -116,7 +116,7 @@ impl CheckEmailInput {
 
 /// An enum to describe how confident we are that the recipient address is
 /// real.
-#[derive(Debug, PartialEq, Serialize)]
+#[derive(Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Reachable {
 	/// The email is safe to send.
