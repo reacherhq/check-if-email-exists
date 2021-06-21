@@ -34,7 +34,7 @@
 //! - Catch-all address. Is this email address a catch-all address?
 //!
 //! ```rust
-//! use check_if_email_exists::{check_email, CheckEmailInput};
+//! use check_if_email_exists::{check_email, CheckEmailInput, CheckEmailInputProxy};
 //!
 //! async fn check() {
 //!     // Let's say we want to test the deliverability of someone@gmail.com.
@@ -45,7 +45,7 @@
 //!     input
 //!         .set_from_email("me@example.org".into()) // Used in the `MAIL FROM:` command
 //!         .set_hello_name("example.org".into())    // Used in the `EHLO` command
-//!         .set_proxy(CheckEmailInputProxy{         // Use a SOCKS5 proxy to verify the email
+//!         .set_proxy(CheckEmailInputProxy {         // Use a SOCKS5 proxy to verify the email
 //!             host: "my-proxy.io".into(),
 //!             port: 1080
 //!     });
