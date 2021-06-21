@@ -43,8 +43,12 @@
 //!     // Optionally, we can also tweak the configuration parameters used in the
 //!     // verification.
 //!     input
-//!         .from_email("me@example.org".into()) // Used in the `MAIL FROM:` command
-//!         .hello_name("example.org".into()); // Used in the `EHLO` command
+//!         .set_from_email("me@example.org".into()) // Used in the `MAIL FROM:` command
+//!         .set_hello_name("example.org".into())    // Used in the `EHLO` command
+//!         .set_proxy(CheckEmailInputProxy{         // Use a SOCKS5 proxy to verify the email
+//!             host: "my-proxy.io".into(),
+//!             port: 1080
+//!     });
 //!
 //!     // Verify this input, using async/await syntax.
 //!     let result = check_email(&input).await;
@@ -191,6 +195,11 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 /// The main function of this library: takes as input a list of email addresses
 /// to check. Then performs syntax, mx, smtp and misc checks, and outputs a
 /// list of results.
+///
+/// Please note that checking multiple emails at once (by putting multiple
+/// emails in the `inputs.to_emails` Vec) is still a beta feature, and not
+/// fully optimized. For more info, see #65
+/// <https://github.com/reacherhq/check-if-email-exists/issues/65>.
 pub async fn check_email(inputs: &CheckEmailInput) -> Vec<CheckEmailOutput> {
 	// FIXME Obviously, the below `join_all` is not optimal. Some optimizations
 	// include:
