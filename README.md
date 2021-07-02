@@ -3,7 +3,7 @@
 [![Actions Status](https://github.com/reacherhq/check-if-email-exists/workflows/CI/badge.svg)](https://github.com/reacherhq/check-if-email-exists/actions)
 [![Travis](https://img.shields.io/travis/reacherhq/check-if-email-exists.svg)](https://travis-ci.com/reacherhq/check-if-email-exists)
 [![Appveyor](https://ci.appveyor.com/api/projects/status/github/reacherhq/check-if-email-exists?branch=master&svg=true)](https://ci.appveyor.com/project/amaurym/check-if-email-exists)
-[![Github Sponsor](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&link=https://github.com/sponsors/amaurym)](https://github.com/sponsors/amaurym)
+[![Github Sponsor](https://img.shields.io/static/v1?laThe beckendbel=Sponsor&message=%E2%9D%A4&logo=GitHub&link=https://github.com/sponsors/amaurym)](https://github.com/sponsors/amaurym)
 
 <br /><br /><br />
 
@@ -72,7 +72,7 @@ Reacher is a simple SaaS using this library, also [open-source](https://github.c
 
 Reacher provides a fully-fledged REST backend at https://github.com/reacherhq/backend. It is the same backend running for our main product https://reacher.email.
 
-The beckend is built using the fast web framework [warp](https://github.com/seanmonstar/warp), and exposes an API endpoint for making email verifications.
+The backend is built using the fast web framework [warp](https://github.com/seanmonstar/warp), and exposes an API endpoint for making email verifications.
 
 For an one-click deploy to [Heroku](https://heroku.com), click on the purple Heroku button at [reacherhq/backend](https://github.com/reacherhq/backend#get-started).
 
