@@ -4,6 +4,7 @@
 [![Travis](https://img.shields.io/travis/reacherhq/check-if-email-exists.svg)](https://travis-ci.com/reacherhq/check-if-email-exists)
 [![Appveyor](https://ci.appveyor.com/api/projects/status/github/reacherhq/check-if-email-exists?branch=master&svg=true)](https://ci.appveyor.com/project/amaurym/check-if-email-exists)
 [![Github Sponsor](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&link=https://github.com/sponsors/amaurym)](https://github.com/sponsors/amaurym)
+
 <br /><br /><br />
 
 <h1 align="center">check-if-email-exists</h1>
