@@ -25,6 +25,10 @@ use crate::CONF;
 
 /// JSON Request from POST /
 #[derive(Debug, Deserialize, Serialize)]
+#[deprecated(
+	since = "0.8.24",
+	note = "The HTTP server will be removed from the CLI, please use https://github.com/reacherhq/backend instead"
+)]
 pub struct PostReqBody {
 	from_email: Option<String>,
 	hello_name: Option<String>,
@@ -35,9 +39,14 @@ pub struct PostReqBody {
 
 /// Error Response from POST /
 #[derive(Debug, Deserialize, Serialize)]
+#[deprecated(
+	since = "0.8.24",
+	note = "The HTTP server will be removed from the CLI, please use https://github.com/reacherhq/backend instead"
+)]
 pub struct PostResError {
 	error: String,
 }
+
 async fn req_handler(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
 	match (req.method(), req.uri().path()) {
 		// Serve some instructions at /
@@ -99,9 +108,15 @@ async fn req_handler(req: Request<Body>) -> Result<Response<Body>, hyper::Error>
 	}
 }
 
+#[deprecated(
+	since = "0.8.24",
+	note = "The HTTP server will be removed from the CLI, please use https://github.com/reacherhq/backend instead"
+)]
 pub async fn run<A: Into<SocketAddr>>(
 	addr: A,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+	println!("WARNING: The HTTP server is deprecated, and will be removed in v0.9.0. Please see https://github.com/reacherhq/backend for a replacement.");
+
 	let service = make_service_fn(|_| async { Ok::<_, hyper::Error>(service_fn(req_handler)) });
 
 	let addr = addr.into();
