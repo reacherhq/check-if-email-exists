@@ -124,7 +124,6 @@ branches:
   only:
     # release tags
     - /^v\d+\.\d+\.\d+.*$/
-    - master
 
 notifications:
   email:
