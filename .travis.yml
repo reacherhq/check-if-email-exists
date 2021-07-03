@@ -124,7 +124,7 @@ branches:
   only:
     # release tags
     - /^v\d+\.\d+\.\d+.*$/
-    - master
+    # - master # We used to run Travis on each PR, but now we only have limited Travis credits.
 
 notifications:
   email:
