@@ -1,3 +1,8 @@
+# Deprecated.
+# This Dockerfile is for demo purposes, and should not be used in production.
+# For a production-ready web server, please see https://github.com/reacherhq/backend.
+# This Dockerfile will be **deprecated** soon, and removed from the
+# Docker Hub: https://hub.docker.com/r/reacherhq/check-if-email-exists.
 FROM alpine
 
 # `ciee` stands for check-if-email-exists
