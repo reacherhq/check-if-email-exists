@@ -51,19 +51,34 @@ pub struct Cli {
 	/// The email to check.
 	pub to_email: Option<String>,
 
-	/// Runs a HTTP server.
+	/// Deprecated. Runs a HTTP server.
+	/// This option will be removed in v0.9.
 	#[clap(long)]
+	#[deprecated(
+		since = "0.8.24",
+		note = "The HTTP server will be removed from the CLI, please use https://github.com/reacherhq/backend/ instead"
+	)]
 	pub http: bool,
 
-	/// Sets the host IP address on which the HTTP server should bind.
+	/// Deprecated. Sets the host IP address on which the HTTP server should bind.
 	/// Only used when `--http` flag is on.
+	/// This option will be removed in v0.9.
 	#[clap(long, env = "HOST", default_value = "127.0.0.1")]
+	#[deprecated(
+		since = "0.8.24",
+		note = "The HTTP server will be removed from the CLI, please use https://github.com/reacherhq/backend/ instead"
+	)]
 	pub http_host: IpAddr,
 
-	/// Sets the port on which the HTTP server should bind.
+	/// Deprecated. Sets the port on which the HTTP server should bind.
 	/// Only used when `--http` flag is on.
 	/// If not set, then it will use $PORT, or default to 3000.
+	///  This option will be removed in v0.9.
 	#[clap(long, env = "PORT", default_value = "3000")]
+	#[deprecated(
+		since = "0.8.24",
+		note = "The HTTP server will be removed from the CLI, please use https://github.com/reacherhq/backend/ instead"
+	)]
 	pub http_port: u16,
 }
 
