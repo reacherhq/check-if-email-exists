@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.8.24](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.23...v0.8.24) (2021-07-03)
+
+
+### Features
+
+* Add `CheckEmailInput` setter `set_` prefix to differentiate with accessing fields ([#933](https://github.com/amaurymartiny/check-if-email-exists/issues/933)) ([276f656](https://github.com/amaurymartiny/check-if-email-exists/commit/276f6561e7a98af6415dbd4645d84cbe697b738e))
+* Add deprecated warning when running HTTP server ([#943](https://github.com/amaurymartiny/check-if-email-exists/issues/943)) ([e4b1570](https://github.com/amaurymartiny/check-if-email-exists/commit/e4b1570a8be5573f7394a3139f34ab021452cc3a))
+
 ### [0.8.23](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.22...v0.8.23) (2021-06-20)
 
 
