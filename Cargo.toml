@@ -21,7 +21,7 @@ serde = "1.0.126"
 serde_json = "1.0.64"
 
 [dependencies.hyper]
-version = "0.14.9"
+version = "0.14.10"
 features = ["full"]
 
 [dependencies.tokio]
