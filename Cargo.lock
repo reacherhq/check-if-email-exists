@@ -480,9 +480,9 @@ checksum = "f7531096570974c3a9dcf9e4b8e1cede1ec26cf5046219fb3b9d897503b9be59"
 
 [[package]]
 name = "fast-socks5"
-version = "0.4.2"
+version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c1955b65d95243f547eb1d1ee6e5ce75ecf6daaeb72b08cd6c66e549d6d88e1"
+checksum = "ba337793c1ee49731350a8d971d791651ed51d6e814ab4ddabd79c12b5366140"
 dependencies = [
  "anyhow",
  "async-std",
