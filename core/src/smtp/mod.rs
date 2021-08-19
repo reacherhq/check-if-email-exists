@@ -18,12 +18,13 @@ mod yahoo;
 
 use super::util::{constants::LOG_TARGET, input_output::CheckEmailInput};
 use crate::util::ser_with_display::ser_with_display;
+use async_native_tls::TlsConnector;
 use async_smtp::{
 	smtp::{
 		client::net::NetworkStream, commands::*, error::Error as AsyncSmtpError,
 		extension::ClientId,
 	},
-	ClientSecurity, EmailAddress, SmtpClient, SmtpTransport,
+	ClientSecurity, ClientTlsParameters, EmailAddress, SmtpClient, SmtpTransport,
 };
 use async_std::future;
 use fast_socks5::{
@@ -125,13 +126,20 @@ async fn connect_to_host(
 	port: u16,
 	input: &CheckEmailInput,
 ) -> Result<SmtpTransport, SmtpError> {
-	let mut smtp_client =
-		SmtpClient::with_security((host.to_utf8().as_ref(), port), ClientSecurity::None)
-			.await?
-			// FIXME Do not clone?
-			.hello_name(ClientId::Domain(input.hello_name.clone()))
-			.timeout(Some(Duration::new(30, 0))) // Set timeout to 30s
-			.into_transport();
+	let security = {
+		let host_string = host.to_utf8();
+		let host_str = host_string.trim_end_matches('.'); // hostname verification fails if it ends with '.'
+		ClientSecurity::Opportunistic(ClientTlsParameters::new(
+			host_str.to_string(),
+			TlsConnector::new().use_sni(true),
+		))
+	};
+	let mut smtp_client = SmtpClient::with_security((host.to_utf8().as_ref(), port), security)
+		.await?
+		// FIXME Do not clone?
+		.hello_name(ClientId::Domain(input.hello_name.clone()))
+		.timeout(Some(Duration::new(30, 0))) // Set timeout to 30s
+		.into_transport();
 
 	// Connect to the host. If the proxy argument is set, use it.
 	log::debug!(target: LOG_TARGET, "Connecting to {}:{}", host, port);

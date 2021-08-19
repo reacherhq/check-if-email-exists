@@ -309,6 +309,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 name = "check-if-email-exists"
 version = "0.8.24"
 dependencies = [
+ "async-native-tls",
  "async-smtp",
  "async-std",
  "async-std-resolver",
