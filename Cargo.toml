@@ -25,7 +25,7 @@ version = "0.14.11"
 features = ["full"]
 
 [dependencies.tokio]
-version = "1.9.0"
+version = "1.10.0"
 features = ["macros", "net", "io-util", "rt-multi-thread"]
 
 [profile.release]
