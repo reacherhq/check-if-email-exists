@@ -110,7 +110,7 @@ Head to the [releases page](https://github.com/reacherhq/check-if-email-exists/r
 
 ```
 > $ check_if_email_exists --help
-check_if_email_exists 0.8.22
+check_if_email_exists 0.8.24
 Check if an email address exists without sending any email.
 
 USAGE:
@@ -173,7 +173,7 @@ check-if-email-exists = "0.8"
 And use it in your code as follows:
 
 ```rust
-use check_if_email_exists::{check_email, CheckEmailInput};
+use check_if_email_exists::{check_email, CheckEmailInput, CheckEmailInputProxy};
 
 async fn check() {
     // Let's say we want to test the deliverability of someone@gmail.com.
@@ -182,10 +182,14 @@ async fn check() {
     // Optionally, we can also tweak the configuration parameters used in the
     // verification.
     input
-        .from_email("me@example.org".into()) // Used in the `MAIL FROM:` command
-        .hello_name("example.org".into()); // Used in the `EHLO` command
+        .set_from_email("me@example.org".into()) // Used in the `MAIL FROM:` command
+        .set_hello_name("example.org".into())    // Used in the `EHLO` command
+        .set_proxy(CheckEmailInputProxy {         // Use a SOCKS5 proxy to verify the email
+            host: "my-proxy.io".into(),
+            port: 1080
+        });
 
-    // Verify this input, using async/await syntax.
+    // Verify this email, using async/await syntax.
     let result = check_email(&input).await;
 
     // `result` is a `Vec<CheckEmailOutput>`, where the CheckEmailOutput

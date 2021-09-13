@@ -18,12 +18,12 @@ use crate::misc::{MiscDetails, MiscError};
 use crate::mx::{MxDetails, MxError};
 use crate::smtp::{SmtpDetails, SmtpError};
 use crate::syntax::SyntaxDetails;
-use serde::{ser::SerializeMap, Serialize, Serializer};
+use serde::{ser::SerializeMap, Deserialize, Serialize, Serializer};
 use std::time::Duration;
 
 /// Perform the email verification via a specified proxy. The usage of a proxy
 /// is optional.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CheckEmailInputProxy {
 	/// Use the specified SOCKS5 proxy host to perform email verification.
 	pub host: String,
@@ -33,7 +33,7 @@ pub struct CheckEmailInputProxy {
 
 /// Builder pattern for the input argument into the main `email_exists`
 /// function.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CheckEmailInput {
 	/// The email to validate.
 	pub to_emails: Vec<String>,
@@ -45,7 +45,7 @@ pub struct CheckEmailInput {
 	///
 	/// Defaults to "localhost" (note: "localhost" is not a FQDN).
 	pub hello_name: String,
-	/// Perform the email verification via a specified proxy. The usage of a
+	/// Perform the email verification via the specified SOCK5 proxy. The usage of a
 	/// proxy is optional.
 	pub proxy: Option<CheckEmailInputProxy>,
 	/// Add optional timeout for the SMTP verification step.
@@ -79,19 +79,38 @@ impl CheckEmailInput {
 		}
 	}
 
-	/// Set the email to use in the `MAIL FROM:` SMTP command.
+	/// Set the email to use in the `MAIL FROM:` SMTP command. Defaults to
+	/// `user@example.org` if not explicitly set.
+	#[deprecated(since = "0.8.24", note = "Please use set_from_email instead")]
 	pub fn from_email(&mut self, email: String) -> &mut CheckEmailInput {
 		self.from_email = email;
 		self
 	}
 
-	/// Set the name to use in the `EHLO:` SMTP command.
+	/// Set the email to use in the `MAIL FROM:` SMTP command. Defaults to
+	/// `user@example.org` if not explicitly set.
+	pub fn set_from_email(&mut self, email: String) -> &mut CheckEmailInput {
+		self.from_email = email;
+		self
+	}
+
+	/// Set the name to use in the `EHLO:` SMTP command. Defaults to `localhost`
+	/// if not explicitly set.
+	#[deprecated(since = "0.8.24", note = "Please use set_hello_name instead")]
 	pub fn hello_name(&mut self, name: String) -> &mut CheckEmailInput {
 		self.hello_name = name;
 		self
 	}
 
-	/// Use the specified proxy to perform email verification.
+	/// Set the name to use in the `EHLO:` SMTP command. Defaults to `localhost`
+	/// if not explicitly set.
+	pub fn set_hello_name(&mut self, name: String) -> &mut CheckEmailInput {
+		self.hello_name = name;
+		self
+	}
+
+	/// Use the specified SOCK5 proxy to perform email verification.
+	#[deprecated(since = "0.8.24", note = "Please use set_proxy instead")]
 	pub fn proxy(&mut self, proxy_host: String, proxy_port: u16) -> &mut CheckEmailInput {
 		self.proxy = Some(CheckEmailInputProxy {
 			host: proxy_host,
@@ -100,15 +119,36 @@ impl CheckEmailInput {
 		self
 	}
 
+	/// Use the specified SOCK5 proxy to perform email verification.
+	pub fn set_proxy(&mut self, proxy: CheckEmailInputProxy) -> &mut CheckEmailInput {
+		self.proxy = Some(proxy);
+		self
+	}
+
 	/// Add optional timeout for the SMTP verification step.
+	#[deprecated(since = "0.8.24", note = "Please use set_smtp_timeout instead")]
 	pub fn smtp_timeout(&mut self, duration: Duration) -> &mut CheckEmailInput {
 		self.smtp_timeout = Some(duration);
 		self
 	}
 
+	/// Add optional timeout for the SMTP verification step.
+	pub fn set_smtp_timeout(&mut self, duration: Duration) -> &mut CheckEmailInput {
+		self.smtp_timeout = Some(duration);
+		self
+	}
+
 	/// Set whether to use Yahoo's API or connecting directly to their SMTP
-	/// servers.
+	/// servers. Defaults to true.
+	#[deprecated(since = "0.8.24", note = "Please use set_yahoo_use_api instead")]
 	pub fn yahoo_use_api(&mut self, use_api: bool) -> &mut CheckEmailInput {
+		self.yahoo_use_api = use_api;
+		self
+	}
+
+	/// Set whether to use Yahoo's API or connecting directly to their SMTP
+	/// servers. Defaults to true.
+	pub fn set_yahoo_use_api(&mut self, use_api: bool) -> &mut CheckEmailInput {
 		self.yahoo_use_api = use_api;
 		self
 	}
@@ -116,7 +156,7 @@ impl CheckEmailInput {
 
 /// An enum to describe how confident we are that the recipient address is
 /// real.
-#[derive(Debug, PartialEq, Serialize)]
+#[derive(Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Reachable {
 	/// The email is safe to send.

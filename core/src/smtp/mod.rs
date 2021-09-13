@@ -32,7 +32,7 @@ use fast_socks5::{
 };
 use rand::rngs::SmallRng;
 use rand::{distributions::Alphanumeric, Rng, SeedableRng};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::iter;
 use std::str::FromStr;
 use std::time::Duration;
@@ -40,7 +40,7 @@ use trust_dns_proto::rr::Name;
 use yahoo::YahooError;
 
 /// Details that we gathered from connecting to this email via SMTP
-#[derive(Debug, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct SmtpDetails {
 	/// Are we able to connect to the SMTP server?
 	pub can_connect_smtp: bool,
@@ -448,7 +448,7 @@ mod tests {
 		let to_email = EmailAddress::from_str("foo@gmail.com").unwrap();
 		let host = Name::from_str("gmail.com").unwrap();
 		let mut input = CheckEmailInput::default();
-		input.smtp_timeout(Duration::from_millis(1));
+		input.set_smtp_timeout(Duration::from_millis(1));
 
 		let res = runtime.block_on(check_smtp(&to_email, &host, 25, "gmail.com", &input));
 		match res {

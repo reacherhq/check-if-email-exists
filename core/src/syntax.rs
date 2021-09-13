@@ -15,11 +15,11 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use async_smtp::EmailAddress;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
 /// Syntax information after parsing an email address
-#[derive(Debug, PartialEq, Serialize)]
+#[derive(Debug, PartialEq, Deserialize, Serialize)]
 pub struct SyntaxDetails {
 	/// The email address as a async_smtp `EmailAddress`. It will be `None` if
 	/// the email address is ill-formed.
