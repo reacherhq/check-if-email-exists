@@ -42,8 +42,10 @@ jobs:
       matrix:
         target:
           # MSVC
-          - i686-pc-windows-msvc
-          - x86_64-pc-windows-msvc
+          # Fix windows build:
+          # https://github.com/reacherhq/check-if-email-exists/issues/975
+          # - i686-pc-windows-msvc
+          # - x86_64-pc-windows-msvc
           # GNU
           # - i686-pc-windows-gnu
           # - x86_64-pc-windows-gnu
