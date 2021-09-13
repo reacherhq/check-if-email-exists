@@ -106,7 +106,7 @@ Optionally, you can also pass in `from_email` and `hello_name` fields into the J
 
 > Note: The binary doesn't connect to any backend, it checks the email directly from your computer.
 
-Head to the [releases page](https://github.com/reacherhq/check-if-email-exists/releases) and download the binary for your platform. Make sure you have [`openssl`](https://www.openssl.org/) installed on your local machine.
+Head to the [releases page](https://github.com/reacherhq/check-if-email-exists/releases) and download the binary for your platform.
 
 ```
 > $ check_if_email_exists --help
