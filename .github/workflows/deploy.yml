@@ -34,7 +34,45 @@ jobs:
     strategy:
       matrix:
         platform: [linux-musl, apple-darwin]
-
+        
+  windows:
+    runs-on: windows-latest
+    needs: install-cross
+    steps:
+      - uses: actions/checkout@v2
+      - uses: shogo82148/actions-setup-perl@v1
+        with:
+          perl-version: '5.32'
+          distribution: strawberry
+      - run: ci/set_rust_version.bash ${{ matrix.channel }} ${{ matrix.target }}
+        shell: bash
+      - run: ci/build.ps1 cargo ${{ matrix.target }} RELEASE
+      - run: tar -czvf ${{ env.BIN }}.tar.gz --directory=target/${{ matrix.target }}/release ${{ env.BIN }}.exe
+      - uses: XAMPPRocky/create-release@v1.0.2
+        id: create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          draft: false
+          prerelease: false
+      - uses: actions/upload-release-asset@v1
+        id: upload-release-asset
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ env.BIN }}.tar.gz
+          asset_name: ${{ env.BIN }}-${{ matrix.target }}.tar.gz
+          asset_content_type: application/gzip
+    strategy:
+      fail-fast: true
+      matrix:
+        channel: [stable]
+        target:
+          - x86_64-pc-windows-msvc
+          - i686-pc-windows-msvc
   macos:
     runs-on: macos-latest
     needs: install-cross
@@ -88,7 +126,7 @@ jobs:
           # WASM, off by default as most rust projects aren't compatible yet.
           # - wasm32-unknown-emscripten
           # Linux
-          # - aarch64-unknown-linux-gnu
+          - aarch64-unknown-linux-gnu
           # - arm-unknown-linux-gnueabi
           # - armv7-unknown-linux-gnueabihf
           # - i686-unknown-linux-gnu
