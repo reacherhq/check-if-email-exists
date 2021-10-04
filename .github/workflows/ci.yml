@@ -17,8 +17,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-        with:
-          depth: 50
       - uses: XAMPPRocky/get-github-release@v1
         id: cross
         with:
@@ -39,9 +37,6 @@ jobs:
     needs: install-cross
     steps:
       - uses: actions/checkout@v2
-        with:
-          depth: 50
-
       - uses: actions/download-artifact@v1
         with:
           name: cross-apple-darwin
@@ -65,14 +60,36 @@ jobs:
           # iOS
           # - aarch64-apple-ios
           # - x86_64-apple-ios
+  
+  windows:
+    runs-on: windows-latest
+    needs: install-cross
+    steps:
+      - uses: actions/checkout@v2
+      - uses: shogo82148/actions-setup-perl@v1
+        with:
+          perl-version: '5.32'
+          distribution: strawberry
+          
+      - run: ci/set_rust_version.bash ${{ matrix.channel }} ${{ matrix.target }}
+        shell: bash
+      - run: ci/build.ps1 cargo ${{ matrix.target }}      
+      - run: ci/test.bash cargo ${{ matrix.target }}
+        shell: bash
+    strategy:
+      fail-fast: true
+      matrix:
+        channel: [stable]
+        target:
+          - x86_64-pc-windows-msvc
+          - i686-pc-windows-msvc
+
 
   linux:
     runs-on: ubuntu-latest
     needs: install-cross
     steps:
       - uses: actions/checkout@v2
-        with:
-          depth: 50
 
       - name: Download Cross
         uses: actions/download-artifact@v1
@@ -101,8 +118,8 @@ jobs:
           # WASM, off by default as most rust projects aren't compatible yet.
           # - wasm32-unknown-emscripten
           # Linux
-          # - aarch64-unknown-linux-gnu
-          # - aarch64-unknown-linux-musl
+          - aarch64-unknown-linux-gnu
+          - aarch64-unknown-linux-musl
           # - arm-unknown-linux-gnueabi
           # - arm-unknown-linux-gnueabihf
           # - arm-unknown-linux-musleabi
