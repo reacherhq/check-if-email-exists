@@ -45,7 +45,8 @@
 //!     input
 //!         .set_from_email("me@example.org".into()) // Used in the `MAIL FROM:` command
 //!         .set_hello_name("example.org".into())    // Used in the `EHLO` command
-//!         .set_proxy(CheckEmailInputProxy {         // Use a SOCKS5 proxy to verify the email
+//!         .set_smtp(587)                           // Use port 587 instead of 25
+//!         .set_proxy(CheckEmailInputProxy {        // Use a SOCKS5 proxy to verify the email
 //!             host: "my-proxy.io".into(),
 //!             port: 1080
 //!     });
@@ -65,7 +66,6 @@ pub mod smtp;
 pub mod syntax;
 mod util;
 
-use async_smtp::smtp::SMTP_PORT;
 use futures::future;
 use misc::{check_misc, MiscDetails};
 use mx::check_mx;
@@ -173,8 +173,7 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 					.as_ref()
 					.expect("We already checked that the email has valid format. qed."),
 				host.exchange(),
-				// FIXME We could add ports 465 and 587 too.
-				SMTP_PORT,
+				input.smtp_port,
 				my_syntax.domain.as_ref(),
 				&input,
 			)
@@ -215,6 +214,7 @@ pub async fn check_email(inputs: &CheckEmailInput) -> Vec<CheckEmailOutput> {
 			from_email: inputs.from_email.clone(),
 			hello_name: inputs.hello_name.clone(),
 			proxy: inputs.proxy.clone(),
+			smtp_port: inputs.smtp_port,
 			smtp_timeout: inputs.smtp_timeout,
 			yahoo_use_api: inputs.yahoo_use_api,
 		}

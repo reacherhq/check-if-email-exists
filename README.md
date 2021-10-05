@@ -1,8 +1,6 @@
 [![Crate](https://img.shields.io/crates/v/check-if-email-exists.svg)](https://crates.io/crates/check-if-email-exists)
 [![Docs](https://docs.rs/check-if-email-exists/badge.svg)](https://docs.rs/check-if-email-exists)
 [![Actions Status](https://github.com/reacherhq/check-if-email-exists/workflows/CI/badge.svg)](https://github.com/reacherhq/check-if-email-exists/actions)
-[![Travis](https://img.shields.io/travis/reacherhq/check-if-email-exists.svg)](https://travis-ci.com/reacherhq/check-if-email-exists)
-[![Appveyor](https://ci.appveyor.com/api/projects/status/github/reacherhq/check-if-email-exists?branch=master&svg=true)](https://ci.appveyor.com/project/amaurym/check-if-email-exists)
 [![Github Sponsor](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&link=https://github.com/sponsors/amaurym)](https://github.com/sponsors/amaurym)
 
 <br /><br /><br />
@@ -78,29 +76,9 @@ For an one-click deploy to [Heroku](https://heroku.com), click on the purple Her
 
 ### 3. Use Docker
 
-The [Docker image](./Dockerfile) is hosted on Docker Hub: https://hub.docker.com/r/reacherhq/check-if-email-exists.
+A Docker image with a fully-fledged HTTP backend is hosted on https://hub.docker.com/r/reacherhq/backend.
 
-To run it, run the following command:
-
-```bash
-docker run -p 3000:3000 reacherhq/check-if-email-exists
-```
-
-You can then send a POST request with the following body to `http://localhost:3000` to test multiple emails at once:
-
-```json
-{
-	"to_emails": ["someone@gmail.com"]
-}
-```
-
-Here's the equivalent `curl` command:
-
-```bash
-curl -X POST -d'{"to_emails":["someone@gmail.com"]}' http://localhost:3000
-```
-
-Optionally, you can also pass in `from_email` and `hello_name` fields into the JSON object, see the help message below to understand their meanings.
+For more information on how to use the Docker image, please head to [reacherhq/backend](https://github.com/reacherhq/backend#2-use-docker).
 
 ### 4. Download the Binary
 
@@ -110,50 +88,52 @@ Head to the [releases page](https://github.com/reacherhq/check-if-email-exists/r
 
 ```
 > $ check_if_email_exists --help
-check_if_email_exists 0.8.24
+check_if_email_exists 0.8.25
 Check if an email address exists without sending any email.
 
 USAGE:
     check_if_email_exists [FLAGS] [OPTIONS] [TO_EMAIL]
 
+ARGS:
+    <TO_EMAIL>    The email to check
+
 FLAGS:
-        --http       Runs a HTTP server.
-    -h, --help       Prints help information
-    -V, --version    Prints version information
+    -h, --help       Print help information
+        --http       DEPRECATED. Runs a HTTP server. This option will be removed in v0.9.0
+    -V, --version    Print version information
 
 OPTIONS:
-        --from-email <FROM_EMAIL>          The email to use in the `MAIL FROM:` SMTP command. [default:
-                                           user@example.org]
-        --hello-name <HELLO_NAME>          The name to use in the `EHLO:` SMTP command. [default: localhost]
-        --http-host <HOST>                 Sets the host IP address on which the HTTP server should bind. Only used when
-                                           `--http` flag is on. [default: 127.0.0.1]
-        --http-port <PORT>                 Sets the port on which the HTTP server should bind. Only used when `--http`
-                                           flag is on. If not set, then it will use $PORT, or default to 3000.
-        --proxy-host <PROXY_HOST>          Use the specified SOCKS5 proxy host to perform email verification.
-        --proxy-port <PROXY_PORT>          Use the specified SOCKS5 proxy port to perform email verification. Only used
-                                           when `--proxy-host` flag is set. [default: 1080]
-        --yahoo-use-api <YAHOO_USE_API>    For Yahoo email addresses, use Yahoo's API instead of connecting directly to
-                                           their SMTP servers. [default: true]
+        --from-email <FROM_EMAIL>
+            The email to use in the `MAIL FROM:` SMTP command [env: FROM_EMAIL=] [default:
+            user@example.org]
 
-ARGS:
-    <TO_EMAIL>    The email to check.
+        --hello-name <HELLO_NAME>
+            The name to use in the `EHLO:` SMTP command [env: HELLO_NAME=] [default: localhost]
+
+        --http-host <HTTP_HOST>
+            DEPRECATED. Sets the host IP address on which the HTTP server should bind. Only used
+            when `--http` flag is on. This option will be removed in v0.9.0 [env: HOST=] [default:
+            127.0.0.1]
+
+        --http-port <HTTP_PORT>
+            DEPRECATED. Sets the port on which the HTTP server should bind. Only used when `--http`
+            flag is on. If not set, then it will use $PORT, or default to 3000. This option will be
+            removed in v0.9.0 [env: PORT=] [default: 3000]
+
+        --proxy-host <PROXY_HOST>
+            Use the specified SOCKS5 proxy host to perform email verification [env: PROXY_HOST=]
+
+        --proxy-port <PROXY_PORT>
+            Use the specified SOCKS5 proxy port to perform email verification. Only used when
+            `--proxy-host` flag is set [env: PROXY_PORT=] [default: 1080]
+
+        --smtp-port <SMTP_PORT>
+            The email to check [env: SMTP_PORT=] [default: 25]
+
+        --yahoo-use-api <YAHOO_USE_API>
+            For Yahoo email addresses, use Yahoo's API instead of connecting directly to their SMTP
+            servers [env: YAHOO_USE_API=] [default: true]
 ```
-
-If you run with the `--http` flag, `check-if-email-exists` will serve a HTTP server on `http://localhost:3000`. You can then send a POST request with the following body to test multiple emails at once:
-
-```json
-{
-	"to_emails": ["someone@gmail.com"]
-}
-```
-
-Here's the equivalent `curl` command:
-
-```bash
-curl -X POST -d'{"to_emails":["someone@gmail.com"]}' http://localhost:3000
-```
-
-Optionally, you can also pass in `from_email` and `hello_name` fields into the JSON object, see the help message above to understand their meanings.
 
 **💡 PRO TIP:** To show debug logs when running the binary, run:
 

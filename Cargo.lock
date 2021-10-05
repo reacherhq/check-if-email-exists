@@ -307,7 +307,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "check-if-email-exists"
-version = "0.8.24"
+version = "0.8.25"
 dependencies = [
  "async-native-tls",
  "async-smtp",
@@ -328,7 +328,7 @@ dependencies = [
 
 [[package]]
 name = "check-if-email-exists-cli"
-version = "0.8.24"
+version = "0.8.25"
 dependencies = [
  "check-if-email-exists",
  "clap",
