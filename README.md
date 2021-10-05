@@ -135,22 +135,6 @@ OPTIONS:
             servers [env: YAHOO_USE_API=] [default: true]
 ```
 
-If you run with the `--http` flag, `check-if-email-exists` will serve a HTTP server on `http://localhost:3000`. You can then send a POST request with the following body to test multiple emails at once:
-
-```json
-{
-	"to_emails": ["someone@gmail.com"]
-}
-```
-
-Here's the equivalent `curl` command:
-
-```bash
-curl -X POST -d'{"to_emails":["someone@gmail.com"]}' http://localhost:3000
-```
-
-Optionally, you can also pass in `from_email` and `hello_name` fields into the JSON object, see the help message above to understand their meanings.
-
 **💡 PRO TIP:** To show debug logs when running the binary, run:
 
 ```bash
