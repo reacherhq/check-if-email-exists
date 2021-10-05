@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.8.25](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.24...v0.8.25) (2021-10-05)
+
+
+### Features
+
+* Add possibility to set SMTP port ([#985](https://github.com/amaurymartiny/check-if-email-exists/issues/985)) ([cdabdf8](https://github.com/amaurymartiny/check-if-email-exists/commit/cdabdf80e858908d6c33e1273dfdc1fef0f78d35))
+
+
+### Bug Fixes
+
+* Use async_std_resolver::resolver_from_system_conf ([#982](https://github.com/amaurymartiny/check-if-email-exists/issues/982)) ([376c3b0](https://github.com/amaurymartiny/check-if-email-exists/commit/376c3b0d4743ccc60a1df2a9fa3e9f2f5cd68178))
+* Use TLS when available ([#964](https://github.com/amaurymartiny/check-if-email-exists/issues/964)) ([aed11d2](https://github.com/amaurymartiny/check-if-email-exists/commit/aed11d2e15b6b7688ecaf856824ca6effbb5d21b))
+
 ### [0.8.24](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.23...v0.8.24) (2021-07-03)
 
 
