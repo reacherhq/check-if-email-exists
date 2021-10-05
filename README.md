@@ -76,29 +76,9 @@ For an one-click deploy to [Heroku](https://heroku.com), click on the purple Her
 
 ### 3. Use Docker
 
-The [Docker image](./Dockerfile) is hosted on Docker Hub: https://hub.docker.com/r/reacherhq/check-if-email-exists.
+A Docker image with a fully-fledged HTTP backend is hosted on https://hub.docker.com/r/reacherhq/backend.
 
-To run it, run the following command:
-
-```bash
-docker run -p 3000:3000 reacherhq/check-if-email-exists
-```
-
-You can then send a POST request with the following body to `http://localhost:3000` to test multiple emails at once:
-
-```json
-{
-	"to_emails": ["someone@gmail.com"]
-}
-```
-
-Here's the equivalent `curl` command:
-
-```bash
-curl -X POST -d'{"to_emails":["someone@gmail.com"]}' http://localhost:3000
-```
-
-Optionally, you can also pass in `from_email` and `hello_name` fields into the JSON object, see the help message below to understand their meanings.
+For more information on how to use the Docker image, please head to [reacherhq/backend](https://github.com/reacherhq/backend#2-use-docker).
 
 ### 4. Download the Binary
 
