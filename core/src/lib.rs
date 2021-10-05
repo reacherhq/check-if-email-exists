@@ -173,7 +173,6 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 					.as_ref()
 					.expect("We already checked that the email has valid format. qed."),
 				host.exchange(),
-				// FIXME We could add ports 465 and 587 too.
 				input.smtp_port,
 				my_syntax.domain.as_ref(),
 				&input,
