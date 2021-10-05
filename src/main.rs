@@ -43,6 +43,10 @@ pub struct Cli {
 	#[clap(long, env, default_value = "1080")]
 	pub proxy_port: u16,
 
+	/// The port to use for the SMTP request.
+	#[clap(long, env, default_value = "25")]
+	pub smtp_port: u16,
+
 	/// For Yahoo email addresses, use Yahoo's API instead of connecting
 	/// directly to their SMTP servers.
 	#[clap(long, env, default_value = "true", parse(try_from_str))]
@@ -94,6 +98,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 		input
 			.set_from_email(CONF.from_email.clone())
 			.set_hello_name(CONF.hello_name.clone())
+			.set_smtp_port(CONF.smtp_port)
 			.set_yahoo_use_api(CONF.yahoo_use_api);
 		if let Some(proxy_host) = &CONF.proxy_host {
 			input.set_proxy(CheckEmailInputProxy {

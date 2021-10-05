@@ -48,6 +48,11 @@ pub struct CheckEmailInput {
 	/// Perform the email verification via the specified SOCK5 proxy. The usage of a
 	/// proxy is optional.
 	pub proxy: Option<CheckEmailInputProxy>,
+	/// SMTP port to use for email validation. Generally, ports 25, 465, 587
+	/// and 2525 are used.
+	///
+	/// Defaults to 25.
+	pub smtp_port: u16,
 	/// Add optional timeout for the SMTP verification step.
 	pub smtp_timeout: Option<Duration>,
 	/// For Yahoo email addresses, use Yahoo's API instead of connecting
@@ -64,6 +69,7 @@ impl Default for CheckEmailInput {
 			from_email: "user@example.org".into(),
 			hello_name: "localhost".into(),
 			proxy: None,
+			smtp_port: 25,
 			smtp_timeout: None,
 			yahoo_use_api: true,
 		}
@@ -129,6 +135,12 @@ impl CheckEmailInput {
 	#[deprecated(since = "0.8.24", note = "Please use set_smtp_timeout instead")]
 	pub fn smtp_timeout(&mut self, duration: Duration) -> &mut CheckEmailInput {
 		self.smtp_timeout = Some(duration);
+		self
+	}
+
+	/// Change the SMTP port.
+	pub fn set_smtp_port(&mut self, port: u16) -> &mut CheckEmailInput {
+		self.smtp_port = port;
 		self
 	}
 
