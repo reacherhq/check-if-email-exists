@@ -19,7 +19,7 @@ mod yahoo;
 use super::util::{constants::LOG_TARGET, input_output::CheckEmailInput};
 use crate::util::ser_with_display::ser_with_display;
 use async_native_tls::TlsConnector;
-use async_smtp::{
+use lettre::{
 	smtp::{
 		client::net::NetworkStream, commands::*, error::Error as AsyncSmtpError,
 		extension::ClientId,

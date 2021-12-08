@@ -16,6 +16,13 @@ repository = "https://github.com/reacherhq/check-if-email-exists"
 appveyor = { repository = "reacherhq/check-if-email-exists", service = "github" }
 travis-ci = { repository = "reacherhq/check-if-email-exists", service = "github" }
 
+[features]
+rustls = ["reqwest/rustls-tls"]
+native-tls = ["reqwest/native-tls"]
+default = ["rustls", "async-std-rt"]
+tokio-rt = []
+async-std-rt = []
+
 [dependencies]
 async-native-tls = "0.3.3"
 async-smtp = { version = "0.4.0", features = ["socks5"] }
@@ -31,6 +38,7 @@ reqwest = { version = "0.11.6", features = ["json", "socks"] }
 serde = { version = "1.0.130", features = ["derive"] }
 serde_json = "1.0.72"
 trust-dns-proto = "0.20.3"
+lettre = { version = "0.10.0-rc.4", features = ["tokio1", "tokio1_rustls", "tokio1-rustls-tls", "builder", "pool", "hostname", "smtp-transport"], default-features = false }
 
 [dev-dependencies]
 tokio = { version = "1.14.0" }

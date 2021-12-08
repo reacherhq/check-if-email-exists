@@ -107,6 +107,7 @@ impl From<SerdeError> for YahooError {
 
 /// Helper function to create a reqwest client, with optional proxy.
 fn create_client(input: &CheckEmailInput) -> Result<reqwest::Client, ReqwestError> {
+	let mut client = reqwest::Client::builder();
 	if let Some(proxy) = &input.proxy {
 		log::debug!(
 			target: LOG_TARGET,
@@ -116,10 +117,14 @@ fn create_client(input: &CheckEmailInput) -> Result<reqwest::Client, ReqwestErro
 		);
 
 		let proxy = reqwest::Proxy::all(&format!("socks5://{}:{}", proxy.host, proxy.port))?;
-		reqwest::Client::builder().proxy(proxy).build()
-	} else {
-		Ok(reqwest::Client::new())
+		client = client.use_rustls_tls().proxy(proxy);
 	}
+	#[cfg(feature = "rustls")]
+		{ client = client.use_rustls_tls(); }
+	#[cfg(feature = "native-tls")]
+		{ client = client.use_native_tls(); }
+
+	client.build()
 }
 
 /// Use well-crafted HTTP requests to verify if a Yahoo email address exists.
