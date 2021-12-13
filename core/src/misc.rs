@@ -16,25 +16,17 @@
 
 use super::syntax::SyntaxDetails;
 use serde::{Deserialize, Serialize};
+use std::default::Default;
 
 const ROLE_ACCOUNTS: &str = include_str!("./util/roles.json");
 
 /// Miscelleanous details about the email address.
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 pub struct MiscDetails {
 	/// Is this a DEA (disposable email account)?
 	pub is_disposable: bool,
 	/// Is this email a role-based account?
 	pub is_role_account: bool,
-}
-
-impl Default for MiscDetails {
-	fn default() -> Self {
-		MiscDetails {
-			is_disposable: false,
-			is_role_account: false,
-		}
-	}
 }
 
 /// Error occured connecting to this email server via SMTP. Right now this
