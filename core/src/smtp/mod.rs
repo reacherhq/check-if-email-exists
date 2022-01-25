@@ -19,6 +19,7 @@ mod yahoo;
 use super::util::{constants::LOG_TARGET, input_output::CheckEmailInput};
 use crate::util::ser_with_display::ser_with_display;
 use async_native_tls::TlsConnector;
+use async_recursion::async_recursion;
 use async_smtp::{
 	smtp::{
 		client::net::NetworkStream, commands::*, error::Error as AsyncSmtpError,
@@ -99,9 +100,9 @@ impl From<YahooError> for SmtpError {
 
 /// Try to send an smtp command, close and return Err if fails.
 macro_rules! try_smtp (
-    ($res: expr, $client: ident, $host: expr, $port: expr) => ({
+    ($res: expr, $client: ident, $to_email: expr, $host: expr, $port: expr) => ({
 		if let Err(err) = $res {
-			log::debug!(target: LOG_TARGET, "Closing {}:{}, because of error '{}'.", $host, $port, err);
+			log::debug!(target: LOG_TARGET, "email={} Closing {}:{}, because of error '{:?}'.", $to_email, $host, $port, err);
 			$client.close().await?;
 
 			return Err(err.into());
@@ -131,7 +132,13 @@ async fn connect_to_host(
 		.into_transport();
 
 	// Connect to the host. If the proxy argument is set, use it.
-	log::debug!(target: LOG_TARGET, "Connecting to {}:{}", host, port);
+	log::debug!(
+		target: LOG_TARGET,
+		"email={} Connecting to {}:{}",
+		input.to_emails[0],
+		host,
+		port
+	);
 	if let Some(proxy) = &input.proxy {
 		let stream = Socks5Stream::connect(
 			(proxy.host.as_ref(), proxy.port),
@@ -146,11 +153,18 @@ async fn connect_to_host(
 				.connect_with_stream(NetworkStream::Socks5Stream(stream))
 				.await,
 			smtp_client,
+			input.to_emails[0],
 			host,
 			port
 		);
 	} else {
-		try_smtp!(smtp_client.connect().await, smtp_client, host, port);
+		try_smtp!(
+			smtp_client.connect().await,
+			smtp_client,
+			input.to_emails[0],
+			host,
+			port
+		);
 	}
 
 	// "MAIL FROM: user@example.org"
@@ -167,6 +181,7 @@ async fn connect_to_host(
 			.command(MailCommand::new(Some(from_email.clone()), vec![],))
 			.await,
 		smtp_client,
+		input.to_emails[0],
 		host,
 		port
 	);
@@ -399,8 +414,9 @@ fn is_io_incomplete_smtp_error<T>(result: &Result<T, SmtpError>) -> bool {
 	}
 }
 
-/// Get all email details we can from one single `EmailAddress`.
-pub async fn check_smtp(
+/// Get all email details we can from one single `EmailAddress`, without
+/// retries.
+async fn check_smtp_without_retry(
 	to_email: &EmailAddress,
 	host: &Name,
 	port: u16,
@@ -428,6 +444,60 @@ pub async fn check_smtp(
 		is_deliverable: deliverability.is_deliverable,
 		is_disabled: deliverability.is_disabled,
 	})
+}
+
+/// Get all email details we can from one single `EmailAddress`.
+/// Retry the SMTP connection, in particular to avoid greylisting.
+#[async_recursion]
+async fn retry(
+	to_email: &EmailAddress,
+	host: &Name,
+	port: u16,
+	domain: &str,
+	input: &CheckEmailInput,
+	count: usize,
+) -> Result<SmtpDetails, SmtpError> {
+	log::debug!(
+		target: LOG_TARGET,
+		"email={} Check SMTP attempt {}/{}",
+		input.to_emails[0],
+		input.retries - count + 1,
+		input.retries,
+	);
+
+	let result = check_smtp_without_retry(to_email, host, port, domain, input).await;
+
+	log::debug!(
+		target: LOG_TARGET,
+		"email={} Got result with attempt {}/{}, result={:?}",
+		input.to_emails[0],
+		input.retries - count + 1,
+		input.retries,
+		result
+	);
+
+	match result {
+		Ok(_) => result,
+		Err(_) => {
+			if count <= 1 {
+				result
+			} else {
+				retry(to_email, host, port, domain, input, count - 1).await
+			}
+		}
+	}
+}
+
+/// Get all email details we can from one single `EmailAddress`, without
+/// retries.
+pub async fn check_smtp(
+	to_email: &EmailAddress,
+	host: &Name,
+	port: u16,
+	domain: &str,
+	input: &CheckEmailInput,
+) -> Result<SmtpDetails, SmtpError> {
+	retry(to_email, host, port, domain, input, input.retries).await
 }
 
 #[cfg(test)]

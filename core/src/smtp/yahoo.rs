@@ -110,7 +110,8 @@ fn create_client(input: &CheckEmailInput) -> Result<reqwest::Client, ReqwestErro
 	if let Some(proxy) = &input.proxy {
 		log::debug!(
 			target: LOG_TARGET,
-			"Using proxy socks://{}:{} for Yahoo API",
+			"email={} Using proxy socks://{}:{} for Yahoo API",
+			input.to_emails[0],
 			proxy.host,
 			proxy.port
 		);
@@ -141,10 +142,21 @@ pub async fn check_yahoo(
 			return Err(YahooError::NoCookie);
 		}
 	};
-	log::debug!(target: LOG_TARGET, "Yahoo 1st response: {:?}", response);
-	log::debug!(target: LOG_TARGET, "Yahoo cookies: {:?}", cookies);
 
 	let to_email = to_email.to_string();
+	log::debug!(
+		target: LOG_TARGET,
+		"email={} Yahoo 1st response: {:?}",
+		to_email,
+		response
+	);
+	log::debug!(
+		target: LOG_TARGET,
+		"email={} Yahoo cookies: {:?}",
+		to_email,
+		cookies
+	);
+
 	let username = to_email
 		.split('@')
 		.next()
@@ -189,7 +201,12 @@ pub async fn check_yahoo(
 		.json::<FormResponse>()
 		.await?;
 
-	log::debug!(target: LOG_TARGET, "Yahoo 2nd response: {:?}", response);
+	log::debug!(
+		target: LOG_TARGET,
+		"email={} Yahoo 2nd response: {:?}",
+		to_email,
+		response
+	);
 
 	let username_exists = response
 		.errors
