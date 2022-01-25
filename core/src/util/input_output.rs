@@ -60,6 +60,9 @@ pub struct CheckEmailInput {
 	///
 	/// Defaults to true.
 	pub yahoo_use_api: bool,
+	/// Number of retries of SMTP connections to do. Defaults to 2 to avoid
+	/// greylisting.
+	pub retries: usize,
 }
 
 impl Default for CheckEmailInput {
@@ -72,6 +75,7 @@ impl Default for CheckEmailInput {
 			smtp_port: 25,
 			smtp_timeout: None,
 			yahoo_use_api: true,
+			retries: 2,
 		}
 	}
 }
@@ -128,6 +132,12 @@ impl CheckEmailInput {
 	/// Use the specified SOCK5 proxy to perform email verification.
 	pub fn set_proxy(&mut self, proxy: CheckEmailInputProxy) -> &mut CheckEmailInput {
 		self.proxy = Some(proxy);
+		self
+	}
+
+	/// Set the number of SMTP retries to do.
+	pub fn set_retries(&mut self, retries: usize) -> &mut CheckEmailInput {
+		self.retries = retries;
 		self
 	}
 

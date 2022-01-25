@@ -138,6 +138,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "async-recursion"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2cda8f4bcc10624c4e85bc66b3f452cca98cfa5ca002dc83a16aad2367641bea"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "async-smtp"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -310,6 +321,7 @@ name = "check-if-email-exists"
 version = "0.8.25"
 dependencies = [
  "async-native-tls",
+ "async-recursion",
  "async-smtp",
  "async-std",
  "async-std-resolver",

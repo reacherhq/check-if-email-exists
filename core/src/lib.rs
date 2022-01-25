@@ -103,7 +103,12 @@ fn calculate_reachable(misc: &MiscDetails, smtp: &Result<SmtpDetails, SmtpError>
 async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 	let to_email = &input.to_emails[0];
 
-	log::debug!(target: LOG_TARGET, "Checking email \"{}\"", to_email);
+	log::debug!(
+		target: LOG_TARGET,
+		"email={} Checking email \"{}\"",
+		to_email,
+		to_email
+	);
 	let my_syntax = check_syntax(to_email.as_ref());
 	if !my_syntax.is_valid_syntax {
 		return CheckEmailOutput {
@@ -116,7 +121,8 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 
 	log::debug!(
 		target: LOG_TARGET,
-		"Found the following syntax validation: {:?}",
+		"email={} Found the following syntax validation: {:?}",
+		to_email,
 		my_syntax
 	);
 
@@ -136,7 +142,8 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 	};
 	log::debug!(
 		target: LOG_TARGET,
-		"Found the following MX hosts {:?}",
+		"email={} Found the following MX hosts {:?}",
+		to_email,
 		my_mx
 	);
 
@@ -154,7 +161,8 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 	let my_misc = check_misc(&my_syntax);
 	log::debug!(
 		target: LOG_TARGET,
-		"Found the following misc details: {:?}",
+		"email={} Found the following misc details: {:?}",
+		to_email,
 		my_misc
 	);
 
@@ -214,6 +222,7 @@ pub async fn check_email(inputs: &CheckEmailInput) -> Vec<CheckEmailOutput> {
 			from_email: inputs.from_email.clone(),
 			hello_name: inputs.hello_name.clone(),
 			proxy: inputs.proxy.clone(),
+			retries: inputs.retries,
 			smtp_port: inputs.smtp_port,
 			smtp_timeout: inputs.smtp_timeout,
 			yahoo_use_api: inputs.yahoo_use_api,
