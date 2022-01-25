@@ -224,6 +224,7 @@ pub async fn check_email(inputs: &CheckEmailInput) -> Vec<CheckEmailOutput> {
 			proxy: inputs.proxy.clone(),
 			retries: inputs.retries,
 			smtp_port: inputs.smtp_port,
+			smtp_security: inputs.smtp_security,
 			smtp_timeout: inputs.smtp_timeout,
 			yahoo_use_api: inputs.yahoo_use_api,
 		}
