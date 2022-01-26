@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.8.26](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.25...v0.8.26) (2022-01-26)
+
+
+### Features
+
+* Add SMTP retries to avoid greylisting ([#1041](https://github.com/amaurymartiny/check-if-email-exists/issues/1041)) ([b451a1e](https://github.com/amaurymartiny/check-if-email-exists/commit/b451a1e93a6ccf025c78d56dee7439ad607c8507))
+
+
+### Bug Fixes
+
+* Use std::default for deriving ([#1015](https://github.com/amaurymartiny/check-if-email-exists/issues/1015)) ([03720f0](https://github.com/amaurymartiny/check-if-email-exists/commit/03720f027fd68d5ea5ae538aa567a621f4a65fe3))
+
 ### [0.8.25](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.24...v0.8.25) (2021-10-05)
 
 
