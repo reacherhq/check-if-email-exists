@@ -64,20 +64,36 @@ pub enum SmtpError {
 	/// Error if we're using a SOCKS5 proxy.
 	#[serde(serialize_with = "ser_with_display")]
 	SocksError(SocksError),
+	/// Error when communicating with SMTP server, HELO phase.
+	#[serde(serialize_with = "ser_with_display")]
+	HeloError(AsyncSmtpError),
+	/// Error when communicating with SMTP server, connect phase.
+	#[serde(serialize_with = "ser_with_display")]
+	ConnectError(AsyncSmtpError),
+	/// Error when communicating with SMTP server, connect_with_stream phase.
+	#[serde(serialize_with = "ser_with_display")]
+	ConnectWithStreamError(AsyncSmtpError),
+	/// Error when communicating with SMTP server, MAIL FROM phase.
+	#[serde(serialize_with = "ser_with_display")]
+	MailFromError(AsyncSmtpError),
+	/// Error when communicating with SMTP server, RCPT TO phase.
+	#[serde(serialize_with = "ser_with_display")]
+	RcptToError(AsyncSmtpError),
+	/// Error when communicating with SMTP server, close phase.
+	#[serde(serialize_with = "ser_with_display")]
+	CloseError(AsyncSmtpError),
 	/// Error when communicating with SMTP server.
 	#[serde(serialize_with = "ser_with_display")]
+	#[deprecated(
+		since = "0.8.27",
+		note = "SMTP errors have been broken up into 6 phases, see all `Smtp*Error`s"
+	)]
 	SmtpError(AsyncSmtpError),
 	/// Time-out error.
 	#[serde(serialize_with = "ser_with_display")]
 	TimeoutError(future::TimeoutError),
 	/// Error when verifying a Yahoo email.
 	YahooError(YahooError),
-}
-
-impl From<AsyncSmtpError> for SmtpError {
-	fn from(error: AsyncSmtpError) -> Self {
-		SmtpError::SmtpError(error)
-	}
 }
 
 impl From<SocksError> for SmtpError {
@@ -100,12 +116,13 @@ impl From<YahooError> for SmtpError {
 
 /// Try to send an smtp command, close and return Err if fails.
 macro_rules! try_smtp (
-    ($res: expr, $client: ident, $to_email: expr, $host: expr, $port: expr) => ({
+    ($res: expr, $client: ident, $to_email: expr, $host: expr, $port: expr, $err_type: expr) => ({
 		if let Err(err) = $res {
 			log::debug!(target: LOG_TARGET, "email={} Closing {}:{}, because of error '{:?}'.", $to_email, $host, $port, err);
-			$client.close().await?;
+			// Try to close the connection, but ignore if there's an error.
+			let _ = $client.close().await;
 
-			return Err(err.into());
+			return Err($err_type(err));
 		}
     })
 );
@@ -125,7 +142,8 @@ async fn connect_to_host(
 		input.smtp_security.to_client_security(tls_params)
 	};
 	let mut smtp_client = SmtpClient::with_security((host.to_utf8().as_ref(), port), security)
-		.await?
+		.await
+		.map_err(SmtpError::HeloError)?
 		// FIXME Do not clone?
 		.hello_name(ClientId::Domain(input.hello_name.clone()))
 		.timeout(Some(Duration::new(30, 0))) // Set timeout to 30s
@@ -155,7 +173,8 @@ async fn connect_to_host(
 			smtp_client,
 			input.to_emails[0],
 			host,
-			port
+			port,
+			SmtpError::ConnectWithStreamError
 		);
 	} else {
 		try_smtp!(
@@ -163,7 +182,8 @@ async fn connect_to_host(
 			smtp_client,
 			input.to_emails[0],
 			host,
-			port
+			port,
+			SmtpError::ConnectError
 		);
 	}
 
@@ -183,7 +203,8 @@ async fn connect_to_host(
 		smtp_client,
 		input.to_emails[0],
 		host,
-		port
+		port,
+		SmtpError::MailFromError
 	);
 
 	Ok(smtp_client)
@@ -334,7 +355,7 @@ async fn email_deliverable(
 				});
 			}
 
-			Err(SmtpError::SmtpError(err))
+			Err(SmtpError::RcptToError(err))
 		}
 	}
 }
@@ -391,6 +412,11 @@ async fn create_smtp_future(
 		// so we can only check for "io: incomplete" SMTP error being returned.
 		// https://github.com/async-email/async-smtp/issues/37
 		if is_io_incomplete_smtp_error(&result) {
+			log::debug!(
+				target: LOG_TARGET,
+				"Got `io: incomplete` error, reconnecting."
+			);
+
 			let _ = smtp_client.close().await;
 			smtp_client = connect_to_host(host, port, input).await?;
 			result = email_deliverable(&mut smtp_client, to_email).await;
@@ -399,18 +425,22 @@ async fn create_smtp_future(
 		result?
 	};
 
-	smtp_client.close().await?;
+	smtp_client.close().await.map_err(SmtpError::CloseError)?;
 
 	Ok((is_catch_all, deliverability))
 }
 
 /// Indicates whether the given [`Result`] represents an `io: incomplete`
-/// [`SmtpError::SmtpError`].
+/// [`SmtpError::Error`].
 fn is_io_incomplete_smtp_error<T>(result: &Result<T, SmtpError>) -> bool {
-	if let Err(SmtpError::SmtpError(AsyncSmtpError::Io(err))) = result {
-		err.to_string().as_str() == "incomplete"
-	} else {
-		false
+	match result {
+		Err(SmtpError::HeloError(AsyncSmtpError::Io(err)))
+		| Err(SmtpError::ConnectError(AsyncSmtpError::Io(err)))
+		| Err(SmtpError::ConnectWithStreamError(AsyncSmtpError::Io(err)))
+		| Err(SmtpError::MailFromError(AsyncSmtpError::Io(err)))
+		| Err(SmtpError::RcptToError(AsyncSmtpError::Io(err)))
+		| Err(SmtpError::CloseError(AsyncSmtpError::Io(err))) => err.to_string().as_str() == "incomplete",
+		_ => false,
 	}
 }
 
