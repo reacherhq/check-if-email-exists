@@ -142,7 +142,7 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 	};
 	log::debug!(
 		target: LOG_TARGET,
-		"email={} Found the following MX hosts {:?}",
+		"email={} Found the following MX hosts: {:?}",
 		to_email,
 		my_mx
 	);
@@ -204,10 +204,17 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 /// list of results.
 ///
 /// Please note that checking multiple emails at once (by putting multiple
-/// emails in the `inputs.to_emails` Vec) is still a beta feature, and not
+/// emails in the `inputs.to_emails` Vec) is still a **beta** feature, and not
 /// fully optimized. For more info, see #65
 /// <https://github.com/reacherhq/check-if-email-exists/issues/65>.
 pub async fn check_email(inputs: &CheckEmailInput) -> Vec<CheckEmailOutput> {
+	if inputs.to_emails.len() > 1 {
+		log::warn!(
+			target: LOG_TARGET,
+			"Verifying multiple emails with this library is still a beta feature, please don't overuse it. See reacherhq/check-if-email-exists #65."
+		);
+	}
+
 	// FIXME Obviously, the below `join_all` is not optimal. Some optimizations
 	// include:
 	// - if multiple email addresses share the same domain, we should only do
