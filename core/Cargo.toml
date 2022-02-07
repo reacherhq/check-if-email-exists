@@ -21,17 +21,17 @@ async-native-tls = "0.3.3"
 async-recursion = "1.0.0"
 async-smtp = { version = "0.4.0", features = ["socks5"] }
 async-std = "1.10.0"
-async-std-resolver = "0.20.3"
+async-std-resolver = "0.20.4"
 fast-socks5 = "0.4.3"
-futures = "0.3.19"
+futures = "0.3.21"
 log = "0.4.14"
-mailchecker = "4.1.10"
+mailchecker = "4.1.11"
 rand = {version = "0.8.3", features = ["small_rng"] }
 regex = "1.4.6"
 reqwest = { version = "0.11.9", features = ["json", "socks"] }
 serde = { version = "1.0.136", features = ["derive"] }
 serde_json = "1.0.78"
-trust-dns-proto = "0.20.3"
+trust-dns-proto = "0.20.4"
 
 [dev-dependencies]
 tokio = { version = "1.16.1" }
