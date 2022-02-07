@@ -25,7 +25,7 @@ use async_smtp::{
 		client::net::NetworkStream, commands::*, error::Error as AsyncSmtpError,
 		extension::ClientId,
 	},
-	ClientSecurity, ClientTlsParameters, EmailAddress, SmtpClient, SmtpTransport,
+	ClientTlsParameters, EmailAddress, SmtpClient, SmtpTransport,
 };
 use async_std::future;
 use fast_socks5::{
@@ -135,11 +135,11 @@ async fn connect_to_host(
 ) -> Result<SmtpTransport, SmtpError> {
 	let security = {
 		let host_string = host.to_utf8();
-		let host_str = host_string.trim_end_matches('.'); // hostname verification fails if it ends with '.'
-		ClientSecurity::Opportunistic(ClientTlsParameters::new(
-			host_str.to_string(),
-			TlsConnector::new().use_sni(true),
-		))
+		let host_string = host_string.trim_end_matches('.'); // hostname verification fails if it ends with '.'
+		let tls_params =
+			ClientTlsParameters::new(host_string.to_string(), TlsConnector::new().use_sni(true));
+
+		input.smtp_security.to_client_security(tls_params)
 	};
 	let mut smtp_client = SmtpClient::with_security((host.to_utf8().as_ref(), port), security)
 		.await
