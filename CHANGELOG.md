@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.8.27](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.26...v0.8.27) (2022-02-07)
+
+
+### Features
+
+* Allow user to define SMTP client security for TLS ([#1043](https://github.com/amaurymartiny/check-if-email-exists/issues/1043)) ([bc722ff](https://github.com/amaurymartiny/check-if-email-exists/commit/bc722ff1a9b30747308a3b3b5959d73e5e853292))
+* Break SmtpError into `{Helo,Connect,ConnectWithStream,MailFrom,RcptTo,Close}Error` ([#1055](https://github.com/amaurymartiny/check-if-email-exists/issues/1055)) ([64e5193](https://github.com/amaurymartiny/check-if-email-exists/commit/64e5193c48a6bf4c080e79daeefd1c98dadffd5d))
+
 ### [0.8.26](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.25...v0.8.26) (2022-01-26)
 
 
