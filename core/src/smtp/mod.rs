@@ -28,6 +28,8 @@ use async_smtp::{
 	ClientTlsParameters, EmailAddress, SmtpClient, SmtpTransport,
 };
 use async_std::future;
+use async_std::io::BufReader;
+use async_std::prelude::*;
 use fast_socks5::{
 	client::{Config, Socks5Stream},
 	Result, SocksError,
@@ -158,6 +160,35 @@ async fn connect_to_host(
 		port
 	);
 	if let Some(proxy) = &input.proxy {
+		{
+			println!(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+			println!("CUSTOM CODE START");
+			let stream = Socks5Stream::connect(
+				(proxy.host.as_ref(), proxy.port),
+				host.to_utf8(),
+				port,
+				Config::default(),
+			)
+			.await?;
+
+			println!("SOCKS5 connected");
+
+			let mut reader = BufReader::new(stream);
+			let mut buffer = String::with_capacity(100);
+
+			loop {
+				println!("read_response");
+				let read = reader.read_line(&mut buffer).await.unwrap();
+				println!("read_response read={:?} buffer={:?}", read, buffer);
+				if read == 0 {
+					break;
+				}
+				println!("<< {}", escape_crlf(&buffer));
+			}
+			println!("CUSTOM CODE END");
+			println!("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+		}
+
 		let stream = Socks5Stream::connect(
 			(proxy.host.as_ref(), proxy.port),
 			host.to_utf8(),
@@ -165,7 +196,6 @@ async fn connect_to_host(
 			Config::default(),
 		)
 		.await?;
-
 		try_smtp!(
 			smtp_client
 				.connect_with_stream(NetworkStream::Socks5Stream(stream))
@@ -212,6 +242,7 @@ async fn connect_to_host(
 
 /// Description of the deliverability information we can gather from
 /// communicating with the SMTP server.
+#[derive(Debug)]
 struct Deliverability {
 	/// Is this email account's inbox full?
 	has_full_inbox: bool,
@@ -432,7 +463,7 @@ async fn create_smtp_future(
 
 /// Indicates whether the given [`Result`] represents an `io: incomplete`
 /// [`SmtpError::Error`].
-fn is_io_incomplete_smtp_error<T>(result: &Result<T, SmtpError>) -> bool {
+fn is_io_incomplete_smtp_error(result: &Result<Deliverability, SmtpError>) -> bool {
 	match result {
 		Err(SmtpError::HeloError(AsyncSmtpError::Io(err)))
 		| Err(SmtpError::ConnectError(AsyncSmtpError::Io(err)))
@@ -553,4 +584,8 @@ mod tests {
 			_ => panic!("check_smtp did not time out"),
 		}
 	}
+}
+
+fn escape_crlf(string: &str) -> String {
+	string.replace("\r\n", "<CRLF>")
 }

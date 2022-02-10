@@ -104,7 +104,7 @@ impl Default for CheckEmailInput {
 			hello_name: "localhost".into(),
 			proxy: None,
 			smtp_port: 25,
-			smtp_security: SmtpSecurity::Opportunistic,
+			smtp_security: SmtpSecurity::None,
 			smtp_timeout: None,
 			yahoo_use_api: true,
 			retries: 2,
