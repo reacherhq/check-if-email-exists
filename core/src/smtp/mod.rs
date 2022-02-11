@@ -133,15 +133,18 @@ async fn connect_to_host(
 	port: u16,
 	input: &CheckEmailInput,
 ) -> Result<SmtpTransport, SmtpError> {
+	// hostname verification fails if it ends with '.', for example, using
+	// SOCKS5 proxies we can `io: incomplete` error.
+	let host = host.to_string();
+	let host = host.trim_end_matches('.').to_string();
+
 	let security = {
-		let host_string = host.to_utf8();
-		let host_string = host_string.trim_end_matches('.'); // hostname verification fails if it ends with '.'
-		let tls_params =
-			ClientTlsParameters::new(host_string.to_string(), TlsConnector::new().use_sni(true));
+		let tls_params = ClientTlsParameters::new(host.clone(), TlsConnector::new().use_sni(true));
 
 		input.smtp_security.to_client_security(tls_params)
 	};
-	let mut smtp_client = SmtpClient::with_security((host.to_utf8().as_ref(), port), security)
+
+	let mut smtp_transport = SmtpClient::with_security((host.as_ref(), port), security)
 		.await
 		.map_err(SmtpError::HeloError)?
 		// FIXME Do not clone?
@@ -157,20 +160,36 @@ async fn connect_to_host(
 		host,
 		port
 	);
+
 	if let Some(proxy) = &input.proxy {
-		let stream = Socks5Stream::connect(
-			(proxy.host.as_ref(), proxy.port),
-			host.to_utf8(),
-			port,
-			Config::default(),
-		)
-		.await?;
+		let stream = match (&proxy.username, &proxy.password) {
+			(Some(username), Some(password)) => {
+				Socks5Stream::connect_with_password(
+					(proxy.host.as_ref(), proxy.port),
+					host.clone(),
+					port,
+					username.to_string(),
+					password.to_string(),
+					Config::default(),
+				)
+				.await?
+			}
+			_ => {
+				Socks5Stream::connect(
+					(proxy.host.as_ref(), proxy.port),
+					host.clone(),
+					port,
+					Config::default(),
+				)
+				.await?
+			}
+		};
 
 		try_smtp!(
-			smtp_client
+			smtp_transport
 				.connect_with_stream(NetworkStream::Socks5Stream(stream))
 				.await,
-			smtp_client,
+			smtp_transport,
 			input.to_emails[0],
 			host,
 			port,
@@ -178,8 +197,8 @@ async fn connect_to_host(
 		);
 	} else {
 		try_smtp!(
-			smtp_client.connect().await,
-			smtp_client,
+			smtp_transport.connect().await,
+			smtp_transport,
 			input.to_emails[0],
 			host,
 			port,
@@ -196,18 +215,18 @@ async fn connect_to_host(
 		EmailAddress::from_str("user@example.org").expect("This is a valid email. qed.")
 	});
 	try_smtp!(
-		smtp_client
+		smtp_transport
 			// FIXME Do not clone?
 			.command(MailCommand::new(Some(from_email.clone()), vec![],))
 			.await,
-		smtp_client,
+		smtp_transport,
 		input.to_emails[0],
 		host,
 		port,
 		SmtpError::MailFromError
 	);
 
-	Ok(smtp_client)
+	Ok(smtp_transport)
 }
 
 /// Description of the deliverability information we can gather from
@@ -224,12 +243,12 @@ struct Deliverability {
 /// Check if `to_email` exists on host SMTP server. This is the core logic of
 /// this tool.
 async fn email_deliverable(
-	smtp_client: &mut SmtpTransport,
+	smtp_transport: &mut SmtpTransport,
 	to_email: &EmailAddress,
 ) -> Result<Deliverability, SmtpError> {
 	// "RCPT TO: me@email.com"
 	// FIXME Do not clone?
-	match smtp_client
+	match smtp_transport
 		.command(RcptCommand::new(to_email.clone(), vec![]))
 		.await
 	{
@@ -362,7 +381,7 @@ async fn email_deliverable(
 
 /// Verify the existence of a catch-all on the domain.
 async fn smtp_is_catch_all(
-	smtp_client: &mut SmtpTransport,
+	smtp_transport: &mut SmtpTransport,
 	domain: &str,
 ) -> Result<bool, SmtpError> {
 	// Create a random 15-char alphanumerical string.
@@ -375,7 +394,7 @@ async fn smtp_is_catch_all(
 	let random_email = EmailAddress::new(format!("{}@{}", random_email, domain));
 
 	email_deliverable(
-		smtp_client,
+		smtp_transport,
 		&random_email.expect("Email is correctly constructed. qed."),
 	)
 	.await
@@ -391,9 +410,9 @@ async fn create_smtp_future(
 ) -> Result<(bool, Deliverability), SmtpError> {
 	// FIXME If the SMTP is not connectable, we should actually return an
 	// Ok(SmtpDetails { can_connect_smtp: false, ... }).
-	let mut smtp_client = connect_to_host(host, port, input).await?;
+	let mut smtp_transport = connect_to_host(host, port, input).await?;
 
-	let is_catch_all = smtp_is_catch_all(&mut smtp_client, domain)
+	let is_catch_all = smtp_is_catch_all(&mut smtp_transport, domain)
 		.await
 		.unwrap_or(false);
 	let deliverability = if is_catch_all {
@@ -403,12 +422,12 @@ async fn create_smtp_future(
 			is_disabled: false,
 		}
 	} else {
-		let mut result = email_deliverable(&mut smtp_client, to_email).await;
+		let mut result = email_deliverable(&mut smtp_transport, to_email).await;
 
 		// Some SMTP servers automatically close the connection after an error,
 		// so we should reconnect to perform a next command.
 		//
-		// Unfortunately `smtp_client.is_connected()` doesn't report about this,
+		// Unfortunately `smtp_transport.is_connected()` doesn't report about this,
 		// so we can only check for "io: incomplete" SMTP error being returned.
 		// https://github.com/async-email/async-smtp/issues/37
 		if is_io_incomplete_smtp_error(&result) {
@@ -417,15 +436,18 @@ async fn create_smtp_future(
 				"Got `io: incomplete` error, reconnecting."
 			);
 
-			let _ = smtp_client.close().await;
-			smtp_client = connect_to_host(host, port, input).await?;
-			result = email_deliverable(&mut smtp_client, to_email).await;
+			let _ = smtp_transport.close().await;
+			smtp_transport = connect_to_host(host, port, input).await?;
+			result = email_deliverable(&mut smtp_transport, to_email).await;
 		}
 
 		result?
 	};
 
-	smtp_client.close().await.map_err(SmtpError::CloseError)?;
+	smtp_transport
+		.close()
+		.await
+		.map_err(SmtpError::CloseError)?;
 
 	Ok((is_catch_all, deliverability))
 }

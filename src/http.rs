@@ -78,7 +78,8 @@ async fn req_handler(req: Request<Body>) -> Result<Response<Body>, hyper::Error>
 			if let Some(proxy_host) = body.proxy_host.map(Cow::Owned).or_else(|| CONF.proxy_host.as_ref().map(Cow::Borrowed)) {
 				input.set_proxy(CheckEmailInputProxy {
 					host:proxy_host.into_owned(),
-					port: body.proxy_port.unwrap_or(CONF.proxy_port)
+					port: body.proxy_port.unwrap_or(CONF.proxy_port),
+					..Default::default()
 				});
 			}
 

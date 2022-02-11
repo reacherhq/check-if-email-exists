@@ -1,6 +1,6 @@
 [package]
 name = "check-if-email-exists"
-version = "0.8.27"
+version = "0.8.28"
 authors = ["Amaury <amaurym10@protonmail.com>"]
 categories = ["email"]
 description = "Check if an email address exists without sending any email"
