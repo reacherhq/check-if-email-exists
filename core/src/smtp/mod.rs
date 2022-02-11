@@ -20,7 +20,10 @@ use super::util::{constants::LOG_TARGET, input_output::CheckEmailInput};
 use crate::util::ser_with_display::ser_with_display;
 use async_recursion::async_recursion;
 use async_smtp::{
-	smtp::{commands::*, error::Error as AsyncSmtpError, extension::ClientId, Socks5Config},
+	smtp::{
+		authentication::Credentials, commands::*, error::Error as AsyncSmtpError,
+		extension::ClientId, Socks5Config,
+	},
 	EmailAddress, SmtpClient, SmtpTransport,
 };
 use async_std::future;
@@ -128,7 +131,9 @@ async fn connect_to_host(
 		.timeout(Some(Duration::new(30, 0))); // Set timeout to 30s
 	if let Some(proxy) = &input.proxy {
 		let socks5_config = Socks5Config::new(proxy.host.clone(), proxy.port);
-		smtp_builder = smtp_builder.use_socks5(socks5_config);
+		let creds = Credentials::new("mylogin".to_string(), "mypassword".to_string());
+
+		smtp_builder = smtp_builder.use_socks5(socks5_config).credentials(creds);
 	}
 	let mut smtp_transport = smtp_builder.into_transport();
 
