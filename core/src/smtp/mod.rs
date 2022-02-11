@@ -20,10 +20,7 @@ use super::util::{constants::LOG_TARGET, input_output::CheckEmailInput};
 use crate::util::ser_with_display::ser_with_display;
 use async_recursion::async_recursion;
 use async_smtp::{
-	smtp::{
-		authentication::Credentials, commands::*, error::Error as AsyncSmtpError,
-		extension::ClientId, Socks5Config,
-	},
+	smtp::{commands::*, error::Error as AsyncSmtpError, extension::ClientId, Socks5Config},
 	EmailAddress, SmtpClient, SmtpTransport,
 };
 use async_std::future;
@@ -126,9 +123,14 @@ async fn connect_to_host(
 	port: u16,
 	input: &CheckEmailInput,
 ) -> Result<SmtpTransport, SmtpError> {
-	let mut smtp_builder = SmtpClient::new_host_port(host.to_string(), port)
+	// We need to remove the '.' at the end of strings, or else we get a
+	// `io: incomplete` error when using some SOCKS5 proxies.
+	let host = host.to_string().trim_end_matches('.').to_string();
+
+	let mut smtp_builder = SmtpClient::new_host_port(host.clone(), port)
 		.hello_name(ClientId::Domain(input.hello_name.clone()))
 		.timeout(Some(Duration::new(30, 0))); // Set timeout to 30s
+
 	if let Some(proxy) = &input.proxy {
 		let socks5_config = match (&proxy.username, &proxy.password) {
 			(Some(username), Some(password)) => Socks5Config::new_with_user_pass(
