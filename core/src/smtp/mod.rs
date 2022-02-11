@@ -131,9 +131,12 @@ async fn connect_to_host(
 		.timeout(Some(Duration::new(30, 0))); // Set timeout to 30s
 	if let Some(proxy) = &input.proxy {
 		let socks5_config = Socks5Config::new(proxy.host.clone(), proxy.port);
-		let creds = Credentials::new("mylogin".to_string(), "mypassword".to_string());
+		smtp_builder = smtp_builder.use_socks5(socks5_config);
 
-		smtp_builder = smtp_builder.use_socks5(socks5_config).credentials(creds);
+		if let (Some(username), Some(password)) = (&proxy.username, &proxy.password) {
+			let creds = Credentials::new(username.to_string(), password.to_string());
+			smtp_builder = smtp_builder.credentials(creds);
+		}
 	}
 	let mut smtp_transport = smtp_builder.into_transport();
 

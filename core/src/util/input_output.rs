@@ -18,43 +18,21 @@ use crate::misc::{MiscDetails, MiscError};
 use crate::mx::{MxDetails, MxError};
 use crate::smtp::{SmtpDetails, SmtpError};
 use crate::syntax::SyntaxDetails;
-use async_smtp::{ClientSecurity, ClientTlsParameters};
 use serde::{ser::SerializeMap, Deserialize, Serialize, Serializer};
 use std::time::Duration;
 
 /// Perform the email verification via a specified proxy. The usage of a proxy
 /// is optional.
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Default, Clone, Deserialize, Serialize)]
 pub struct CheckEmailInputProxy {
 	/// Use the specified SOCKS5 proxy host to perform email verification.
 	pub host: String,
 	/// Use the specified SOCKS5 proxy port to perform email verification.
 	pub port: u16,
-}
-
-/// Define how to apply TLS to a SMTP client connection. Will be converted into
-/// async_smtp::ClientSecurity.
-#[derive(Debug, Clone, Copy, Deserialize, Serialize)]
-pub enum SmtpSecurity {
-	/// Insecure connection only (for testing purposes).
-	None,
-	/// Start with insecure connection and use `STARTTLS` when available.
-	Opportunistic,
-	/// Start with insecure connection and require `STARTTLS`.
-	Required,
-	/// Use TLS wrapped connection.
-	Wrapper,
-}
-
-impl SmtpSecurity {
-	pub fn to_client_security(self, tls_params: ClientTlsParameters) -> ClientSecurity {
-		match self {
-			Self::None => ClientSecurity::None,
-			Self::Opportunistic => ClientSecurity::Opportunistic(tls_params),
-			Self::Required => ClientSecurity::Required(tls_params),
-			Self::Wrapper => ClientSecurity::Wrapper(tls_params),
-		}
-	}
+	/// Username to pass to proxy authentication.
+	pub username: Option<String>,
+	/// Password to pass to proxy authentication.
+	pub password: Option<String>,
 }
 
 /// Builder pattern for the input argument into the main `email_exists`
@@ -90,10 +68,6 @@ pub struct CheckEmailInput {
 	///
 	/// Defaults to 2 to avoid greylisting.
 	pub retries: usize,
-	/// How to apply TLS to a SMTP client connection.
-	///
-	/// Defaults to Opportunistic.
-	pub smtp_security: SmtpSecurity,
 }
 
 impl Default for CheckEmailInput {
@@ -104,7 +78,6 @@ impl Default for CheckEmailInput {
 			hello_name: "localhost".into(),
 			proxy: None,
 			smtp_port: 25,
-			smtp_security: SmtpSecurity::None,
 			smtp_timeout: None,
 			yahoo_use_api: true,
 			retries: 2,
@@ -157,6 +130,7 @@ impl CheckEmailInput {
 		self.proxy = Some(CheckEmailInputProxy {
 			host: proxy_host,
 			port: proxy_port,
+			..Default::default()
 		});
 		self
 	}
@@ -183,12 +157,6 @@ impl CheckEmailInput {
 	/// Change the SMTP port.
 	pub fn set_smtp_port(&mut self, port: u16) -> &mut CheckEmailInput {
 		self.smtp_port = port;
-		self
-	}
-
-	/// Set the SMTP client security to use for TLS.
-	pub fn set_smtp_security(&mut self, smtp_security: SmtpSecurity) -> &mut CheckEmailInput {
-		self.smtp_security = smtp_security;
 		self
 	}
 
