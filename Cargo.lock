@@ -151,8 +151,7 @@ dependencies = [
 [[package]]
 name = "async-smtp"
 version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "472a081e9e3a92f9201237f07b51c0bab657336ca6600fd2f243c9cc3c9c81ff"
+source = "git+https://github.com/amaurym/async-smtp?branch=master#3e7a8f3de19fdeb19d14cf123a8696c49685d3fa"
 dependencies = [
  "async-native-tls",
  "async-std",
@@ -160,7 +159,6 @@ dependencies = [
  "base64",
  "bufstream",
  "fast-socks5",
- "fast_chemail",
  "hostname 0.1.5",
  "log",
  "nom",
