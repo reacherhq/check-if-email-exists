@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.8.28](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.27...v0.8.28) (2022-02-11)
+
+
+### Features
+
+* Add proxy username/password ([#1057](https://github.com/amaurymartiny/check-if-email-exists/issues/1057)) ([d9583c6](https://github.com/amaurymartiny/check-if-email-exists/commit/d9583c6ae0d3353a5135dd157999cf579b308d6d))
+
 ### [0.8.27](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.26...v0.8.27) (2022-02-07)
 
 
