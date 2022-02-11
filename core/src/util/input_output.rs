@@ -24,12 +24,16 @@ use std::time::Duration;
 
 /// Perform the email verification via a specified proxy. The usage of a proxy
 /// is optional.
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Default, Clone, Deserialize, Serialize)]
 pub struct CheckEmailInputProxy {
 	/// Use the specified SOCKS5 proxy host to perform email verification.
 	pub host: String,
 	/// Use the specified SOCKS5 proxy port to perform email verification.
 	pub port: u16,
+	/// Username to pass to proxy authentication.
+	pub username: Option<String>,
+	/// Password to pass to proxy authentication.
+	pub password: Option<String>,
 }
 
 /// Define how to apply TLS to a SMTP client connection. Will be converted into
@@ -157,6 +161,7 @@ impl CheckEmailInput {
 		self.proxy = Some(CheckEmailInputProxy {
 			host: proxy_host,
 			port: proxy_port,
+			..Default::default()
 		});
 		self
 	}

@@ -43,6 +43,16 @@ pub struct Cli {
 	#[clap(long, env, default_value = "1080")]
 	pub proxy_port: u16,
 
+	/// Username passed to the specified SOCKS5 proxy port to perform email verification.
+	/// Only used when `--proxy-host` flag is set.
+	#[clap(long, env)]
+	pub proxy_username: Option<String>,
+
+	/// Username passed to the specified SOCKS5 proxy port to perform email verification.
+	/// Only used when `--proxy-host` flag is set.
+	#[clap(long, env)]
+	pub proxy_password: Option<String>,
+
 	/// The port to use for the SMTP request.
 	#[clap(long, env, default_value = "25")]
 	pub smtp_port: u16,
@@ -104,6 +114,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 			input.set_proxy(CheckEmailInputProxy {
 				host: proxy_host.clone(),
 				port: CONF.proxy_port,
+				username: CONF.proxy_username.clone(),
+				password: CONF.proxy_password.clone(),
 			});
 		}
 
