@@ -21,7 +21,7 @@ async-native-tls = "0.3.3"
 async-recursion = "1.0.0"
 async-smtp = { version = "0.4.0", features = ["socks5"] }
 async-std = "1.10.0"
-async-std-resolver = "0.20.4"
+async-std-resolver = "0.21.0"
 fast-socks5 = "0.4.3"
 futures = "0.3.21"
 log = "0.4.14"
