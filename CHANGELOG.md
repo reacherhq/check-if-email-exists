@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.8.29](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.28...v0.8.29) (2022-03-02)
+
+
+### Features
+
+* Loop through all MX servers ([#1070](https://github.com/amaurymartiny/check-if-email-exists/issues/1070)) ([11e6a06](https://github.com/amaurymartiny/check-if-email-exists/commit/11e6a06a67f5893b729c76d1a33667f83d63c836))
+
 ### [0.8.28](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.27...v0.8.28) (2022-02-11)
 
 
