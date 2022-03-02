@@ -64,30 +64,8 @@ pub enum SmtpError {
 	/// Error if we're using a SOCKS5 proxy.
 	#[serde(serialize_with = "ser_with_display")]
 	SocksError(SocksError),
-	/// Error when communicating with SMTP server, HELO phase.
-	#[serde(serialize_with = "ser_with_display")]
-	HeloError(AsyncSmtpError),
-	/// Error when communicating with SMTP server, connect phase.
-	#[serde(serialize_with = "ser_with_display")]
-	ConnectError(AsyncSmtpError),
-	/// Error when communicating with SMTP server, connect_with_stream phase.
-	#[serde(serialize_with = "ser_with_display")]
-	ConnectWithStreamError(AsyncSmtpError),
-	/// Error when communicating with SMTP server, MAIL FROM phase.
-	#[serde(serialize_with = "ser_with_display")]
-	MailFromError(AsyncSmtpError),
-	/// Error when communicating with SMTP server, RCPT TO phase.
-	#[serde(serialize_with = "ser_with_display")]
-	RcptToError(AsyncSmtpError),
-	/// Error when communicating with SMTP server, close phase.
-	#[serde(serialize_with = "ser_with_display")]
-	CloseError(AsyncSmtpError),
 	/// Error when communicating with SMTP server.
 	#[serde(serialize_with = "ser_with_display")]
-	#[deprecated(
-		since = "0.8.27",
-		note = "SMTP errors have been broken up into 6 phases, see all `Smtp*Error`s"
-	)]
 	SmtpError(AsyncSmtpError),
 	/// Time-out error.
 	#[serde(serialize_with = "ser_with_display")]
@@ -116,13 +94,13 @@ impl From<YahooError> for SmtpError {
 
 /// Try to send an smtp command, close and return Err if fails.
 macro_rules! try_smtp (
-    ($res: expr, $client: ident, $to_email: expr, $host: expr, $port: expr, $err_type: expr) => ({
+    ($res: expr, $client: ident, $to_email: expr, $host: expr, $port: expr) => ({
 		if let Err(err) = $res {
 			log::debug!(target: LOG_TARGET, "email={} Closing {}:{}, because of error '{:?}'.", $to_email, $host, $port, err);
 			// Try to close the connection, but ignore if there's an error.
 			let _ = $client.close().await;
 
-			return Err($err_type(err));
+			return Err(SmtpError::SmtpError(err));
 		}
     })
 );
@@ -146,20 +124,11 @@ async fn connect_to_host(
 
 	let mut smtp_transport = SmtpClient::with_security((host.as_ref(), port), security)
 		.await
-		.map_err(SmtpError::HeloError)?
+		.map_err(SmtpError::SmtpError)?
 		// FIXME Do not clone?
 		.hello_name(ClientId::Domain(input.hello_name.clone()))
 		.timeout(Some(Duration::new(30, 0))) // Set timeout to 30s
 		.into_transport();
-
-	// Connect to the host. If the proxy argument is set, use it.
-	log::debug!(
-		target: LOG_TARGET,
-		"email={} Connecting to {}:{}",
-		input.to_emails[0],
-		host,
-		port
-	);
 
 	if let Some(proxy) = &input.proxy {
 		let stream = match (&proxy.username, &proxy.password) {
@@ -192,8 +161,7 @@ async fn connect_to_host(
 			smtp_transport,
 			input.to_emails[0],
 			host,
-			port,
-			SmtpError::ConnectWithStreamError
+			port
 		);
 	} else {
 		try_smtp!(
@@ -201,8 +169,7 @@ async fn connect_to_host(
 			smtp_transport,
 			input.to_emails[0],
 			host,
-			port,
-			SmtpError::ConnectError
+			port
 		);
 	}
 
@@ -222,8 +189,7 @@ async fn connect_to_host(
 		smtp_transport,
 		input.to_emails[0],
 		host,
-		port,
-		SmtpError::MailFromError
+		port
 	);
 
 	Ok(smtp_transport)
@@ -366,6 +332,8 @@ async fn email_deliverable(
 				|| err_string.contains("no such recipient")
 				// 554 delivery error: This user doesn’t have an account
 				|| err_string.contains("have an account")
+				// 5.1.1 RCP-P1 Domain facebook.com no longer available https://www.facebook.com/postmaster/response_codes?ip=3.80.111.155#RCP-P1
+				|| err_string.contains("no longer available")
 			{
 				return Ok(Deliverability {
 					has_full_inbox: false,
@@ -374,7 +342,7 @@ async fn email_deliverable(
 				});
 			}
 
-			Err(SmtpError::RcptToError(err))
+			Err(SmtpError::SmtpError(err))
 		}
 	}
 }
@@ -444,10 +412,7 @@ async fn create_smtp_future(
 		result?
 	};
 
-	smtp_transport
-		.close()
-		.await
-		.map_err(SmtpError::CloseError)?;
+	smtp_transport.close().await.map_err(SmtpError::SmtpError)?;
 
 	Ok((is_catch_all, deliverability))
 }
@@ -456,12 +421,9 @@ async fn create_smtp_future(
 /// [`SmtpError::Error`].
 fn is_io_incomplete_smtp_error<T>(result: &Result<T, SmtpError>) -> bool {
 	match result {
-		Err(SmtpError::HeloError(AsyncSmtpError::Io(err)))
-		| Err(SmtpError::ConnectError(AsyncSmtpError::Io(err)))
-		| Err(SmtpError::ConnectWithStreamError(AsyncSmtpError::Io(err)))
-		| Err(SmtpError::MailFromError(AsyncSmtpError::Io(err)))
-		| Err(SmtpError::RcptToError(AsyncSmtpError::Io(err)))
-		| Err(SmtpError::CloseError(AsyncSmtpError::Io(err))) => err.to_string().as_str() == "incomplete",
+		Err(SmtpError::SmtpError(AsyncSmtpError::Io(err))) => {
+			err.to_string().as_str() == "incomplete"
+		}
 		_ => false,
 	}
 }
@@ -511,32 +473,42 @@ async fn retry(
 ) -> Result<SmtpDetails, SmtpError> {
 	log::debug!(
 		target: LOG_TARGET,
-		"email={} Check SMTP attempt {}/{}",
+		"email={} Check SMTP attempt #{} on {}:{}",
 		input.to_emails[0],
 		input.retries - count + 1,
-		input.retries,
+		host,
+		port
 	);
 
 	let result = check_smtp_without_retry(to_email, host, port, domain, input).await;
 
 	log::debug!(
 		target: LOG_TARGET,
-		"email={} Got result with attempt {}/{}, result={:?}",
+		"email={} Got result for attempt #{} on {}:{}, result={:?}",
 		input.to_emails[0],
 		input.retries - count + 1,
-		input.retries,
+		host,
+		port,
 		result
 	);
 
 	match result {
-		Ok(_) => result,
-		Err(_) => {
+		// Only retry if the error was a temporary/transient error, or a
+		// timeout error.
+		Err(SmtpError::SmtpError(AsyncSmtpError::Transient(_)))
+		| Err(SmtpError::SmtpError(AsyncSmtpError::Timeout(_))) => {
 			if count <= 1 {
 				result
 			} else {
+				log::debug!(
+					target: LOG_TARGET,
+					"email={} Potential greylisting detected, retrying.",
+					input.to_emails[0],
+				);
 				retry(to_email, host, port, domain, input, count - 1).await
 			}
 		}
+		_ => result,
 	}
 }
 
