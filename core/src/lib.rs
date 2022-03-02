@@ -72,7 +72,6 @@ use mx::check_mx;
 use smtp::{check_smtp, SmtpDetails, SmtpError};
 use syntax::check_syntax;
 use util::constants::LOG_TARGET;
-
 pub use util::input_output::*;
 
 /// Given an email's misc and smtp details, calculate an estimate of our
@@ -140,12 +139,6 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 			};
 		}
 	};
-	log::debug!(
-		target: LOG_TARGET,
-		"email={} Found the following MX hosts: {:?}",
-		to_email,
-		my_mx
-	);
 
 	// Return if we didn't find any MX records.
 	if my_mx.lookup.is_err() {
@@ -158,6 +151,19 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 		};
 	}
 
+	log::debug!(
+		target: LOG_TARGET,
+		"email={} Found the following MX hosts: {:?}",
+		to_email,
+		my_mx
+			.lookup
+			.as_ref()
+			.expect("If lookup is error, we already returned. qed.")
+			.iter()
+			.map(|host| host.exchange().to_string())
+			.collect::<Vec<String>>()
+	);
+
 	let my_misc = check_misc(&my_syntax);
 	log::debug!(
 		target: LOG_TARGET,
@@ -166,28 +172,39 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 		my_misc
 	);
 
-	// We simply take the first lookup result, and connect to that SMTP server.
-	// FIXME Add retry mechanism to other lookup results.
-	let my_smtp = my_mx
+	// We loop through all the MX records, and check each one of them. This is
+	// because to prevent SPAM, some servers put a dummy server as 1st MX
+	// record.
+	// ref: https://github.com/reacherhq/check-if-email-exists/issues/1049
+	let mut my_smtp: Option<Result<SmtpDetails, SmtpError>> = None;
+	for host in my_mx
 		.lookup
 		.as_ref()
 		.expect("If lookup is error, we already returned. qed.")
 		.iter()
-		.next()
-		.map(|host| {
-			check_smtp(
-				my_syntax
-					.address
-					.as_ref()
-					.expect("We already checked that the email has valid format. qed."),
-				host.exchange(),
-				input.smtp_port,
-				my_syntax.domain.as_ref(),
-				&input,
-			)
-		})
-		.expect("Lookup cannot be empty. qed.")
+	{
+		let res = check_smtp(
+			my_syntax
+				.address
+				.as_ref()
+				.expect("We already checked that the email has valid format. qed."),
+			host.exchange(),
+			input.smtp_port,
+			my_syntax.domain.as_ref(),
+			&input,
+		)
 		.await;
+		let is_reachable = res.is_ok();
+		my_smtp = Some(res);
+		if !is_reachable {
+			continue; // If error, then we move on to next MX record.
+		} else {
+			break; // If successful, then we break.
+		}
+	}
+	let my_smtp = my_smtp.expect(
+		"As long as lookup has at least 1 element (which we checked), my_smtp will be a Some. qed.",
+	);
 
 	CheckEmailOutput {
 		input: to_email.to_string(),
