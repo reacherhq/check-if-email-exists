@@ -255,10 +255,8 @@ async fn email_deliverable(
 			}
 
 			// Check if the email account has a full inbox.
-			if err_string.contains("full")
-				|| err_string.contains("insufficient")
+			if err_string.contains("insufficient")
 				|| err_string.contains("over quota")
-				|| err_string.contains("space")
 				// 550 user has too many messages on the server
 				|| err_string.contains("too many messages")
 			{
