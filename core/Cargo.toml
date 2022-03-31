@@ -19,7 +19,7 @@ travis-ci = { repository = "reacherhq/check-if-email-exists", service = "github"
 [dependencies]
 async-native-tls = "0.3.3"
 async-recursion = "1.0.0"
-async-smtp = { version = "0.4.0", features = ["socks5"] }
+async-smtp = { features = ["socks5"], path = "../../async-smtp" }
 async-std = "1.10.0"
 async-std-resolver = "0.20.4"
 fast-socks5 = "0.4.3"
