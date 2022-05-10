@@ -24,7 +24,7 @@ async-std = "1.11.0"
 async-std-resolver = "0.20.4"
 fast-socks5 = "0.4.3"
 futures = "0.3.21"
-log = "0.4.16"
+log = "0.4.17"
 mailchecker = "4.1.16"
 rand = {version = "0.8.5", features = ["small_rng"] }
 regex = "1.5.5"
