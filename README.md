@@ -14,7 +14,7 @@
 
 <a href="https://www.hookdoo.com/?github"><img src="https://storage.googleapis.com/saasify-uploads-prod/696e287ad79f0e0352bc201b36d701849f7d55e7.svg" height="96" alt="hookdoo" align="left" /></a>
 
-If you don't have time to waste configuring, hosting, debugging and maintaining your own email verifier, we offer a **SaaS** solution that has all of the capabilities `check-if-email-exists` provides, plus a lot more, and all that packaged in a nice friendly web interface. If you are interested, find out more at [Reacher](https://reacher.email/?ref=github). If you have any questions, you can contact me at amaury@reacher.email.
+If you don't have time to waste configuring, hosting, debugging, and maintaining your own email verifier, we offer a **SaaS** solution that has all of the capabilities `check-if-email-exists` provides, plus a lot more, and all that packaged in a nice friendly web interface. If you are interested, find out more at [Reacher](https://reacher.email/?ref=github). If you have any questions, you can contact me at amaury@reacher.email.
 
 <br />
 
@@ -44,15 +44,15 @@ Many online services (https://hunter.io, https://verify-email.org, https://email
 
 ## License
 
-`check-if-email-exists`'s source code is provided under a **dual license model** .
+`check-if-email-exists`'s source code is provided under a **dual license model**.
 
 ### Commercial license
 
-If you want to use `check-if-email-exists` to develop commercial sites, tools, and applications, the Commercial License is the appropriate license. With this option, your source code is kept proprietary. Purchase an `check-if-email-exists` Commercial License at https://reacher.email/pricing.
+If you want to use `check-if-email-exists` to develop commercial sites, tools, and applications, the Commercial License is the appropriate license. With this option, your source code is kept proprietary. Purchase a `check-if-email-exists` Commercial License at https://reacher.email/pricing.
 
 ### Open source license
 
-If you are creating an open source application under a license compatible with the GNU Affero GPL license v3, you may use `check-if-email-exists` under the terms of the [AGPL-3.0](./LICENSE.AGPL).
+If you are creating an open-source application under a license compatible with the GNU Affero GPL license v3, you may use `check-if-email-exists` under the terms of the [AGPL-3.0](./LICENSE.AGPL).
 
 [Read more](https://help.reacher.email/reacher-licenses) about Reacher's license.
 
@@ -64,15 +64,15 @@ There are 5 ways you can try `check-if-email-exists`.
 
 Reacher is a simple SaaS using this library, also [open-source](https://github.com/reacherhq/backend)!
 
-> If you would like a high free tier to test Reacher, consider [sponsoring me](https://github.com/sponsors/amaurym/)! You'll get 8000 free email verifications every month, and a this contribution would mean A WHOLE LOT to me.
+> If you would like a high free tier to test Reacher, consider [sponsoring me](https://github.com/sponsors/amaurym/)! You'll get 8000 free email verifications every month, and this contribution would mean A WHOLE LOT to me.
 
 ### 2. One-Click Deploy to Heroku
 
 Reacher provides a fully-fledged REST backend at https://github.com/reacherhq/backend. It is the same backend running for our main product https://reacher.email.
 
-The beckend is built using the fast web framework [warp](https://github.com/seanmonstar/warp), and exposes an API endpoint for making email verifications.
+The backend is built using the fast web framework [warp](https://github.com/seanmonstar/warp) and exposes an API endpoint for making email verifications.
 
-For an one-click deploy to [Heroku](https://heroku.com), click on the purple Heroku button at [reacherhq/backend](https://github.com/reacherhq/backend#get-started).
+For a one-click deploy to [Heroku](https://heroku.com), click on the purple Heroku button at [reacherhq/backend](https://github.com/reacherhq/backend#get-started).
 
 ### 3. Use Docker
 
@@ -89,7 +89,7 @@ Head to the [releases page](https://github.com/reacherhq/check-if-email-exists/r
 ```
 > $ check_if_email_exists --help
 check_if_email_exists 0.8.29
-Check if an email address exists without sending any email.
+Check if an email address exists without sending an email.
 
 USAGE:
     check_if_email_exists [FLAGS] [OPTIONS] [TO_EMAIL]
@@ -99,7 +99,7 @@ ARGS:
 
 FLAGS:
     -h, --help       Print help information
-        --http       DEPRECATED. Runs a HTTP server. This option will be removed in v0.9.0
+        --http       DEPRECATED. Runs an HTTP server. This option will be removed in v0.9.0
     -V, --version    Print version information
 
 OPTIONS:
@@ -116,8 +116,8 @@ OPTIONS:
             127.0.0.1]
 
         --http-port <HTTP_PORT>
-            DEPRECATED. Sets the port on which the HTTP server should bind. Only used when `--http`
-            flag is on. If not set, then it will use $PORT, or default to 3000. This option will be
+            DEPRECATED. Sets the port on which the HTTP server should bind. Only used when the `--http`
+            flag is on. If not set, then it will use $PORT or default to 3000. This option will be
             removed in v0.9.0 [env: PORT=] [default: 3000]
 
         --proxy-host <PROXY_HOST>
@@ -229,7 +229,7 @@ This means that the server does not allow real-time verification of an email rig
 
 Most ISPs block outgoing SMTP requests through port 25, to prevent spam. `check-if-email-exists` needs to have this port open to make a connection to the email's SMTP server, so won't work behind these ISPs, and will instead hang until it times out. There's unfortunately no easy workaround for this problem, see for example [this StackOverflow thread](https://stackoverflow.com/questions/18139102/how-to-get-around-an-isp-block-on-port-25-for-smtp). One solution is to rent a Linux cloud server with a static IP and no blocked ports, see for example our [Deploy to Heroku](#2-deploy-to-heroku) section.
 
-To see in details what the binary is doing behind the scenes, run it in verbose mode to see the logs.
+To see in detail what the binary is doing behind the scenes, run it in verbose mode to see the logs.
 
 #### I have another question
 
@@ -253,4 +253,4 @@ $ ./target/release/check_if_email_exists --help
 
 ## Legacy Bash Script
 
-The 1st version of this tool was a simple bash script which made a telnet call. If you would like to use that simpler version, have a look at the [`legacy`](https://github.com/reacherhq/check-if-email-exists/tree/legacy) branch. The reasons for porting the bash script to the current codebase are explained [in issue #4](https://github.com/reacherhq/check-if-email-exists/issues/4).
+The 1st version of this tool was a simple bash script that made a telnet call. If you would like to use that simpler version, have a look at the [`legacy`](https://github.com/reacherhq/check-if-email-exists/tree/legacy) branch. The reasons for porting the bash script to the current codebase are explained [in issue #4](https://github.com/reacherhq/check-if-email-exists/issues/4).
