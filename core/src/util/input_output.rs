@@ -16,7 +16,7 @@
 
 use crate::misc::{MiscDetails, MiscError};
 use crate::mx::{MxDetails, MxError};
-use crate::smtp::{SmtpDetails, SmtpError};
+use crate::smtp::{SmtpDetails, SmtpError, SmtpErrorDesc};
 use crate::syntax::SyntaxDetails;
 use async_smtp::{ClientSecurity, ClientTlsParameters};
 use serde::{ser::SerializeMap, Deserialize, Serialize, Serializer};
@@ -280,6 +280,10 @@ impl Serialize for CheckEmailOutput {
 		#[derive(Serialize)]
 		struct MyError<E> {
 			error: E,
+			// We add an optional "description" field when relevant, given by
+			// the `get_description` on SmtpError.
+			#[serde(skip_serializing_if = "Option::is_none")]
+			description: Option<SmtpErrorDesc>,
 		}
 
 		let mut map = serializer.serialize_map(Some(1))?;
@@ -287,17 +291,85 @@ impl Serialize for CheckEmailOutput {
 		map.serialize_entry("is_reachable", &self.is_reachable)?;
 		match &self.misc {
 			Ok(t) => map.serialize_entry("misc", &t)?,
-			Err(error) => map.serialize_entry("misc", &MyError { error })?,
+			Err(error) => map.serialize_entry(
+				"misc",
+				&MyError {
+					error,
+					description: None,
+				},
+			)?,
 		}
 		match &self.mx {
 			Ok(t) => map.serialize_entry("mx", &t)?,
-			Err(error) => map.serialize_entry("mx", &MyError { error })?,
+			Err(error) => map.serialize_entry(
+				"mx",
+				&MyError {
+					error,
+					description: None,
+				},
+			)?,
 		}
 		match &self.smtp {
 			Ok(t) => map.serialize_entry("smtp", &t)?,
-			Err(error) => map.serialize_entry("smtp", &MyError { error })?,
+			Err(error) => map.serialize_entry(
+				"smtp",
+				&MyError {
+					error,
+					description: error.get_description(),
+				},
+			)?,
 		}
 		map.serialize_entry("syntax", &self.syntax)?;
 		map.end()
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::CheckEmailOutput;
+	use async_smtp::smtp::response::{Category, Code, Detail, Response, Severity};
+
+	#[test]
+	fn should_serialize_correctly() {
+		// create a dummy CheckEmailOutput, with a given message as a transient
+		// SMTP error.
+		fn dummy_response_with_message(m: &str) -> CheckEmailOutput {
+			let r = Response::new(
+				Code {
+					severity: Severity::TransientNegativeCompletion,
+					category: Category::MailSystem,
+					detail: Detail::Zero,
+				},
+				vec![m.to_string(), "8BITMIME".to_string(), "SIZE 42".to_string()],
+			);
+
+			CheckEmailOutput {
+				input: "foo".to_string(),
+				is_reachable: super::Reachable::Unknown,
+				misc: Ok(super::MiscDetails::default()),
+				mx: Ok(super::MxDetails::default()),
+				syntax: super::SyntaxDetails::default(),
+				smtp: Err(super::SmtpError::SmtpError(r.into())),
+			}
+		}
+
+		let res = dummy_response_with_message("blacklist");
+		let actual = serde_json::to_string(&res).unwrap();
+		// Make sure the `description` is present with IpBlacklisted.
+		let expected = r#"{"input":"foo","is_reachable":"unknown","misc":{"is_disposable":false,"is_role_account":false},"mx":{"accepts_mail":false,"records":[]},"smtp":{"error":{"type":"SmtpError","message":"transient: blacklist"},"description":"IpBlacklisted"},"syntax":{"address":null,"domain":"","is_valid_syntax":false,"username":""}}"#;
+		assert_eq!(expected, actual);
+
+		let res =
+			dummy_response_with_message("Client host rejected: cannot find your reverse hostname");
+		let actual = serde_json::to_string(&res).unwrap();
+		// Make sure the `description` is present with NeedsRDNs.
+		let expected = r#"{"input":"foo","is_reachable":"unknown","misc":{"is_disposable":false,"is_role_account":false},"mx":{"accepts_mail":false,"records":[]},"smtp":{"error":{"type":"SmtpError","message":"transient: Client host rejected: cannot find your reverse hostname"},"description":"NeedsRDNS"},"syntax":{"address":null,"domain":"","is_valid_syntax":false,"username":""}}"#;
+		assert_eq!(expected, actual);
+
+		let res = dummy_response_with_message("foobar");
+		let actual = serde_json::to_string(&res).unwrap();
+		// Make sure the `description` is NOT present.
+		let expected = r#"{"input":"foo","is_reachable":"unknown","misc":{"is_disposable":false,"is_role_account":false},"mx":{"accepts_mail":false,"records":[]},"smtp":{"error":{"type":"SmtpError","message":"transient: foobar"}},"syntax":{"address":null,"domain":"","is_valid_syntax":false,"username":""}}"#;
+		assert_eq!(expected, actual);
 	}
 }
