@@ -18,13 +18,6 @@
 
 use super::error::SmtpError;
 use async_smtp::smtp::error::Error as AsyncSmtpError;
-use std::io::Error as IoError;
-
-/// Function to replace all usernames from email, and replace them with
-/// `***@domain.com` for privacy reasons.
-fn redact(input: &str, username: &str) -> String {
-	input.replace(username, "***")
-}
 
 /// is_invalid checks for SMTP responses meaning that the email is invalid,
 /// i.e. that the mailbox doesn;t exist.
@@ -196,36 +189,3 @@ pub fn is_err_needs_rdns(e: &SmtpError) -> bool {
 	// You dont seem to have a reverse dns entry. Come back later. You are greylisted for 20 minutes. See http://www.fsf.org/about/systems/greylisting
 	first_line.contains("reverse dns entry")
 }
-
-#[cfg(test)]
-mod tests {
-	use super::redact;
-
-	#[test]
-	fn test_redact() {
-		assert_eq!("***@gmail.com", redact("someone@gmail.com", "someone"));
-		assert_eq!(
-			"my email is ***@gmail.com.",
-			redact("my email is someone@gmail.com.", "someone")
-		);
-		assert_eq!(
-			"my email is ***@gmail.com., I repeat, my email is ***@gmail.com.",
-			redact(
-				"my email is someone@gmail.com., I repeat, my email is someone@gmail.com.",
-				"someone"
-			)
-		);
-		assert_eq!(
-			"*** @ gmail . com",
-			redact("someone @ gmail . com", "someone")
-		);
-		assert_eq!("*** is here.", redact("someone is here.", "someone"));
-	}
-}
-
-//
-
-// // 4.3.2 Please try again later
-// e.contains("try again") ||
-// // Temporary local problem - please try later
-// e.contains("try later")
