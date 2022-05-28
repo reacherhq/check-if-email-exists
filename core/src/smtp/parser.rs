@@ -16,6 +16,7 @@
 
 //! Parse the SMTP responses to get information about the email address.
 
+use super::error::SmtpError;
 use async_smtp::smtp::error::Error as AsyncSmtpError;
 use std::io::Error as IoError;
 
@@ -108,18 +109,20 @@ pub fn is_disabled_account(e: &str) -> bool {
 	|| e.contains("discontinued")
 }
 
-/// Check if the message contains known SMTP IO errors.
-fn is_err_io_errors(error: &IoError) -> bool {
-	// code: 104, kind: ConnectionReset, message: "Connection reset by peer",
-	error.raw_os_error() == Some(104) ||
-	// kind: Other, error: "incomplete",
-	error.to_string() == "incomplete"
+/// Check if the error is an IO "incomplete" error.
+pub fn is_err_io_errors(e: &SmtpError) -> bool {
+	match e {
+		SmtpError::SmtpError(AsyncSmtpError::Io(err)) => err.to_string() == "incomplete",
+		_ => false,
+	}
 }
 
 /// Check if the IP is blacklisted.
-pub fn is_err_ip_blacklisted(e: &AsyncSmtpError) -> bool {
+pub fn is_err_ip_blacklisted(e: &SmtpError) -> bool {
 	let message: &Vec<String> = match e {
-		AsyncSmtpError::Transient(r) | AsyncSmtpError::Permanent(r) => r.message.as_ref(),
+		SmtpError::SmtpError(AsyncSmtpError::Transient(r) | AsyncSmtpError::Permanent(r)) => {
+			r.message.as_ref()
+		}
 		_ => {
 			return false;
 		}
@@ -175,9 +178,11 @@ pub fn is_err_ip_blacklisted(e: &AsyncSmtpError) -> bool {
 }
 
 /// Check if the IP needs a reverse DNS.
-pub fn is_err_needs_rdns(e: &AsyncSmtpError) -> bool {
+pub fn is_err_needs_rdns(e: &SmtpError) -> bool {
 	let message: &Vec<String> = match e {
-		AsyncSmtpError::Transient(r) | AsyncSmtpError::Permanent(r) => r.message.as_ref(),
+		SmtpError::SmtpError(AsyncSmtpError::Transient(r) | AsyncSmtpError::Permanent(r)) => {
+			r.message.as_ref()
+		}
 		_ => {
 			return false;
 		}

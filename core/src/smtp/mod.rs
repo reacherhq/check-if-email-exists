@@ -304,15 +304,17 @@ async fn create_smtp_future(
 		// Unfortunately `smtp_transport.is_connected()` doesn't report about this,
 		// so we can only check for "io: incomplete" SMTP error being returned.
 		// https://github.com/async-email/async-smtp/issues/37
-		if is_io_incomplete_smtp_error(&result) {
-			log::debug!(
-				target: LOG_TARGET,
-				"Got `io: incomplete` error, reconnecting."
-			);
+		if let Err(e) = &result {
+			if parser::is_err_io_errors(e) {
+				log::debug!(
+					target: LOG_TARGET,
+					"Got `io: incomplete` error, reconnecting."
+				);
 
-			let _ = smtp_transport.close().await;
-			smtp_transport = connect_to_host(host, port, input).await?;
-			result = email_deliverable(&mut smtp_transport, to_email).await;
+				let _ = smtp_transport.close().await;
+				smtp_transport = connect_to_host(host, port, input).await?;
+				result = email_deliverable(&mut smtp_transport, to_email).await;
+			}
 		}
 
 		result?
@@ -321,17 +323,6 @@ async fn create_smtp_future(
 	smtp_transport.close().await.map_err(SmtpError::SmtpError)?;
 
 	Ok((is_catch_all, deliverability))
-}
-
-/// Indicates whether the given [`Result`] represents an `io: incomplete`
-/// [`SmtpError::Error`].
-fn is_io_incomplete_smtp_error<T>(result: &Result<T, SmtpError>) -> bool {
-	match result {
-		Err(SmtpError::SmtpError(AsyncSmtpError::Io(err))) => {
-			err.to_string().as_str() == "incomplete"
-		}
-		_ => false,
-	}
 }
 
 /// Get all email details we can from one single `EmailAddress`, without

@@ -62,10 +62,10 @@ impl SmtpError {
 	/// SmtpErrorDesc.
 	pub fn get_description(&self) -> Option<SmtpErrorDesc> {
 		match self {
-			SmtpError::SmtpError(e) => {
-				if parser::is_err_ip_blacklisted(&e) {
+			SmtpError::SmtpError(_) => {
+				if parser::is_err_ip_blacklisted(self) {
 					Some(SmtpErrorDesc::IpBlacklisted)
-				} else if parser::is_err_needs_rdns(&e) {
+				} else if parser::is_err_needs_rdns(self) {
 					Some(SmtpErrorDesc::NeedsRDNS)
 				} else {
 					None
