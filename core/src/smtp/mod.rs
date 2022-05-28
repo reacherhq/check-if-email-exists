@@ -256,19 +256,8 @@ async fn email_deliverable(
 /// Verify the existence of a catch-all on the domain.
 async fn smtp_is_catch_all(
 	smtp_transport: &mut SmtpTransport,
-	host: &Name,
 	domain: &str,
 ) -> Result<bool, SmtpError> {
-	// Some email providers return that the recipient is okay for random
-	// addresses, even though these email providers do not support catch-all.
-	// Surely, there SMTP servers are configured as catch-all, but they do some
-	// more magic to bounce email addresses that are not registered.
-	//
-	// We hardcode the known list of such SMTP servers here.
-	if host.to_string().contains("outlook.com") {
-		return Ok(false);
-	}
-
 	// Create a random 15-char alphanumerical string.
 	let mut rng = SmallRng::from_entropy();
 	let random_email: String = iter::repeat(())
@@ -297,7 +286,7 @@ async fn create_smtp_future(
 	// Ok(SmtpDetails { can_connect_smtp: false, ... }).
 	let mut smtp_transport = connect_to_host(host, port, input).await?;
 
-	let is_catch_all = smtp_is_catch_all(&mut smtp_transport, host, domain)
+	let is_catch_all = smtp_is_catch_all(&mut smtp_transport, domain)
 		.await
 		.unwrap_or(false);
 	let deliverability = if is_catch_all {
