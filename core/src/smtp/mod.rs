@@ -14,10 +14,11 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+pub mod error;
+mod parser;
 mod yahoo;
 
 use super::util::{constants::LOG_TARGET, input_output::CheckEmailInput};
-use crate::util::ser_with_display::ser_with_display;
 use async_native_tls::TlsConnector;
 use async_recursion::async_recursion;
 use async_smtp::{
@@ -28,9 +29,10 @@ use async_smtp::{
 	ClientTlsParameters, EmailAddress, SmtpClient, SmtpTransport,
 };
 use async_std::future;
+pub use error::*;
 use fast_socks5::{
 	client::{Config, Socks5Stream},
-	Result, SocksError,
+	Result,
 };
 use rand::rngs::SmallRng;
 use rand::{distributions::Alphanumeric, Rng, SeedableRng};
@@ -40,7 +42,6 @@ use std::iter;
 use std::str::FromStr;
 use std::time::Duration;
 use trust_dns_proto::rr::Name;
-use yahoo::YahooError;
 
 /// Details that we gathered from connecting to this email via SMTP
 #[derive(Debug, Default, Deserialize, Serialize)]
@@ -55,41 +56,6 @@ pub struct SmtpDetails {
 	pub is_deliverable: bool,
 	/// Is the email blocked or disabled by the provider?
 	pub is_disabled: bool,
-}
-
-/// Error occured connecting to this email server via SMTP.
-#[derive(Debug, Serialize)]
-#[serde(tag = "type", content = "message")]
-pub enum SmtpError {
-	/// Error if we're using a SOCKS5 proxy.
-	#[serde(serialize_with = "ser_with_display")]
-	SocksError(SocksError),
-	/// Error when communicating with SMTP server.
-	#[serde(serialize_with = "ser_with_display")]
-	SmtpError(AsyncSmtpError),
-	/// Time-out error.
-	#[serde(serialize_with = "ser_with_display")]
-	TimeoutError(future::TimeoutError),
-	/// Error when verifying a Yahoo email.
-	YahooError(YahooError),
-}
-
-impl From<SocksError> for SmtpError {
-	fn from(error: SocksError) -> Self {
-		SmtpError::SocksError(error)
-	}
-}
-
-impl From<future::TimeoutError> for SmtpError {
-	fn from(error: future::TimeoutError) -> Self {
-		SmtpError::TimeoutError(error)
-	}
-}
-
-impl From<YahooError> for SmtpError {
-	fn from(error: YahooError) -> Self {
-		SmtpError::YahooError(error)
-	}
 }
 
 /// Try to send an smtp command, close and return Err if fails.
@@ -242,11 +208,7 @@ async fn email_deliverable(
 			let err_string = err.to_string().to_lowercase();
 
 			// Check if the email account has been disabled or blocked.
-			// 554 The email account that you tried to reach is disabled. Learn more at https://support.google.com/mail/?p=DisabledUser"
-			if err_string.contains("disabled")
-				// 554 delivery error: Sorry your message to [email] cannot be delivered. This account has been disabled or discontinued
-				|| err_string.contains("discontinued")
-			{
+			if parser::is_disabled_account(err_string.as_str()) {
 				return Ok(Deliverability {
 					has_full_inbox: false,
 					is_deliverable: false,
@@ -255,11 +217,7 @@ async fn email_deliverable(
 			}
 
 			// Check if the email account has a full inbox.
-			if err_string.contains("insufficient")
-				|| err_string.contains("over quota")
-				// 550 user has too many messages on the server
-				|| err_string.contains("too many messages")
-			{
+			if parser::is_full_inbox(err_string.as_str()) {
 				return Ok(Deliverability {
 					has_full_inbox: true,
 					is_deliverable: false,
@@ -280,59 +238,8 @@ async fn email_deliverable(
 				});
 			}
 
-			// These are the possible error messages when email account doesn't exist.
-			// 550 Address rejected
-			// 550 5.1.1 : Recipient address rejected
-			// 550 5.1.1 : Recipient address rejected: User unknown in virtual alias table
-			// 550 5.1.1 <user@domain.com>: Recipient address rejected: User unknown in relay recipient table
-			if err_string.contains("address rejected")
-				// 550 5.1.1 : Unrouteable address
-				|| err_string.contains("unrouteable")
-				// 550 5.1.1 : The email account that you tried to reach does not exist
-				|| err_string.contains("does not exist")
-				// 550 invalid address
-				// 550 User not local or invalid address – Relay denied
-				|| err_string.contains("invalid address")
-				// 5.1.1 Invalid email address
-				|| err_string.contains("invalid email address")
-				// 550 Invalid recipient
-				|| err_string.contains("invalid recipient")
-				|| err_string.contains("may not exist")
-				|| err_string.contains("recipient invalid")
-				// 550 5.1.1 : Recipient rejected
-				|| err_string.contains("recipient rejected")
-				|| err_string.contains("undeliverable")
-				// 550 User unknown
-				// 550 5.1.1 <EMAIL> User unknown
-				// 550 recipient address rejected: user unknown in local recipient table
-				|| err_string.contains("user unknown")
-				// 550 Unknown user
-				|| err_string.contains("unknown user")
-				// 5.1.1 Recipient unknown <EMAIL>
-				|| err_string.contains("recipient unknown")
-				// 550 5.1.1 No such user - pp
-				// 550 No such user here
-				|| err_string.contains("no such user")
-				// 550 5.1.1 : Mailbox not found
-				// 550 Unknown address error ‘MAILBOX NOT FOUND’
-				|| err_string.contains("not found")
-				// 550 5.1.1 : Invalid mailbox
-				|| err_string.contains("invalid mailbox")
-				// 550 5.1.1 Sorry, no mailbox here by that name
-				|| err_string.contains("no mailbox")
-				// 5.2.0 No such mailbox
-				|| err_string.contains("no such mailbox")
-				// 550 Requested action not taken: mailbox unavailable
-				|| err_string.contains("mailbox unavailable")
-				// 550 5.1.1 Is not a valid mailbox
-				|| err_string.contains("not a valid mailbox")
-				// No such recipient here
-				|| err_string.contains("no such recipient")
-				// 554 delivery error: This user doesn’t have an account
-				|| err_string.contains("have an account")
-				// 5.1.1 RCP-P1 Domain facebook.com no longer available https://www.facebook.com/postmaster/response_codes?ip=3.80.111.155#RCP-P1
-				|| err_string.contains("no longer available")
-			{
+			// Check that the mailbox doesn't exist.
+			if parser::is_invalid(err_string.as_str()) {
 				return Ok(Deliverability {
 					has_full_inbox: false,
 					is_deliverable: false,
@@ -340,6 +247,7 @@ async fn email_deliverable(
 				});
 			}
 
+			// Return all unparsable errors,.
 			Err(SmtpError::SmtpError(err))
 		}
 	}
@@ -396,15 +304,17 @@ async fn create_smtp_future(
 		// Unfortunately `smtp_transport.is_connected()` doesn't report about this,
 		// so we can only check for "io: incomplete" SMTP error being returned.
 		// https://github.com/async-email/async-smtp/issues/37
-		if is_io_incomplete_smtp_error(&result) {
-			log::debug!(
-				target: LOG_TARGET,
-				"Got `io: incomplete` error, reconnecting."
-			);
+		if let Err(e) = &result {
+			if parser::is_err_io_errors(e) {
+				log::debug!(
+					target: LOG_TARGET,
+					"Got `io: incomplete` error, reconnecting."
+				);
 
-			let _ = smtp_transport.close().await;
-			smtp_transport = connect_to_host(host, port, input).await?;
-			result = email_deliverable(&mut smtp_transport, to_email).await;
+				let _ = smtp_transport.close().await;
+				smtp_transport = connect_to_host(host, port, input).await?;
+				result = email_deliverable(&mut smtp_transport, to_email).await;
+			}
 		}
 
 		result?
@@ -413,17 +323,6 @@ async fn create_smtp_future(
 	smtp_transport.close().await.map_err(SmtpError::SmtpError)?;
 
 	Ok((is_catch_all, deliverability))
-}
-
-/// Indicates whether the given [`Result`] represents an `io: incomplete`
-/// [`SmtpError::Error`].
-fn is_io_incomplete_smtp_error<T>(result: &Result<T, SmtpError>) -> bool {
-	match result {
-		Err(SmtpError::SmtpError(AsyncSmtpError::Io(err))) => {
-			err.to_string().as_str() == "incomplete"
-		}
-		_ => false,
-	}
 }
 
 /// Get all email details we can from one single `EmailAddress`, without
