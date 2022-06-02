@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.8.30](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.29...v0.8.30) (2022-06-02)
+
+
+### Features
+
+* Add `smtp.error.description` field for human-readable description of error ([#1111](https://github.com/amaurymartiny/check-if-email-exists/issues/1111)) ([43b47ea](https://github.com/amaurymartiny/check-if-email-exists/commit/43b47ea2b9250f2c6d58c8a0ec4340066169c169))
+
+
+### Bug Fixes
+
+* Fix `has_full_inbox` check too lenient ([93de444](https://github.com/amaurymartiny/check-if-email-exists/commit/93de444dfa7c6d66061570115be8f53f0647c431))
+
 ### [0.8.29](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.28...v0.8.29) (2022-03-02)
 
 
