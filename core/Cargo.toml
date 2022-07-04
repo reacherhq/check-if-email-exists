@@ -29,7 +29,7 @@ mailchecker = "4.1.17"
 rand = {version = "0.8.5", features = ["small_rng"] }
 regex = "1.5.6"
 reqwest = { version = "0.11.11", features = ["json", "socks"] }
-serde = { version = "1.0.137", features = ["derive"] }
+serde = { version = "1.0.138", features = ["derive"] }
 serde_json = "1.0.81"
 trust-dns-proto = "0.20.4"
 
