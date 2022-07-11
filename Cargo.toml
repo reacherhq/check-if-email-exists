@@ -22,7 +22,7 @@ serde = "1.0.138"
 serde_json = "1.0.82"
 
 [dependencies.hyper]
-version = "0.14.19"
+version = "0.14.20"
 features = ["full"]
 
 [dependencies.tokio]
