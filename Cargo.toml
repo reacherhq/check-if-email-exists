@@ -18,7 +18,7 @@ clap = "3.0.0-beta.4"
 env_logger = "0.9.0"
 once_cell = "1.13.0"
 openssl = { version = "0.10.41", features = ["vendored"] }
-serde = "1.0.138"
+serde = "1.0.139"
 serde_json = "1.0.82"
 
 [dependencies.hyper]
