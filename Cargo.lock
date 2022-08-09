@@ -159,7 +159,7 @@ dependencies = [
  "async-trait",
  "base64",
  "bufstream",
- "fast-socks5",
+ "fast-socks5 0.4.3",
  "fast_chemail",
  "hostname 0.1.5",
  "log",
@@ -324,7 +324,7 @@ dependencies = [
  "async-smtp",
  "async-std",
  "async-std-resolver",
- "fast-socks5",
+ "fast-socks5 0.5.0",
  "futures",
  "log",
  "mailchecker",
@@ -501,6 +501,19 @@ dependencies = [
  "futures",
  "log",
  "thiserror",
+]
+
+[[package]]
+name = "fast-socks5"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dd50adaa05aff4273f2b710db1fe74030611402aba0a1fca2f37afbb706f2c13"
+dependencies = [
+ "anyhow",
+ "log",
+ "thiserror",
+ "tokio",
+ "tokio-stream",
 ]
 
 [[package]]
@@ -1660,6 +1673,17 @@ dependencies = [
  "either",
  "futures-util",
  "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "tokio-stream"
+version = "0.1.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "df54d54117d6fdc4e4fea40fe1e4e566b3505700e148a6827e59b34b0d2600d9"
+dependencies = [
+ "futures-core",
+ "pin-project-lite",
  "tokio",
 ]
 
