@@ -121,6 +121,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "async-native-tls"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d57d4cec3c647232e1094dc013546c0b33ce785d8aeb251e1f20dfaf8a9a13fe"
+dependencies = [
+ "futures-util",
+ "native-tls",
+ "thiserror",
+ "url",
+]
+
+[[package]]
 name = "async-process"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -154,7 +166,7 @@ version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "472a081e9e3a92f9201237f07b51c0bab657336ca6600fd2f243c9cc3c9c81ff"
 dependencies = [
- "async-native-tls",
+ "async-native-tls 0.3.3",
  "async-std",
  "async-trait",
  "base64",
@@ -319,7 +331,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 name = "check-if-email-exists"
 version = "0.8.30"
 dependencies = [
- "async-native-tls",
+ "async-native-tls 0.4.0",
  "async-recursion",
  "async-smtp",
  "async-std",

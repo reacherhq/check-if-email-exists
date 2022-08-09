@@ -17,7 +17,7 @@ appveyor = { repository = "reacherhq/check-if-email-exists", service = "github" 
 travis-ci = { repository = "reacherhq/check-if-email-exists", service = "github" }
 
 [dependencies]
-async-native-tls = "0.3.3"
+async-native-tls = "0.4.0"
 async-recursion = "1.0.0"
 async-smtp = { version = "0.4.0", features = ["socks5"] }
 async-std = "1.12.0"
