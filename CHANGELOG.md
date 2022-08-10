@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [0.8.31](https://github.com/reacherhq/check-if-email-exists/compare/v0.8.30...v0.8.31) (2022-08-10)
 
+### Improvements
+
+* Bump packages incl. `async-smtp` ([#1136](https://github.com/amaurymartiny/check-if-email-exists/issues/1136)) ([43b47ea](https://github.com/amaurymartiny/check-if-email-exists/commit/cbdab7c35bc4ce7f7da79fa9316727cc840da4e4))
+
 ### [0.8.30](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.29...v0.8.30) (2022-06-02)
 
 
