@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.8.31](https://github.com/reacherhq/check-if-email-exists/compare/v0.8.30...v0.8.31) (2022-08-10)
+
 ### [0.8.30](https://github.com/amaurymartiny/check-if-email-exists/compare/v0.8.29...v0.8.30) (2022-06-02)
 
 
