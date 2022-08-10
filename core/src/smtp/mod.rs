@@ -23,17 +23,13 @@ use async_native_tls::TlsConnector;
 use async_recursion::async_recursion;
 use async_smtp::{
 	smtp::{
-		client::net::NetworkStream, commands::*, error::Error as AsyncSmtpError,
-		extension::ClientId,
+		commands::*, error::Error as AsyncSmtpError, extension::ClientId, ServerAddress,
+		Socks5Config,
 	},
 	ClientTlsParameters, EmailAddress, SmtpClient, SmtpTransport,
 };
 use async_std::future;
 pub use error::*;
-use fast_socks5::{
-	client::{Config, Socks5Stream},
-	Result,
-};
 use rand::rngs::SmallRng;
 use rand::{distributions::Alphanumeric, Rng, SeedableRng};
 use serde::{Deserialize, Serialize};
@@ -88,56 +84,39 @@ async fn connect_to_host(
 		input.smtp_security.to_client_security(tls_params)
 	};
 
-	let mut smtp_transport = SmtpClient::with_security((host.as_ref(), port), security)
-		.await
-		.map_err(SmtpError::SmtpError)?
-		// FIXME Do not clone?
-		.hello_name(ClientId::Domain(input.hello_name.clone()))
-		.timeout(Some(Duration::new(30, 0))) // Set timeout to 30s
-		.into_transport();
+	let mut smtp_client = SmtpClient::with_security(
+		ServerAddress {
+			host: host.clone(),
+			port,
+		},
+		security,
+	)
+	.hello_name(ClientId::Domain(input.hello_name.clone()))
+	.timeout(Some(Duration::new(30, 0))); // Set timeout to 30s
 
 	if let Some(proxy) = &input.proxy {
-		let stream = match (&proxy.username, &proxy.password) {
-			(Some(username), Some(password)) => {
-				Socks5Stream::connect_with_password(
-					(proxy.host.as_ref(), proxy.port),
-					host.clone(),
-					port,
-					username.to_string(),
-					password.to_string(),
-					Config::default(),
-				)
-				.await?
-			}
-			_ => {
-				Socks5Stream::connect(
-					(proxy.host.as_ref(), proxy.port),
-					host.clone(),
-					port,
-					Config::default(),
-				)
-				.await?
-			}
+		let socks5_config = match (&proxy.username, &proxy.password) {
+			(Some(username), Some(password)) => Socks5Config::new_with_user_pass(
+				proxy.host.clone(),
+				proxy.port,
+				username.clone(),
+				password.clone(),
+			),
+			_ => Socks5Config::new(proxy.host.clone(), proxy.port),
 		};
 
-		try_smtp!(
-			smtp_transport
-				.connect_with_stream(NetworkStream::Socks5Stream(stream))
-				.await,
-			smtp_transport,
-			input.to_emails[0],
-			host,
-			port
-		);
-	} else {
-		try_smtp!(
-			smtp_transport.connect().await,
-			smtp_transport,
-			input.to_emails[0],
-			host,
-			port
-		);
+		smtp_client = smtp_client.use_socks5(socks5_config);
 	}
+
+	let mut smtp_transport = smtp_client.into_transport();
+
+	try_smtp!(
+		smtp_transport.connect().await,
+		smtp_transport,
+		input.to_emails[0],
+		host,
+		port
+	);
 
 	// "MAIL FROM: user@example.org"
 	let from_email = EmailAddress::from_str(input.from_email.as_ref()).unwrap_or_else(|_| {
@@ -149,8 +128,7 @@ async fn connect_to_host(
 	});
 	try_smtp!(
 		smtp_transport
-			// FIXME Do not clone?
-			.command(MailCommand::new(Some(from_email.clone()), vec![],))
+			.command(MailCommand::new(Some(from_email), vec![],))
 			.await,
 		smtp_transport,
 		input.to_emails[0],

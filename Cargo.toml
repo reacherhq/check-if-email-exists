@@ -1,6 +1,6 @@
 [package]
 name = "check-if-email-exists-cli"
-version = "0.8.30"
+version = "0.8.31"
 default-run = "check_if_email_exists"
 edition = "2018"
 description = "Check if an email address exists without sending any email."
@@ -14,7 +14,7 @@ path = "src/main.rs"
 
 [dependencies]
 check-if-email-exists = { path = "./core" }
-clap = "3.0.0-beta.4"
+clap = { version = "3.2.16", features = ["derive", "env"] }
 env_logger = "0.9.0"
 once_cell = "1.13.0"
 openssl = { version = "0.10.41", features = ["vendored"] }

@@ -90,7 +90,7 @@ pub async fn check_mx(syntax: &SyntaxDetails) -> Result<MxDetails, MxError> {
 	// Lookup the MX records associated with a name.
 	// The final dot forces this to be an FQDN, otherwise the search rules as specified
 	// in `ResolverOpts` will take effect. FQDN's are generally cheaper queries.
-	match resolver.mx_lookup(syntax.domain.as_ref()).await {
+	match resolver.mx_lookup(syntax.domain.as_str()).await {
 		Ok(lookup) => Ok(MxDetails::from(lookup)),
 		Err(err) => Ok(MxDetails { lookup: Err(err) }),
 	}

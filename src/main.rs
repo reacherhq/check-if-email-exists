@@ -19,11 +19,11 @@ mod http;
 use std::net::IpAddr;
 
 use check_if_email_exists::{check_email, CheckEmailInput, CheckEmailInputProxy};
-use clap::Clap;
+use clap::Parser;
 use once_cell::sync::Lazy;
 
 /// CLI options of this binary.
-#[derive(Clap, Debug)]
+#[derive(Parser, Debug)]
 #[clap(author, version, about)]
 pub struct Cli {
 	/// The email to use in the `MAIL FROM:` SMTP command.
