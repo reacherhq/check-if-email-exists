@@ -97,12 +97,12 @@ async fn connect_to_host(
 	if let Some(proxy) = &input.proxy {
 		let socks5_config = match (&proxy.username, &proxy.password) {
 			(Some(username), Some(password)) => Socks5Config::new_with_user_pass(
-				host.clone(),
-				port,
+				proxy.host.clone(),
+				proxy.port,
 				username.clone(),
 				password.clone(),
 			),
-			_ => Socks5Config::new(host.clone(), port),
+			_ => Socks5Config::new(proxy.host.clone(), proxy.port),
 		};
 
 		smtp_client = smtp_client.use_socks5(socks5_config);
