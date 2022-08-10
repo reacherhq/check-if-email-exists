@@ -128,7 +128,6 @@ async fn connect_to_host(
 	});
 	try_smtp!(
 		smtp_transport
-			// FIXME Do not clone?
 			.command(MailCommand::new(Some(from_email), vec![],))
 			.await,
 		smtp_transport,
