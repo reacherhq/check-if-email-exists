@@ -57,7 +57,7 @@ pub fn is_invalid(e: &str) -> bool {
 		// 550 No such user here
 		|| e.contains("no such user")
 		// permanent: 5.1.1 MXIN501 mailbox <EMAIL> unknown (on @virginmedia.com)
-		|| e.contains("")
+		// || e.contains("") TODO Use regex here?
 		// 550 5.1.1 : Mailbox not found
 		// 550 Unknown address error ‘MAILBOX NOT FOUND’
 		|| e.contains("mailbox not found")
@@ -188,4 +188,18 @@ pub fn is_err_needs_rdns(e: &SmtpError) -> bool {
 	first_line.contains("cannot find your reverse hostname") ||
 	// You dont seem to have a reverse dns entry. Come back later. You are greylisted for 20 minutes. See http://www.fsf.org/about/systems/greylisting
 	first_line.contains("reverse dns entry")
+}
+
+#[cfg(test)]
+mod tests {
+
+	#[test]
+	fn is_invalid_works() {
+		use super::is_invalid;
+
+		assert_eq!(
+			is_invalid("554 5.7.1 <mta.voipdir.net[]>: Client host rejected: Access denied"),
+			false
+		);
+	}
 }
