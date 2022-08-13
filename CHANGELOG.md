@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.8.32](https://github.com/reacherhq/check-if-email-exists/compare/v0.8.31...v0.8.32) (2022-08-13)
+
+
+### Features
+
+* Use opportunistic STARTTLS by default ([#1079](https://github.com/reacherhq/check-if-email-exists/issues/1079)) ([54911f0](https://github.com/reacherhq/check-if-email-exists/commit/54911f0a8ec51e753f757878021e933609cff868))
+
+
+### Bug Fixes
+
+* Fix parsing some invalid emails ([cb65c0f](https://github.com/reacherhq/check-if-email-exists/commit/cb65c0f4767b2f163f48054652f7652b6d0b6043))
+* Syntax also check using using `mailchecker` ([8385bec](https://github.com/reacherhq/check-if-email-exists/commit/8385bec6fedc0912881800442bffda5b33c2f394))
+
 ### [0.8.31](https://github.com/reacherhq/check-if-email-exists/compare/v0.8.30...v0.8.31) (2022-08-10)
 
 ### Improvements
