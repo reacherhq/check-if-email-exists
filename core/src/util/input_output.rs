@@ -108,7 +108,7 @@ impl Default for CheckEmailInput {
 			hello_name: "localhost".into(),
 			proxy: None,
 			smtp_port: 25,
-			smtp_security: SmtpSecurity::None,
+			smtp_security: SmtpSecurity::Opportunistic,
 			smtp_timeout: None,
 			yahoo_use_api: true,
 			retries: 2,
@@ -221,7 +221,7 @@ impl CheckEmailInput {
 
 /// An enum to describe how confident we are that the recipient address is
 /// real.
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Reachable {
 	/// The email is safe to send.
