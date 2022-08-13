@@ -49,7 +49,18 @@ impl Default for SyntaxDetails {
 /// username and domain.
 pub fn check_syntax(email_address: &str) -> SyntaxDetails {
 	let email_address = match EmailAddress::from_str(email_address) {
-		Ok(m) => m,
+		Ok(m) => {
+			if mailchecker::is_valid(email_address) {
+				m
+			} else {
+				return SyntaxDetails {
+					address: None,
+					domain: "".into(),
+					is_valid_syntax: false,
+					username: "".into(),
+				};
+			}
+		}
 		_ => {
 			return SyntaxDetails {
 				address: None,
