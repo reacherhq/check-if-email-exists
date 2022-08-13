@@ -164,9 +164,11 @@ async fn check() {
     input
         .set_from_email("me@example.org".into()) // Used in the `MAIL FROM:` command
         .set_hello_name("example.org".into())    // Used in the `EHLO` command
-        .set_proxy(CheckEmailInputProxy {         // Use a SOCKS5 proxy to verify the email
+        .set_proxy(CheckEmailInputProxy {        // Use a SOCKS5 proxy to verify the email
             host: "my-proxy.io".into(),
-            port: 1080
+            port: 1080,
+            username: None,                      // You can also set it non-empty
+            password: None
         });
 
     // Verify this email, using async/await syntax.
