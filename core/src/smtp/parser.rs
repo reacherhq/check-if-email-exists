@@ -189,3 +189,17 @@ pub fn is_err_needs_rdns(e: &SmtpError) -> bool {
 	// You dont seem to have a reverse dns entry. Come back later. You are greylisted for 20 minutes. See http://www.fsf.org/about/systems/greylisting
 	first_line.contains("reverse dns entry")
 }
+
+#[cfg(test)]
+mod tests {
+
+	#[test]
+	fn is_invalid_works() {
+		use super::is_invalid;
+
+		assert_eq!(
+			is_invalid("554 5.7.1 <mta.voipdir.net[]>: Client host rejected: Access denied"),
+			false
+		);
+	}
+}
