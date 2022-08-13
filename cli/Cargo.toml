@@ -1,0 +1,33 @@
+[package]
+name = "check-if-email-exists-cli"
+version = "0.8.32"
+default-run = "check_if_email_exists"
+edition = "2018"
+description = "Check if an email address exists without sending any email."
+authors = ["Amaury <amaurym10@protonmail.com>"]
+license = "AGPL-3.0"
+publish = false
+
+[[bin]]
+name = "check_if_email_exists"
+path = "src/main.rs"
+
+[dependencies]
+check-if-email-exists = { path = "../core" }
+clap = { version = "3.2.16", features = ["derive", "env"] }
+env_logger = "0.9.0"
+once_cell = "1.13.0"
+openssl = { version = "0.10.41", features = ["vendored"] }
+serde = "1.0.143"
+serde_json = "1.0.83"
+
+[dependencies.hyper]
+version = "0.14.20"
+features = ["full"]
+
+[dependencies.tokio]
+version = "1.16.1"
+features = ["macros", "net", "io-util", "rt-multi-thread"]
+
+[profile.release]
+lto = true
