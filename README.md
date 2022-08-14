@@ -8,7 +8,7 @@
 
 <p align="center"><img align="center" src="https://storage.googleapis.com/saasify-uploads-prod/696e287ad79f0e0352bc201b36d701849f7d55e7.svg" height="96" alt="reacher" /></p>
 <h1 align="center">check-if-email-exists</h1>
-<h4 align="center">Check if an email address exists without sending any email.<br/>Comes with a ⚙️ HTTP backend.</h4>
+<h4 align="center">Check if an email address exists without sending any email.<br/>Comes with a [⚙️ HTTP backend](./backend/).</h4>
 
 <br /><br /><br />
 
@@ -23,12 +23,12 @@ This is open-source, but I also offer a **SaaS** solution that has `check-if-ema
 
 3 non-SaaS ways to get started with `check-if-email-exists`.
 
-### 1. ⚙️ REST API backend via Docker (popular method 🥇)
+### 1. ⚙️ HTTP backend using Docker (popular method 🥇)
 
-This option allows you to run a REST API backend on a cloud instance or your own server using Docker 🐳.
+This option allows you to run a HTTP backend using Docker 🐳, on a cloud instance or your own server. Please note that outbound port 25 must be open.
 
 ```bash
-`docker run -p 8080:8080 reacherhq/backend:v0.4.0-beta4`
+docker run -p 8080:8080 reacherhq/backend:v0.4.0-beta4
 ```
 
 You can then send a POST request with the following body to `http://localhost:8080/v0/check_email`:
@@ -40,13 +40,15 @@ You can then send a POST request with the following body to `http://localhost:80
 	"hello_name": "my-server.com",    // (optional) name to use in the `EHLO` SMTP command, defaults to "localhost"
 	"proxy": {                        // (optional) SOCK5 proxy to run the verification through, default is empty
 		"host": "my-proxy.io",
-		"port": 1080
+		"port": 1080,
+		"username": "me",             // (optional) Proxy username
+		"password": "pass"            // (optional) Proxy password
 	},
-	"smtp_port": 25                   // (optional) SMTP port to do the email verification, defaults to 25
+	"smtp_port": 587                  // (optional) SMTP port to do the email verification, defaults to 25
 }
 ```
 
-See the [detailed README](./backend/README.md) for more information on running and configuration.
+See the [detailed README](./backend/README.md) for more information on configuration.
 
 ### 2. Download the CLI
 

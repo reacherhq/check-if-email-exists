@@ -82,11 +82,20 @@ The API exposes the following endpoint: `POST /v0/check_email` expecting the fol
 }
 ```
 
-Also check [`openapi.json`](./openapi.json) for the complete OpenAPI specification.
+For example, you can send the following `curl` request:
+
+```bash
+curl -X POST \
+    -H'Content-Type: application/json' \
+    -d'{"to_email":"someone@gmail.com"}' \
+    http://localhost:8080/v0/check_email
+```
+
+Also check the [OpenAPI documentation](https://help.reacher.email/rest-api-documentation).
 
 ## 🔨 Build From Source
 
-You can build the backend from source to generate a binary, and run the server locally on your machine. First, [install Rust](https://www.rust-lang.org/tools/install); you'll need Rust 1.37.0 or later. Then, run the following commands:
+You can build the backend from source to generate a binary, and run the server locally on your machine. First, [install Rust](https://www.rust-lang.org/tools/install); you'll need Rust 1.37.0 or later. Make sure `openssl` is installed too. Then, run the following commands:
 
 ```bash
 # Download the code

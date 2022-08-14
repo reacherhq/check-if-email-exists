@@ -72,8 +72,6 @@ $ cargo build --release
 
 # Run the binary
 $ ./target/release/check_if_email_exists --help
-
-# Or run the REST API backend
 ```
 
 ## Legacy Bash Script
