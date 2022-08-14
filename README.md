@@ -64,6 +64,8 @@ USAGE:
     check_if_email_exists [FLAGS] [OPTIONS] [TO_EMAIL]
 ```
 
+Check out the [dedicated README.md](./cli/README.md) for all options and flags.
+
 ### 3. Programmatic Usage [[Full docs](https://docs.rs/check-if-email-exists)]
 
 In your own Rust project, you can add `check-if-email-exists` in your `Cargo.toml`:
