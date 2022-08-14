@@ -21,7 +21,7 @@ This is open-source, but I also offer a **SaaS** solution that has `check-if-ema
 
 ## Get Started
 
-If you don't want to use the SaaS service above, there are 3 ways to use Reacher.
+3 non-SaaS ways to get started with `check-if-email-exists`.
 
 ### 1. ⚙️ REST API backend via Docker (popular method 🥇)
 
