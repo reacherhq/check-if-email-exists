@@ -31,20 +31,20 @@ This option allows you to run a HTTP backend using Docker 🐳, on a cloud insta
 docker run -p 8080:8080 reacherhq/backend:latest
 ```
 
-You can then send a `POST http://localhost:8080/v0/check_email` request with the following body:
+You can then send a `POST http://localhost:8080/v0/check_email` request with the following body to ``:
 
 ```js
 {
-	"to_email": "someone@gmail.com",
-	"from_email": "my@my-server.com", // (optional) email to use in the `FROM` SMTP command, defaults to "user@example.org"
-	"hello_name": "my-server.com",    // (optional) name to use in the `EHLO` SMTP command, defaults to "localhost"
-	"proxy": {                        // (optional) SOCK5 proxy to run the verification through, default is empty
-		"host": "my-proxy.io",
-		"port": 1080,
-		"username": "me",             // (optional) Proxy username
-		"password": "pass"            // (optional) Proxy password
-	},
-	"smtp_port": 587                  // (optional) SMTP port to do the email verification, defaults to 25
+    "to_email": "someone@gmail.com",
+    "from_email": "my@my-server.com", // (optional) email to use in the `FROM` SMTP command, defaults to "user@example.org"
+    "hello_name": "my-server.com",    // (optional) name to use in the `EHLO` SMTP command, defaults to "localhost"
+    "proxy": {                        // (optional) SOCK5 proxy to run the verification through, default is empty
+        "host": "my-proxy.io",
+        "port": 1080,
+        "username": "me",             // (optional) Proxy username
+        "password": "pass"            // (optional) Proxy password
+    },
+    "smtp_port": 587                  // (optional) SMTP port to do the email verification, defaults to 25
 }
 ```
 
@@ -148,33 +148,33 @@ The output will be a JSON with the below format, the fields should be self-expla
 
 ```json
 {
-	"input": "someone@gmail.com",
-	"is_reachable": "invalid",
-	"misc": {
-		"is_disposable": false,
-		"is_role_account": false
+    "input": "someone@gmail.com",
+    "is_reachable": "invalid",
+    "misc": {
+	    "is_disposable": false,
+	    "is_role_account": false
 	},
-	"mx": {
-		"accepts_mail": true,
-		"records": [
-			"alt3.gmail-smtp-in.l.google.com.",
-			"gmail-smtp-in.l.google.com.",
-			"alt1.gmail-smtp-in.l.google.com.",
-			"alt4.gmail-smtp-in.l.google.com.",
-			"alt2.gmail-smtp-in.l.google.com."
+    "mx": {
+	    "accepts_mail": true,
+	    "records": [
+		    "alt3.gmail-smtp-in.l.google.com.",
+		    "gmail-smtp-in.l.google.com.",
+		    "alt1.gmail-smtp-in.l.google.com.",
+		    "alt4.gmail-smtp-in.l.google.com.",
+		    "alt2.gmail-smtp-in.l.google.com."
 		]
 	},
-	"smtp": {
-		"can_connect_smtp": true,
-		"has_full_inbox": false,
-		"is_catch_all": false,
-		"is_deliverable": false,
-		"is_disabled": true
+    "smtp": {
+	    "can_connect_smtp": true,
+	    "has_full_inbox": false,
+	    "is_catch_all": false,
+	    "is_deliverable": false,
+	    "is_disabled": true
 	},
-	"syntax": {
-		"domain": "gmail.com",
-		"is_valid_syntax": true,
-		"username": "someone"
+    "syntax": {
+	    "domain": "gmail.com",
+	    "is_valid_syntax": true,
+	    "username": "someone"
 	}
 }
 ```
