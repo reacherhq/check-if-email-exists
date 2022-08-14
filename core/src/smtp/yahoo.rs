@@ -111,7 +111,7 @@ fn create_client(input: &CheckEmailInput) -> Result<reqwest::Client, ReqwestErro
 		log::debug!(
 			target: LOG_TARGET,
 			"email={} Using proxy socks://{}:{} for Yahoo API",
-			input.to_emails[0],
+			input.to_email,
 			proxy.host,
 			proxy.port
 		);

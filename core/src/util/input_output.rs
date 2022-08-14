@@ -66,7 +66,7 @@ impl SmtpSecurity {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CheckEmailInput {
 	/// The email to validate.
-	pub to_emails: Vec<String>,
+	pub to_email: String,
 	/// Email to use in the `MAIL FROM:` SMTP command.
 	///
 	/// Defaults to "user@example.org".
@@ -103,7 +103,7 @@ pub struct CheckEmailInput {
 impl Default for CheckEmailInput {
 	fn default() -> Self {
 		CheckEmailInput {
-			to_emails: vec![],
+			to_email: "".into(),
 			from_email: "user@example.org".into(),
 			hello_name: "localhost".into(),
 			proxy: None,
@@ -118,9 +118,9 @@ impl Default for CheckEmailInput {
 
 impl CheckEmailInput {
 	/// Create a new CheckEmailInput.
-	pub fn new(to_emails: Vec<String>) -> CheckEmailInput {
+	pub fn new(to_email: String) -> CheckEmailInput {
 		CheckEmailInput {
-			to_emails,
+			to_email,
 			..Default::default()
 		}
 	}

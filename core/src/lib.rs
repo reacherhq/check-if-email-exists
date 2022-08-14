@@ -38,7 +38,7 @@
 //!
 //! async fn check() {
 //!     // Let's say we want to test the deliverability of someone@gmail.com.
-//!     let mut input = CheckEmailInput::new(vec!["someone@gmail.com".into()]);
+//!     let mut input = CheckEmailInput::new("someone@gmail.com".into());
 //!
 //!     // Optionally, we can also tweak the configuration parameters used in the
 //!     // verification.
@@ -54,7 +54,7 @@
 //!     });
 //!
 //!     // Verify this input, using async/await syntax.
-//!     let result = check_email(&input).await;
+//!     let result = check_email(input).await;
 //!
 //!     // `result` is a `Vec<CheckEmailOutput>`, where the CheckEmailOutput
 //!     // struct contains all information about one email.
@@ -68,7 +68,6 @@ pub mod smtp;
 pub mod syntax;
 mod util;
 
-use futures::future;
 use misc::{check_misc, MiscDetails};
 use mx::check_mx;
 use smtp::{check_smtp, SmtpDetails, SmtpError};
@@ -94,15 +93,15 @@ fn calculate_reachable(misc: &MiscDetails, smtp: &Result<SmtpDetails, SmtpError>
 	}
 }
 
-/// Check a single emails. This assumes this `input.check_email` contains
-/// exactly one element. If it contains more, elements other than the first
-/// one will be ignored.
-///
-/// # Panics
-///
-/// This function panics if `input.check_email` is empty.
-async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
-	let to_email = &input.to_emails[0];
+/// The main function of this library: verify a single email. Performs, in the
+/// following order, 4 types of verifications:
+/// - syntax check: verify the email is well-formed,
+/// - MX checks: verify the domain is configured to receive email,
+/// - SMTP checks: connect to the SMTP server and verify the email is
+///   deliverable,
+/// - misc checks: metadata about the email provider.
+pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
+	let to_email = &input.to_email;
 
 	log::debug!(
 		target: LOG_TARGET,
@@ -216,44 +215,4 @@ async fn check_single_email(input: CheckEmailInput) -> CheckEmailOutput {
 		smtp: my_smtp,
 		syntax: my_syntax,
 	}
-}
-
-/// The main function of this library: takes as input a list of email addresses
-/// to check. Then performs syntax, mx, smtp and misc checks, and outputs a
-/// list of results.
-///
-/// Please note that checking multiple emails at once (by putting multiple
-/// emails in the `inputs.to_emails` Vec) is still a **beta** feature, and not
-/// fully optimized. For more info, see #65
-/// <https://github.com/reacherhq/check-if-email-exists/issues/65>.
-pub async fn check_email(inputs: &CheckEmailInput) -> Vec<CheckEmailOutput> {
-	if inputs.to_emails.len() > 1 {
-		log::warn!(
-			target: LOG_TARGET,
-			"Verifying multiple emails with this library is still a beta feature, please don't overuse it. See reacherhq/check-if-email-exists #65."
-		);
-	}
-
-	// FIXME Obviously, the below `join_all` is not optimal. Some optimizations
-	// include:
-	// - if multiple email addresses share the same domain, we should only do
-	// `check_mx` call for all these email addresses.
-	// - if multiple email addresses share the same domain, we should call
-	// `check_smtp` with grouped email addresses, to share a SMTP connection.
-	// ref: https://github.com/reacherhq/check-if-email-exists/issues/65.
-	let inputs = inputs.to_emails.iter().map(|email| {
-		// Create n `CheckEmailInput`s, each with one email address.
-		CheckEmailInput {
-			to_emails: vec![email.clone()],
-			from_email: inputs.from_email.clone(),
-			hello_name: inputs.hello_name.clone(),
-			proxy: inputs.proxy.clone(),
-			retries: inputs.retries,
-			smtp_port: inputs.smtp_port,
-			smtp_security: inputs.smtp_security,
-			smtp_timeout: inputs.smtp_timeout,
-			yahoo_use_api: inputs.yahoo_use_api,
-		}
-	});
-	future::join_all(inputs.map(check_single_email)).await
 }

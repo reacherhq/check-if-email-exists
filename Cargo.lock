@@ -319,7 +319,6 @@ dependencies = [
  "async-smtp",
  "async-std",
  "async-std-resolver",
- "futures",
  "log",
  "mailchecker",
  "rand",
