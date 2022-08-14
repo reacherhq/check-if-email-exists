@@ -24,7 +24,7 @@ This is open-source, but I also offer a **SaaS** solution that has `check-if-ema
 
 3 non-SaaS ways to get started with `check-if-email-exists`.
 
-### 1. ⚙️ HTTP backend using Docker (popular method 🥇) [[Full docs](./backend)]
+### 1. ⚙️ HTTP backend using Docker (popular method 🥇) [[Full docs](./backend/README.md)]
 
 This option allows you to run a HTTP backend using Docker 🐳, on a cloud instance or your own server. Please note that outbound port 25 must be open.
 
@@ -49,7 +49,7 @@ Then send a `POST http://localhost:8080/v0/check_email` request with the followi
 }
 ```
 
-### 2. Download the CLI [[Full docs](./cli)]
+### 2. Download the CLI [[Full docs](./cli/README.md)]
 
 > Note: The CLI binary doesn't connect to any backend, it checks the email directly from your computer.
 
