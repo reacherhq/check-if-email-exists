@@ -8,7 +8,7 @@
 
 <p align="center"><img align="center" src="https://storage.googleapis.com/saasify-uploads-prod/696e287ad79f0e0352bc201b36d701849f7d55e7.svg" height="96" alt="reacher" /></p>
 <h1 align="center">check-if-email-exists</h1>
-<h4 align="center">Check if an email address exists without sending any email.<br/>Comes with a <a href="https://github.com/reacherhq/check-if-email-exists/tree/master/backend">⚙️ HTTP backend</a>.</h4>
+<h4 align="center">Check if an email address exists without sending any email.<br/>Comes with a <a href="./backend">⚙️ HTTP backend</a>.</h4>
 
 <br /><br /><br />
 
@@ -24,7 +24,7 @@ This is open-source, but I also offer a **SaaS** solution that has `check-if-ema
 
 3 non-SaaS ways to get started with `check-if-email-exists`.
 
-### 1. ⚙️ HTTP backend using Docker (popular method 🥇) [[Full docs](./backend/README.md)]
+### 1. ⚙️ HTTP backend using Docker (popular method 🥇) [[Full docs](./backend)]
 
 This option allows you to run a HTTP backend using Docker 🐳, on a cloud instance or your own server. Please note that outbound port 25 must be open.
 
@@ -49,7 +49,7 @@ Then send a `POST http://localhost:8080/v0/check_email` request with the followi
 }
 ```
 
-### 2. Download the CLI [[Full docs](./cli/README.md)]
+### 2. Download the CLI [[Full docs](./cli)]
 
 > Note: The CLI binary doesn't connect to any backend, it checks the email directly from your computer.
 
