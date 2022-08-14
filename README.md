@@ -180,10 +180,10 @@ Most ISPs block outgoing SMTP requests through port 25, to prevent spam. `check-
 
 To see in detail what the binary is doing behind the scenes, run it in verbose mode with `RUST_LOG=debug` to see the logs.
 
-#### I have another question
+#### I have another question.
 
 Feel free to check out Reacher's [FAQ](https://help.reacher.email/faq).
 
 ## 🔨 Build From Source
 
-Build the [CLI from source](./cli/README.md#🔨-build-from-source) or the [HTTP backend from source](./backend/README.md#🔨-build-from-source).
+Build the [CLI from source](./cli/README.md#build-from-source) or the [HTTP backend from source](./backend/README.md#build-from-source).

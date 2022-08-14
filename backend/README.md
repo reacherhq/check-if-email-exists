@@ -93,7 +93,7 @@ curl -X POST \
 
 Also check the [OpenAPI documentation](https://help.reacher.email/rest-api-documentation).
 
-## 🔨 Build From Source
+## Build From Source
 
 You can build the backend from source to generate a binary, and run the server locally on your machine. First, [install Rust](https://www.rust-lang.org/tools/install); you'll need Rust 1.37.0 or later. Make sure `openssl` is installed too. Then, run the following commands:
 

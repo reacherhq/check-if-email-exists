@@ -58,7 +58,7 @@ OPTIONS:
 RUST_LOG=debug check_if_email_exists
 ```
 
-## 🔨 Build From Source
+## Build From Source
 
 First, [install Rust](https://www.rust-lang.org/tools/install); you'll need Rust 1.37.0 or later. Then, run the following commands:
 
