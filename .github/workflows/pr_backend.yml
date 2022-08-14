@@ -33,7 +33,8 @@ jobs:
       - name: Run cargo check
         uses: actions-rs/cargo@v1
         with:
-          command: check --bin reacher_backend
+          command: check
+          args: --all
 
   # Cargo test.
   test:
@@ -53,4 +54,4 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --all --bin reacher_backend
+          args: --all
