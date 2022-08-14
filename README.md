@@ -11,12 +11,29 @@
 <br /><br /><br />
 
 ## 👉 Live Demo: https://reacher.email
-
-<a href="https://www.hookdoo.com/?github"><img src="https://storage.googleapis.com/saasify-uploads-prod/696e287ad79f0e0352bc201b36d701849f7d55e7.svg" height="96" alt="hookdoo" align="left" /></a>
+<img src="https://storage.googleapis.com/saasify-uploads-prod/696e287ad79f0e0352bc201b36d701849f7d55e7.svg" height="96" alt="hookdoo" align="left" />
 
 If you don't have time to waste configuring, hosting, debugging, and maintaining your own email verifier, we offer a **SaaS** solution that has all of the capabilities `check-if-email-exists` provides, plus a lot more, and all that packaged in a nice friendly web interface. If you are interested, find out more at [Reacher](https://reacher.email/?ref=github). If you have any questions, you can contact me at amaury@reacher.email.
 
 <br />
+
+## Usage
+
+If you don't want to use the SaaS service above, there are 3 ways to use Reacher.
+
+
+|                                        | Version                                                                                                                                        | Description                  | Usage                                                    | Learn More                                       |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- | -------------------------------------------------------- | ------------------------------------------------ |
+| **Self-host HTTP backend** (⭐ Popular) | [![Docker](https://img.shields.io/docker/v/reacherhq/backend?color=4A94E6&label=docker&sort=date)](https://hub.docker.com/r/reacherhq/backend) | Run a REST API server        | `docker run -p 8080:8080 reacherhq/backend:v0.4.0-beta4` | [README](./backend/README.md)                    |
+| CLI                                    | [![Crate](https://img.shields.io/crates/v/check-if-email-exists.svg)](https://crates.io/crates/check-if-email-exists)                          | Run from your terminal       | `./check-if-email-exists <email>`                        | [README](./cli/README.md)                        |
+| Programmatic                  usage    | [![Crate](https://img.shields.io/crates/v/check-if-email-exists.svg)](https://crates.io/crates/check-if-email-exists)                          | Include it as a Rust library | `use check_if_email_exists::check_email;`                | [docs.rs](https://docs.rs/check-if-email-exists) |
+
+|             | **Self-host HTTP backend** (⭐ Popular)                                                                                                         | CLI                                                                 | Programmatic usage                                                                                                    |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Version     | [![Docker](https://img.shields.io/docker/v/reacherhq/backend?color=4A94E6&label=docker&sort=date)](https://hub.docker.com/r/reacherhq/backend) | ![Crate](https://img.shields.io/crates/v/check-if-email-exists.svg) | [![Crate](https://img.shields.io/crates/v/check-if-email-exists.svg)](https://crates.io/crates/check-if-email-exists) |
+| Description | Run a REST API server                                                                                                                          | Run from your terminal                                              | Include it as a Rust library                                                                                          |
+| Usage       | `docker run -p 8080:8080 reacherhq/backend:v0.4.0-beta4`                                                                                       | `./check-if-email-exists <email>`                                   | `use check_if_email_exists::check_email;`                                                                             |
+| Learn More  | [README](./backend/README.md)                                                                                                                  | [README](./backend/README.md)                                       | [docs.rs](https://docs.rs/check-if-email-exists)                                                                      |
 
 ## What Does This Tool Check?
 
