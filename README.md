@@ -4,15 +4,16 @@
 [![Actions Status](https://github.com/reacherhq/check-if-email-exists/workflows/pr/badge.svg)](https://github.com/reacherhq/check-if-email-exists/actions)
 [![Github Sponsor](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&link=https://github.com/sponsors/amaurym)](https://github.com/sponsors/amaurym)
 
-<br /><br /><br />
+<br /><br />
 
+<p align="center"><img align="center" src="https://storage.googleapis.com/saasify-uploads-prod/696e287ad79f0e0352bc201b36d701849f7d55e7.svg" height="96" alt="reacher" /></p>
 <h1 align="center">check-if-email-exists</h1>
 <h4 align="center">Check if an email address exists without sending any email.<br/>Comes with a ⚙️ HTTP backend.</h4>
 
 <br /><br /><br />
 
 ## 👉 Live Demo: https://reacher.email
-<img src="https://storage.googleapis.com/saasify-uploads-prod/696e287ad79f0e0352bc201b36d701849f7d55e7.svg" height="120" align="left" />
+<img src="https://storage.googleapis.com/saasify-uploads-prod/696e287ad79f0e0352bc201b36d701849f7d55e7.svg" height="80" align="left" />
 
 If you don't have time to waste configuring, hosting, debugging, and maintaining your own email verifier, we offer a **SaaS** solution that has all of the capabilities `check-if-email-exists` provides, plus a lot more, and all that packaged in a nice friendly web interface. If you are interested, find out more at [Reacher](https://reacher.email/?ref=github). If you have any questions, you can contact me at amaury@reacher.email.
 
