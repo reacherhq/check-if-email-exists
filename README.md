@@ -8,7 +8,7 @@
 
 <p align="center"><img align="center" src="https://storage.googleapis.com/saasify-uploads-prod/696e287ad79f0e0352bc201b36d701849f7d55e7.svg" height="96" alt="reacher" /></p>
 <h1 align="center">check-if-email-exists</h1>
-<h4 align="center">Check if an email address exists without sending any email.<br/>Comes with a [⚙️ HTTP backend](./backend/).</h4>
+<h4 align="center">Check if an email address exists without sending any email.<br/>Comes with a <a href="./backend">⚙️ HTTP backend]</a>.</h4>
 
 <br /><br /><br />
 
