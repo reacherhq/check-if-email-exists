@@ -48,17 +48,17 @@ You can then send a `POST http://localhost:8080/v0/check_email` request with the
 
 These are the environment variables used to configure the HTTP server. You can pass them to the Docker container using the `-e {ENV_VAR}={VALUE}` flag.
 
-| Env Var                             | Required?                   | Description                                                                                               | Default            |
-| ----------------------------------- | --------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------ |
-| `RCH_ENABLE_BULK`                   | No                          | If set to 1, then bulk verification endpoints will be added to the backend.                               | 0                  |
-| `DATABASE_URL`                      | Yes if `RCH_ENABLE_BULK==1` | Database connection string for storing results and task queue                                             | not defined        |
-| `RCH_HTTP_HOST`                     | No                          | The host name to bind the HTTP server to.                                                                 | `127.0.0.1`        |
-| `PORT`                              | No                          | The port to bind the HTTP server to, often populated by the cloud provider.                               | `8080`             |
-| `RCH_FROM_EMAIL`                    | No                          | The email to use in the `MAIL FROM:` SMTP command.                                                        | `user@example.org` |
-| `RCH_SENTRY_DSN`                    | No                          | If set, bug reports will be sent to this [Sentry](https://sentry.io) DSN.                                 | not defined        |
-| `RCH_DATABASE_MAX_CONNECTIONS`      | No                          | (Bulk) Connections created for the database pool                                                          | 5                  |
-| `RCH_MINIMUM_TASK_CONCURRENCY`      | No                          | (Bulk) Minimum number of concurrent running tasks below which more tasks are fetched                      | 10                 |
-| `RCH_MAXIMUM_CONCURRENT_TASK_FETCH` | No                          | (Bulk) Maximum number of tasks fetched at once                                                            | 20                 |
+| Env Var                             | Required?                   | Description                                                                                                | Default            |
+| ----------------------------------- | --------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------ |
+| `RCH_ENABLE_BULK`                   | No                          | If set to 1, then bulk verification endpoints will be added to the backend.                                | 0                  |
+| `DATABASE_URL`                      | Yes if `RCH_ENABLE_BULK==1` | Database connection string for storing results and task queue                                              | not defined        |
+| `RCH_HTTP_HOST`                     | No                          | The host name to bind the HTTP server to.                                                                  | `127.0.0.1`        |
+| `PORT`                              | No                          | The port to bind the HTTP server to, often populated by the cloud provider.                                | `8080`             |
+| `RCH_FROM_EMAIL`                    | No                          | The email to use in the `MAIL FROM:` SMTP command.                                                         | `user@example.org` |
+| `RCH_SENTRY_DSN`                    | No                          | If set, bug reports will be sent to this [Sentry](https://sentry.io) DSN.                                  | not defined        |
+| `RCH_DATABASE_MAX_CONNECTIONS`      | No                          | (Bulk) Connections created for the database pool                                                           | 5                  |
+| `RCH_MINIMUM_TASK_CONCURRENCY`      | No                          | (Bulk) Minimum number of concurrent running tasks below which more tasks are fetched                       | 10                 |
+| `RCH_MAXIMUM_CONCURRENT_TASK_FETCH` | No                          | (Bulk) Maximum number of tasks fetched at once                                                             | 20                 |
 | `RUST_LOG`                          | No                          | One of `trace,debug,warn,error,info`. 💡 PRO TIP: `RUST_LOG=debug` is very handful for debugging purposes. | not defined        |
 
 ## REST API Documentation

@@ -13,6 +13,7 @@
 <br /><br /><br />
 
 ## 👉 Live Demo: https://reacher.email
+
 <img src="https://storage.googleapis.com/saasify-uploads-prod/696e287ad79f0e0352bc201b36d701849f7d55e7.svg" height="68" align="left" />
 
 This is open-source, but I also offer a **SaaS** solution that has `check-if-email-exists` packaged in a nice friendly web interface. If you are interested, find out more at [Reacher](https://reacher.email/?ref=github). If you have any questions, you can contact me at amaury@reacher.email.
@@ -81,18 +82,6 @@ async fn check() {
     // Let's say we want to test the deliverability of someone@gmail.com.
     let mut input = CheckEmailInput::new(vec!["someone@gmail.com".into()]);
 
-    // Optionally, we can also tweak the configuration parameters used in the
-    // verification.
-    input
-        .set_from_email("me@example.org".into()) // Used in the `MAIL FROM:` command
-        .set_hello_name("example.org".into())    // Used in the `EHLO` command
-        .set_proxy(CheckEmailInputProxy {        // Use a SOCKS5 proxy to verify the email
-            host: "my-proxy.io".into(),
-            port: 1080,
-            username: None,                      // You can also set it non-empty
-            password: None
-        });
-
     // Verify this email, using async/await syntax.
     let result = check_email(&input).await;
 
@@ -104,25 +93,62 @@ async fn check() {
 
 The reference docs are hosted on [docs.rs](https://docs.rs/check-if-email-exists).
 
+## ✈️ JSON Output
+
+The output will be a JSON with the below format, the fields should be self-explanatory. For `someone@gmail.com` (note that it is disabled by Gmail), here's the exact output:
+
+```json
+{
+	"input": "someone@gmail.com",
+	"is_reachable": "invalid",
+	"misc": {
+		"is_disposable": false,
+		"is_role_account": false
+	},
+	"mx": {
+		"accepts_mail": true,
+		"records": [
+			"alt3.gmail-smtp-in.l.google.com.",
+			"gmail-smtp-in.l.google.com.",
+			"alt1.gmail-smtp-in.l.google.com.",
+			"alt4.gmail-smtp-in.l.google.com.",
+			"alt2.gmail-smtp-in.l.google.com."
+		]
+	},
+	"smtp": {
+		"can_connect_smtp": true,
+		"has_full_inbox": false,
+		"is_catch_all": false,
+		"is_deliverable": false,
+		"is_disabled": true
+	},
+	"syntax": {
+		"domain": "gmail.com",
+		"is_valid_syntax": true,
+		"username": "someone"
+	}
+}
+```
+
 ## What Does This Tool Check?
 
 | Included? | Feature                                       | Description                                                                                                                     | JSON field                                                                  |
 | --------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| ✅         | **Email reachability**                        | How confident are we in sending an email to this address? Can be one of `safe`, `risky`, `invalid` or `unknown`.                | `is_reachable`                                                              |
-| ✅         | **Syntax validation**                         | Is the address syntactically valid?                                                                                             | `syntax.is_valid_syntax`                                                    |
-| ✅         | **DNS records validation**                    | Does the domain of the email address have valid MX DNS records?                                                                 | `mx.accepts_mail`                                                           |
-| ✅         | **Disposable email address (DEA) validation** | Is the address provided by a known [disposable email address](https://en.wikipedia.org/wiki/Disposable_email_address) provider? | `misc.is_disposable`                                                        |
-| ✅         | **SMTP server validation**                    | Can the mail exchanger of the email address domain be contacted successfully?                                                   | `smtp.can_connect_smtp`                                                     |
-| ✅         | **Email deliverability**                      | Is an email sent to this address deliverable?                                                                                   | `smtp.is_deliverable`                                                       |
-| ✅         | **Mailbox disabled**                          | Has this email address been disabled by the email provider?                                                                     | `smtp.is_disabled`                                                          |
-| ✅         | **Full inbox**                                | Is the inbox of this mailbox full?                                                                                              | `smtp.has_full_inbox`                                                       |
-| ✅         | **Catch-all address**                         | Is this email address a [catch-all](https://debounce.io/blog/help/what-is-a-catch-all-or-accept-all/) address?                  | `smtp.is_catch_all`                                                         |
-| ✅         | **Role account validation**                   | Is the email address a well-known role account?                                                                                 | `misc.is_role_account`                                                      |
-| 🔜         | **Free email provider check**                 | Is the email address bound to a known free email provider?                                                                      | [Issue #89](https://github.com/reacherhq/check-if-email-exists/issues/89)   |
-| 🔜         | **Syntax validation, provider-specific**      | According to the syntactic rules of the target mail provider, is the address syntactically valid?                               | [Issue #90](https://github.com/reacherhq/check-if-email-exists/issues/90)   |
-| 🔜         | **Honeypot detection**                        | Does email address under test hide a [honeypot](https://en.wikipedia.org/wiki/Spamtrap)?                                        | [Issue #91](https://github.com/reacherhq/check-if-email-exists/issues/91)   |
-| 🔜         | **Gravatar**                                  | Does this email address have a [Gravatar](https://gravatar.com/) profile picture?                                               | [Issue #92](https://github.com/reacherhq/check-if-email-exists/issues/92)   |
-| 🔜         | **Have I Been Pwned?**                        | Has this email been compromised in a [data breach](https://haveibeenpwned.com/)?                                                | [Issue #289](https://github.com/reacherhq/check-if-email-exists/issues/289) |
+| ✅        | **Email reachability**                        | How confident are we in sending an email to this address? Can be one of `safe`, `risky`, `invalid` or `unknown`.                | `is_reachable`                                                              |
+| ✅        | **Syntax validation**                         | Is the address syntactically valid?                                                                                             | `syntax.is_valid_syntax`                                                    |
+| ✅        | **DNS records validation**                    | Does the domain of the email address have valid MX DNS records?                                                                 | `mx.accepts_mail`                                                           |
+| ✅        | **Disposable email address (DEA) validation** | Is the address provided by a known [disposable email address](https://en.wikipedia.org/wiki/Disposable_email_address) provider? | `misc.is_disposable`                                                        |
+| ✅        | **SMTP server validation**                    | Can the mail exchanger of the email address domain be contacted successfully?                                                   | `smtp.can_connect_smtp`                                                     |
+| ✅        | **Email deliverability**                      | Is an email sent to this address deliverable?                                                                                   | `smtp.is_deliverable`                                                       |
+| ✅        | **Mailbox disabled**                          | Has this email address been disabled by the email provider?                                                                     | `smtp.is_disabled`                                                          |
+| ✅        | **Full inbox**                                | Is the inbox of this mailbox full?                                                                                              | `smtp.has_full_inbox`                                                       |
+| ✅        | **Catch-all address**                         | Is this email address a [catch-all](https://debounce.io/blog/help/what-is-a-catch-all-or-accept-all/) address?                  | `smtp.is_catch_all`                                                         |
+| ✅        | **Role account validation**                   | Is the email address a well-known role account?                                                                                 | `misc.is_role_account`                                                      |
+| 🔜        | **Free email provider check**                 | Is the email address bound to a known free email provider?                                                                      | [Issue #89](https://github.com/reacherhq/check-if-email-exists/issues/89)   |
+| 🔜        | **Syntax validation, provider-specific**      | According to the syntactic rules of the target mail provider, is the address syntactically valid?                               | [Issue #90](https://github.com/reacherhq/check-if-email-exists/issues/90)   |
+| 🔜        | **Honeypot detection**                        | Does email address under test hide a [honeypot](https://en.wikipedia.org/wiki/Spamtrap)?                                        | [Issue #91](https://github.com/reacherhq/check-if-email-exists/issues/91)   |
+| 🔜        | **Gravatar**                                  | Does this email address have a [Gravatar](https://gravatar.com/) profile picture?                                               | [Issue #92](https://github.com/reacherhq/check-if-email-exists/issues/92)   |
+| 🔜        | **Have I Been Pwned?**                        | Has this email been compromised in a [data breach](https://haveibeenpwned.com/)?                                                | [Issue #289](https://github.com/reacherhq/check-if-email-exists/issues/289) |
 
 ## 🤔 Why?
 
@@ -141,43 +167,6 @@ If you want to use `check-if-email-exists` to develop commercial sites, tools, a
 If you are creating an open-source application under a license compatible with the GNU Affero GPL license v3, you may use `check-if-email-exists` under the terms of the [AGPL-3.0](./LICENSE.AGPL).
 
 [Read more](https://help.reacher.email/reacher-licenses) about Reacher's license.
-
-## ✈️ JSON Output
-
-The output will be a JSON with the below format, the fields should be self-explanatory. For `someone@gmail.com` (note that it is disabled by Gmail), here's the exact output:
-
-```json
-{
-    "input": "someone@gmail.com",
-    "is_reachable": "invalid",
-    "misc": {
-	    "is_disposable": false,
-	    "is_role_account": false
-	},
-    "mx": {
-	    "accepts_mail": true,
-	    "records": [
-		    "alt3.gmail-smtp-in.l.google.com.",
-		    "gmail-smtp-in.l.google.com.",
-		    "alt1.gmail-smtp-in.l.google.com.",
-		    "alt4.gmail-smtp-in.l.google.com.",
-		    "alt2.gmail-smtp-in.l.google.com."
-		]
-	},
-    "smtp": {
-	    "can_connect_smtp": true,
-	    "has_full_inbox": false,
-	    "is_catch_all": false,
-	    "is_deliverable": false,
-	    "is_disabled": true
-	},
-    "syntax": {
-	    "domain": "gmail.com",
-	    "is_valid_syntax": true,
-	    "username": "someone"
-	}
-}
-```
 
 You can also take a look at the [OpenAPI documentation](https://help.reacher.email/rest-api-documentation) of this JSON object.
 
