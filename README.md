@@ -12,7 +12,7 @@
 <br /><br /><br />
 
 ## 👉 Live Demo: https://reacher.email
-<img src="https://storage.googleapis.com/saasify-uploads-prod/696e287ad79f0e0352bc201b36d701849f7d55e7.svg" height="100" align="left" />
+<img src="https://storage.googleapis.com/saasify-uploads-prod/696e287ad79f0e0352bc201b36d701849f7d55e7.svg" height="120" align="left" />
 
 If you don't have time to waste configuring, hosting, debugging, and maintaining your own email verifier, we offer a **SaaS** solution that has all of the capabilities `check-if-email-exists` provides, plus a lot more, and all that packaged in a nice friendly web interface. If you are interested, find out more at [Reacher](https://reacher.email/?ref=github). If you have any questions, you can contact me at amaury@reacher.email.
 
