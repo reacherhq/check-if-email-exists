@@ -32,7 +32,7 @@ This option allows you to run a HTTP backend using Docker 🐳, on a cloud insta
 docker run -p 8080:8080 reacherhq/backend:latest
 ```
 
-You can then send a `POST http://localhost:8080/v0/check_email` request with the following body to ``:
+Then send a `POST http://localhost:8080/v0/check_email` request with the following body to ``:
 
 ```js
 {
@@ -168,7 +168,7 @@ If you are creating an open-source application under a license compatible with t
 
 [Read more](https://help.reacher.email/reacher-licenses) about Reacher's license.
 
-You can also take a look at the [OpenAPI documentation](https://help.reacher.email/rest-api-documentation) of this JSON object.
+Please also take a look at the [OpenAPI documentation](https://help.reacher.email/rest-api-documentation) of this JSON object.
 
 ## ❓ FAQ
 
@@ -188,4 +188,4 @@ Feel free to check out Reacher's [FAQ](https://help.reacher.email/faq).
 
 ## 🔨 Build From Source
 
-You can build the [CLI from source](./cli/README.md#🔨-build-from-source) or the [HTTP backend from source](./backend/README.md#🔨-build-from-source).
+Build the [CLI from source](./cli/README.md#🔨-build-from-source) or the [HTTP backend from source](./backend/README.md#🔨-build-from-source).

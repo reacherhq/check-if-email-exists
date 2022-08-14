@@ -27,7 +27,7 @@ To run it, run the following command:
 docker run -p 8080:8080 reacherhq/backend:latest
 ```
 
-You can then send a `POST http://localhost:8080/v0/check_email` request with the following body:
+Then send a `POST http://localhost:8080/v0/check_email` request with the following body:
 
 ```js
 {
@@ -46,7 +46,7 @@ You can then send a `POST http://localhost:8080/v0/check_email` request with the
 
 ### Configuration
 
-These are the environment variables used to configure the HTTP server. You can pass them to the Docker container using the `-e {ENV_VAR}={VALUE}` flag.
+These are the environment variables used to configure the HTTP server. To pass them to the Docker container, use the `-e {ENV_VAR}={VALUE}` flag.
 
 | Env Var                             | Required?                   | Description                                                                                                | Default            |
 | ----------------------------------- | --------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------ |
