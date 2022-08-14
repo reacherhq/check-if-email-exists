@@ -7,7 +7,7 @@
 <br /><br /><br />
 
 <h1 align="center">check-if-email-exists</h1>
-<h4 align="center">Check if an email address exists without sending any email.</h4>
+<h4 align="center">Check if an email address exists without sending any email.<br/>Comes with a ⚙️ HTTP backend.</h4>
 
 <br /><br /><br />
 
