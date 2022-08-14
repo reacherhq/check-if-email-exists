@@ -166,9 +166,7 @@ If you want to use `check-if-email-exists` to develop commercial sites, tools, a
 
 If you are creating an open-source application under a license compatible with the GNU Affero GPL license v3, you may use `check-if-email-exists` under the terms of the [AGPL-3.0](./LICENSE.AGPL).
 
-[Read more](https://help.reacher.email/reacher-licenses) about Reacher's license.
-
-Please also take a look at the [OpenAPI documentation](https://help.reacher.email/rest-api-documentation) of this JSON object.
+[➡️ Read more](https://help.reacher.email/reacher-licenses) about Reacher's license.
 
 ## ❓ FAQ
 
