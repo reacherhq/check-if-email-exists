@@ -28,7 +28,7 @@ This is open-source, but I also offer a **SaaS** solution that has `check-if-ema
 This option allows you to run a HTTP backend using Docker 🐳, on a cloud instance or your own server. Please note that outbound port 25 must be open.
 
 ```bash
-docker run -p 8080:8080 reacherhq/backend:v0.4.0-beta4
+docker run -p 8080:8080 reacherhq/backend:latest
 ```
 
 You can then send a POST request with the following body to `http://localhost:8080/v0/check_email`:

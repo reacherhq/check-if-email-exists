@@ -24,7 +24,7 @@ The [Docker image](./Dockerfile) is hosted on Docker Hub: https://hub.docker.com
 To run it, run the following command:
 
 ```bash
-docker run -p 8080:8080 reacherhq/backend
+docker run -p 8080:8080 reacherhq/backend:latest
 ```
 
 You can then send a POST request with the following body to `http://localhost:8080/v0/check_email`:
