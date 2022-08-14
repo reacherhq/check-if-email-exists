@@ -100,6 +100,9 @@ fn calculate_reachable(misc: &MiscDetails, smtp: &Result<SmtpDetails, SmtpError>
 /// - SMTP checks: connect to the SMTP server and verify the email is
 ///   deliverable,
 /// - misc checks: metadata about the email provider.
+///
+/// Returns a `CheckEmailOutput` output, whose `is_reachable` field is one of
+/// `Safe`, `Invalid`, `Risky` or `Unknown`.
 pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 	let to_email = &input.to_email;
 
