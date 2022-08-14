@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
+      - run: cd backend
       - name: Set GITHUB_TAG env
         id: vars
         run: echo ::set-output name=GITHUB_TAG::${GITHUB_REF:10} # Remove /refs/head/
