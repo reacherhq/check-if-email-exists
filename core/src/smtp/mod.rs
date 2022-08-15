@@ -55,7 +55,7 @@ pub struct SmtpDetails {
 macro_rules! try_smtp (
     ($res: expr, $client: ident, $to_email: expr, $host: expr, $port: expr) => ({
 		if let Err(err) = $res {
-			log::debug!(target: LOG_TARGET, "[email={}] Closing {}:{}, because of error '{:?}'.", $to_email, $host, $port, err);
+			log::debug!(target: LOG_TARGET, "[email={}] Closing [host={}:{}], because of error '{:?}'.", $to_email, $host, $port, err);
 			// Try to close the connection, but ignore if there's an error.
 			let _ = $client.close().await;
 
