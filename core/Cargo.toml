@@ -12,10 +12,6 @@ publish = true
 readme = "../README.md"
 repository = "https://github.com/reacherhq/check-if-email-exists"
 
-[badges]
-appveyor = { repository = "reacherhq/check-if-email-exists", service = "github" }
-travis-ci = { repository = "reacherhq/check-if-email-exists", service = "github" }
-
 [dependencies]
 async-native-tls = { version = "0.4", default-features = false }
 async-recursion = "1.0.0"
