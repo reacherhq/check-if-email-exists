@@ -4,7 +4,7 @@ on:
     tags:
       - "v*" # Push events to matching v*, i.e. v1.0, v20.15.10
 
-name: deploy
+name: deploy_cli
 env:
   # TODO: Rename to your binary
   BIN: check_if_email_exists
@@ -192,18 +192,3 @@ jobs:
           asset_path: ${{ env.BIN }}.tar.gz
           asset_name: ${{ env.BIN }}-${{ matrix.target }}.tar.gz
           asset_content_type: application/gzip
-
-  docker-publish:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@master
-      - name: Set GITHUB_TAG env
-        id: vars
-        run: echo ::set-output name=GITHUB_TAG::${GITHUB_REF:10} # Remove /refs/head/
-      - name: Publish to Registry
-        uses: elgohr/Publish-Docker-Github-Action@master
-        with:
-          name: reacherhq/check-if-email-exists
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-          tags: "latest,${{ steps.vars.outputs.GITHUB_TAG }}"

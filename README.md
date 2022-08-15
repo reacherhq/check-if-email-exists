@@ -1,147 +1,72 @@
 [![Crate](https://img.shields.io/crates/v/check-if-email-exists.svg)](https://crates.io/crates/check-if-email-exists)
 [![Docs](https://docs.rs/check-if-email-exists/badge.svg)](https://docs.rs/check-if-email-exists)
-[![Actions Status](https://github.com/reacherhq/check-if-email-exists/workflows/CI/badge.svg)](https://github.com/reacherhq/check-if-email-exists/actions)
+[![Docker](https://img.shields.io/docker/v/reacherhq/backend?color=0db7ed&label=docker&sort=date)](https://hub.docker.com/r/reacherhq/backend)
+[![Actions Status](https://github.com/reacherhq/check-if-email-exists/workflows/pr/badge.svg)](https://github.com/reacherhq/check-if-email-exists/actions)
 [![Github Sponsor](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&link=https://github.com/sponsors/amaurym)](https://github.com/sponsors/amaurym)
 
-<br /><br /><br />
+<br /><br />
 
+<p align="center"><img align="center" src="https://storage.googleapis.com/saasify-uploads-prod/696e287ad79f0e0352bc201b36d701849f7d55e7.svg" height="96" alt="reacher" /></p>
 <h1 align="center">check-if-email-exists</h1>
-<h4 align="center">Check if an email address exists without sending any email.</h4>
+<h4 align="center">Check if an email address exists without sending any email.<br/>Comes with a <a href="./backend">⚙️ HTTP backend</a>.</h4>
 
 <br /><br /><br />
 
 ## 👉 Live Demo: https://reacher.email
 
-<a href="https://www.hookdoo.com/?github"><img src="https://storage.googleapis.com/saasify-uploads-prod/696e287ad79f0e0352bc201b36d701849f7d55e7.svg" height="96" alt="hookdoo" align="left" /></a>
+<img src="https://storage.googleapis.com/saasify-uploads-prod/696e287ad79f0e0352bc201b36d701849f7d55e7.svg" height="68" align="left" />
 
-If you don't have time to waste configuring, hosting, debugging, and maintaining your own email verifier, we offer a **SaaS** solution that has all of the capabilities `check-if-email-exists` provides, plus a lot more, and all that packaged in a nice friendly web interface. If you are interested, find out more at [Reacher](https://reacher.email/?ref=github). If you have any questions, you can contact me at amaury@reacher.email.
+This is open-source, but I also offer a **SaaS** solution that has `check-if-email-exists` packaged in a nice friendly web interface. If you are interested, find out more at [Reacher](https://reacher.email/?ref=github). If you have any questions, you can contact me at amaury@reacher.email.
 
 <br />
 
-## What Does This Tool Check?
+## Get Started
 
-| Included? | Feature                                       | Description                                                                                                                     | JSON field                                                                  |
-| --------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| ✅         | **Email reachability**                        | How confident are we in sending an email to this address? Can be one of `safe`, `risky`, `invalid` or `unknown`.                | `is_reachable`                                                              |
-| ✅         | **Syntax validation**                         | Is the address syntactically valid?                                                                                             | `syntax.is_valid_syntax`                                                    |
-| ✅         | **DNS records validation**                    | Does the domain of the email address have valid MX DNS records?                                                                 | `mx.accepts_mail`                                                           |
-| ✅         | **Disposable email address (DEA) validation** | Is the address provided by a known [disposable email address](https://en.wikipedia.org/wiki/Disposable_email_address) provider? | `misc.is_disposable`                                                        |
-| ✅         | **SMTP server validation**                    | Can the mail exchanger of the email address domain be contacted successfully?                                                   | `smtp.can_connect_smtp`                                                     |
-| ✅         | **Email deliverability**                      | Is an email sent to this address deliverable?                                                                                   | `smtp.is_deliverable`                                                       |
-| ✅         | **Mailbox disabled**                          | Has this email address been disabled by the email provider?                                                                     | `smtp.is_disabled`                                                          |
-| ✅         | **Full inbox**                                | Is the inbox of this mailbox full?                                                                                              | `smtp.has_full_inbox`                                                       |
-| ✅         | **Catch-all address**                         | Is this email address a [catch-all](https://debounce.io/blog/help/what-is-a-catch-all-or-accept-all/) address?                  | `smtp.is_catch_all`                                                         |
-| ✅         | **Role account validation**                   | Is the email address a well-known role account?                                                                                 | `misc.is_role_account`                                                      |
-| 🔜         | **Free email provider check**                 | Is the email address bound to a known free email provider?                                                                      | [Issue #89](https://github.com/reacherhq/check-if-email-exists/issues/89)   |
-| 🔜         | **Syntax validation, provider-specific**      | According to the syntactic rules of the target mail provider, is the address syntactically valid?                               | [Issue #90](https://github.com/reacherhq/check-if-email-exists/issues/90)   |
-| 🔜         | **Honeypot detection**                        | Does email address under test hide a [honeypot](https://en.wikipedia.org/wiki/Spamtrap)?                                        | [Issue #91](https://github.com/reacherhq/check-if-email-exists/issues/91)   |
-| 🔜         | **Gravatar**                                  | Does this email address have a [Gravatar](https://gravatar.com/) profile picture?                                               | [Issue #92](https://github.com/reacherhq/check-if-email-exists/issues/92)   |
-| 🔜         | **Have I Been Pwned?**                        | Has this email been compromised in a [data breach](https://haveibeenpwned.com/)?                                                | [Issue #289](https://github.com/reacherhq/check-if-email-exists/issues/289) |
+3 non-SaaS ways to get started with `check-if-email-exists`.
 
-## 🤔 Why?
+### 1. ⚙️ HTTP backend using Docker (popular method 🥇) [[Full docs](./backend/README.md)]
 
-Many online services (https://hunter.io, https://verify-email.org, https://email-checker.net) offer this service for a paid fee. Here is an open-source alternative to those tools.
+This option allows you to run a HTTP backend using Docker 🐳, on a cloud instance or your own server. Please note that outbound port 25 must be open.
 
-## License
+```bash
+docker run -p 8080:8080 reacherhq/backend:latest
+```
 
-`check-if-email-exists`'s source code is provided under a **dual license model**.
+Then send a `POST http://localhost:8080/v0/check_email` request with the following body:
 
-### Commercial license
+```js
+{
+    "to_email": "someone@gmail.com",
+    "from_email": "my@my-server.com", // (optional) email to use in the `FROM` SMTP command, defaults to "user@example.org"
+    "hello_name": "my-server.com",    // (optional) name to use in the `EHLO` SMTP command, defaults to "localhost"
+    "proxy": {                        // (optional) SOCK5 proxy to run the verification through, default is empty
+        "host": "my-proxy.io",
+        "port": 1080,
+        "username": "me",             // (optional) Proxy username
+        "password": "pass"            // (optional) Proxy password
+    },
+    "smtp_port": 587                  // (optional) SMTP port to do the email verification, defaults to 25
+}
+```
 
-If you want to use `check-if-email-exists` to develop commercial sites, tools, and applications, the Commercial License is the appropriate license. With this option, your source code is kept proprietary. Purchase a `check-if-email-exists` Commercial License at https://reacher.email/pricing.
+### 2. Download the CLI [[Full docs](./cli/README.md)]
 
-### Open source license
-
-If you are creating an open-source application under a license compatible with the GNU Affero GPL license v3, you may use `check-if-email-exists` under the terms of the [AGPL-3.0](./LICENSE.AGPL).
-
-[Read more](https://help.reacher.email/reacher-licenses) about Reacher's license.
-
-## Try It Yourself
-
-There are 5 ways you can try `check-if-email-exists`.
-
-### 1. Use the Hosted Version: https://reacher.email 🥇
-
-Reacher is a simple SaaS using this library, also [open-source](https://github.com/reacherhq/backend)!
-
-> If you would like a high free tier to test Reacher, consider [sponsoring me](https://github.com/sponsors/amaurym/)! You'll get 8000 free email verifications every month, and this contribution would mean A WHOLE LOT to me.
-
-### 2. One-Click Deploy to Heroku
-
-Reacher provides a fully-fledged REST backend at https://github.com/reacherhq/backend. It is the same backend running for our main product https://reacher.email.
-
-The backend is built using the fast web framework [warp](https://github.com/seanmonstar/warp) and exposes an API endpoint for making email verifications.
-
-For a one-click deploy to [Heroku](https://heroku.com), click on the purple Heroku button at [reacherhq/backend](https://github.com/reacherhq/backend#get-started).
-
-### 3. Use Docker
-
-A Docker image with a fully-fledged HTTP backend is hosted on https://hub.docker.com/r/reacherhq/backend.
-
-For more information on how to use the Docker image, please head to [reacherhq/backend](https://github.com/reacherhq/backend#2-use-docker).
-
-### 4. Download the Binary
-
-> Note: The binary doesn't connect to any backend, it checks the email directly from your computer.
+> Note: The CLI binary doesn't connect to any backend, it checks the email directly from your computer.
 
 Head to the [releases page](https://github.com/reacherhq/check-if-email-exists/releases) and download the binary for your platform.
 
-```
+```bash
 > $ check_if_email_exists --help
 check_if_email_exists 0.8.32
 Check if an email address exists without sending an email.
 
 USAGE:
     check_if_email_exists [FLAGS] [OPTIONS] [TO_EMAIL]
-
-ARGS:
-    <TO_EMAIL>    The email to check
-
-FLAGS:
-    -h, --help       Print help information
-        --http       DEPRECATED. Runs an HTTP server. This option will be removed in v0.9.0
-    -V, --version    Print version information
-
-OPTIONS:
-        --from-email <FROM_EMAIL>
-            The email to use in the `MAIL FROM:` SMTP command [env: FROM_EMAIL=] [default:
-            user@example.org]
-
-        --hello-name <HELLO_NAME>
-            The name to use in the `EHLO:` SMTP command [env: HELLO_NAME=] [default: localhost]
-
-        --http-host <HTTP_HOST>
-            DEPRECATED. Sets the host IP address on which the HTTP server should bind. Only used
-            when `--http` flag is on. This option will be removed in v0.9.0 [env: HOST=] [default:
-            127.0.0.1]
-
-        --http-port <HTTP_PORT>
-            DEPRECATED. Sets the port on which the HTTP server should bind. Only used when the `--http`
-            flag is on. If not set, then it will use $PORT or default to 3000. This option will be
-            removed in v0.9.0 [env: PORT=] [default: 3000]
-
-        --proxy-host <PROXY_HOST>
-            Use the specified SOCKS5 proxy host to perform email verification [env: PROXY_HOST=]
-
-        --proxy-port <PROXY_PORT>
-            Use the specified SOCKS5 proxy port to perform email verification. Only used when
-            `--proxy-host` flag is set [env: PROXY_PORT=] [default: 1080]
-
-        --smtp-port <SMTP_PORT>
-            The email to check [env: SMTP_PORT=] [default: 25]
-
-        --yahoo-use-api <YAHOO_USE_API>
-            For Yahoo email addresses, use Yahoo's API instead of connecting directly to their SMTP
-            servers [env: YAHOO_USE_API=] [default: true]
 ```
 
-**💡 PRO TIP:** To show debug logs when running the binary, run:
+Check out the [dedicated README.md](./cli/README.md) for all options and flags.
 
-```bash
-RUST_LOG=debug check_if_email_exists [FLAGS] [OPTIONS] [TO_EMAIL]
-```
-
-### 5. Usage as a Rust Library
+### 3. Programmatic Usage [[Full docs](https://docs.rs/check-if-email-exists)]
 
 In your own Rust project, you can add `check-if-email-exists` in your `Cargo.toml`:
 
@@ -158,18 +83,6 @@ use check_if_email_exists::{check_email, CheckEmailInput, CheckEmailInputProxy};
 async fn check() {
     // Let's say we want to test the deliverability of someone@gmail.com.
     let mut input = CheckEmailInput::new(vec!["someone@gmail.com".into()]);
-
-    // Optionally, we can also tweak the configuration parameters used in the
-    // verification.
-    input
-        .set_from_email("me@example.org".into()) // Used in the `MAIL FROM:` command
-        .set_hello_name("example.org".into())    // Used in the `EHLO` command
-        .set_proxy(CheckEmailInputProxy {        // Use a SOCKS5 proxy to verify the email
-            host: "my-proxy.io".into(),
-            port: 1080,
-            username: None,                      // You can also set it non-empty
-            password: None
-        });
 
     // Verify this email, using async/await syntax.
     let result = check_email(&input).await;
@@ -219,7 +132,43 @@ The output will be a JSON with the below format, the fields should be self-expla
 }
 ```
 
-You can also take a look at the [documentation](https://help.reacher.email/rest-api-documentation) of this JSON object.
+## What Does This Tool Check?
+
+| Included? | Feature                                       | Description                                                                                                                     | JSON field                                                                  |
+| --------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| ✅        | **Email reachability**                        | How confident are we in sending an email to this address? Can be one of `safe`, `risky`, `invalid` or `unknown`.                | `is_reachable`                                                              |
+| ✅        | **Syntax validation**                         | Is the address syntactically valid?                                                                                             | `syntax.is_valid_syntax`                                                    |
+| ✅        | **DNS records validation**                    | Does the domain of the email address have valid MX DNS records?                                                                 | `mx.accepts_mail`                                                           |
+| ✅        | **Disposable email address (DEA) validation** | Is the address provided by a known [disposable email address](https://en.wikipedia.org/wiki/Disposable_email_address) provider? | `misc.is_disposable`                                                        |
+| ✅        | **SMTP server validation**                    | Can the mail exchanger of the email address domain be contacted successfully?                                                   | `smtp.can_connect_smtp`                                                     |
+| ✅        | **Email deliverability**                      | Is an email sent to this address deliverable?                                                                                   | `smtp.is_deliverable`                                                       |
+| ✅        | **Mailbox disabled**                          | Has this email address been disabled by the email provider?                                                                     | `smtp.is_disabled`                                                          |
+| ✅        | **Full inbox**                                | Is the inbox of this mailbox full?                                                                                              | `smtp.has_full_inbox`                                                       |
+| ✅        | **Catch-all address**                         | Is this email address a [catch-all](https://debounce.io/blog/help/what-is-a-catch-all-or-accept-all/) address?                  | `smtp.is_catch_all`                                                         |
+| ✅        | **Role account validation**                   | Is the email address a well-known role account?                                                                                 | `misc.is_role_account`                                                      |
+| 🔜        | **Free email provider check**                 | Is the email address bound to a known free email provider?                                                                      | [Issue #89](https://github.com/reacherhq/check-if-email-exists/issues/89)   |
+| 🔜        | **Syntax validation, provider-specific**      | According to the syntactic rules of the target mail provider, is the address syntactically valid?                               | [Issue #90](https://github.com/reacherhq/check-if-email-exists/issues/90)   |
+| 🔜        | **Honeypot detection**                        | Does email address under test hide a [honeypot](https://en.wikipedia.org/wiki/Spamtrap)?                                        | [Issue #91](https://github.com/reacherhq/check-if-email-exists/issues/91)   |
+| 🔜        | **Gravatar**                                  | Does this email address have a [Gravatar](https://gravatar.com/) profile picture?                                               | [Issue #92](https://github.com/reacherhq/check-if-email-exists/issues/92)   |
+| 🔜        | **Have I Been Pwned?**                        | Has this email been compromised in a [data breach](https://haveibeenpwned.com/)?                                                | [Issue #289](https://github.com/reacherhq/check-if-email-exists/issues/289) |
+
+## 🤔 Why?
+
+Many online services (https://hunter.io, https://verify-email.org, https://email-checker.net) offer this service for a paid fee. Here is an open-source alternative to those tools.
+
+## License
+
+`check-if-email-exists`'s source code is provided under a **dual license model**.
+
+### Commercial license
+
+If you want to use `check-if-email-exists` to develop commercial sites, tools, and applications, the Commercial License is the appropriate license. With this option, your source code is kept proprietary. Purchase a `check-if-email-exists` Commercial License at https://reacher.email/pricing.
+
+### Open source license
+
+If you are creating an open-source application under a license compatible with the GNU Affero GPL license v3, you may use `check-if-email-exists` under the terms of the [AGPL-3.0](./LICENSE.AGPL).
+
+[➡️ Read more](https://help.reacher.email/reacher-licenses) about Reacher's license.
 
 ## ❓ FAQ
 
@@ -229,30 +178,14 @@ This means that the server does not allow real-time verification of an email rig
 
 #### The library hangs/takes a long time/doesn't show anything after 1 minute.
 
-Most ISPs block outgoing SMTP requests through port 25, to prevent spam. `check-if-email-exists` needs to have this port open to make a connection to the email's SMTP server, so won't work behind these ISPs, and will instead hang until it times out. There's unfortunately no easy workaround for this problem, see for example [this StackOverflow thread](https://stackoverflow.com/questions/18139102/how-to-get-around-an-isp-block-on-port-25-for-smtp). One solution is to rent a Linux cloud server with a static IP and no blocked ports, see for example our [Deploy to Heroku](#2-deploy-to-heroku) section.
+Most ISPs block outgoing SMTP requests through port 25, to prevent spam. `check-if-email-exists` needs to have this port open to make a connection to the email's SMTP server, so won't work behind these ISPs, and will instead hang until it times out. There's unfortunately no easy workaround for this problem, see for example [this StackOverflow thread](https://stackoverflow.com/questions/18139102/how-to-get-around-an-isp-block-on-port-25-for-smtp). One solution is to rent a Linux cloud server with a static IP and no blocked ports, see for example our [Self-Host Guide](https://help.reacher.email/self-host-guide) for which cloud providers open port 25.
 
-To see in detail what the binary is doing behind the scenes, run it in verbose mode to see the logs.
+To see in detail what the binary is doing behind the scenes, run it in verbose mode with `RUST_LOG=debug` to see the logs.
 
-#### I have another question
+#### I have another question.
 
 Feel free to check out Reacher's [FAQ](https://help.reacher.email/faq).
 
 ## 🔨 Build From Source
 
-First, [install Rust](https://www.rust-lang.org/tools/install); you'll need Rust 1.37.0 or later. Then, run the following commands:
-
-```bash
-# Download the code
-$ git clone https://github.com/reacherhq/check-if-email-exists
-$ cd check-if-email-exists
-
-# Build in release mode
-$ cargo build --release
-
-# Run the binary
-$ ./target/release/check_if_email_exists --help
-```
-
-## Legacy Bash Script
-
-The 1st version of this tool was a simple bash script that made a telnet call. If you would like to use that simpler version, have a look at the [`legacy`](https://github.com/reacherhq/check-if-email-exists/tree/legacy) branch. The reasons for porting the bash script to the current codebase are explained [in issue #4](https://github.com/reacherhq/check-if-email-exists/issues/4).
+Build the [CLI from source](./cli/README.md#build-from-source) or the [HTTP backend from source](./backend/README.md#build-from-source).

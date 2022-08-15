@@ -1,6 +1,6 @@
 [workspace]
 members = [
+	"backend",
 	"cli",
 	"core",
-	"test_suite"
 ]
