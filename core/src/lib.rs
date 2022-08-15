@@ -127,7 +127,7 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 
 	log::debug!(
 		target: LOG_TARGET,
-		"[email={}] [step=syntax] Found the following syntax validation: {:?}",
+		"[email={}] Found the following syntax validation: {:?}",
 		to_email,
 		my_syntax
 	);
@@ -160,7 +160,7 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 
 	log::debug!(
 		target: LOG_TARGET,
-		"[email={}] [step=mx] Found the following MX hosts: {:?}",
+		"[email={}] Found the following MX hosts: {:?}",
 		to_email,
 		my_mx
 			.lookup
@@ -174,7 +174,7 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 	let my_misc = check_misc(&my_syntax);
 	log::debug!(
 		target: LOG_TARGET,
-		"[email={}] [step=misc] Found the following misc details: {:?}",
+		"[email={}] Found the following misc details: {:?}",
 		to_email,
 		my_misc
 	);
