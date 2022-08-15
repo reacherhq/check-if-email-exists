@@ -15,7 +15,7 @@ Then run:
 
 ```bash
 > $ check_if_email_exists --help
-check-if-email-exists-cli 0.8.32
+check-if-email-exists-cli 0.9.0
 Check if an email address exists without sending any email.
 
 USAGE:
