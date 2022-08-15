@@ -44,6 +44,8 @@ pub fn is_invalid(e: &str) -> bool {
 		|| e.contains("recipient rejected")
 		// permanent: 5.1.1 Unknown recipient address
 		|| e.contains("unknown recipient address")
+		// 554 Unknown Recipient (#5.1.1) (on @parkwayhonda.com)
+		|| e.contains("unknown recipient") 
 		|| e.contains("undeliverable")
 		// 550 User unknown
 		// 550 5.1.1 <EMAIL> User unknown
@@ -69,6 +71,8 @@ pub fn is_invalid(e: &str) -> bool {
 		|| e.contains("no such mailbox")
 		// 550 Requested action not taken: mailbox unavailable
 		|| e.contains("mailbox unavailable")
+		// 5.5.0 Requested actions not taken as the mailbox is unavailable (on @etu.uca.fr)
+		|| e.contains("mailbox is unavailable")
 		// 550 5.1.1 Is not a valid mailbox
 		|| e.contains("not a valid mailbox")
 		// No such recipient here
@@ -157,8 +161,6 @@ pub fn is_err_ip_blacklisted(e: &SmtpError) -> bool {
 	first_line.contains("poor reputation") ||
 	// JunkMail rejected - (gmail.com) [193.218.118.140]:46615 is in an RBL: http://www.barracudanetworks.com/reputation/?pr=1&ip=193.218.118.140
 	first_line.contains("junkmail") ||
-	// 554 Unknown Recipient (#5.1.1)
-	first_line.contains("unknown recipient") ||
 
     // Transient errors
 
