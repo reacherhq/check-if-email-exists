@@ -1,4 +1,5 @@
-name: CI
+# CI actions for the CLI only. We test that the CLI works on various platforms.
+name: cli
 
 on:
   push:

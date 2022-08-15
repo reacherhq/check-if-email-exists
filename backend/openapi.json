@@ -1,0 +1,348 @@
+{
+	"openapi": "3.0.0",
+	"info": {
+		"title": "Reacher",
+		"version": "0.3.*",
+		"description": "### What is Reacher?\n\nReacher is a powerful, free and open-source email verification API service. It is provided both as a SaaS and as a self-host solution.",
+		"license": {
+			"name": "AGPL-3.0 OR Commercial",
+			"url": "https://github.com/reacherhq/backend/blob/master/LICENSE.md"
+		},
+		"contact": {
+			"name": "Reacher",
+			"url": "https://reacher.email",
+			"email": "amaury@reacher.email"
+		},
+		"termsOfService": "https://github.com/reacherhq/policies/blob/master/terms/index.fr.md"
+	},
+	"servers": [
+		{
+			"url": "https://api.reacher.email/v0",
+			"description": "Reacher Production"
+		}
+	],
+	"paths": {
+		"/check_email": {
+			"post": {
+				"summary": "/check_email",
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CheckEmailOutput"
+								},
+								"examples": {
+									"Example with test@gmail.com": {
+										"value": {
+											"input": "test@gmail.com",
+											"is_reachable": "invalid",
+											"misc": {
+												"is_disposable": false,
+												"is_role_account": true
+											},
+											"mx": {
+												"accepts_mail": true,
+												"records": [
+													"alt4.gmail-smtp-in.l.google.com.",
+													"alt2.gmail-smtp-in.l.google.com.",
+													"alt3.gmail-smtp-in.l.google.com.",
+													"gmail-smtp-in.l.google.com.",
+													"alt1.gmail-smtp-in.l.google.com."
+												]
+											},
+											"smtp": {
+												"can_connect_smtp": true,
+												"has_full_inbox": false,
+												"is_catch_all": false,
+												"is_deliverable": false,
+												"is_disabled": false
+											},
+											"syntax": {
+												"domain": "gmail.com",
+												"is_valid_syntax": true,
+												"username": "test"
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"operationId": "post-check-email",
+				"description": "Perform a full verification of an email address.",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CheckEmailInput"
+							}
+						}
+					},
+					"description": "Input containing all parameters necessary for an email verification."
+				},
+				"parameters": [
+					{
+						"schema": {
+							"type": "string"
+						},
+						"in": "header",
+						"name": "Authorization",
+						"description": "Your personal Reacher API key",
+						"required": true
+					}
+				]
+			},
+			"parameters": []
+		}
+	},
+	"components": {
+		"schemas": {
+			"CheckEmailOutput": {
+				"title": "CheckEmailOutput",
+				"type": "object",
+				"x-examples": {
+					"Example with test@gmail.com": {
+						"input": "test@gmail.com",
+						"is_reachable": "invalid",
+						"misc": {
+							"is_disposable": false,
+							"is_role_account": true
+						},
+						"mx": {
+							"accepts_mail": true,
+							"records": [
+								"alt4.gmail-smtp-in.l.google.com.",
+								"alt2.gmail-smtp-in.l.google.com.",
+								"alt3.gmail-smtp-in.l.google.com.",
+								"gmail-smtp-in.l.google.com.",
+								"alt1.gmail-smtp-in.l.google.com."
+							]
+						},
+						"smtp": {
+							"can_connect_smtp": true,
+							"has_full_inbox": false,
+							"is_catch_all": false,
+							"is_deliverable": false,
+							"is_disabled": false
+						},
+						"syntax": {
+							"domain": "gmail.com",
+							"is_valid_syntax": true,
+							"username": "test"
+						}
+					}
+				},
+				"description": "The verification result of an email.",
+				"properties": {
+					"input": {
+						"type": "string",
+						"format": "email",
+						"description": "The input email address."
+					},
+					"is_reachable": {
+						"$ref": "#/components/schemas/Reachable"
+					},
+					"misc": {
+						"oneOf": [
+							{
+								"$ref": "#/components/schemas/MiscDetails"
+							},
+							{
+								"$ref": "#/components/schemas/Error"
+							}
+						],
+						"description": "Miscellaneous information about the email account."
+					},
+					"mx": {
+						"oneOf": [
+							{
+								"$ref": "#/components/schemas/MxDetails"
+							},
+							{
+								"$ref": "#/components/schemas/Error"
+							}
+						],
+						"description": "Information gathered from querying the MX records of the mail server."
+					},
+					"smtp": {
+						"oneOf": [
+							{
+								"$ref": "#/components/schemas/SmtpDetails"
+							},
+							{
+								"$ref": "#/components/schemas/Error"
+							}
+						],
+						"description": "Verifications performed by connecting to the mail server via SMTP."
+					},
+					"syntax": {
+						"$ref": "#/components/schemas/SyntaxDetails"
+					}
+				},
+				"required": ["input", "misc", "mx", "smtp", "syntax", "is_reachable"]
+			},
+			"Error": {
+				"title": "Error",
+				"type": "object",
+				"description": "Object describing an error happening during the misc, MX, or SMTP verifications.",
+				"properties": {
+					"type": {
+						"type": "string",
+						"description": "An error type."
+					},
+					"message": {
+						"type": "string",
+						"description": "A human-readable description of the error."
+					}
+				},
+				"required": ["type", "message"]
+			},
+			"MiscDetails": {
+				"title": "MiscDetails",
+				"type": "object",
+				"description": "Miscellaneous information about the email account.",
+				"properties": {
+					"is_disposable": {
+						"type": "boolean",
+						"description": "Is the address provided by a known disposable email address provider?"
+					},
+					"is_role_account": {
+						"type": "boolean",
+						"description": "Is this email a role-based account?"
+					}
+				},
+				"required": ["is_disposable", "is_role_account"]
+			},
+			"MxDetails": {
+				"title": "MxDetails",
+				"type": "object",
+				"properties": {
+					"accepts_mail": {
+						"type": "boolean",
+						"description": "Does the server accept mails?"
+					},
+					"records": {
+						"type": "array",
+						"description": "The list of FQDN (Fully Qualified Domain Names) of the mail server.",
+						"items": {
+							"type": "string"
+						}
+					}
+				},
+				"required": ["accepts_mail", "records"],
+				"description": "Object holding the MX details of the mail server."
+			},
+			"SmtpDetails": {
+				"title": "SmtpDetails",
+				"type": "object",
+				"description": "Verifications performed by connecting to the mail server via SMTP.",
+				"properties": {
+					"can_connect_smtp": {
+						"type": "boolean",
+						"description": "Can the mail exchanger of the email address domain be contacted successfully?"
+					},
+					"has_full_inbox": {
+						"type": "boolean",
+						"description": "Is the inbox of this mailbox full?"
+					},
+					"is_catch_all": {
+						"type": "boolean",
+						"description": "Is this email address a catch-all address?"
+					},
+					"is_deliverable": {
+						"type": "boolean",
+						"description": "Is an email sent to this address deliverable?"
+					},
+					"is_disabled": {
+						"type": "boolean",
+						"description": "Has this email address been disabled by the email provider?"
+					}
+				},
+				"required": ["can_connect_smtp", "has_full_inbox", "is_catch_all", "is_deliverable", "is_disabled"]
+			},
+			"SyntaxDetails": {
+				"title": "SyntaxDetails",
+				"type": "object",
+				"description": "Syntax validation of an email address.",
+				"properties": {
+					"domain": {
+						"type": "string",
+						"description": "The domain name of the email, i.e. the part after the \"@\" symbol."
+					},
+					"is_valid_syntax": {
+						"type": "boolean",
+						"description": "Is the address syntactically valid?"
+					},
+					"username": {
+						"type": "string",
+						"description": "The username of the email, i.e. the part before the \"@\" symbol."
+					}
+				},
+				"required": ["domain", "is_valid_syntax", "username"]
+			},
+			"Reachable": {
+				"type": "string",
+				"title": "Reachable",
+				"enum": ["invalid", "unknown", "safe", "risky"],
+				"description": "An enum to describe how confident we are that the recipient address is real: `safe`, `risky`, `invalid` and `unknown`. Check our FAQ to know the meanings of the 4 possibilities: https://help.reacher.email/email-attributes-inside-json."
+			},
+			"CheckEmailInput": {
+				"title": "CheckEmailInput",
+				"type": "object",
+				"description": "Input containing all parameters necessary for an email verification.",
+				"properties": {
+					"from_email": {
+						"type": "string",
+						"description": "In the SMTP connection, the FROM email address."
+					},
+					"to_email": {
+						"type": "string",
+						"description": "The email address to check."
+					},
+					"hello_name": {
+						"type": "string",
+						"description": "In the SMTP connection, the EHLO hostname."
+					},
+					"proxy": {
+						"$ref": "#/components/schemas/CheckEmailInputProxy"
+					}
+				},
+				"required": ["to_email"]
+			},
+			"CheckEmailInputProxy": {
+				"title": "CheckEmailInputProxy",
+				"type": "object",
+				"x-examples": {
+					"example-1": {
+						"value": {
+							"host": "my-proxy.io",
+							"port": 1080
+						}
+					}
+				},
+				"properties": {
+					"host": {
+						"type": "string",
+						"description": "The proxy host."
+					},
+					"port": {
+						"type": "integer",
+						"description": "The proxy port."
+					}
+				},
+				"required": ["host", "port"]
+			}
+		},
+		"securitySchemes": {
+			"Authorization": {
+				"name": "Authorization",
+				"type": "apiKey",
+				"in": "header",
+				"description": "A Reacher API key is required for all requests. Sign up on https://reacher.email to get your personal API key."
+			}
+		}
+	}
+}

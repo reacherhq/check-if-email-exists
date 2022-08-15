@@ -4,3 +4,4 @@
 
 # sensitive data
 /test_suite/src/sensitive_fixtures/*.json
+.env
