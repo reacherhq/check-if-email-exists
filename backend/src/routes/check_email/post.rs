@@ -58,7 +58,7 @@ impl From<EndpointRequest> for CheckEmailInput {
 /// The main endpoint handler that implements the logic of this route.
 async fn handler(body: EndpointRequest) -> Result<impl warp::Reply, warp::Rejection> {
 	// Run the future to check an email.
-	Ok(warp::reply::json(&check_email(&body.into()).await))
+	Ok(warp::reply::json(&check_email(body.into()).await))
 }
 
 /// Create the `POST /check_email` endpoint.

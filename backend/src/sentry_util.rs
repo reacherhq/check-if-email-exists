@@ -20,13 +20,17 @@
 //! `check-if-email-exists` are known errors, in which case we don't log them
 //! to Sentry.
 
-use super::sentry_util;
+use std::borrow::Cow;
+use std::env;
+
 use async_smtp::smtp::error::Error as AsyncSmtpError;
+use check_if_email_exists::misc::MiscError;
+use check_if_email_exists::mx::MxError;
 use check_if_email_exists::LOG_TARGET;
 use check_if_email_exists::{smtp::SmtpError, CheckEmailOutput};
-use sentry::protocol::{Event, Level, Value};
-use std::io::Error as IoError;
-use std::{collections::BTreeMap, env};
+use sentry::protocol::{Event, Exception, Level, Values};
+
+use super::sentry_util;
 
 pub const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -42,62 +46,62 @@ pub fn setup_sentry() -> sentry::ClientInitGuard {
 	sentry
 }
 
-/// If BACKEND_NAME environment variable is set, add it to the sentry `extra`
-/// properties.
+/// If RCH_BACKEND_NAME environment variable is set, add it to the sentry
+/// `server_name` properties.
 /// For backwards compatibility, we also support HEROKU_APP_NAME env variable.
-fn add_backend_name(mut extra: BTreeMap<String, Value>) -> BTreeMap<String, Value> {
-	if let Ok(n) = env::var("BACKEND_NAME") {
-		extra.insert("BACKEND_NAME".into(), n.into());
+fn get_backend_name<'a>() -> Option<Cow<'a, str>> {
+	if let Ok(n) = env::var("RCH_BACKEND_NAME") {
+		return Some(n.into());
 	} else if let Ok(n) = env::var("HEROKU_APP_NAME") {
-		extra.insert("BACKEND_NAME".into(), n.into());
+		return Some(n.into());
 	}
 
-	extra
+	None
 }
 
-/// Helper function to send an Info event to Sentry. We use these events for
-/// analytics purposes (I know, Sentry shouldn't be used for that...).
-/// TODO https://github.com/reacherhq/backend/issues/207
-pub fn metrics(message: String, duration: u128, domain: &str) {
-	log::info!(target: LOG_TARGET, "Sending info to Sentry: {}", message);
+#[derive(Debug)]
+enum SentryError<'a> {
+	Misc(&'a MiscError),
+	Mx(&'a MxError),
+	Smtp(&'a SmtpError),
+}
 
-	let mut extra = BTreeMap::new();
-
-	extra.insert("duration".into(), duration.to_string().into());
-	extra.insert("domain".into(), domain.into());
-	extra = add_backend_name(extra);
-
-	sentry::capture_event(Event {
-		extra,
-		level: Level::Info,
-		message: Some(message),
-		release: Some(CARGO_PKG_VERSION.into()),
-		..Default::default()
-	});
+impl<'a> SentryError<'a> {
+	/// Get the error type to be passed into Sentry's Exception `ty` field.
+	fn get_exception_type(&self) -> String {
+		match self {
+			SentryError::Misc(_) => "MiscError".into(),
+			SentryError::Mx(_) => "MxError".into(),
+			SentryError::Smtp(_) => "SmtpError".into(),
+		}
+	}
 }
 
 /// Helper function to send an Error event to Sentry. We redact all sensitive
-/// info before sending to Sentry, but removing all instances of `username`.
-pub fn error(message: String, result: Option<&str>, username: &str) {
-	let redacted_message = redact(message.as_str(), username);
+/// info before sending to Sentry, by removing all instances of `username`.
+fn error(err: SentryError, result: &CheckEmailOutput, redact_username: &str) {
+	let redacted_message = redact(format!("{:?}", err).as_str(), redact_username);
 	log::debug!(
 		target: LOG_TARGET,
 		"Sending error to Sentry: {}",
 		redacted_message
 	);
 
-	let mut extra = BTreeMap::new();
-	if let Some(result) = result {
-		extra.insert("CheckEmailOutput".into(), redact(result, username).into());
-	}
-
-	extra = add_backend_name(extra);
+	let exception = Exception {
+		ty: err.get_exception_type(),
+		value: Some(format!("{:#?}", result)),
+		..Default::default()
+	};
 
 	sentry::capture_event(Event {
-		extra,
+		exception: Values {
+			values: vec![exception],
+		},
 		level: Level::Error,
+		environment: Some("production".into()),
 		message: Some(redacted_message),
 		release: Some(CARGO_PKG_VERSION.into()),
+		server_name: get_backend_name(),
 		..Default::default()
 	});
 }
@@ -108,16 +112,8 @@ fn redact(input: &str, username: &str) -> String {
 	input.replace(username, "***")
 }
 
-/// Check if the message contains known SMTP IO errors.
-fn has_smtp_io_errors(error: &IoError) -> bool {
-	// code: 104, kind: ConnectionReset, message: "Connection reset by peer",
-	error.raw_os_error() == Some(104) ||
-	// kind: Other, error: "incomplete",
-	error.to_string() == "incomplete"
-}
-
 /// Check if the message contains known SMTP Transient errors.
-fn has_smtp_transient_errors(message: &[String]) -> bool {
+fn skip_smtp_transient_errors(message: &[String]) -> bool {
 	let first_line = message[0].to_lowercase();
 
 	// 4.3.2 Please try again later
@@ -130,42 +126,47 @@ fn has_smtp_transient_errors(message: &[String]) -> bool {
 /// which case we don't log to Sentry to avoid spamming it.
 pub fn log_unknown_errors(result: &CheckEmailOutput) {
 	match (&result.misc, &result.mx, &result.smtp) {
-		(Err(error), _, _) => {
-			// We log misc errors.
+		(Err(err), _, _) => {
+			// We log all misc errors.
 			sentry_util::error(
-				format!("{:?}", error),
-				Some(format!("{:#?}", result).as_ref()),
+				SentryError::Misc(err),
+				result,
 				result.syntax.username.as_str(),
 			);
 		}
-		(_, Err(error), _) => {
-			// We log mx errors.
+		(_, Err(err), _) => {
+			// We log all mx errors.
 			sentry_util::error(
-				format!("{:?}", error),
-				Some(format!("{:#?}", result).as_ref()),
+				SentryError::Mx(err),
+				result,
 				result.syntax.username.as_str(),
 			);
+		}
+		(_, _, Err(err)) if err.get_description().is_some() => {
+			// If the SMTP error is known, we don't track it in Sentry.
 		}
 		(_, _, Err(SmtpError::SmtpError(AsyncSmtpError::Transient(response))))
-			if has_smtp_transient_errors(&response.message) =>
+			if skip_smtp_transient_errors(&response.message) =>
 		{
+			// If the SMTP error is transient and known, we don't track it in
+			// Sentry, just log it locally.
 			log::debug!(
 				target: LOG_TARGET,
 				"Transient error: {}",
-				response.message[0]
+				redact(
+					response.message[0].as_str(),
+					result.syntax.username.as_str()
+				)
 			);
 		}
-		(_, _, Err(SmtpError::SmtpError(AsyncSmtpError::Io(err)))) if has_smtp_io_errors(err) => {
-			log::debug!(target: LOG_TARGET, "Io error: {}", err);
-		}
-		(_, _, Err(error)) => {
+		(_, _, Err(err)) => {
 			// If it's a SMTP error we didn't catch above, we log to
 			// Sentry, to be able to debug them better. We don't want to
 			// spam Sentry and log all instances of the error, hence the
 			// `count` check.
 			sentry_util::error(
-				format!("{:?}", error),
-				Some(format!("{:#?}", result).as_ref()),
+				SentryError::Smtp(err),
+				result,
 				result.syntax.username.as_str(),
 			);
 		}

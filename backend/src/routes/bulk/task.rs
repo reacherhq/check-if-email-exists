@@ -17,13 +17,13 @@
 //! This file implements the `POST /bulk` endpoint.
 
 use super::error::BulkError;
-use crate::check::{check_email, SMTP_TIMEOUT};
+use crate::check::check_email;
 use check_if_email_exists::LOG_TARGET;
 use check_if_email_exists::{CheckEmailInput, CheckEmailInputProxy, CheckEmailOutput, Reachable};
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres};
 use sqlxmq::{job, CurrentJob};
-use std::{error::Error, time::Duration};
+use std::error::Error;
 use uuid::Uuid;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -74,8 +74,6 @@ impl Iterator for TaskInputIterator {
 			if let Some(proxy) = &self.body.proxy {
 				item.set_proxy(proxy.clone());
 			}
-
-			item.set_smtp_timeout(Duration::from_secs(SMTP_TIMEOUT));
 
 			self.index += 1;
 			Some(item)
@@ -160,12 +158,13 @@ pub async fn email_verification_task(
 			current_job.id(),
 		);
 
-		let response = check_email(&check_email_input).await;
+		let to_email = check_email_input.to_email.clone();
+		let response = check_email(check_email_input).await;
 
 		log::debug!(
 			target: LOG_TARGET,
 			"Got task result [email={}] for [job={}] and [uuid={}] with [is_reachable={:?}]",
-			check_email_input.to_email,
+			to_email,
 			task_payload.id,
 			current_job.id(),
 			response.is_reachable,

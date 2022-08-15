@@ -18,29 +18,18 @@
 
 use super::sentry_util;
 use check_if_email_exists::{check_email as ciee_check_email, CheckEmailInput, CheckEmailOutput};
-use std::time::Instant;
+use std::time::Duration;
 
 /// Timeout after which we drop the `check-if-email-exists` check. We run the
-/// checks twice (to avoid greylisting), so each verification takes 20s max.
-pub const SMTP_TIMEOUT: u64 = 10;
+/// checks twice (to avoid greylisting), so each verification takes 60s max.
+const SMTP_TIMEOUT: u64 = 30;
 
 /// Same as `check-if-email-exists`'s check email, but adds some additional
-/// logging and error handling.
-pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
-	// Run `ciee_check_email` with retries if necessary. Also measure the
-	// verification time.
-	let now = Instant::now();
+/// inputs and error handling.
+pub async fn check_email(mut input: CheckEmailInput) -> CheckEmailOutput {
+	input.set_smtp_timeout(Duration::from_secs(SMTP_TIMEOUT));
 
-	let res = ciee_check_email(input).await;
-
-	// Log on Sentry the `is_reachable` field.
-	// We should definitely log this somewhere else than Sentry.
-	// TODO https://github.com/reacherhq/backend/issues/207
-	sentry_util::metrics(
-		format!("is_reachable={:?}", res.is_reachable),
-		now.elapsed().as_millis(),
-		res.syntax.domain.as_ref(),
-	);
+	let res = ciee_check_email(&input).await;
 
 	sentry_util::log_unknown_errors(&res);
 
