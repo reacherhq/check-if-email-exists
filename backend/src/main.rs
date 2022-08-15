@@ -124,12 +124,7 @@ async fn run_warp_server(
 				.expect("Environment variable PORT is malformed.")
 		})
 		.unwrap_or(8080);
-	log::info!(
-		target: LOG_TARGET,
-		"Server is listening on {}:{}.",
-		host,
-		port
-	);
+	println!("Server is listening on {}:{}.", host, port);
 
 	warp::serve(routes).run((host, port)).await;
 
