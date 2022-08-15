@@ -1,7 +1,7 @@
 [package]
 name = "check-if-email-exists"
 version = "0.8.32"
-authors = ["Amaury <amaurym10@protonmail.com>"]
+authors = ["Amaury <amaury@reacher.email>"]
 categories = ["email"]
 description = "Check if an email address exists without sending any email"
 documentation = "http://docs.rs/check-if-email-exists"

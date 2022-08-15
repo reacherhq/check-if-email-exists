@@ -14,17 +14,13 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-mod http;
-
-use std::net::IpAddr;
-
 use check_if_email_exists::{check_email, CheckEmailInput, CheckEmailInputProxy};
 use clap::Parser;
 use once_cell::sync::Lazy;
 
 /// CLI options of this binary.
 #[derive(Parser, Debug)]
-#[clap(author, version, about)]
+#[clap(version, about)]
 pub struct Cli {
 	/// The email to use in the `MAIL FROM:` SMTP command.
 	#[clap(long, env, default_value = "user@example.org")]
@@ -63,37 +59,7 @@ pub struct Cli {
 	pub yahoo_use_api: bool,
 
 	/// The email to check.
-	pub to_email: Option<String>,
-
-	/// DEPRECATED. Runs a HTTP server.
-	/// This option will be removed in v0.9.0.
-	#[clap(long)]
-	#[deprecated(
-		since = "0.8.24",
-		note = "The HTTP server will be removed from the CLI, please use https://github.com/reacherhq/backend instead"
-	)]
-	pub http: bool,
-
-	/// DEPRECATED. Sets the host IP address on which the HTTP server should bind.
-	/// Only used when `--http` flag is on.
-	/// This option will be removed in v0.9.0.
-	#[clap(long, env = "HOST", default_value = "127.0.0.1")]
-	#[deprecated(
-		since = "0.8.24",
-		note = "The HTTP server will be removed from the CLI, please use https://github.com/reacherhq/backend instead"
-	)]
-	pub http_host: IpAddr,
-
-	/// DEPRECATED. Sets the port on which the HTTP server should bind.
-	/// Only used when `--http` flag is on.
-	/// If not set, then it will use $PORT, or default to 3000.
-	///  This option will be removed in v0.9.0.
-	#[clap(long, env = "PORT", default_value = "3000")]
-	#[deprecated(
-		since = "0.8.24",
-		note = "The HTTP server will be removed from the CLI, please use https://github.com/reacherhq/backend instead"
-	)]
-	pub http_port: u16,
+	pub to_email: String,
 }
 
 /// Global config of this application.
@@ -103,38 +69,33 @@ pub(crate) static CONF: Lazy<Cli> = Lazy::new(Cli::parse);
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	env_logger::init();
 
-	if let Some(to_email) = &CONF.to_email {
-		let mut input = CheckEmailInput::new(vec![to_email.clone()]);
-		input
-			.set_from_email(CONF.from_email.clone())
-			.set_hello_name(CONF.hello_name.clone())
-			.set_smtp_port(CONF.smtp_port)
-			.set_yahoo_use_api(CONF.yahoo_use_api);
-		if let Some(proxy_host) = &CONF.proxy_host {
-			input.set_proxy(CheckEmailInputProxy {
-				host: proxy_host.clone(),
-				port: CONF.proxy_port,
-				username: CONF.proxy_username.clone(),
-				password: CONF.proxy_password.clone(),
-			});
+	let to_email = &CONF.to_email;
+
+	let mut input = CheckEmailInput::new(vec![to_email.clone()]);
+	input
+		.set_from_email(CONF.from_email.clone())
+		.set_hello_name(CONF.hello_name.clone())
+		.set_smtp_port(CONF.smtp_port)
+		.set_yahoo_use_api(CONF.yahoo_use_api);
+	if let Some(proxy_host) = &CONF.proxy_host {
+		input.set_proxy(CheckEmailInputProxy {
+			host: proxy_host.clone(),
+			port: CONF.proxy_port,
+			username: CONF.proxy_username.clone(),
+			password: CONF.proxy_password.clone(),
+		});
+	}
+
+	let result = check_email(&input).await;
+
+	match serde_json::to_string_pretty(&result) {
+		Ok(output) => {
+			println!("{}", output);
 		}
-
-		let result = check_email(&input).await;
-
-		match serde_json::to_string_pretty(&result) {
-			Ok(output) => {
-				println!("{}", output);
-			}
-			Err(err) => {
-				println!("{}", err);
-			}
-		};
-	}
-
-	// Run the web server if --http flag is on.
-	if CONF.http {
-		http::run((CONF.http_host, CONF.http_port)).await?;
-	}
+		Err(err) => {
+			println!("{}", err);
+		}
+	};
 
 	Ok(())
 }

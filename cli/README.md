@@ -15,24 +15,22 @@ Then run:
 
 ```bash
 > $ check_if_email_exists --help
-check_if_email_exists 0.8.32
-Check if an email address exists without sending an email.
+check-if-email-exists-cli 0.8.32
+Check if an email address exists without sending any email.
 
 USAGE:
-    check_if_email_exists [FLAGS] [OPTIONS] [TO_EMAIL]
+    check_if_email_exists [OPTIONS] <TO_EMAIL>
 
 ARGS:
     <TO_EMAIL>    The email to check
-
-FLAGS:
-    -h, --help       Print help information
-        --http       DEPRECATED. Runs an HTTP server. This option will be removed in v0.9.0
-    -V, --version    Print version information
 
 OPTIONS:
         --from-email <FROM_EMAIL>
             The email to use in the `MAIL FROM:` SMTP command [env: FROM_EMAIL=] [default:
             user@example.org]
+
+    -h, --help
+            Print help information
 
         --hello-name <HELLO_NAME>
             The name to use in the `EHLO:` SMTP command [env: HELLO_NAME=] [default: localhost]
@@ -40,12 +38,23 @@ OPTIONS:
         --proxy-host <PROXY_HOST>
             Use the specified SOCKS5 proxy host to perform email verification [env: PROXY_HOST=]
 
+        --proxy-password <PROXY_PASSWORD>
+            Username passed to the specified SOCKS5 proxy port to perform email verification. Only
+            used when `--proxy-host` flag is set [env: PROXY_PASSWORD=]
+
         --proxy-port <PROXY_PORT>
             Use the specified SOCKS5 proxy port to perform email verification. Only used when
             `--proxy-host` flag is set [env: PROXY_PORT=] [default: 1080]
 
+        --proxy-username <PROXY_USERNAME>
+            Username passed to the specified SOCKS5 proxy port to perform email verification. Only
+            used when `--proxy-host` flag is set [env: PROXY_USERNAME=]
+
         --smtp-port <SMTP_PORT>
-            The email to check [env: SMTP_PORT=] [default: 25]
+            The port to use for the SMTP request [env: SMTP_PORT=] [default: 25]
+
+    -V, --version
+            Print version information
 
         --yahoo-use-api <YAHOO_USE_API>
             For Yahoo email addresses, use Yahoo's API instead of connecting directly to their SMTP
