@@ -22,10 +22,7 @@ use super::util::{constants::LOG_TARGET, input_output::CheckEmailInput};
 use async_native_tls::TlsConnector;
 use async_recursion::async_recursion;
 use async_smtp::{
-	smtp::{
-		commands::*, error::Error as AsyncSmtpError, extension::ClientId, ServerAddress,
-		Socks5Config,
-	},
+	smtp::{commands::*, extension::ClientId, ServerAddress, Socks5Config},
 	ClientTlsParameters, EmailAddress, SmtpClient, SmtpTransport,
 };
 use async_std::future;
@@ -58,7 +55,7 @@ pub struct SmtpDetails {
 macro_rules! try_smtp (
     ($res: expr, $client: ident, $to_email: expr, $host: expr, $port: expr) => ({
 		if let Err(err) = $res {
-			log::debug!(target: LOG_TARGET, "email={} Closing {}:{}, because of error '{:?}'.", $to_email, $host, $port, err);
+			log::debug!(target: LOG_TARGET, "[email={}] Closing [host={}:{}], because of error '{:?}'.", $to_email, $host, $port, err);
 			// Try to close the connection, but ignore if there's an error.
 			let _ = $client.close().await;
 
@@ -348,7 +345,7 @@ async fn retry(
 ) -> Result<SmtpDetails, SmtpError> {
 	log::debug!(
 		target: LOG_TARGET,
-		"email={} Check SMTP attempt #{} on {}:{}",
+		"[email={}] Check SMTP [attempt={}] on [host={}:{}]",
 		input.to_email,
 		input.retries - count + 1,
 		host,
@@ -359,7 +356,7 @@ async fn retry(
 
 	log::debug!(
 		target: LOG_TARGET,
-		"email={} Got result for attempt #{} on {}:{}, result={:?}",
+		"[email={}] Got result for [attempt={}] on [host={}:{}], [result={:?}]",
 		input.to_email,
 		input.retries - count + 1,
 		host,
@@ -367,17 +364,15 @@ async fn retry(
 		result
 	);
 
-	match result {
-		// Only retry if the error was a temporary/transient error, or a
-		// timeout error.
-		Err(SmtpError::SmtpError(AsyncSmtpError::Transient(_)))
-		| Err(SmtpError::SmtpError(AsyncSmtpError::Timeout(_))) => {
+	match &result {
+		// Only retry if the error was unknown.
+		Err(err) if err.get_description().is_none() => {
 			if count <= 1 {
 				result
 			} else {
 				log::debug!(
 					target: LOG_TARGET,
-					"email={} Potential greylisting detected, retrying.",
+					"[email={}] Potential greylisting detected, retrying.",
 					input.to_email,
 				);
 				retry(to_email, host, port, domain, input, count - 1).await

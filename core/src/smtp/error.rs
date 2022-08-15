@@ -59,7 +59,9 @@ impl From<YahooError> for SmtpError {
 
 impl SmtpError {
 	/// Get a human-understandable description of the error, in form of an enum
-	/// SmtpErrorDesc.
+	/// SmtpErrorDesc. This only parses the following known errors:
+	/// - IP blacklisted
+	/// - IP needs reverse DNS
 	pub fn get_description(&self) -> Option<SmtpErrorDesc> {
 		match self {
 			SmtpError::SmtpError(_) => {

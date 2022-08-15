@@ -77,6 +77,9 @@ pub use util::input_output::*;
 
 /// Given an email's misc and smtp details, calculate an estimate of our
 /// confidence on how reachable the email is.
+///
+/// Maybe we can switch to a points-based system?
+/// ref: https://github.com/reacherhq/check-if-email-exists/issues/935
 fn calculate_reachable(misc: &MiscDetails, smtp: &Result<SmtpDetails, SmtpError>) -> Reachable {
 	if let Ok(smtp) = smtp {
 		if misc.is_disposable || misc.is_role_account || smtp.is_catch_all || smtp.has_full_inbox {
@@ -108,7 +111,7 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 
 	log::debug!(
 		target: LOG_TARGET,
-		"email={} Checking email \"{}\"",
+		"[email={}] Checking email \"{}\"",
 		to_email,
 		to_email
 	);
@@ -124,7 +127,7 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 
 	log::debug!(
 		target: LOG_TARGET,
-		"email={} Found the following syntax validation: {:?}",
+		"[email={}] Found the following syntax validation: {:?}",
 		to_email,
 		my_syntax
 	);
@@ -157,7 +160,7 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 
 	log::debug!(
 		target: LOG_TARGET,
-		"email={} Found the following MX hosts: {:?}",
+		"[email={}] Found the following MX hosts: {:?}",
 		to_email,
 		my_mx
 			.lookup
@@ -171,7 +174,7 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 	let my_misc = check_misc(&my_syntax);
 	log::debug!(
 		target: LOG_TARGET,
-		"email={} Found the following misc details: {:?}",
+		"[email={}] Found the following misc details: {:?}",
 		to_email,
 		my_misc
 	);
