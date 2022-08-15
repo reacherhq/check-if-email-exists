@@ -22,10 +22,7 @@ use super::util::{constants::LOG_TARGET, input_output::CheckEmailInput};
 use async_native_tls::TlsConnector;
 use async_recursion::async_recursion;
 use async_smtp::{
-	smtp::{
-		commands::*, error::Error as AsyncSmtpError, extension::ClientId, ServerAddress,
-		Socks5Config,
-	},
+	smtp::{commands::*, extension::ClientId, ServerAddress, Socks5Config},
 	ClientTlsParameters, EmailAddress, SmtpClient, SmtpTransport,
 };
 use async_std::future;
@@ -367,11 +364,9 @@ async fn retry(
 		result
 	);
 
-	match result {
-		// Only retry if the error was a temporary/transient error, or a
-		// timeout error.
-		Err(SmtpError::SmtpError(AsyncSmtpError::Transient(_)))
-		| Err(SmtpError::SmtpError(AsyncSmtpError::Timeout(_))) => {
+	match &result {
+		// Only retry if the error was unknown.
+		Err(err) if err.get_description().is_none() => {
 			if count <= 1 {
 				result
 			} else {
