@@ -28,8 +28,8 @@ use uuid::Uuid;
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct TaskInput {
 	// fields for CheckEmailInput
-	pub to_emails: Vec<String>, // chunk of email from request. This always has at most `EMAIL_TASK_BATCH_SIZE` items.
-	pub smtp_ports: Vec<u16>,   // override empty smtp ports from request with default value
+	pub to_email: String,     // Email from request to verify.
+	pub smtp_ports: Vec<u16>, // Ports to try for each email, in given order. Defaults to [25].
 	pub proxy: Option<CheckEmailInputProxy>,
 	pub hello_name: Option<String>,
 	pub from_email: Option<String>,
@@ -58,7 +58,7 @@ impl Iterator for TaskInputIterator {
 
 	fn next(&mut self) -> Option<Self::Item> {
 		if self.index < self.body.smtp_ports.len() {
-			let mut item = CheckEmailInput::new(self.body.to_emails.clone());
+			let mut item = CheckEmailInput::new(self.body.to_email);
 
 			if let Some(name) = &self.body.hello_name {
 				item.set_hello_name(name.clone());
@@ -154,7 +154,7 @@ pub async fn email_verification_task(
 		log::debug!(
 			target:"reacher",
 			"Starting task [email={}] for [job={}] and [uuid={}]",
-			check_email_input.to_emails[0],
+			check_email_input.to_email,
 			task_payload.id,
 			current_job.id(),
 		);
@@ -164,7 +164,7 @@ pub async fn email_verification_task(
 		log::debug!(
 			target:"reacher",
 			"Got task result [email={}] for [job={}] and [uuid={}] with [is_reachable={:?}]",
-			check_email_input.to_emails[0],
+			check_email_input.to_email,
 			task_payload.id,
 			current_job.id(),
 			response.is_reachable,

@@ -70,7 +70,7 @@ async fn req_handler(req: Request<Body>) -> Result<Response<Body>, hyper::Error>
 			};
 
 			// Create EmailInput from body
-			let mut input = CheckEmailInput::new(body.to_emails);
+			let mut input = CheckEmailInput::new(body.to_emails[0]);
 			input
 				.set_from_email(body.from_email.unwrap_or_else(|| CONF.from_email.clone()))
 				.set_hello_name(body.hello_name.unwrap_or_else(|| CONF.hello_name.clone()))
