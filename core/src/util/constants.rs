@@ -15,4 +15,4 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 /// The target where to log check-if-email-exists logs.
-pub const LOG_TARGET: &str = "check-if-email-exists";
+pub const LOG_TARGET: &str = "reacher";

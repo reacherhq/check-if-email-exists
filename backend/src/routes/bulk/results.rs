@@ -20,6 +20,7 @@ use super::{
 	db::with_db,
 	error::{BulkError, CsvError},
 };
+use check_if_email_exists::LOG_TARGET;
 use csv::WriterBuilder;
 use serde::{Deserialize, Serialize};
 use sqlx::{Executor, Pool, Postgres, Row};
@@ -242,7 +243,7 @@ async fn job_result(
 	.await
 	.map_err(|e| {
 		log::error!(
-			target: "reacher",
+			target: LOG_TARGET,
 			"Failed to fetch total_records for [job={}] with [error={}]",
 			job_id,
 			e
@@ -258,7 +259,7 @@ async fn job_result(
 	.await
 	.map_err(|e| {
 		log::error!(
-			target: "reacher",
+			target: LOG_TARGET,
 			"Failed to get total_processed for [job={}] with [error={}]",
 			job_id,
 			e
@@ -286,7 +287,7 @@ async fn job_result(
 			let reply =
 				serde_json::to_vec(&JobResultJsonResponse { results: data }).map_err(|e| {
 					log::error!(
-						target: "reacher",
+						target: LOG_TARGET,
 						"Failed to convert json results to string for [job={}] with [error={}]",
 						job_id,
 						e
@@ -338,7 +339,7 @@ async fn job_result_json(
 		.await
 		.map_err(|e| {
 			log::error!(
-				target: "reacher",
+				target: LOG_TARGET,
 				"Failed to get results for [job={}] [limit={}] [offset={}] with [error={}]",
 				job_id,
 				limit,
@@ -380,7 +381,7 @@ async fn job_result_csv(
 		.await
 		.map_err(|e| {
 			log::error!(
-				target: "reacher",
+				target: LOG_TARGET,
 				"Failed to get results for [job={}] with [error={}]",
 				job_id,
 				e
@@ -393,7 +394,7 @@ async fn job_result_csv(
 	{
 		let result_csv: JobResultCsvResponse = CsvWrapper(json_value).try_into().map_err(|e: &'static str| {
 			log::error!(
-				target: "reacher",
+				target: LOG_TARGET,
 				"Failed to convert json to csv output struct for [job={}] [limit={}] [offset={}] to csv with [error={}]",
 				job_id,
 				limit,
@@ -405,7 +406,7 @@ async fn job_result_csv(
 		})?;
 		wtr.serialize(result_csv).map_err(|e| {
 			log::error!(
-				target: "reacher",
+				target: LOG_TARGET,
 				"Failed to serialize result for [job={}] [limit={}] [offset={}] to csv with [error={}]",
 				job_id,
 				limit,
@@ -419,7 +420,7 @@ async fn job_result_csv(
 
 	let data = wtr.into_inner().map_err(|e| {
 		log::error!(
-			target: "reacher",
+			target: LOG_TARGET,
 			"Failed to convert results for [job={}] [limit={}] [offset={}] to csv with [error={}]",
 			job_id,
 			limit,
@@ -442,5 +443,5 @@ pub fn get_bulk_job_result(
 		.and(warp::query::<JobResultRequest>())
 		.and_then(job_result)
 		// View access logs by setting `RUST_LOG=reacher`.
-		.with(warp::log("reacher"))
+		.with(warp::log(LOG_TARGET))
 }

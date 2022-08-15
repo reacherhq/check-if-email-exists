@@ -72,7 +72,7 @@ use misc::{check_misc, MiscDetails};
 use mx::check_mx;
 use smtp::{check_smtp, SmtpDetails, SmtpError};
 use syntax::check_syntax;
-use util::constants::LOG_TARGET;
+pub use util::constants::LOG_TARGET;
 pub use util::input_output::*;
 
 /// Given an email's misc and smtp details, calculate an estimate of our
