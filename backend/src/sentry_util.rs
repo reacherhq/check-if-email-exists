@@ -61,6 +61,8 @@ fn get_backend_name<'a>() -> Option<Cow<'a, str>> {
 
 #[derive(Debug)]
 enum SentryError<'a> {
+	// TODO: Probably a good idea would be to `impl std:error:Error` for the
+	// three errors below.
 	Misc(&'a MiscError),
 	Mx(&'a MxError),
 	Smtp(&'a SmtpError),
@@ -79,17 +81,17 @@ impl<'a> SentryError<'a> {
 
 /// Helper function to send an Error event to Sentry. We redact all sensitive
 /// info before sending to Sentry, by removing all instances of `username`.
-fn error(err: SentryError, result: &CheckEmailOutput, redact_username: &str) {
-	let redacted_message = redact(format!("{:?}", err).as_str(), redact_username);
+fn error(err: SentryError, result: &CheckEmailOutput) {
+	let exception_value = redact(format!("{:?}", err).as_str(), &result.syntax.username);
 	log::debug!(
 		target: LOG_TARGET,
 		"Sending error to Sentry: {}",
-		redacted_message
+		exception_value
 	);
 
 	let exception = Exception {
 		ty: err.get_exception_type(),
-		value: Some(format!("{:#?}", result)),
+		value: Some(exception_value),
 		..Default::default()
 	};
 
@@ -99,9 +101,13 @@ fn error(err: SentryError, result: &CheckEmailOutput, redact_username: &str) {
 		},
 		level: Level::Error,
 		environment: Some("production".into()),
-		message: Some(redacted_message),
 		release: Some(CARGO_PKG_VERSION.into()),
+		message: Some(redact(
+			format!("{:#?}", result).as_str(),
+			&result.syntax.username,
+		)),
 		server_name: get_backend_name(),
+		transaction: Some(format!("check_email:{}", result.syntax.domain)),
 		..Default::default()
 	});
 }
@@ -128,19 +134,11 @@ pub fn log_unknown_errors(result: &CheckEmailOutput) {
 	match (&result.misc, &result.mx, &result.smtp) {
 		(Err(err), _, _) => {
 			// We log all misc errors.
-			sentry_util::error(
-				SentryError::Misc(err),
-				result,
-				result.syntax.username.as_str(),
-			);
+			sentry_util::error(SentryError::Misc(err), result);
 		}
 		(_, Err(err), _) => {
 			// We log all mx errors.
-			sentry_util::error(
-				SentryError::Mx(err),
-				result,
-				result.syntax.username.as_str(),
-			);
+			sentry_util::error(SentryError::Mx(err), result);
 		}
 		(_, _, Err(err)) if err.get_description().is_some() => {
 			// If the SMTP error is known, we don't track it in Sentry.
@@ -164,11 +162,7 @@ pub fn log_unknown_errors(result: &CheckEmailOutput) {
 			// Sentry, to be able to debug them better. We don't want to
 			// spam Sentry and log all instances of the error, hence the
 			// `count` check.
-			sentry_util::error(
-				SentryError::Smtp(err),
-				result,
-				result.syntax.username.as_str(),
-			);
+			sentry_util::error(SentryError::Smtp(err), result);
 		}
 		// If everything is ok, we just return the result.
 		(Ok(_), Ok(_), Ok(_)) => {}
