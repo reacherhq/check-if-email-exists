@@ -54,7 +54,7 @@
 //!     });
 //!
 //!     // Verify this input, using async/await syntax.
-//!     let result = check_email(input).await;
+//!     let result = check_email(&input).await;
 //!
 //!     // `result` is a `Vec<CheckEmailOutput>`, where the CheckEmailOutput
 //!     // struct contains all information about one email.
