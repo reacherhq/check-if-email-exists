@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.9.0](https://github.com/reacherhq/check-if-email-exists/compare/v0.8.32...v0.9.0) (2022-08-15)
+
+
+### ⚠ BREAKING CHANGES
+
+* The `RUST_LOG` target has been changed from `check-if-email-exists` to `reacher`.
+
+```diff
+- RUST_LOG=check-if-email-exists=debug cargo run
+- RUST_LOG=reacher=debug cargo run
+```
+* The library's main function `check_email`'s argument `CheckEmailInput` nows takes a single `to_email` field, instead of a `to_emails: Vec<String>`
+
+```diff
+pub struct CheckEmailInput {
+- pub to_emails: Vec<String>,
++ pub to_email: String,
+  // --snip--
+}
+```
+* Remove HTTP backend from CLI (#1151)
+
+### Features
+
+* Move `backend` code to this repo ([#1138](https://github.com/reacherhq/check-if-email-exists/issues/1138)) ([0dc6053](https://github.com/reacherhq/check-if-email-exists/commit/0dc60531d26efb217137347ef2b6aaf678d94238))
+* Revert back to `check_email` input with single email ([#1150](https://github.com/reacherhq/check-if-email-exists/issues/1150)) ([ce1ba53](https://github.com/reacherhq/check-if-email-exists/commit/ce1ba5346849b578a0ed30b1d72096f15cfbc09d)), closes [#65](https://github.com/reacherhq/check-if-email-exists/issues/65)
+
+
+* Change RUST_LOG target to `reacher` ([#1152](https://github.com/reacherhq/check-if-email-exists/issues/1152)) ([7e87be2](https://github.com/reacherhq/check-if-email-exists/commit/7e87be26f1e35a6936bfc967c872cd42b93fd256))
+* Remove HTTP backend from CLI ([#1151](https://github.com/reacherhq/check-if-email-exists/issues/1151)) ([7184372](https://github.com/reacherhq/check-if-email-exists/commit/71843720c9b87fa0e43fa482a35ef074435bf562))
+
 ### [0.8.32](https://github.com/reacherhq/check-if-email-exists/compare/v0.8.31...v0.8.32) (2022-08-13)
 
 
