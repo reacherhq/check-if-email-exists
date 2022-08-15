@@ -449,7 +449,6 @@ dependencies = [
  "check-if-email-exists",
  "clap",
  "env_logger",
- "hyper",
  "once_cell",
  "openssl",
  "serde",
