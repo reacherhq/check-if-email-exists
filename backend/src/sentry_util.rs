@@ -68,7 +68,7 @@ enum SentryError<'a> {
 
 impl<'a> SentryError<'a> {
 	/// Get the error type to be passed into Sentry's Exception `ty` field.
-	fn get_exception_type(self) -> String {
+	fn get_exception_type(&self) -> String {
 		match self {
 			SentryError::Misc(_) => "MiscError".into(),
 			SentryError::Mx(_) => "MxError".into(),
