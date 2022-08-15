@@ -17,6 +17,7 @@
 //! This file implements the `POST /check_email` endpoint.
 
 use crate::check::check_email;
+use check_if_email_exists::LOG_TARGET;
 use check_if_email_exists::{CheckEmailInput, CheckEmailInputProxy};
 use serde::{Deserialize, Serialize};
 use std::env;
@@ -71,5 +72,5 @@ pub fn post_check_email(
 		.and(warp::body::json())
 		.and_then(handler)
 		// View access logs by setting `RUST_LOG=reacher`.
-		.with(warp::log("reacher"))
+		.with(warp::log(LOG_TARGET))
 }

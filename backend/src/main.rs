@@ -17,6 +17,7 @@
 //! Main entry point of the `reacher_backend` binary. It has two `main`
 //! functions, depending on whether the `bulk` feature is enabled or not.
 
+use check_if_email_exists::LOG_TARGET;
 use dotenv::dotenv;
 use reacher_backend::routes::{bulk::email_verification_task, create_routes};
 use reacher_backend::sentry_util::{setup_sentry, CARGO_PKG_VERSION};
@@ -35,7 +36,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
 	let is_bulk_enabled = env::var("RCH_ENABLE_BULK").unwrap_or_else(|_| "0".into()) == "1";
 	if is_bulk_enabled {
-		log::info!(target: "reacher", "Bulk endpoints enabled.");
+		log::info!(target: LOG_TARGET, "Bulk endpoints enabled.");
 		let pool = create_db().await?;
 		let _registry = create_job_registry(&pool).await?;
 		let routes = create_routes(Some(pool));
@@ -52,7 +53,7 @@ fn init_logger() {
 	// Read from .env file if present.
 	let _ = dotenv();
 	env_logger::init();
-	log::info!(target: "reacher", "Running Reacher v{}", CARGO_PKG_VERSION);
+	log::info!(target: LOG_TARGET, "Running Reacher v{}", CARGO_PKG_VERSION);
 }
 
 /// Create a DB pool.
@@ -123,7 +124,7 @@ async fn run_warp_server(
 				.expect("Environment variable PORT is malformed.")
 		})
 		.unwrap_or(8080);
-	log::info!(target: "reacher", "Server is listening on {}:{}.", host, port);
+	println!("Server is listening on {}:{}.", host, port);
 
 	warp::serve(routes).run((host, port)).await;
 

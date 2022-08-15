@@ -22,6 +22,7 @@
 
 use super::sentry_util;
 use async_smtp::smtp::error::Error as AsyncSmtpError;
+use check_if_email_exists::LOG_TARGET;
 use check_if_email_exists::{smtp::SmtpError, CheckEmailOutput};
 use sentry::protocol::{Event, Level, Value};
 use std::io::Error as IoError;
@@ -35,7 +36,7 @@ pub fn setup_sentry() -> sentry::ClientInitGuard {
 	// will just silently ignore.
 	let sentry = sentry::init(env::var("RCH_SENTRY_DSN").unwrap_or_else(|_| "".into()));
 	if sentry.is_enabled() {
-		log::info!(target: "reacher", "Sentry is successfully set up.")
+		log::info!(target: LOG_TARGET, "Sentry is successfully set up.")
 	}
 
 	sentry
@@ -58,7 +59,7 @@ fn add_backend_name(mut extra: BTreeMap<String, Value>) -> BTreeMap<String, Valu
 /// analytics purposes (I know, Sentry shouldn't be used for that...).
 /// TODO https://github.com/reacherhq/backend/issues/207
 pub fn metrics(message: String, duration: u128, domain: &str) {
-	log::info!(target: "reacher", "Sending info to Sentry: {}", message);
+	log::info!(target: LOG_TARGET, "Sending info to Sentry: {}", message);
 
 	let mut extra = BTreeMap::new();
 
@@ -79,7 +80,11 @@ pub fn metrics(message: String, duration: u128, domain: &str) {
 /// info before sending to Sentry, but removing all instances of `username`.
 pub fn error(message: String, result: Option<&str>, username: &str) {
 	let redacted_message = redact(message.as_str(), username);
-	log::debug!(target: "reacher", "Sending error to Sentry: {}", redacted_message);
+	log::debug!(
+		target: LOG_TARGET,
+		"Sending error to Sentry: {}",
+		redacted_message
+	);
 
 	let mut extra = BTreeMap::new();
 	if let Some(result) = result {
@@ -144,10 +149,14 @@ pub fn log_unknown_errors(result: &CheckEmailOutput) {
 		(_, _, Err(SmtpError::SmtpError(AsyncSmtpError::Transient(response))))
 			if has_smtp_transient_errors(&response.message) =>
 		{
-			log::debug!(target: "reacher", "Transient error: {}", response.message[0]);
+			log::debug!(
+				target: LOG_TARGET,
+				"Transient error: {}",
+				response.message[0]
+			);
 		}
 		(_, _, Err(SmtpError::SmtpError(AsyncSmtpError::Io(err)))) if has_smtp_io_errors(err) => {
-			log::debug!(target: "reacher", "Io error: {}", err);
+			log::debug!(target: LOG_TARGET, "Io error: {}", err);
 		}
 		(_, _, Err(error)) => {
 			// If it's a SMTP error we didn't catch above, we log to

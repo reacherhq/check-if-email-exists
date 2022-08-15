@@ -17,6 +17,7 @@
 //! This file implements the `GET /bulk/{id}` endpoint.
 
 use super::{db::with_db, error::BulkError};
+use check_if_email_exists::LOG_TARGET;
 use serde::Serialize;
 use sqlx::types::chrono::{DateTime, Utc};
 use sqlx::{Pool, Postgres};
@@ -82,7 +83,7 @@ async fn job_status(
 	.await
 	.map_err(|e| {
 		log::error!(
-			target: "reacher",
+			target: LOG_TARGET,
 			"Failed to get job record for [job={}] with [error={}]",
 			job_id,
 			e
@@ -108,7 +109,7 @@ async fn job_status(
 	.await
 	.map_err(|e| {
 		log::error!(
-			target: "reacher",
+			target: LOG_TARGET,
 			"Failed to get aggregate info for [job={}] with [error={}]",
 			job_id,
 			e
@@ -165,5 +166,5 @@ pub fn get_bulk_job_status(
 		.and(with_db(o))
 		.and_then(job_status)
 		// View access logs by setting `RUST_LOG=reacher`.
-		.with(warp::log("reacher"))
+		.with(warp::log(LOG_TARGET))
 }
