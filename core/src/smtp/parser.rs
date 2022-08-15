@@ -156,7 +156,9 @@ pub fn is_err_ip_blacklisted(e: &SmtpError) -> bool {
 	// Your access to this mail system has been rejected due to the sending MTA\'s poor reputation. If you believe that this failure is in error, please contact the intended recipient via alternate means.
 	first_line.contains("poor reputation") ||
 	// JunkMail rejected - (gmail.com) [193.218.118.140]:46615 is in an RBL: http://www.barracudanetworks.com/reputation/?pr=1&ip=193.218.118.140
-	first_line.contains("junkmail")||
+	first_line.contains("junkmail") ||
+	// 554 Unknown Recipient (#5.1.1)
+	first_line.contains("unknown recipient") ||
 
     // Transient errors
 
