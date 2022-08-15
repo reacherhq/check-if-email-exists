@@ -34,4 +34,4 @@ serde_json = "1.0.83"
 trust-dns-proto = "0.21.2"
 
 [dev-dependencies]
-tokio = { version = "1.16.1" }
+tokio = { version = "1.20.1" }
