@@ -24,16 +24,7 @@ use super::{
 use check_if_email_exists::CheckEmailInputProxy;
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres};
-use std::cmp::min;
 use warp::Filter;
-
-// this configures the number of emails passed to every task
-// this can be configured but will require changes in the
-// in the `crate::check::check_email` function which assumes a task can have
-// only one email. This will also require changing the
-// email_verification_task itself to handle multiple
-// outputs and commit them to the database.
-const EMAIL_TASK_BATCH_SIZE: usize = 1;
 
 /// Endpoint request body.
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -49,7 +40,6 @@ struct CreateBulkRequestBody {
 struct CreateBulkRequestBodyIterator {
 	body: CreateBulkRequestBody,
 	index: usize,
-	batch_size: usize,
 }
 
 impl IntoIterator for CreateBulkRequestBody {
@@ -60,7 +50,6 @@ impl IntoIterator for CreateBulkRequestBody {
 		CreateBulkRequestBodyIterator {
 			body: self,
 			index: 0,
-			batch_size: EMAIL_TASK_BATCH_SIZE,
 		}
 	}
 }
@@ -70,17 +59,16 @@ impl Iterator for CreateBulkRequestBodyIterator {
 
 	fn next(&mut self) -> Option<Self::Item> {
 		if self.index < self.body.input.len() {
-			let bounded_index = min(self.index + self.batch_size, self.body.input.len());
-			let to_emails = self.body.input[self.index..bounded_index].to_vec();
+			let to_email = &self.body.input[self.index];
 			let item = TaskInput {
-				to_emails,
+				to_email: to_email.clone(),
 				smtp_ports: self.body.smtp_ports.clone().unwrap_or_else(|| vec![25]),
 				proxy: self.body.proxy.clone(),
 				hello_name: self.body.hello_name.clone(),
 				from_email: self.body.from_email.clone(),
 			};
 
-			self.index = bounded_index;
+			self.index += 1;
 			Some(item)
 		} else {
 			None

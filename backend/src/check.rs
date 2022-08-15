@@ -25,25 +25,13 @@ use std::time::Instant;
 pub const SMTP_TIMEOUT: u64 = 10;
 
 /// Same as `check-if-email-exists`'s check email, but adds some additional
-/// logging and error handling, and also only handles 1 email.
-///
-/// # Panics
-///
-/// If more than 1 email is passed inside input, then this function panics.
+/// logging and error handling.
 pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 	// Run `ciee_check_email` with retries if necessary. Also measure the
 	// verification time.
 	let now = Instant::now();
 
-	assert!(
-		input.to_emails.len() == 1,
-		"We currently hardcode the BATCH_SIZE to 1. qed."
-	);
-
-	let res = ciee_check_email(input)
-		.await
-		.pop()
-		.expect("Input only has one email, so does output. qed.");
+	let res = ciee_check_email(input).await;
 
 	// Log on Sentry the `is_reachable` field.
 	// We should definitely log this somewhere else than Sentry.

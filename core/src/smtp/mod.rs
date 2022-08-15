@@ -113,7 +113,7 @@ async fn connect_to_host(
 	try_smtp!(
 		smtp_transport.connect().await,
 		smtp_transport,
-		input.to_emails[0],
+		input.to_email,
 		host,
 		port
 	);
@@ -131,7 +131,7 @@ async fn connect_to_host(
 			.command(MailCommand::new(Some(from_email), vec![],))
 			.await,
 		smtp_transport,
-		input.to_emails[0],
+		input.to_email,
 		host,
 		port
 	);
@@ -156,8 +156,8 @@ async fn email_deliverable(
 	smtp_transport: &mut SmtpTransport,
 	to_email: &EmailAddress,
 ) -> Result<Deliverability, SmtpError> {
-	// "RCPT TO: me@email.com"
-	// FIXME Do not clone?
+	// "RCPT TO: <target email>"
+	// FIXME Do not clone `to_email`?
 	match smtp_transport
 		.command(RcptCommand::new(to_email.clone(), vec![]))
 		.await
@@ -349,7 +349,7 @@ async fn retry(
 	log::debug!(
 		target: LOG_TARGET,
 		"email={} Check SMTP attempt #{} on {}:{}",
-		input.to_emails[0],
+		input.to_email,
 		input.retries - count + 1,
 		host,
 		port
@@ -360,7 +360,7 @@ async fn retry(
 	log::debug!(
 		target: LOG_TARGET,
 		"email={} Got result for attempt #{} on {}:{}, result={:?}",
-		input.to_emails[0],
+		input.to_email,
 		input.retries - count + 1,
 		host,
 		port,
@@ -378,7 +378,7 @@ async fn retry(
 				log::debug!(
 					target: LOG_TARGET,
 					"email={} Potential greylisting detected, retrying.",
-					input.to_emails[0],
+					input.to_email,
 				);
 				retry(to_email, host, port, domain, input, count - 1).await
 			}
