@@ -14,6 +14,7 @@ jobs:
       - name: Set GITHUB_TAG env
         id: vars
         run: echo ::set-output name=GITHUB_TAG::${GITHUB_REF:18} # Remove /refs/head/backend/
+      - run: echo "Publishing reacherhq/backend:$GITHUB_TAG"
       - name: Publish to Registry
         uses: elgohr/Publish-Docker-Github-Action@master
         with:
