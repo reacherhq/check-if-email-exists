@@ -195,7 +195,7 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 			host.exchange(),
 			input.smtp_port,
 			my_syntax.domain.as_ref(),
-			&input,
+			input,
 		)
 		.await;
 		let is_reachable = res.is_ok();

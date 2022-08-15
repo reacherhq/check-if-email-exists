@@ -71,7 +71,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
 	let to_email = &CONF.to_email;
 
-	let mut input = CheckEmailInput::new(vec![to_email.clone()]);
+	let mut input = CheckEmailInput::new(to_email.clone());
 	input
 		.set_from_email(CONF.from_email.clone())
 		.set_hello_name(CONF.hello_name.clone())

@@ -58,7 +58,7 @@ impl Iterator for TaskInputIterator {
 
 	fn next(&mut self) -> Option<Self::Item> {
 		if self.index < self.body.smtp_ports.len() {
-			let mut item = CheckEmailInput::new(self.body.to_email);
+			let mut item = CheckEmailInput::new(self.body.to_email.clone());
 
 			if let Some(name) = &self.body.hello_name {
 				item.set_hello_name(name.clone());

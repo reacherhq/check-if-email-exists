@@ -35,7 +35,7 @@ pub struct EndpointRequest {
 impl From<EndpointRequest> for CheckEmailInput {
 	fn from(req: EndpointRequest) -> Self {
 		// Create Request for check_if_email_exists from body
-		let mut input = CheckEmailInput::new(vec![req.to_email]);
+		let mut input = CheckEmailInput::new(req.to_email);
 		input
 			.set_from_email(req.from_email.unwrap_or_else(|| {
 				env::var("RCH_FROM_EMAIL").unwrap_or_else(|_| "user@example.org".into())
