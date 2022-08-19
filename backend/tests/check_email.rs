@@ -51,7 +51,7 @@ async fn test_input_foo_bar_baz() {
 		.reply(&create_routes(None))
 		.await;
 
-	assert_eq!(resp.status(), StatusCode::OK);
+	assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
 	assert_eq!(resp.body(), FOO_BAR_BAZ_RESPONSE);
 }
 
