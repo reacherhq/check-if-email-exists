@@ -40,7 +40,7 @@ pub async fn check_email(mut input: CheckEmailInput) -> CheckEmailOutput {
 	res
 }
 
-/// The header which holds the Saasify secret.
+/// The header which holds the Reacher backend secret.
 pub const REACHER_SECRET_HEADER: &str = "x-reacher-secret";
 
 /// Warp filter to check that the header secret is correct, if the environment
@@ -49,10 +49,10 @@ pub fn check_header() -> warp::filters::BoxedFilter<()> {
 	let env_var = env::var("RCH_HEADER_SECRET");
 
 	match env_var {
-		Ok(saasify_secret) => {
-			let saasify_secret: &'static str = Box::leak(Box::new(saasify_secret));
+		Ok(secret) => {
+			let secret: &'static str = Box::leak(Box::new(secret));
 
-			warp::header::exact("x-reacher-secret", saasify_secret).boxed()
+			warp::header::exact("x-reacher-secret", secret).boxed()
 		}
 		Err(_) => warp::any().boxed(),
 	}
