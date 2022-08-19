@@ -27,6 +27,8 @@ const FOO_BAR_BAZ_RESPONSE: &str = r#"{"input":"foo@bar.baz","is_reachable":"inv
 
 #[tokio::test]
 async fn test_input_foo_bar() {
+	env::remove_var("RCH_HEADER_SECRET");
+
 	let resp = request()
 		.path("/v0/check_email")
 		.method("POST")
@@ -40,6 +42,8 @@ async fn test_input_foo_bar() {
 
 #[tokio::test]
 async fn test_input_foo_bar_baz() {
+	env::remove_var("RCH_HEADER_SECRET");
+
 	let resp = request()
 		.path("/v0/check_email")
 		.method("POST")
