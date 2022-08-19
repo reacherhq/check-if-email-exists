@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use std::env;
+
+use reacher_backend::check::REACHER_SECRET_HEADER;
 use reacher_backend::routes::{check_email::post::EndpointRequest, create_routes};
 use serde_json;
 use warp::http::StatusCode;
@@ -24,6 +27,8 @@ const FOO_BAR_BAZ_RESPONSE: &str = r#"{"input":"foo@bar.baz","is_reachable":"inv
 
 #[tokio::test]
 async fn test_input_foo_bar() {
+	env::remove_var("RCH_HEADER_SECRET");
+
 	let resp = request()
 		.path("/v0/check_email")
 		.method("POST")
@@ -37,6 +42,8 @@ async fn test_input_foo_bar() {
 
 #[tokio::test]
 async fn test_input_foo_bar_baz() {
+	env::remove_var("RCH_HEADER_SECRET");
+
 	let resp = request()
 		.path("/v0/check_email")
 		.method("POST")
@@ -44,6 +51,53 @@ async fn test_input_foo_bar_baz() {
 		.reply(&create_routes(None))
 		.await;
 
-	assert_eq!(resp.status(), StatusCode::OK);
+	assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
 	assert_eq!(resp.body(), FOO_BAR_BAZ_RESPONSE);
+}
+
+#[tokio::test]
+async fn test_reacher_secret_missing_header() {
+	env::set_var("RCH_HEADER_SECRET", "foobar");
+
+	let resp = request()
+		.path("/v0/check_email")
+		.method("POST")
+		.json(&serde_json::from_str::<EndpointRequest>(r#"{"to_email": "foo@bar.baz"}"#).unwrap())
+		.reply(&create_routes(None))
+		.await;
+
+	assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+	assert_eq!(resp.body(), r#"Missing request header "x-reacher-secret""#);
+}
+
+#[tokio::test]
+async fn test_reacher_secret_wrong_secret() {
+	env::set_var("RCH_HEADER_SECRET", "foobar");
+
+	let resp = request()
+		.path("/v0/check_email")
+		.method("POST")
+		.header(REACHER_SECRET_HEADER, "barbaz")
+		.json(&serde_json::from_str::<EndpointRequest>(r#"{"to_email": "foo@bar.baz"}"#).unwrap())
+		.reply(&create_routes(None))
+		.await;
+
+	assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+	assert_eq!(resp.body(), r#"Invalid request header "x-reacher-secret""#);
+}
+
+#[tokio::test]
+async fn test_reacher_secret_correct_secret() {
+	env::set_var("RCH_HEADER_SECRET", "foobar");
+
+	let resp = request()
+		.path("/v0/check_email")
+		.method("POST")
+		.header(REACHER_SECRET_HEADER, "foobar")
+		.json(&serde_json::from_str::<EndpointRequest>(r#"{"to_email": "foo@bar"}"#).unwrap())
+		.reply(&create_routes(None))
+		.await;
+
+	assert_eq!(resp.status(), StatusCode::OK);
+	assert_eq!(resp.body(), FOO_BAR_RESPONSE);
 }

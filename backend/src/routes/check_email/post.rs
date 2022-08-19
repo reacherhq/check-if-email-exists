@@ -16,12 +16,14 @@
 
 //! This file implements the `POST /check_email` endpoint.
 
-use crate::check::check_email;
+use std::env;
+
 use check_if_email_exists::LOG_TARGET;
 use check_if_email_exists::{CheckEmailInput, CheckEmailInputProxy};
 use serde::{Deserialize, Serialize};
-use std::env;
 use warp::Filter;
+
+use crate::check::{check_email, check_header};
 
 /// Endpoint request body.
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -66,6 +68,7 @@ pub fn post_check_email(
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v0" / "check_email")
 		.and(warp::post())
+		.and(check_header())
 		// When accepting a body, we want a JSON body (and to reject huge
 		// payloads)...
 		.and(warp::body::content_length_limit(1024 * 16))

@@ -16,16 +16,18 @@
 
 //! This file implements the /bulk/{id}/results endpoints.
 
-use super::{
-	db::with_db,
-	error::{BulkError, CsvError},
-};
+use std::convert::{TryFrom, TryInto};
+
 use check_if_email_exists::LOG_TARGET;
 use csv::WriterBuilder;
 use serde::{Deserialize, Serialize};
 use sqlx::{Executor, Pool, Postgres, Row};
-use std::convert::{TryFrom, TryInto};
 use warp::Filter;
+
+use super::{
+	db::with_db,
+	error::{BulkError, CsvError},
+};
 
 /// Defines the download format, passed in as a query param.
 #[derive(Serialize, Deserialize)]

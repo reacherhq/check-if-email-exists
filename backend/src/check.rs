@@ -16,9 +16,13 @@
 
 //! This file contains shared logic for checking one email.
 
-use super::sentry_util;
-use check_if_email_exists::{check_email as ciee_check_email, CheckEmailInput, CheckEmailOutput};
+use std::env;
 use std::time::Duration;
+
+use check_if_email_exists::{check_email as ciee_check_email, CheckEmailInput, CheckEmailOutput};
+use warp::Filter;
+
+use super::sentry_util;
 
 /// Timeout after which we drop the `check-if-email-exists` check. We run the
 /// checks twice (to avoid greylisting), so each verification takes 60s max.
@@ -34,4 +38,22 @@ pub async fn check_email(mut input: CheckEmailInput) -> CheckEmailOutput {
 	sentry_util::log_unknown_errors(&res);
 
 	res
+}
+
+/// The header which holds the Reacher backend secret.
+pub const REACHER_SECRET_HEADER: &str = "x-reacher-secret";
+
+/// Warp filter to check that the header secret is correct, if the environment
+/// variable `RCH_HEADER_SECRET`  is set
+pub fn check_header() -> warp::filters::BoxedFilter<()> {
+	let env_var = env::var("RCH_HEADER_SECRET");
+
+	match env_var {
+		Ok(secret) => {
+			let secret: &'static str = Box::leak(Box::new(secret));
+
+			warp::header::exact("x-reacher-secret", secret).boxed()
+		}
+		Err(_) => warp::any().boxed(),
+	}
 }

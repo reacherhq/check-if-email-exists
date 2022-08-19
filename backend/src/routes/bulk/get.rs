@@ -16,12 +16,13 @@
 
 //! This file implements the `GET /bulk/{id}` endpoint.
 
-use super::{db::with_db, error::BulkError};
-use check_if_email_exists::LOG_TARGET;
 use serde::Serialize;
 use sqlx::types::chrono::{DateTime, Utc};
 use sqlx::{Pool, Postgres};
 use warp::Filter;
+
+use super::{db::with_db, error::BulkError};
+use check_if_email_exists::LOG_TARGET;
 
 /// NOTE: Type conversions from postgres to rust types
 /// are according to the table given by
