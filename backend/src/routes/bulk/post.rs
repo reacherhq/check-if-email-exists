@@ -16,16 +16,18 @@
 
 //! This file implements the `POST /bulk` endpoint.
 
-use super::{
-	db::with_db,
-	error::BulkError,
-	task::{submit_job, TaskInput},
-};
 use check_if_email_exists::CheckEmailInputProxy;
 use check_if_email_exists::LOG_TARGET;
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres};
 use warp::Filter;
+
+use super::{
+	db::with_db,
+	error::BulkError,
+	task::{submit_job, TaskInput},
+};
+use crate::check::check_header;
 
 /// Endpoint request body.
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -137,6 +139,7 @@ pub fn create_bulk_job(
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v0" / "bulk")
 		.and(warp::post())
+		.and(check_header())
 		.and(with_db(o))
 		// When accepting a body, we want a JSON body (and to reject huge
 		// payloads)...
