@@ -79,10 +79,7 @@ async fn test_reacher_secret_wrong_secret() {
 		.await;
 
 	assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
-	assert_eq!(
-		resp.body(),
-		r#"Invalid request header "x-saasify-proxy-secret""#
-	);
+	assert_eq!(resp.body(), r#"Invalid request header "x-reacher-secret""#);
 }
 
 #[tokio::test]
