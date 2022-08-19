@@ -22,7 +22,6 @@ use sqlx::{Pool, Postgres};
 use warp::Filter;
 
 use super::{db::with_db, error::BulkError};
-use crate::check::check_header;
 use check_if_email_exists::LOG_TARGET;
 
 /// NOTE: Type conversions from postgres to rust types
@@ -165,7 +164,6 @@ pub fn get_bulk_job_status(
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v0" / "bulk" / i32)
 		.and(warp::get())
-		.and(check_header())
 		.and(with_db(o))
 		.and_then(job_status)
 		// View access logs by setting `RUST_LOG=reacher`.
