@@ -17,11 +17,11 @@
 //! Parse the SMTP responses to get information about the email address.
 
 use super::error::SmtpError;
-use async_smtp::smtp::error::Error as AsyncSmtpError;
+use async_smtp::{smtp::error::Error as AsyncSmtpError, EmailAddress};
 
 /// is_invalid checks for SMTP responses meaning that the email is invalid,
-/// i.e. that the mailbox doesn;t exist.
-pub fn is_invalid(e: &str) -> bool {
+/// i.e. that the mailbox doesn't exist.
+pub fn is_invalid(e: &str, email: &EmailAddress) -> bool {
 	// 550 Address rejected
 	// 550 5.1.1 : Recipient address rejected
 	// 550 5.1.1 : Recipient address rejected: User unknown in virtual alias table
@@ -59,7 +59,7 @@ pub fn is_invalid(e: &str) -> bool {
 		// 550 No such user here
 		|| e.contains("no such user")
 		// permanent: 5.1.1 MXIN501 mailbox <EMAIL> unknown (on @virginmedia.com)
-		// || e.contains("") TODO Use regex here?
+		|| e.contains(format!("mailbox {} unknown", email).as_str())
 		// 550 5.1.1 : Mailbox not found
 		// 550 Unknown address error ‘MAILBOX NOT FOUND’
 		|| e.contains("mailbox not found")
@@ -83,6 +83,8 @@ pub fn is_invalid(e: &str) -> bool {
 		|| e.contains("unknown local part")
 		// 5.1.1 RCP-P1 Domain facebook.com no longer available https://www.facebook.com/postmaster/response_codes?ip=3.80.111.155#RCP-P1
 		|| e.contains("no longer available")
+		// permanent: RCPT (<EMAIL>) dosn't exist (on @hgy.ooo)
+		|| e.contains("dosn't exist") // sic! typo is intentional
 }
 
 /// Check that the mailbox has a full inbox.
@@ -200,10 +202,25 @@ mod tests {
 	#[test]
 	fn is_invalid_works() {
 		use super::is_invalid;
+		use async_smtp::EmailAddress;
+		use std::str::FromStr;
+
+		let email = EmailAddress::from_str("foo@bar.baz").unwrap();
 
 		assert_eq!(
-			is_invalid("554 5.7.1 <mta.voipdir.net[]>: Client host rejected: Access denied"),
+			is_invalid(
+				"554 5.7.1 <mta.voipdir.net[]>: Client host rejected: Access denied",
+				&email
+			),
 			false
+		);
+
+		assert_eq!(
+			is_invalid(
+				"permanent: 5.1.1 MXIN501 mailbox foo@bar.baz unknown (on @virginmedia.com)",
+				&email
+			),
+			true
 		);
 	}
 }

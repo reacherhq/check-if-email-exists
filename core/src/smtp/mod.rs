@@ -214,7 +214,7 @@ async fn email_deliverable(
 			}
 
 			// Check that the mailbox doesn't exist.
-			if parser::is_invalid(err_string.as_str()) {
+			if parser::is_invalid(err_string.as_str(), to_email) {
 				return Ok(Deliverability {
 					has_full_inbox: false,
 					is_deliverable: false,
