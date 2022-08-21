@@ -217,11 +217,7 @@ mod tests {
 
 		assert_eq!(
 			is_invalid(
-				format!(
-					"permanent: 5.1.1 MXIN501 mailbox {} unknown (on @virginmedia.com)",
-					email
-				)
-				.as_str(),
+				"permanent: 5.1.1 MXIN501 mailbox foo@bar.baz unknown (on @virginmedia.com)",
 				&email
 			),
 			true
