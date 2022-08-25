@@ -420,10 +420,10 @@ dependencies = [
  "async-smtp",
  "async-std",
  "async-std-resolver",
+ "fast-socks5",
  "log",
  "mailchecker",
  "rand",
- "reacher-fast-socks5",
  "regex",
  "reqwest",
  "serde",
@@ -734,9 +734,9 @@ checksum = "0206175f82b8d6bf6652ff7d71a1e27fd2e4efde587fd368662814d6ec1d9ce0"
 
 [[package]]
 name = "fast-socks5"
-version = "0.8.0"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "25bef00d863e757b64a737857143b5425061271a4149ff5d81201fb4c9bfc01c"
+checksum = "d2687b5a6108f18ba8621e0e618a3be1dcc2768632dad24b7cea1f87975375a9"
 dependencies = [
  "anyhow",
  "log",
@@ -1723,19 +1723,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d34f1408f55294453790c48b2f1ebbb1c5b4b7563eb1f418bcfcfdbb06ebb4e7"
 dependencies = [
  "getrandom",
-]
-
-[[package]]
-name = "reacher-fast-socks5"
-version = "0.8.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a1e0ee4dd08849e48b878598d7a8074284147ad924fe066c0923caf7e104cd12"
-dependencies = [
- "anyhow",
- "log",
- "thiserror",
- "tokio",
- "tokio-stream",
 ]
 
 [[package]]
