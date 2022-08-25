@@ -19,7 +19,7 @@ use super::yahoo::YahooError;
 use crate::util::ser_with_display::ser_with_display;
 use async_smtp::smtp::error::Error as AsyncSmtpError;
 use async_std::future;
-use reacher_fast_socks5::SocksError;
+use fast_socks5::SocksError;
 use serde::Serialize;
 
 /// Error occured connecting to this email server via SMTP.
