@@ -32,6 +32,9 @@ const SMTP_TIMEOUT: u64 = 30;
 /// inputs and error handling.
 pub async fn check_email(mut input: CheckEmailInput) -> CheckEmailOutput {
 	input.set_smtp_timeout(Duration::from_secs(SMTP_TIMEOUT));
+	input.set_hotmail_use_headless(
+		env::var("RCH_HOTMAIL_USE_HEADLESS").unwrap_or_else(|_| "".into()) == "1",
+	);
 
 	let res = ciee_check_email(&input).await;
 

@@ -15,6 +15,8 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 pub mod error;
+#[cfg(feature = "headless")]
+mod hotmail;
 mod parser;
 mod yahoo;
 
@@ -314,6 +316,10 @@ async fn check_smtp_without_retry(
 		return yahoo::check_yahoo(to_email, input)
 			.await
 			.map_err(|err| err.into());
+	}
+	#[cfg(feature = "headless")]
+	if host.to_lowercase().to_string().contains("outlook") {
+		return hotmail::check_password_recovery(to_email).map_err(|err| err.into());
 	}
 
 	let fut = create_smtp_future(to_email, host, port, domain, input);

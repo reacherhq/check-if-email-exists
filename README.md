@@ -57,7 +57,7 @@ Head to the [releases page](https://github.com/reacherhq/check-if-email-exists/r
 
 ```bash
 > $ check_if_email_exists --help
-check_if_email_exists 0.9.0
+check_if_email_exists 0.9.1
 Check if an email address exists without sending an email.
 
 USAGE:

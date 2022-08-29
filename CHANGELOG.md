@@ -22,7 +22,7 @@ pub struct CheckEmailInput {
   // --snip--
 }
 ```
-* Remove `--http` flag has been removed from `check-if-email-exists` CLI. To run a HTTP backend, please refer to the [backend](./backend) subfolder.
+* The `--http` flag has been removed from `check-if-email-exists` CLI. To run a HTTP backend, please refer to the [backend](./backend) subfolder.
 
 ### Features
 

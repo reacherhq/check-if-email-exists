@@ -90,6 +90,12 @@ pub struct CheckEmailInput {
 	///
 	/// Defaults to true.
 	pub yahoo_use_api: bool,
+	/// For Hotmail/Outlook email addresses, use a headless navigator
+	/// connecting to the password recovery page instead of the SMTP server.
+	///
+	/// Defaults to false.
+	#[cfg(feature = "headless")]
+	pub hotmail_use_headless: bool,
 	/// Number of retries of SMTP connections to do.
 	///
 	/// Defaults to 2 to avoid greylisting.
@@ -106,6 +112,8 @@ impl Default for CheckEmailInput {
 			to_email: "".into(),
 			from_email: "user@example.org".into(),
 			hello_name: "localhost".into(),
+			#[cfg(feature = "headless")]
+			hotmail_use_headless: false,
 			proxy: None,
 			smtp_port: 25,
 			smtp_security: SmtpSecurity::Opportunistic,
@@ -214,6 +222,15 @@ impl CheckEmailInput {
 	/// Set whether to use Yahoo's API or connecting directly to their SMTP
 	/// servers. Defaults to true.
 	pub fn set_yahoo_use_api(&mut self, use_api: bool) -> &mut CheckEmailInput {
+		self.yahoo_use_api = use_api;
+		self
+	}
+
+	/// Set whether to use a headless navigator to navigate to Hotmail's
+	/// password recovery page to check whether an email exists or not.
+	/// Defaults to false.
+	#[cfg(feature = "headless")]
+	pub fn set_hotmail_use_headless(&mut self, use_api: bool) -> &mut CheckEmailInput {
 		self.yahoo_use_api = use_api;
 		self
 	}
