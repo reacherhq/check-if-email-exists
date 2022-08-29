@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+#[cfg(feature = "headless")]
+use super::hotmail::HotmailError;
 use super::parser;
 use super::yahoo::YahooError;
 use crate::util::ser_with_display::ser_with_display;
@@ -35,8 +37,11 @@ pub enum SmtpError {
 	/// Time-out error.
 	#[serde(serialize_with = "ser_with_display")]
 	TimeoutError(future::TimeoutError),
-	/// Error when verifying a Yahoo email.
+	/// Error when verifying a Yahoo email via HTTP requests.
 	YahooError(YahooError),
+	/// Error when verifying a Hotmail email via headless browser.
+	#[cfg(feature = "headless")]
+	HotmailError(HotmailError),
 }
 
 impl From<SocksError> for SmtpError {
@@ -54,6 +59,13 @@ impl From<future::TimeoutError> for SmtpError {
 impl From<YahooError> for SmtpError {
 	fn from(e: YahooError) -> Self {
 		SmtpError::YahooError(e)
+	}
+}
+
+#[cfg(feature = "headless")]
+impl From<HotmailError> for SmtpError {
+	fn from(e: HotmailError) -> Self {
+		SmtpError::HotmailError(e)
 	}
 }
 
