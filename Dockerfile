@@ -22,6 +22,16 @@ RUN cargo build --bin reacher_backend --release --target=x86_64-unknown-linux-mu
 
 FROM alpine:latest
 
+# Installs latest Chromium package.
+RUN apk upgrade --no-cache --available \
+    && apk add --no-cache \
+      chromium \
+      ttf-freefont \
+      font-noto-emoji \
+    && apk add --no-cache \
+      --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing \
+      font-wqy-zenhei
+
 RUN addgroup -g 1000 reacher
 
 RUN adduser -D -s /bin/sh -u 1000 -G reacher reacher

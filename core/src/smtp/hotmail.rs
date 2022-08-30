@@ -34,6 +34,10 @@ impl From<anyhow::Error> for HotmailError {
 	}
 }
 
+/// Check if a Hotmail/Outlook email exists by connecting to the password
+/// recovery page https://account.live.com/password/reset using a headless
+/// Chrome browser. Make sure you have Chrome/Chromium installed locally before
+/// running this, or this will error.
 pub fn check_password_recovery(to_email: &EmailAddress) -> Result<SmtpDetails, HotmailError> {
 	log::debug!(
 		target: LOG_TARGET,

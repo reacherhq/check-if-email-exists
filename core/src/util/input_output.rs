@@ -227,7 +227,9 @@ impl CheckEmailInput {
 	}
 
 	/// Set whether to use a headless navigator to navigate to Hotmail's
-	/// password recovery page to check whether an email exists or not.
+	/// password recovery page to check whether an email exists or not. If set
+	/// to true, make sure you have Chrome/Chromium installed locally before
+	/// verifying the email.
 	/// Defaults to false.
 	#[cfg(feature = "headless")]
 	pub fn set_hotmail_use_headless(&mut self, use_headless: bool) -> &mut CheckEmailInput {

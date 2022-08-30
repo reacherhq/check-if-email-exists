@@ -20,7 +20,7 @@ async-smtp = { version = "0.5.0", features = ["socks5"] }
 async-std = "1.12.0"
 async-std-resolver = "0.21.2"
 fast-socks5 = "0.8.1"
-headless_chrome = { git = "https://github.com/atroche/rust-headless-chrome", features = ["fetch"], optional = true }
+headless_chrome = { git = "https://github.com/atroche/rust-headless-chrome", optional = true }
 log = "0.4.17"
 mailchecker = "5.0.0"
 rand = {version = "0.8.5", features = ["small_rng"] }
