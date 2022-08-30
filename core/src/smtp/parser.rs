@@ -85,6 +85,8 @@ pub fn is_invalid(e: &str, email: &EmailAddress) -> bool {
 		|| e.contains("no longer available")
 		// permanent: RCPT (<EMAIL>) dosn't exist (on @hgy.ooo)
 		|| e.contains("dosn't exist") // sic! typo is intentional
+		// 5.1.1 <EMAIL>: Email address could not be found, or was misspelled (G8) (on biotech-calendar.com)
+		|| e.contains("could not be found")
 }
 
 /// Check that the mailbox has a full inbox.
