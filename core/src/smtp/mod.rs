@@ -318,7 +318,7 @@ async fn check_smtp_without_retry(
 			.map_err(|err| err.into());
 	}
 	#[cfg(feature = "headless")]
-	if host.to_lowercase().to_string().contains("outlook") {
+	if input.hotmail_use_headless && host.to_lowercase().to_string().contains("outlook") {
 		return hotmail::check_password_recovery(to_email).map_err(|err| err.into());
 	}
 

@@ -230,8 +230,8 @@ impl CheckEmailInput {
 	/// password recovery page to check whether an email exists or not.
 	/// Defaults to false.
 	#[cfg(feature = "headless")]
-	pub fn set_hotmail_use_headless(&mut self, use_api: bool) -> &mut CheckEmailInput {
-		self.yahoo_use_api = use_api;
+	pub fn set_hotmail_use_headless(&mut self, use_headless: bool) -> &mut CheckEmailInput {
+		self.hotmail_use_headless = use_headless;
 		self
 	}
 }
