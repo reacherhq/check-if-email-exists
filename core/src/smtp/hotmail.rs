@@ -15,7 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use async_smtp::EmailAddress;
-use headless_chrome::Browser;
+use headless_chrome::{Browser, LaunchOptionsBuilder};
 use serde::Serialize;
 
 use super::SmtpDetails;
@@ -40,7 +40,12 @@ pub fn check_password_recovery(to_email: &EmailAddress) -> Result<SmtpDetails, H
 		"[email={}] Using Hotmail password recovery in headless navigator",
 		to_email,
 	);
-	let browser = Browser::default()?;
+	let options = LaunchOptionsBuilder::default()
+		.window_size(Some((1800, 1500)))
+		.sandbox(false)
+		.build()
+		.unwrap();
+	let browser = Browser::new(options)?;
 	let tab = browser.wait_for_initial_tab()?;
 	let to_email = to_email.to_string();
 

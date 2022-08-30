@@ -37,8 +37,8 @@ USER reacher
 ENV RUST_LOG=reacher=info
 ENV RCH_HTTP_HOST=0.0.0.0
 ENV PORT=8080
-# Using a headless navigator to verify Hotmail emails is disabled. Set to 1 to enable it.
-ENV RCH_HOTMAIL_USE_HEADLESS=0
+# Use a headless navigator to verify Hotmail emails is disabled. Set to 0 to disable it.
+ENV RCH_HOTMAIL_USE_HEADLESS=1
 # Bulk verification is disabled by default. Set to 1 to enable it.
 ENV RCH_ENABLE_BULK=0
 
