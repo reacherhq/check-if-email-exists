@@ -85,6 +85,12 @@ pub fn is_invalid(e: &str, email: &EmailAddress) -> bool {
 		|| e.contains("no longer available")
 		// permanent: RCPT (<EMAIL>) dosn't exist (on @hgy.ooo)
 		|| e.contains("dosn't exist") // sic! typo is intentional
+		// 5.1.1 <EMAIL>: Email address could not be found, or was misspelled (G8) (on biotech-calendar.com, invoicefactoring.com)
+		|| e.contains("could not be found") 
+		// No such person at this address (on aconsa.com.mx)
+		|| e.contains("no such person")
+		// Callout verification failed: 550 No Such User Here (on medipro.co.uk)
+		|| e.contains("callout verification failed")
 }
 
 /// Check that the mailbox has a full inbox.
@@ -94,9 +100,9 @@ pub fn is_full_inbox(e: &str) -> bool {
 	|| e.contains("mailbox full")
 	// https://answers.microsoft.com/en-us/outlook_com/forum/all/how-do-i-interpret-the-delivery-failure-message/2f1bf9c0-8b03-4f8f-aacc-5f6ba60a73f3
 	|| e.contains("quote exceeded")
-		|| e.contains("over quota")
-		// 550 user has too many messages on the server
-		|| e.contains("too many messages")
+	|| e.contains("over quota")
+	// 550 user has too many messages on the server
+	|| e.contains("too many messages")
 }
 
 /// Check if the email account has been disabled or blocked by the email
