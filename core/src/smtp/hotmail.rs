@@ -14,7 +14,11 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use std::fs;
+use std::time::Duration;
+
 use async_smtp::EmailAddress;
+use headless_chrome::protocol::cdp::Page;
 use headless_chrome::{Browser, LaunchOptionsBuilder};
 use serde::Serialize;
 
@@ -39,6 +43,26 @@ impl From<anyhow::Error> for HotmailError {
 /// Chrome browser. Make sure you have Chrome/Chromium installed locally before
 /// running this, or this will error.
 pub fn check_password_recovery(to_email: &EmailAddress) -> Result<SmtpDetails, HotmailError> {
+	let mut res = run_headless(to_email, false);
+
+	// In some rare cases, `run_headless` errors, with the following message:
+	// "Scrolling element into view failed: Node is detached from document"
+	// In those cases, re-run max 2 times more.
+	for _ in 0..2 {
+		if res.is_ok() {
+			return res;
+		}
+
+		res = run_headless(to_email, false);
+	}
+
+	res
+}
+
+/// Launch a headless navigator to perform email password recovery. Optionally
+/// takes a screenshot of the last page, and saves it to disk, by setting
+/// `save_jpg` to true; only use this option while debugging.
+fn run_headless(to_email: &EmailAddress, save_jpg: bool) -> Result<SmtpDetails, HotmailError> {
 	log::debug!(
 		target: LOG_TARGET,
 		"[email={}] Using Hotmail password recovery in headless navigator",
@@ -65,9 +89,22 @@ pub fn check_password_recovery(to_email: &EmailAddress) -> Result<SmtpDetails, H
 
 	// We should end up on the WebKit-page once navigated
 	tab.wait_until_navigated()?;
-	let is_error = tab.find_element("#pMemberNameErr").is_ok();
 
-	if is_error {
+	// Somehow, empirically, it works better by waiting first for #signinNameSection,
+	// then waiting for its child #pMemberNameErr.
+	tab.wait_for_element_with_custom_timeout("#signinNameSection", Duration::from_secs(2))?;
+	let account_does_not_exist = tab
+		.wait_for_element_with_custom_timeout("#pMemberNameErr", Duration::from_secs(1))
+		.is_ok();
+
+	if save_jpg {
+		let jpeg_data =
+			tab.capture_screenshot(Page::CaptureScreenshotFormatOption::Jpeg, None, None, true)?;
+		fs::write("hotmail.jpeg", &jpeg_data)
+			.expect("Safe to unwrap, as save_jpg should only be used for debugging purposes.");
+	}
+
+	if account_does_not_exist {
 		log::debug!(
 			target: LOG_TARGET,
 			"[email={}] Found error message in password recovery, email does not exist",
@@ -85,7 +122,28 @@ pub fn check_password_recovery(to_email: &EmailAddress) -> Result<SmtpDetails, H
 		can_connect_smtp: true,
 		has_full_inbox: false,
 		is_catch_all: false,
-		is_deliverable: !is_error,
+		is_deliverable: !account_does_not_exist,
 		is_disabled: false,
 	})
+}
+
+#[cfg(test)]
+mod tests {
+	use super::run_headless;
+	use async_smtp::EmailAddress;
+	use std::str::FromStr;
+
+	// Ignoring this test as it requires a local instance of Chromium. To debug
+	// the headless password recovery page, simply remove the "#[ignore]".
+	#[test]
+	#[ignore]
+	fn test_hotmail_address() {
+		let email = EmailAddress::from_str("test42134@hotmail.com").unwrap();
+		// Run 10 headless sessions with the above fake email (not deliverable).
+		// It should not error.
+		for _ in 0..10 {
+			let res = run_headless(&email, true).unwrap();
+			assert!(!res.is_deliverable)
+		}
+	}
 }

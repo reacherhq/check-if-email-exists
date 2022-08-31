@@ -25,7 +25,7 @@ pub fn is_invalid(e: &str, email: &EmailAddress) -> bool {
 	// 550 Address rejected
 	// 550 5.1.1 : Recipient address rejected
 	// 550 5.1.1 : Recipient address rejected: User unknown in virtual alias table
-	// 550 5.1.1 <user@domain.com>: Recipient address rejected: User unknown in relay recipient table
+	// 550 5.1.1 <EMAIL: Recipient address rejected: User unknown in relay recipient table
 	e.contains("address rejected")
 		// 550 5.1.1 : Unrouteable address
 		|| e.contains("unrouteable")
@@ -85,11 +85,11 @@ pub fn is_invalid(e: &str, email: &EmailAddress) -> bool {
 		|| e.contains("no longer available")
 		// permanent: RCPT (<EMAIL>) dosn't exist (on @hgy.ooo)
 		|| e.contains("dosn't exist") // sic! typo is intentional
-		// 5.1.1 <EMAIL>: Email address could not be found, or was misspelled (G8) (on biotech-calendar.com, invoicefactoring.com)
+		// 5.1.1 <EMAIL>: Email address could not be found, or was misspelled (G8) (on @biotech-calendar.com, @invoicefactoring.com)
 		|| e.contains("could not be found") 
-		// No such person at this address (on aconsa.com.mx)
+		// No such person at this address (on @aconsa.com.mx)
 		|| e.contains("no such person")
-		// Callout verification failed: 550 No Such User Here (on medipro.co.uk)
+		// Callout verification failed: 550 No Such User Here (on @medipro.co.uk)
 		|| e.contains("callout verification failed")
 }
 
@@ -110,7 +110,7 @@ pub fn is_full_inbox(e: &str) -> bool {
 pub fn is_disabled_account(e: &str) -> bool {
 	// 554 The email account that you tried to reach is disabled. Learn more at https://support.google.com/mail/?p=DisabledUser"
 	e.contains("disabled")
-	// 554 delivery error: Sorry your message to [email] cannot be delivered. This account has been disabled or discontinued
+	// 554 delivery error: Sorry your message to <EMAIL> cannot be delivered. This account has been disabled or discontinued
 	|| e.contains("discontinued")
 }
 
@@ -124,93 +124,101 @@ pub fn is_err_io_errors(e: &SmtpError) -> bool {
 
 /// Check if the IP is blacklisted.
 pub fn is_err_ip_blacklisted(e: &SmtpError) -> bool {
-	let message: &Vec<String> = match e {
+	let e = match e {
 		SmtpError::SmtpError(AsyncSmtpError::Transient(r) | AsyncSmtpError::Permanent(r)) => {
-			r.message.as_ref()
+			// TODO We can use .to_string() after:
+			// https://github.com/async-email/async-smtp/pull/53
+			r.message.join("; ").to_lowercase()
 		}
 		_ => {
 			return false;
 		}
 	};
-	let first_line = message[0].to_lowercase();
 
 	// Permanent errors
 
 	// 5.7.1 IP address blacklisted by recipient
 	// 5.7.1 Service unavailable; Client host [147.75.45.223] is blacklisted. Visit https://www.sophos.com/en-us/threat-center/ip-lookup.aspx?ip=147.75.45.223 to request delisting
-	// 5.3.0 <aaro.peramaa@helsinki.fi>... Mail from 147.75.45.223 rejected by Abusix blacklist
-	first_line.contains("blacklist") ||
+	// 5.3.0 <EMAIL>... Mail from 147.75.45.223 rejected by Abusix blacklist (on @helsinki.fi)
+	e.contains("blacklist") ||
 	// Rejected because 23.129.64.213 is in a black list at b.barracudacentral.org
-	first_line.contains("black list") ||
+	e.contains("black list") ||
 	// 5.7.1 Recipient not authorized, your IP has been found on a block list
-	first_line.contains("block list") ||
+	// gmx.net (mxgmx117) Nemesis ESMTP Service not available; No SMTP service; IP address is block listed.; For explanation visit https://www.gmx.net/mail/senderguidelines?c=bl (on @gmx.net, @web.de)
+	e.contains("block list") ||
 	// Unable to add <EMAIL> because host 23.129.64.184 is listed on zen.spamhaus.org
 	// 5.7.1 Service unavailable, Client host [23.129.64.184] blocked using Spamhaus.
 	// 5.7.1 Email cannot be delivered. Reason: Email detected as Spam by spam filters.
-	first_line.contains("spam") ||
+	e.contains("spam") ||
 	// host 23.129.64.216 is listed at combined.mail.abusix.zone (127.0.0.12,
-		first_line.contains("abusix") ||
+		e.contains("abusix") ||
 	// 5.7.1 Relaying denied. IP name possibly forged [45.154.35.252]
 	// 5.7.1 Relaying denied: You must check for new mail before sending mail. [23.129.64.216]
-	first_line.contains("relaying denied") ||
+	e.contains("relaying denied") ||
 	// 5.7.1 <unknown[23.129.64.100]>: Client host rejected: Access denied
-	first_line.contains("access denied") ||
+	e.contains("access denied") ||
 	// sorry, mail from your location [5.79.109.48] is administratively denied (#5.7.1)
-	first_line.contains("administratively denied") ||
+	e.contains("administratively denied") ||
 	// 5.7.606 Access denied, banned sending IP [23.129.64.216]
-	first_line.contains("banned") ||
+	e.contains("banned") ||
 	// Blocked - see https://ipcheck.proofpoint.com/?ip=23.129.64.192
 	// 5.7.1 Mail from 23.129.64.183 has been blocked by Trend Micro Email Reputation Service.
-	first_line.contains("blocked") ||
+	e.contains("blocked") ||
 	// Connection rejected by policy [7.3] 38206, please visit https://support.symantec.com/en_US/article.TECH246726.html for more details about this error message.
-	first_line.contains("connection rejected") ||
+	e.contains("connection rejected") ||
 	// csi.mimecast.org Poor Reputation Sender. - https://community.mimecast.com/docs/DOC-1369#550 [6ATVl4DjOvSA6XNsWGoUFw.us31]
 	// Your access to this mail system has been rejected due to the sending MTA\'s poor reputation. If you believe that this failure is in error, please contact the intended recipient via alternate means.
-	first_line.contains("poor reputation") ||
+	e.contains("poor reputation") ||
 	// JunkMail rejected - (gmail.com) [193.218.118.140]:46615 is in an RBL: http://www.barracudanetworks.com/reputation/?pr=1&ip=193.218.118.140
-	first_line.contains("junkmail") ||
+	e.contains("junkmail") ||
 
     // Transient errors
 
 	// Blocked - see https://www.spamcop.net/bl.shtml?23.129.64.211
-	first_line.contains("blocked") ||
+	e.contains("blocked") ||
 	// 4.7.1 <EMAIL>: Relay access denied
-	first_line.contains("access denied") ||
+	e.contains("access denied") ||
 	// relay not permitted!
-	first_line.contains("relay not permitted") ||
+	e.contains("relay not permitted") ||
 	// 23.129.64.216 is not yet authorized to deliver mail from
-	first_line.contains("not yet authorized")
+	e.contains("not yet authorized")
 }
 
 /// Check if the IP needs a reverse DNS.
 pub fn is_err_needs_rdns(e: &SmtpError) -> bool {
-	let message: &Vec<String> = match e {
+	let e = match e {
 		SmtpError::SmtpError(AsyncSmtpError::Transient(r) | AsyncSmtpError::Permanent(r)) => {
-			r.message.as_ref()
+			// TODO We can use .to_string() after:
+			// https://github.com/async-email/async-smtp/pull/53
+			r.message.join("; ").to_lowercase()
 		}
 		_ => {
 			return false;
 		}
 	};
-	let first_line = message[0].to_lowercase();
 
 	// 4.7.25 Client host rejected: cannot find your hostname, [147.75.45.223]
 	// 4.7.1 Client host rejected: cannot find your reverse hostname, [147.75.45.223]
 	// 5.7.1 Client host rejected: cannot find your reverse hostname, [23.129.64.184]
-	first_line.contains("cannot find your reverse hostname") ||
+	e.contains("cannot find your reverse hostname") ||
 	// You dont seem to have a reverse dns entry. Come back later. You are greylisted for 20 minutes. See http://www.fsf.org/about/systems/greylisting
-	first_line.contains("reverse dns entry")
+	e.contains("reverse dns entry")
 }
 
 #[cfg(test)]
 mod tests {
 
-	#[test]
-	fn is_invalid_works() {
-		use super::is_invalid;
-		use async_smtp::EmailAddress;
-		use std::str::FromStr;
+	use super::{is_err_ip_blacklisted, is_invalid};
+	use crate::SmtpError::SmtpError;
+	use async_smtp::{
+		smtp::error::Error,
+		smtp::response::{Category, Code, Detail, Response, Severity},
+		EmailAddress,
+	};
+	use std::str::FromStr;
 
+	#[test]
+	fn test_is_invalid() {
 		let email = EmailAddress::from_str("foo@bar.baz").unwrap();
 
 		assert_eq!(
@@ -228,5 +236,24 @@ mod tests {
 			),
 			true
 		);
+	}
+
+	#[test]
+	fn test_is_err_ip_blacklisted() {
+		let err = Error::Permanent(Response::new(
+			Code::new(
+				Severity::PermanentNegativeCompletion,
+				Category::Information,
+				Detail::Zero,
+			),
+			vec![
+				"gmx.net (mxgmx117) Nemesis ESMTP Service not available".to_string(),
+				"No SMTP service".to_string(),
+				"IP address is block listed.".to_string(),
+				"For explanation visit https://www.gmx.net/mail/senderguidelines?c=bl".to_string(),
+			],
+		));
+
+		assert!(is_err_ip_blacklisted(&SmtpError(err)))
 	}
 }

@@ -2,6 +2,9 @@ target
 **/*.rs.bk
 .DS_Store
 
+# Output when debugging Hotmail password recovery using a headless browser.
+hotmail.jpeg
+
 # sensitive data
 /test_suite/src/sensitive_fixtures/*.json
 .env
