@@ -93,7 +93,7 @@ fn run_headless(to_email: &EmailAddress, save_jpg: bool) -> Result<SmtpDetails, 
 	// Somehow, empirically, it works better by waiting first for #signinNameSection,
 	// then waiting for its child #pMemberNameErr.
 	tab.wait_for_element_with_custom_timeout("#signinNameSection", Duration::from_secs(2))?;
-	let is_error = tab
+	let account_does_not_exist = tab
 		.wait_for_element_with_custom_timeout("#pMemberNameErr", Duration::from_secs(1))
 		.is_ok();
 
@@ -104,7 +104,7 @@ fn run_headless(to_email: &EmailAddress, save_jpg: bool) -> Result<SmtpDetails, 
 			.expect("Safe to unwrap, as save_jpg should only be used for debugging purposes.");
 	}
 
-	if is_error {
+	if account_does_not_exist {
 		log::debug!(
 			target: LOG_TARGET,
 			"[email={}] Found error message in password recovery, email does not exist",
@@ -122,7 +122,7 @@ fn run_headless(to_email: &EmailAddress, save_jpg: bool) -> Result<SmtpDetails, 
 		can_connect_smtp: true,
 		has_full_inbox: false,
 		is_catch_all: false,
-		is_deliverable: !is_error,
+		is_deliverable: !account_does_not_exist,
 		is_disabled: false,
 	})
 }
