@@ -25,7 +25,7 @@ pub fn is_invalid(e: &str, email: &EmailAddress) -> bool {
 	// 550 Address rejected
 	// 550 5.1.1 : Recipient address rejected
 	// 550 5.1.1 : Recipient address rejected: User unknown in virtual alias table
-	// 550 5.1.1 <user@domain.com>: Recipient address rejected: User unknown in relay recipient table
+	// 550 5.1.1 <EMAIL: Recipient address rejected: User unknown in relay recipient table
 	e.contains("address rejected")
 		// 550 5.1.1 : Unrouteable address
 		|| e.contains("unrouteable")
@@ -85,11 +85,11 @@ pub fn is_invalid(e: &str, email: &EmailAddress) -> bool {
 		|| e.contains("no longer available")
 		// permanent: RCPT (<EMAIL>) dosn't exist (on @hgy.ooo)
 		|| e.contains("dosn't exist") // sic! typo is intentional
-		// 5.1.1 <EMAIL>: Email address could not be found, or was misspelled (G8) (on biotech-calendar.com, invoicefactoring.com)
+		// 5.1.1 <EMAIL>: Email address could not be found, or was misspelled (G8) (on @biotech-calendar.com, @invoicefactoring.com)
 		|| e.contains("could not be found") 
-		// No such person at this address (on aconsa.com.mx)
+		// No such person at this address (on @aconsa.com.mx)
 		|| e.contains("no such person")
-		// Callout verification failed: 550 No Such User Here (on medipro.co.uk)
+		// Callout verification failed: 550 No Such User Here (on @medipro.co.uk)
 		|| e.contains("callout verification failed")
 }
 
@@ -110,7 +110,7 @@ pub fn is_full_inbox(e: &str) -> bool {
 pub fn is_disabled_account(e: &str) -> bool {
 	// 554 The email account that you tried to reach is disabled. Learn more at https://support.google.com/mail/?p=DisabledUser"
 	e.contains("disabled")
-	// 554 delivery error: Sorry your message to [email] cannot be delivered. This account has been disabled or discontinued
+	// 554 delivery error: Sorry your message to <EMAIL> cannot be delivered. This account has been disabled or discontinued
 	|| e.contains("discontinued")
 }
 
@@ -138,11 +138,12 @@ pub fn is_err_ip_blacklisted(e: &SmtpError) -> bool {
 
 	// 5.7.1 IP address blacklisted by recipient
 	// 5.7.1 Service unavailable; Client host [147.75.45.223] is blacklisted. Visit https://www.sophos.com/en-us/threat-center/ip-lookup.aspx?ip=147.75.45.223 to request delisting
-	// 5.3.0 <aaro.peramaa@helsinki.fi>... Mail from 147.75.45.223 rejected by Abusix blacklist
+	// 5.3.0 <EMAIL>... Mail from 147.75.45.223 rejected by Abusix blacklist (on @helsinki.fi)
 	first_line.contains("blacklist") ||
 	// Rejected because 23.129.64.213 is in a black list at b.barracudacentral.org
 	first_line.contains("black list") ||
 	// 5.7.1 Recipient not authorized, your IP has been found on a block list
+	// gmx.net (mxgmx117) Nemesis ESMTP Service not available; No SMTP service; IP address is block listed.; For explanation visit https://www.gmx.net/mail/senderguidelines?c=bl (on @gmx.net)
 	first_line.contains("block list") ||
 	// Unable to add <EMAIL> because host 23.129.64.184 is listed on zen.spamhaus.org
 	// 5.7.1 Service unavailable, Client host [23.129.64.184] blocked using Spamhaus.
