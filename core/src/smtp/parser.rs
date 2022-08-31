@@ -144,7 +144,7 @@ pub fn is_err_ip_blacklisted(e: &SmtpError) -> bool {
 	// Rejected because 23.129.64.213 is in a black list at b.barracudacentral.org
 	e.contains("black list") ||
 	// 5.7.1 Recipient not authorized, your IP has been found on a block list
-	// gmx.net (mxgmx117) Nemesis ESMTP Service not available; No SMTP service; IP address is block listed.; For explanation visit https://www.gmx.net/mail/senderguidelines?c=bl (on @gmx.net)
+	// gmx.net (mxgmx117) Nemesis ESMTP Service not available; No SMTP service; IP address is block listed.; For explanation visit https://www.gmx.net/mail/senderguidelines?c=bl (on @gmx.net, @web.de)
 	e.contains("block list") ||
 	// Unable to add <EMAIL> because host 23.129.64.184 is listed on zen.spamhaus.org
 	// 5.7.1 Service unavailable, Client host [23.129.64.184] blocked using Spamhaus.
