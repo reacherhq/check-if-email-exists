@@ -181,6 +181,8 @@ pub fn is_err_ip_blacklisted(e: &SmtpError) -> bool {
 	|| e.contains("dnsbl")
 	// smtp-fw-9107.amazon.com; SBRS score too low: http://www.senderbase.org/ (on @amazon.com)
 	|| e.contains("sbrs score too low")
+	// https://www.spamhaus.org/sbl/query/SBLCSShttps://www.spamhaus.org/query/ip/3.238.201.74 (on @knollridges.com.ph)
+	|| e.contains("spamhaus")
 
     // Transient errors
 

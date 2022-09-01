@@ -13,14 +13,14 @@ readme = "../README.md"
 repository = "https://github.com/reacherhq/check-if-email-exists"
 
 [dependencies]
-anyhow = { version = "1.0.61", optional = true }
 async-native-tls = { version = "0.4", default-features = false }
 async-recursion = "1.0.0"
 async-smtp = { version = "0.5.0", features = ["socks5"] }
 async-std = "1.12.0"
 async-std-resolver = "0.21.2"
+fantoccini = { version = "0.19.3", optional = true }
+futures = { version = "0.3.23", optional = true }
 fast-socks5 = "0.8.1"
-headless_chrome = { git = "https://github.com/atroche/rust-headless-chrome", optional = true }
 log = "0.4.17"
 mailchecker = "5.0.0"
 rand = {version = "0.8.5", features = ["small_rng"] }
@@ -34,4 +34,4 @@ trust-dns-proto = "0.21.2"
 tokio = { version = "1.16.1" }
 
 [features]
-headless = ["anyhow", "headless_chrome"]
+headless = ["fantoccini", "futures"]

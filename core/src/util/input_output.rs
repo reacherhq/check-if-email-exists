@@ -92,10 +92,12 @@ pub struct CheckEmailInput {
 	pub yahoo_use_api: bool,
 	/// For Hotmail/Outlook email addresses, use a headless navigator
 	/// connecting to the password recovery page instead of the SMTP server.
+	/// This assumes you have a WebDriver compatible process running, then pass
+	/// its endpoint, usually http://localhost:4444.
 	///
-	/// Defaults to false.
+	/// Defaults to None.
 	#[cfg(feature = "headless")]
-	pub hotmail_use_headless: bool,
+	pub hotmail_use_headless: Option<String>,
 	/// Number of retries of SMTP connections to do.
 	///
 	/// Defaults to 2 to avoid greylisting.
@@ -113,7 +115,7 @@ impl Default for CheckEmailInput {
 			from_email: "user@example.org".into(),
 			hello_name: "localhost".into(),
 			#[cfg(feature = "headless")]
-			hotmail_use_headless: false,
+			hotmail_use_headless: None,
 			proxy: None,
 			smtp_port: 25,
 			smtp_security: SmtpSecurity::Opportunistic,
@@ -226,13 +228,15 @@ impl CheckEmailInput {
 		self
 	}
 
-	/// Set whether to use a headless navigator to navigate to Hotmail's
-	/// password recovery page to check whether an email exists or not. If set
-	/// to true, make sure you have Chrome/Chromium installed locally before
-	/// verifying the email.
-	/// Defaults to false.
+	/// Set whether or not to use a headless navigator to navigate to Hotmail's
+	/// password recovery page to check if an email exists. If set to
+	/// `Some(<endpoint>)`, this endpoint must point to a WebDriver process,
+	/// usually listening on http://localhost:4444. Defaults to None.
 	#[cfg(feature = "headless")]
-	pub fn set_hotmail_use_headless(&mut self, use_headless: bool) -> &mut CheckEmailInput {
+	pub fn set_hotmail_use_headless(
+		&mut self,
+		use_headless: Option<String>,
+	) -> &mut CheckEmailInput {
 		self.hotmail_use_headless = use_headless;
 		self
 	}
