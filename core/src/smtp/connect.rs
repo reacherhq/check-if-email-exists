@@ -308,7 +308,7 @@ async fn check_smtp_without_retry(
 }
 
 /// Get all email details we can from one single `EmailAddress`.
-/// Retry the SMTP connection, in particular to avoid greylisting.
+/// Retry the SMTP connection on error, in particular to avoid greylisting.
 #[async_recursion]
 pub async fn check_smtp_with_retry(
 	to_email: &EmailAddress,

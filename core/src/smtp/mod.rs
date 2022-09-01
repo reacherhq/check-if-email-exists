@@ -14,14 +14,12 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pub mod error;
+mod connect;
+mod error;
 #[cfg(feature = "headless")]
 mod hotmail;
 mod parser;
-mod smtp;
 mod yahoo;
-
-pub use error::*;
 
 use std::default::Default;
 
@@ -30,7 +28,8 @@ use serde::{Deserialize, Serialize};
 use trust_dns_proto::rr::Name;
 
 use crate::util::input_output::CheckEmailInput;
-use smtp::check_smtp_with_retry;
+use connect::check_smtp_with_retry;
+pub use error::*;
 
 /// Details that we gathered from connecting to this email via SMTP
 #[derive(Debug, Default, Deserialize, Serialize)]
@@ -56,15 +55,20 @@ pub async fn check_smtp(
 	domain: &str,
 	input: &CheckEmailInput,
 ) -> Result<SmtpDetails, SmtpError> {
+	let host_lowercase = host.to_lowercase().to_string();
 	// FIXME Is this `contains` too lenient?
-	if input.yahoo_use_api && domain.to_lowercase().contains("yahoo") {
+	if input.yahoo_use_api && host_lowercase.contains("yahoo") {
 		return yahoo::check_yahoo(to_email, input)
 			.await
 			.map_err(|err| err.into());
 	}
 	#[cfg(feature = "headless")]
-	if input.hotmail_use_headless && host.to_lowercase().to_string().contains("outlook") {
-		return hotmail::check_password_recovery(to_email).map_err(|err| err.into());
+	if let Some(webdriver) = &input.hotmail_use_headless {
+		if host_lowercase.contains("outlook") {
+			return hotmail::check_password_recovery(to_email, webdriver)
+				.await
+				.map_err(|err| err.into());
+		}
 	}
 
 	check_smtp_with_retry(to_email, host, port, domain, input, input.retries).await
