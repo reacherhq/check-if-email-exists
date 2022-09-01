@@ -24,6 +24,7 @@ use fantoccini::{
 };
 use futures::TryFutureExt;
 use serde::Serialize;
+use serde_json::Map;
 
 use super::SmtpDetails;
 use crate::util::ser_with_display::ser_with_display;
@@ -64,8 +65,26 @@ pub async fn check_password_recovery(
 		to_email,
 	);
 
-	// Connect to webdriver instance that is listening on port 4444
-	let c = ClientBuilder::native().connect(webdriver).await?;
+	// Running in a container, I run into the following error:
+	// Failed to move to new namespace: PID namespaces supported, Network namespace supported, but failed: errno = Operation not permitted
+	// In searching around I found a few different workarounds:
+	// - Enable namespaces: https://github.com/jessfraz/dockerfiles/issues/65#issuecomment-266532289
+	// - Run it with a custom seccomp: https://github.com/jessfraz/dockerfiles/issues/65#issuecomment-217214671
+	// - Run with --no-sandbox: https://github.com/karma-runner/karma-chrome-launcher/issues/125#issuecomment-312668593
+	// For now I went with the --no-sandbox.
+	//
+	// TODO Look into security implications...
+	let mut caps = Map::new();
+	let opts = serde_json::json!({
+		"args": ["--headless", "--disable-gpu", "--no-sandbox", "--disable-dev-shm-usage"],
+	});
+	caps.insert("goog:chromeOptions".to_string(), opts);
+
+	// Connect to WebDriver instance that is listening on `webdriver`
+	let c = ClientBuilder::native()
+		.capabilities(caps)
+		.connect(webdriver)
+		.await?;
 
 	// Navigate to Microsoft password recovery page.
 	c.goto("https://account.live.com/password/reset").await?;
@@ -125,11 +144,12 @@ pub async fn check_password_recovery(
 mod tests {
 	use super::check_password_recovery;
 	use async_smtp::EmailAddress;
+	use async_std::prelude::FutureExt;
 	use std::str::FromStr;
 
 	// Ignoring this test as it requires a local process of WebDriver running on
 	// "http://localhost:4444". To debug the headless password recovery page,
-	// run e.g. geckodriver and remove the "#[ignore]".
+	// run chromedriver and remove the "#[ignore]".
 	// Also see: https://github.com/jonhoo/fantoccini
 	#[tokio::test]
 	#[ignore]
@@ -144,5 +164,33 @@ mod tests {
 				.unwrap();
 			assert!(!res.is_deliverable)
 		}
+
+		// This email does exist.
+		let email = EmailAddress::from_str("test@hotmail.com").unwrap();
+		// Run 10 headless sessions with the above fake email (not deliverable).
+		// It should not error.
+		for _ in 0..10 {
+			let res = check_password_recovery(&email, "http://localhost:4444")
+				.await
+				.unwrap();
+			assert!(res.is_deliverable)
+		}
+	}
+
+	// This test tests that we can run 2 instances of check_password_recovery.
+	// This will only work with chromedriver (which supports parallel cleints),
+	// but will fail with geckodriver.
+	// ref: https://github.com/jonhoo/fantoccini/issues/111#issuecomment-727650629
+	#[tokio::test]
+	#[ignore]
+	async fn test_parallel() {
+		// This email does not exist.
+		let email = EmailAddress::from_str("foo@bar.baz").unwrap();
+
+		let f1 = check_password_recovery(&email, "http://localhost:4444");
+		let f2 = check_password_recovery(&email, "http://localhost:4444");
+
+		let f = f1.try_join(f2).await;
+		assert!(f.is_ok(), "{:?}", f);
 	}
 }

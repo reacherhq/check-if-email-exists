@@ -93,7 +93,8 @@ pub struct CheckEmailInput {
 	/// For Hotmail/Outlook email addresses, use a headless navigator
 	/// connecting to the password recovery page instead of the SMTP server.
 	/// This assumes you have a WebDriver compatible process running, then pass
-	/// its endpoint, usually http://localhost:4444.
+	/// its endpoint, usually http://localhost:4444. We recommend running
+	/// chromedriver (and not geckodriver) as it allows parallel requests.
 	///
 	/// Defaults to None.
 	#[cfg(feature = "headless")]
