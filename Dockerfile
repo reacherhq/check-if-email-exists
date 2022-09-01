@@ -22,6 +22,12 @@ RUN cargo build --bin reacher_backend --release --target=x86_64-unknown-linux-mu
 
 FROM alpine:latest
 
+RUN addgroup -g 1000 reacher
+
+RUN adduser -D -s /bin/sh -u 1000 -G reacher reacher
+
+WORKDIR /home/reacher/bin/
+
 # Install glibc
 # https://github.com/sgerrand/alpine-pkg-glibc
 RUN wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub && \
@@ -36,18 +42,11 @@ ARG GECKODRIVER_VERSION=v0.31.0
 RUN wget https://github.com/mozilla/geckodriver/releases/download/$GECKODRIVER_VERSION/geckodriver-$GECKODRIVER_VERSION-linux64.tar.gz && \
     tar -zxf geckodriver-$GECKODRIVER_VERSION-linux64.tar.gz -C /usr/bin
 
-# And run it in the background
-RUN geckodriver &
-
-RUN addgroup -g 1000 reacher
-
-RUN adduser -D -s /bin/sh -u 1000 -G reacher reacher
-
-WORKDIR /home/reacher/bin/
-
 COPY --from=cargo-build /usr/src/reacher/target/x86_64-unknown-linux-musl/release/reacher_backend .
+COPY --from=cargo-build /usr/src/reacher/docker.sh .
 
 RUN chown reacher:reacher reacher_backend
+RUN chown reacher:reacher docker.sh
 
 USER reacher
 
@@ -60,4 +59,4 @@ ENV RCH_ENABLE_BULK=0
 
 EXPOSE 8080
 
-CMD ["./reacher_backend"]
+CMD ["./docker.sh"]
