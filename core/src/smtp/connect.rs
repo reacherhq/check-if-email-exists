@@ -58,7 +58,13 @@ async fn connect_to_host(
 	let host = host.trim_end_matches('.').to_string();
 
 	let security = {
-		let tls_params = ClientTlsParameters::new(host.clone(), TlsConnector::new().use_sni(true));
+		let tls_params = ClientTlsParameters::new(
+			host.clone(),
+			TlsConnector::new()
+				.use_sni(true)
+				.danger_accept_invalid_certs(true)
+				.danger_accept_invalid_hostnames(true),
+		);
 
 		input.smtp_security.to_client_security(tls_params)
 	};
