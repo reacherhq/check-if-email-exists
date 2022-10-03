@@ -16,18 +16,18 @@
 
 use crate::util::constants::LOG_TARGET;
 use md5;
+use md5::Digest;
 use serde::{Deserialize, Serialize};
-use std::default::Default;
 
 const API_BASE_URL: &str = "https://www.gravatar.com/avatar/";
 
 // Details on whether the given email address has a gravatar image.
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct GravatarDetails {
 	// Whether a gravatar image for the given email exists.
 	pub has_image: bool,
 	// The Gravatar url of the image belonging to the given email.
-	pub url: Option<&str>,
+	pub url: Option<String>,
 }
 
 impl Default for GravatarDetails {
@@ -39,10 +39,12 @@ impl Default for GravatarDetails {
 	}
 }
 
-pub async fn check_gravatar(to_email: &EmailAddress) -> GravatarDetails {
-	let client: reqwest::Client = reqwest::Client::new()?;
+pub async fn check_gravatar(to_email: &str) -> GravatarDetails {
+	let client = reqwest::Client::new();
 
-	let url = API_BASE_URL + md5::compute(to_email);
+	let mail_hash: Digest = md5::compute(to_email);
+
+	let url = format!("{}{:x}", API_BASE_URL, mail_hash);
 
 	log::debug!(
 		target: LOG_TARGET,
@@ -52,12 +54,12 @@ pub async fn check_gravatar(to_email: &EmailAddress) -> GravatarDetails {
 	);
 
 	let response = client
-		.get(API_BASE_URL)
+		.get(&url)
 		// This option is necessary to return a NotFound exception instead of the default gravatar
 		// image if none for the given email is found.
 		.query(&[("d", "404")])
 		.send()
-		.await?;
+		.await;
 
 	log::debug!(
 		target: LOG_TARGET,
@@ -66,15 +68,20 @@ pub async fn check_gravatar(to_email: &EmailAddress) -> GravatarDetails {
 		response
 	);
 
+	let response = match response {
+		Ok(response) => response,
+		Err(error) => panic!("Unexpected request error: {:?}", error),
+	};
+
 	match response.status() {
 		reqwest::StatusCode::OK => GravatarDetails {
 			has_image: true,
-			url,
+			url: Some(String::from(url)),
 		},
 		reqwest::StatusCode::NOT_FOUND => GravatarDetails {
 			has_image: false,
 			url: None,
 		},
-		_ => panic!("Unexpected status code"),
+		_ => panic!("Unexpected status code: {:?}", response.status()),
 	}
 }

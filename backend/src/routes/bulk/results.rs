@@ -88,7 +88,7 @@ struct JobResultCsvResponse {
 	#[serde(rename = "gravatar.has_image")]
 	gravatar_has_image: bool,
 	#[serde(rename = "gravatar.url")]
-	gravatar_url: Option<&str>,
+	gravatar_url: Option<String>,
 	error: Option<String>,
 }
 
@@ -113,7 +113,7 @@ impl TryFrom<CsvWrapper> for JobResultCsvResponse {
 		let mut syntax_domain: String = String::default();
 		let mut syntax_username: String = String::default();
 		let mut gravatar_has_image: bool = false;
-		let mut gravatar_url: Option<&str> = None;
+		let mut gravatar_url: Option<String> = None;
 		let mut error: Option<String> = None;
 
 		let top_level = value
@@ -216,17 +216,15 @@ impl TryFrom<CsvWrapper> for JobResultCsvResponse {
 					let gravatar_obj = val
 						.as_object()
 						.ok_or("gravatar field should be an object")?;
-					for (key, val) in syntax_obj.keys().zip(syntax_obj.values()) {
+					for (key, val) in gravatar_obj.keys().zip(gravatar_obj.values()) {
 						match key.as_str() {
-							"error" => error = Some(val.to_string()),
 							"has_image" => {
 								gravatar_has_image =
 									val.as_bool().ok_or("has_image should be a boolean")?
 							}
 							"url" => {
-								if val != None {
-									gravatar_url =
-										val.as_str().ok_or("url should be a string")?.to_string()
+								if val.as_str() != None {
+									gravatar_url = Some(val.to_string())
 								}
 							}
 							_ => {}

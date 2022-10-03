@@ -76,6 +76,8 @@ use syntax::check_syntax;
 pub use util::constants::LOG_TARGET;
 pub use util::input_output::*;
 
+use crate::gravatar::check_gravatar;
+
 /// Given an email's misc and smtp details, calculate an estimate of our
 /// confidence on how reachable the email is.
 ///

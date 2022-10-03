@@ -136,7 +136,7 @@
 							"is_valid_syntax": true,
 							"username": "test"
 						},
-						"gavatar": {
+						"gravatar": {
 							"has_image": false
 						}
 					}
@@ -186,6 +186,9 @@
 					},
 					"syntax": {
 						"$ref": "#/components/schemas/SyntaxDetails"
+					},
+					"gravatar": {
+						"$ref": "#/components/schemas/GravatarDetails"
 					}
 				},
 				"required": [
@@ -194,6 +197,7 @@
 					"mx",
 					"smtp",
 					"syntax",
+					"gravatar",
 					"is_reachable"
 				]
 			},
@@ -313,6 +317,24 @@
 					"domain",
 					"is_valid_syntax",
 					"username"
+				]
+			},
+			"GravatarDetails": {
+				"title": "GravatarDetails",
+				"type": "object",
+				"description": "Details on whether the given email address has a gravatar image.",
+				"properties": {
+					"url": {
+						"type": "string",
+						"description": "The Gravatar url of the image belonging to the given email."
+					},
+					"has_image": {
+						"type": "boolean",
+						"description": "Does a gravatar image for the given email exist?"
+					}
+				},
+				"required": [
+					"has_image"
 				]
 			},
 			"Reachable": {

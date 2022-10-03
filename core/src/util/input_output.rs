@@ -280,6 +280,7 @@ pub struct CheckEmailOutput {
 	pub smtp: Result<SmtpDetails, SmtpError>,
 	/// Details about the email address.
 	pub syntax: SyntaxDetails,
+	// Details about gravatar.
 	pub gravatar: GravatarDetails,
 }
 
@@ -347,6 +348,7 @@ impl Serialize for CheckEmailOutput {
 			)?,
 		}
 		map.serialize_entry("syntax", &self.syntax)?;
+		map.serialize_entry("gravatar", &self.gravatar)?;
 		map.end()
 	}
 }
@@ -376,6 +378,7 @@ mod tests {
 				misc: Ok(super::MiscDetails::default()),
 				mx: Ok(super::MxDetails::default()),
 				syntax: super::SyntaxDetails::default(),
+				gravatar: super::GravatarDetails::default(),
 				smtp: Err(super::SmtpError::SmtpError(r.into())),
 			}
 		}
