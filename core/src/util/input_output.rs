@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::gravatar::GravatarDetails;
 use crate::misc::{MiscDetails, MiscError};
 use crate::mx::{MxDetails, MxError};
 use crate::smtp::{SmtpDetails, SmtpError, SmtpErrorDesc};
@@ -91,6 +90,10 @@ pub struct CheckEmailInput {
 	///
 	/// Defaults to true.
 	pub yahoo_use_api: bool,
+	// Whether to check if a gravatar image is existing for the given email.
+	//
+	// Defaults to false
+	pub check_gravatar: bool,
 	/// For Hotmail/Outlook email addresses, use a headless navigator
 	/// connecting to the password recovery page instead of the SMTP server.
 	/// This assumes you have a WebDriver compatible process running, then pass
@@ -123,6 +126,7 @@ impl Default for CheckEmailInput {
 			smtp_security: SmtpSecurity::Opportunistic,
 			smtp_timeout: None,
 			yahoo_use_api: true,
+			check_gravatar: false,
 			retries: 2,
 		}
 	}
@@ -230,6 +234,13 @@ impl CheckEmailInput {
 		self
 	}
 
+	/// Whether to check if a gravatar image is existing for the given email.
+	/// Defaults to false.
+	pub fn set_check_gravatar(&mut self, check_gravatar: bool) -> &mut CheckEmailInput {
+		self.check_gravatar = check_gravatar;
+		self
+	}
+
 	/// Set whether or not to use a headless navigator to navigate to Hotmail's
 	/// password recovery page to check if an email exists. If set to
 	/// `Some(<endpoint>)`, this endpoint must point to a WebDriver process,
@@ -280,8 +291,6 @@ pub struct CheckEmailOutput {
 	pub smtp: Result<SmtpDetails, SmtpError>,
 	/// Details about the email address.
 	pub syntax: SyntaxDetails,
-	// Details about gravatar.
-	pub gravatar: GravatarDetails,
 }
 
 impl Default for CheckEmailOutput {
@@ -293,7 +302,6 @@ impl Default for CheckEmailOutput {
 			mx: Ok(MxDetails::default()),
 			smtp: Ok(SmtpDetails::default()),
 			syntax: SyntaxDetails::default(),
-			gravatar: GravatarDetails::default(),
 		}
 	}
 }
@@ -348,7 +356,6 @@ impl Serialize for CheckEmailOutput {
 			)?,
 		}
 		map.serialize_entry("syntax", &self.syntax)?;
-		map.serialize_entry("gravatar", &self.gravatar)?;
 		map.end()
 	}
 }
@@ -378,7 +385,6 @@ mod tests {
 				misc: Ok(super::MiscDetails::default()),
 				mx: Ok(super::MxDetails::default()),
 				syntax: super::SyntaxDetails::default(),
-				gravatar: super::GravatarDetails::default(),
 				smtp: Err(super::SmtpError::SmtpError(r.into())),
 			}
 		}
@@ -386,20 +392,20 @@ mod tests {
 		let res = dummy_response_with_message("blacklist");
 		let actual = serde_json::to_string(&res).unwrap();
 		// Make sure the `description` is present with IpBlacklisted.
-		let expected = r#"{"input":"foo","is_reachable":"unknown","misc":{"is_disposable":false,"is_role_account":false},"mx":{"accepts_mail":false,"records":[]},"smtp":{"error":{"type":"SmtpError","message":"transient: blacklist"},"description":"IpBlacklisted"},"syntax":{"address":null,"domain":"","is_valid_syntax":false,"username":""},"gravatar":{"has_image":false,"url":null}}"#;
+		let expected = r#"{"input":"foo","is_reachable":"unknown","misc":{"is_disposable":false,"is_role_account":false,"gravatar_url":null},"mx":{"accepts_mail":false,"records":[]},"smtp":{"error":{"type":"SmtpError","message":"transient: blacklist"},"description":"IpBlacklisted"},"syntax":{"address":null,"domain":"","is_valid_syntax":false,"username":""}}"#;
 		assert_eq!(expected, actual);
 
 		let res =
 			dummy_response_with_message("Client host rejected: cannot find your reverse hostname");
 		let actual = serde_json::to_string(&res).unwrap();
 		// Make sure the `description` is present with NeedsRDNs.
-		let expected = r#"{"input":"foo","is_reachable":"unknown","misc":{"is_disposable":false,"is_role_account":false},"mx":{"accepts_mail":false,"records":[]},"smtp":{"error":{"type":"SmtpError","message":"transient: Client host rejected: cannot find your reverse hostname"},"description":"NeedsRDNS"},"syntax":{"address":null,"domain":"","is_valid_syntax":false,"username":""},"gravatar":{"has_image":false,"url":null}}"#;
+		let expected = r#"{"input":"foo","is_reachable":"unknown","misc":{"is_disposable":false,"is_role_account":false,"gravatar_url":null},"mx":{"accepts_mail":false,"records":[]},"smtp":{"error":{"type":"SmtpError","message":"transient: Client host rejected: cannot find your reverse hostname"},"description":"NeedsRDNS"},"syntax":{"address":null,"domain":"","is_valid_syntax":false,"username":""}}"#;
 		assert_eq!(expected, actual);
 
 		let res = dummy_response_with_message("foobar");
 		let actual = serde_json::to_string(&res).unwrap();
 		// Make sure the `description` is NOT present.
-		let expected = r#"{"input":"foo","is_reachable":"unknown","misc":{"is_disposable":false,"is_role_account":false},"mx":{"accepts_mail":false,"records":[]},"smtp":{"error":{"type":"SmtpError","message":"transient: foobar"}},"syntax":{"address":null,"domain":"","is_valid_syntax":false,"username":""},"gravatar":{"has_image":false,"url":null}}"#;
+		let expected = r#"{"input":"foo","is_reachable":"unknown","misc":{"is_disposable":false,"is_role_account":false,"gravatar_url":null},"mx":{"accepts_mail":false,"records":[]},"smtp":{"error":{"type":"SmtpError","message":"transient: foobar"}},"syntax":{"address":null,"domain":"","is_valid_syntax":false,"username":""}}"#;
 		assert_eq!(expected, actual);
 	}
 }

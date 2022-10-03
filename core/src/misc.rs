@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use crate::gravatar::check_gravatar;
+
 use super::syntax::SyntaxDetails;
 use serde::{Deserialize, Serialize};
 use std::default::Default;
@@ -27,6 +29,7 @@ pub struct MiscDetails {
 	pub is_disposable: bool,
 	/// Is this email a role-based account?
 	pub is_role_account: bool,
+	pub gravatar_url: Option<String>,
 }
 
 /// Error occured connecting to this email server via SMTP. Right now this
@@ -37,22 +40,28 @@ pub struct MiscDetails {
 pub enum MiscError {}
 
 /// Fetch misc details about the email address, such as whether it's disposable.
-pub fn check_misc(syntax: &SyntaxDetails) -> MiscDetails {
+pub async fn check_misc(syntax: &SyntaxDetails, cfg_check_gravatar: bool) -> MiscDetails {
 	let role_accounts: Vec<&str> =
 		serde_json::from_str(ROLE_ACCOUNTS).expect("roles.json is a valid json. qed.");
+
+	let address = syntax
+		.address
+		.as_ref()
+		.expect("We already checked that the syntax was valid. qed.")
+		.to_string();
+
+	let mut gravatar_url: Option<String> = None;
+
+	if cfg_check_gravatar {
+		gravatar_url = check_gravatar(address.as_ref()).await;
+	}
 
 	MiscDetails {
 		// mailchecker::is_valid checks also if the syntax is valid. But if
 		// we're here, it means we're sure the syntax is valid, so is_valid
 		// actually will only check if it's disposable.
-		is_disposable: !mailchecker::is_valid(
-			syntax
-				.address
-				.as_ref()
-				.expect("We already checked that the syntax was valid. qed.")
-				.to_string()
-				.as_ref(),
-		),
+		is_disposable: !mailchecker::is_valid(address.as_ref()),
 		is_role_account: role_accounts.contains(&syntax.username.to_lowercase().as_ref()),
+		gravatar_url,
 	}
 }

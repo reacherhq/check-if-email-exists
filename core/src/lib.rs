@@ -76,8 +76,6 @@ use syntax::check_syntax;
 pub use util::constants::LOG_TARGET;
 pub use util::input_output::*;
 
-use crate::gravatar::check_gravatar;
-
 /// Given an email's misc and smtp details, calculate an estimate of our
 /// confidence on how reachable the email is.
 ///
@@ -135,8 +133,6 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		my_syntax
 	);
 
-	let gravatar = check_gravatar(to_email).await;
-
 	let my_mx = match check_mx(&my_syntax).await {
 		Ok(m) => m,
 		e => {
@@ -176,7 +172,7 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 			.collect::<Vec<String>>()
 	);
 
-	let my_misc = check_misc(&my_syntax);
+	let my_misc = check_misc(&my_syntax, input.check_gravatar).await;
 	log::debug!(
 		target: LOG_TARGET,
 		"[email={}] Found the following misc details: {:?}",
@@ -225,6 +221,5 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		mx: Ok(my_mx),
 		smtp: my_smtp,
 		syntax: my_syntax,
-		gravatar,
 	}
 }

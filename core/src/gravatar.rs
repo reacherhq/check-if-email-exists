@@ -17,29 +17,10 @@
 use crate::util::constants::LOG_TARGET;
 use md5;
 use md5::Digest;
-use serde::{Deserialize, Serialize};
 
 const API_BASE_URL: &str = "https://www.gravatar.com/avatar/";
 
-// Details on whether the given email address has a gravatar image.
-#[derive(Debug, Deserialize, Serialize)]
-pub struct GravatarDetails {
-	// Whether a gravatar image for the given email exists.
-	pub has_image: bool,
-	// The Gravatar url of the image belonging to the given email.
-	pub url: Option<String>,
-}
-
-impl Default for GravatarDetails {
-	fn default() -> Self {
-		GravatarDetails {
-			has_image: false,
-			url: None,
-		}
-	}
-}
-
-pub async fn check_gravatar(to_email: &str) -> GravatarDetails {
+pub async fn check_gravatar(to_email: &str) -> Option<String> {
 	let client = reqwest::Client::new();
 
 	let mail_hash: Digest = md5::compute(to_email);
@@ -74,14 +55,8 @@ pub async fn check_gravatar(to_email: &str) -> GravatarDetails {
 	};
 
 	match response.status() {
-		reqwest::StatusCode::OK => GravatarDetails {
-			has_image: true,
-			url: Some(String::from(url)),
-		},
-		reqwest::StatusCode::NOT_FOUND => GravatarDetails {
-			has_image: false,
-			url: None,
-		},
+		reqwest::StatusCode::OK => Some(String::from(url)),
+		reqwest::StatusCode::NOT_FOUND => None,
 		_ => panic!("Unexpected status code: {:?}", response.status()),
 	}
 }

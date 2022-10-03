@@ -67,6 +67,8 @@ struct JobResultCsvResponse {
 	misc_is_disposable: bool,
 	#[serde(rename = "misc.is_role_account")]
 	misc_is_role_account: bool,
+	#[serde(rename = "misc.gravatar_url")]
+	misc_gravatar_url: Option<String>,
 	#[serde(rename = "mx.accepts_mail")]
 	mx_accepts_mail: bool,
 	#[serde(rename = "smtp.can_connect")]
@@ -85,10 +87,6 @@ struct JobResultCsvResponse {
 	syntax_domain: String,
 	#[serde(rename = "syntax.username")]
 	syntax_username: String,
-	#[serde(rename = "gravatar.has_image")]
-	gravatar_has_image: bool,
-	#[serde(rename = "gravatar.url")]
-	gravatar_url: Option<String>,
 	error: Option<String>,
 }
 
@@ -103,6 +101,7 @@ impl TryFrom<CsvWrapper> for JobResultCsvResponse {
 		let mut is_reachable: String = String::default();
 		let mut misc_is_disposable: bool = false;
 		let mut misc_is_role_account: bool = false;
+		let mut misc_gravatar_url: Option<String> = None;
 		let mut mx_accepts_mail: bool = false;
 		let mut smtp_can_connect: bool = false;
 		let mut smtp_has_full_inbox: bool = false;
@@ -112,8 +111,6 @@ impl TryFrom<CsvWrapper> for JobResultCsvResponse {
 		let mut syntax_is_valid_syntax: bool = false;
 		let mut syntax_domain: String = String::default();
 		let mut syntax_username: String = String::default();
-		let mut gravatar_has_image: bool = false;
-		let mut gravatar_url: Option<String> = None;
 		let mut error: Option<String> = None;
 
 		let top_level = value
@@ -141,6 +138,11 @@ impl TryFrom<CsvWrapper> for JobResultCsvResponse {
 							"is_role_account" => {
 								misc_is_role_account =
 									val.as_bool().ok_or("is_role_account should be a boolean")?
+							}
+							"gravatar_url" => {
+								if val.as_str() != None {
+									misc_gravatar_url = Some(val.to_string())
+								}
 							}
 							_ => {}
 						}
@@ -212,25 +214,6 @@ impl TryFrom<CsvWrapper> for JobResultCsvResponse {
 						}
 					}
 				}
-				"gravatar" => {
-					let gravatar_obj = val
-						.as_object()
-						.ok_or("gravatar field should be an object")?;
-					for (key, val) in gravatar_obj.keys().zip(gravatar_obj.values()) {
-						match key.as_str() {
-							"has_image" => {
-								gravatar_has_image =
-									val.as_bool().ok_or("has_image should be a boolean")?
-							}
-							"url" => {
-								if val.as_str() != None {
-									gravatar_url = Some(val.to_string())
-								}
-							}
-							_ => {}
-						}
-					}
-				}
 				// ignore unknown fields
 				_ => {}
 			}
@@ -241,6 +224,7 @@ impl TryFrom<CsvWrapper> for JobResultCsvResponse {
 			is_reachable,
 			misc_is_disposable,
 			misc_is_role_account,
+			misc_gravatar_url,
 			mx_accepts_mail,
 			smtp_can_connect,
 			smtp_has_full_inbox,
@@ -250,8 +234,6 @@ impl TryFrom<CsvWrapper> for JobResultCsvResponse {
 			syntax_domain,
 			syntax_is_valid_syntax,
 			syntax_username,
-			gravatar_has_image,
-			gravatar_url,
 			error,
 		})
 	}
