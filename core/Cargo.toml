@@ -31,7 +31,7 @@ serde_json = "1.0.85"
 trust-dns-proto = "0.21.2"
 
 [dev-dependencies]
-tokio = { version = "1.21.0" }
+tokio = { version = "1.21.2" }
 
 [features]
 headless = ["fantoccini", "futures"]
