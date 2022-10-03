@@ -132,6 +132,8 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		my_syntax
 	);
 
+	let gravatar = check_gravatar(to_email).await;
+
 	let my_mx = match check_mx(&my_syntax).await {
 		Ok(m) => m,
 		e => {
@@ -220,5 +222,6 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		mx: Ok(my_mx),
 		smtp: my_smtp,
 		syntax: my_syntax,
+		gravatar,
 	}
 }

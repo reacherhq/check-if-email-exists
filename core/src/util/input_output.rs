@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use crate::gravatar::GravatarDetails;
 use crate::misc::{MiscDetails, MiscError};
 use crate::mx::{MxDetails, MxError};
 use crate::smtp::{SmtpDetails, SmtpError, SmtpErrorDesc};
@@ -279,6 +280,7 @@ pub struct CheckEmailOutput {
 	pub smtp: Result<SmtpDetails, SmtpError>,
 	/// Details about the email address.
 	pub syntax: SyntaxDetails,
+	pub gravatar: GravatarDetails,
 }
 
 impl Default for CheckEmailOutput {
@@ -290,6 +292,7 @@ impl Default for CheckEmailOutput {
 			mx: Ok(MxDetails::default()),
 			smtp: Ok(SmtpDetails::default()),
 			syntax: SyntaxDetails::default(),
+			gravatar: GravatarDetails::default(),
 		}
 	}
 }
