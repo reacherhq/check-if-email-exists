@@ -62,6 +62,7 @@
 //! }
 //! ```
 
+pub mod gravatar;
 pub mod misc;
 pub mod mx;
 pub mod smtp;

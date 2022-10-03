@@ -85,6 +85,10 @@ struct JobResultCsvResponse {
 	syntax_domain: String,
 	#[serde(rename = "syntax.username")]
 	syntax_username: String,
+	#[serde(rename = "gravatar.has_image")]
+	gravatar_has_image: bool,
+	#[serde(rename = "gravatar.url")]
+	gravatar_url: Option<&str>,
 	error: Option<String>,
 }
 
@@ -108,6 +112,8 @@ impl TryFrom<CsvWrapper> for JobResultCsvResponse {
 		let mut syntax_is_valid_syntax: bool = false;
 		let mut syntax_domain: String = String::default();
 		let mut syntax_username: String = String::default();
+		let mut gravatar_has_image: bool = false;
+		let mut gravatar_url: Option<&str> = None;
 		let mut error: Option<String> = None;
 
 		let top_level = value
@@ -206,6 +212,27 @@ impl TryFrom<CsvWrapper> for JobResultCsvResponse {
 						}
 					}
 				}
+				"gravatar" => {
+					let gravatar_obj = val
+						.as_object()
+						.ok_or("gravatar field should be an object")?;
+					for (key, val) in syntax_obj.keys().zip(syntax_obj.values()) {
+						match key.as_str() {
+							"error" => error = Some(val.to_string()),
+							"has_image" => {
+								gravatar_has_image =
+									val.as_bool().ok_or("has_image should be a boolean")?
+							}
+							"url" => {
+								if val != None {
+									gravatar_url =
+										val.as_str().ok_or("url should be a string")?.to_string()
+								}
+							}
+							_ => {}
+						}
+					}
+				}
 				// ignore unknown fields
 				_ => {}
 			}
@@ -225,6 +252,8 @@ impl TryFrom<CsvWrapper> for JobResultCsvResponse {
 			syntax_domain,
 			syntax_is_valid_syntax,
 			syntax_username,
+			gravatar_has_image,
+			gravatar_url,
 			error,
 		})
 	}
