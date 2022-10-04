@@ -90,6 +90,10 @@ pub struct CheckEmailInput {
 	///
 	/// Defaults to true.
 	pub yahoo_use_api: bool,
+	// Whether to check if a gravatar image is existing for the given email.
+	//
+	// Defaults to false
+	pub check_gravatar: bool,
 	/// For Hotmail/Outlook email addresses, use a headless navigator
 	/// connecting to the password recovery page instead of the SMTP server.
 	/// This assumes you have a WebDriver compatible process running, then pass
@@ -122,6 +126,7 @@ impl Default for CheckEmailInput {
 			smtp_security: SmtpSecurity::Opportunistic,
 			smtp_timeout: None,
 			yahoo_use_api: true,
+			check_gravatar: false,
 			retries: 2,
 		}
 	}
@@ -226,6 +231,13 @@ impl CheckEmailInput {
 	/// servers. Defaults to true.
 	pub fn set_yahoo_use_api(&mut self, use_api: bool) -> &mut CheckEmailInput {
 		self.yahoo_use_api = use_api;
+		self
+	}
+
+	/// Whether to check if a gravatar image is existing for the given email.
+	/// Defaults to false.
+	pub fn set_check_gravatar(&mut self, check_gravatar: bool) -> &mut CheckEmailInput {
+		self.check_gravatar = check_gravatar;
 		self
 	}
 
@@ -380,20 +392,20 @@ mod tests {
 		let res = dummy_response_with_message("blacklist");
 		let actual = serde_json::to_string(&res).unwrap();
 		// Make sure the `description` is present with IpBlacklisted.
-		let expected = r#"{"input":"foo","is_reachable":"unknown","misc":{"is_disposable":false,"is_role_account":false},"mx":{"accepts_mail":false,"records":[]},"smtp":{"error":{"type":"SmtpError","message":"transient: blacklist"},"description":"IpBlacklisted"},"syntax":{"address":null,"domain":"","is_valid_syntax":false,"username":""}}"#;
+		let expected = r#"{"input":"foo","is_reachable":"unknown","misc":{"is_disposable":false,"is_role_account":false,"gravatar_url":null},"mx":{"accepts_mail":false,"records":[]},"smtp":{"error":{"type":"SmtpError","message":"transient: blacklist"},"description":"IpBlacklisted"},"syntax":{"address":null,"domain":"","is_valid_syntax":false,"username":""}}"#;
 		assert_eq!(expected, actual);
 
 		let res =
 			dummy_response_with_message("Client host rejected: cannot find your reverse hostname");
 		let actual = serde_json::to_string(&res).unwrap();
 		// Make sure the `description` is present with NeedsRDNs.
-		let expected = r#"{"input":"foo","is_reachable":"unknown","misc":{"is_disposable":false,"is_role_account":false},"mx":{"accepts_mail":false,"records":[]},"smtp":{"error":{"type":"SmtpError","message":"transient: Client host rejected: cannot find your reverse hostname"},"description":"NeedsRDNS"},"syntax":{"address":null,"domain":"","is_valid_syntax":false,"username":""}}"#;
+		let expected = r#"{"input":"foo","is_reachable":"unknown","misc":{"is_disposable":false,"is_role_account":false,"gravatar_url":null},"mx":{"accepts_mail":false,"records":[]},"smtp":{"error":{"type":"SmtpError","message":"transient: Client host rejected: cannot find your reverse hostname"},"description":"NeedsRDNS"},"syntax":{"address":null,"domain":"","is_valid_syntax":false,"username":""}}"#;
 		assert_eq!(expected, actual);
 
 		let res = dummy_response_with_message("foobar");
 		let actual = serde_json::to_string(&res).unwrap();
 		// Make sure the `description` is NOT present.
-		let expected = r#"{"input":"foo","is_reachable":"unknown","misc":{"is_disposable":false,"is_role_account":false},"mx":{"accepts_mail":false,"records":[]},"smtp":{"error":{"type":"SmtpError","message":"transient: foobar"}},"syntax":{"address":null,"domain":"","is_valid_syntax":false,"username":""}}"#;
+		let expected = r#"{"input":"foo","is_reachable":"unknown","misc":{"is_disposable":false,"is_role_account":false,"gravatar_url":null},"mx":{"accepts_mail":false,"records":[]},"smtp":{"error":{"type":"SmtpError","message":"transient: foobar"}},"syntax":{"address":null,"domain":"","is_valid_syntax":false,"username":""}}"#;
 		assert_eq!(expected, actual);
 	}
 }

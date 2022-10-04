@@ -40,7 +40,8 @@
 											"is_reachable": "invalid",
 											"misc": {
 												"is_disposable": false,
-												"is_role_account": true
+												"is_role_account": true,
+												"gravatar_url": null
 											},
 											"mx": {
 												"accepts_mail": true,
@@ -109,7 +110,8 @@
 						"is_reachable": "invalid",
 						"misc": {
 							"is_disposable": false,
-							"is_role_account": true
+							"is_role_account": true,
+							"gravatar_url": null
 						},
 						"mx": {
 							"accepts_mail": true,
@@ -182,7 +184,14 @@
 						"$ref": "#/components/schemas/SyntaxDetails"
 					}
 				},
-				"required": ["input", "misc", "mx", "smtp", "syntax", "is_reachable"]
+				"required": [
+					"input",
+					"misc",
+					"mx",
+					"smtp",
+					"syntax",
+					"is_reachable"
+				]
 			},
 			"Error": {
 				"title": "Error",
@@ -198,7 +207,10 @@
 						"description": "A human-readable description of the error."
 					}
 				},
-				"required": ["type", "message"]
+				"required": [
+					"type",
+					"message"
+				]
 			},
 			"MiscDetails": {
 				"title": "MiscDetails",
@@ -212,9 +224,16 @@
 					"is_role_account": {
 						"type": "boolean",
 						"description": "Is this email a role-based account?"
+					},
+					"gravatar_url": {
+						"type": "string",
+						"description": "The Gravatar url of the image belonging to the given email."
 					}
 				},
-				"required": ["is_disposable", "is_role_account"]
+				"required": [
+					"is_disposable",
+					"is_role_account"
+				]
 			},
 			"MxDetails": {
 				"title": "MxDetails",
@@ -232,7 +251,10 @@
 						}
 					}
 				},
-				"required": ["accepts_mail", "records"],
+				"required": [
+					"accepts_mail",
+					"records"
+				],
 				"description": "Object holding the MX details of the mail server."
 			},
 			"SmtpDetails": {
@@ -261,7 +283,13 @@
 						"description": "Has this email address been disabled by the email provider?"
 					}
 				},
-				"required": ["can_connect_smtp", "has_full_inbox", "is_catch_all", "is_deliverable", "is_disabled"]
+				"required": [
+					"can_connect_smtp",
+					"has_full_inbox",
+					"is_catch_all",
+					"is_deliverable",
+					"is_disabled"
+				]
 			},
 			"SyntaxDetails": {
 				"title": "SyntaxDetails",
@@ -281,12 +309,21 @@
 						"description": "The username of the email, i.e. the part before the \"@\" symbol."
 					}
 				},
-				"required": ["domain", "is_valid_syntax", "username"]
+				"required": [
+					"domain",
+					"is_valid_syntax",
+					"username"
+				]
 			},
 			"Reachable": {
 				"type": "string",
 				"title": "Reachable",
-				"enum": ["invalid", "unknown", "safe", "risky"],
+				"enum": [
+					"invalid",
+					"unknown",
+					"safe",
+					"risky"
+				],
 				"description": "An enum to describe how confident we are that the recipient address is real: `safe`, `risky`, `invalid` and `unknown`. Check our FAQ to know the meanings of the 4 possibilities: https://help.reacher.email/email-attributes-inside-json."
 			},
 			"CheckEmailInput": {
@@ -310,7 +347,9 @@
 						"$ref": "#/components/schemas/CheckEmailInputProxy"
 					}
 				},
-				"required": ["to_email"]
+				"required": [
+					"to_email"
+				]
 			},
 			"CheckEmailInputProxy": {
 				"title": "CheckEmailInputProxy",
@@ -333,7 +372,10 @@
 						"description": "The proxy port."
 					}
 				},
-				"required": ["host", "port"]
+				"required": [
+					"host",
+					"port"
+				]
 			}
 		},
 		"securitySchemes": {

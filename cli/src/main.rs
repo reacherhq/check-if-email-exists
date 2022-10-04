@@ -58,6 +58,10 @@ pub struct Cli {
 	#[clap(long, env, default_value = "true", parse(try_from_str))]
 	pub yahoo_use_api: bool,
 
+	/// Whether to check if a gravatar image is existing for the given email.
+	#[clap(long, env, default_value = "false", parse(try_from_str))]
+	pub check_gravatar: bool,
+
 	/// The email to check.
 	pub to_email: String,
 }
@@ -76,7 +80,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 		.set_from_email(CONF.from_email.clone())
 		.set_hello_name(CONF.hello_name.clone())
 		.set_smtp_port(CONF.smtp_port)
-		.set_yahoo_use_api(CONF.yahoo_use_api);
+		.set_yahoo_use_api(CONF.yahoo_use_api)
+		.set_check_gravatar(CONF.check_gravatar);
 	if let Some(proxy_host) = &CONF.proxy_host {
 		input.set_proxy(CheckEmailInputProxy {
 			host: proxy_host.clone(),
