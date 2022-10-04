@@ -32,7 +32,7 @@ trust-dns-proto = "0.21.2"
 md5 = "0.7.0"
 
 [dev-dependencies]
-tokio = { version = "1.21.0" }
+tokio = { version = "1.21.2" }
 
 [features]
 headless = ["fantoccini", "futures"]
