@@ -51,12 +51,11 @@ pub async fn check_gravatar(to_email: &str) -> Option<String> {
 
 	let response = match response {
 		Ok(response) => response,
-		Err(error) => panic!("Unexpected request error: {:?}", error),
+		Err(_) => return None,
 	};
 
 	match response.status() {
-		reqwest::StatusCode::OK => Some(String::from(url)),
-		reqwest::StatusCode::NOT_FOUND => None,
-		_ => panic!("Unexpected status code: {:?}", response.status()),
+		reqwest::StatusCode::OK => Some(url),
+		_ => None,
 	}
 }
