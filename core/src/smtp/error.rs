@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use super::gmail::GmailError;
 #[cfg(feature = "headless")]
 use super::hotmail::HotmailError;
 use super::parser;
@@ -39,6 +40,8 @@ pub enum SmtpError {
 	TimeoutError(future::TimeoutError),
 	/// Error when verifying a Yahoo email via HTTP requests.
 	YahooError(YahooError),
+	/// Error when verifying a Gmail email via a HTTP request.
+	GmailError(GmailError),
 	/// Error when verifying a Hotmail email via headless browser.
 	#[cfg(feature = "headless")]
 	HotmailError(HotmailError),
@@ -59,6 +62,12 @@ impl From<future::TimeoutError> for SmtpError {
 impl From<YahooError> for SmtpError {
 	fn from(e: YahooError) -> Self {
 		SmtpError::YahooError(e)
+	}
+}
+
+impl From<GmailError> for SmtpError {
+	fn from(e: GmailError) -> Self {
+		SmtpError::GmailError(e)
 	}
 }
 

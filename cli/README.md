@@ -62,6 +62,10 @@ OPTIONS:
         --yahoo-use-api <YAHOO_USE_API>
             For Yahoo email addresses, use Yahoo's API instead of connecting directly to their SMTP
             servers [env: YAHOO_USE_API=] [default: true]
+
+        --gmail-use-api <GMAIL_USE_API>
+            For Gmail email addresses, use Gmail's API instead of connecting directly to their SMTP
+            servers [env: GMAIL_USE_API=] [default: false]
 ```
 
 **💡 PRO TIP:** To show debug logs when running the binary, run:
