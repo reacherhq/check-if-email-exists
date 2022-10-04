@@ -62,12 +62,14 @@
 //! }
 //! ```
 
+pub mod get_similar_mail_provider;
 pub mod misc;
 pub mod mx;
 pub mod smtp;
 pub mod syntax;
 mod util;
 
+use crate::get_similar_mail_provider::get_similar_mail_provider;
 use misc::{check_misc, MiscDetails};
 use mx::check_mx;
 use smtp::{check_smtp, SmtpDetails, SmtpError};
@@ -115,7 +117,7 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		to_email,
 		to_email
 	);
-	let my_syntax = check_syntax(to_email.as_ref());
+	let mut my_syntax = check_syntax(to_email.as_ref());
 	if !my_syntax.is_valid_syntax {
 		return CheckEmailOutput {
 			input: to_email.to_string(),
@@ -135,6 +137,8 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 	let my_mx = match check_mx(&my_syntax).await {
 		Ok(m) => m,
 		e => {
+			get_similar_mail_provider(&mut my_syntax);
+
 			// This happens when there's an internal error while checking MX
 			// records. Should happen fairly rarely.
 			return CheckEmailOutput {
@@ -149,6 +153,8 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 
 	// Return if we didn't find any MX records.
 	if my_mx.lookup.is_err() {
+		get_similar_mail_provider(&mut my_syntax);
+
 		return CheckEmailOutput {
 			input: to_email.to_string(),
 			is_reachable: Reachable::Invalid,
@@ -212,6 +218,9 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 	let my_smtp = my_smtp.expect(
 		"As long as lookup has at least 1 element (which we checked), my_smtp will be a Some. qed.",
 	);
+	if my_smtp.is_err() {
+		get_similar_mail_provider(&mut my_syntax);
+	}
 
 	CheckEmailOutput {
 		input: to_email.to_string(),

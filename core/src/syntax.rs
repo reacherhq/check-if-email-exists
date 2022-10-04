@@ -32,6 +32,7 @@ pub struct SyntaxDetails {
 	/// The username, before "@". It will be the empty string if the email
 	/// address if ill-formed.
 	pub username: String,
+	pub suggestion: Option<String>,
 }
 
 impl Default for SyntaxDetails {
@@ -41,6 +42,7 @@ impl Default for SyntaxDetails {
 			domain: "".into(),
 			is_valid_syntax: false,
 			username: "".into(),
+			suggestion: None,
 		}
 	}
 }
@@ -58,6 +60,7 @@ pub fn check_syntax(email_address: &str) -> SyntaxDetails {
 					domain: "".into(),
 					is_valid_syntax: false,
 					username: "".into(),
+					suggestion: None,
 				};
 			}
 		}
@@ -67,6 +70,7 @@ pub fn check_syntax(email_address: &str) -> SyntaxDetails {
 				domain: "".into(),
 				is_valid_syntax: false,
 				username: "".into(),
+				suggestion: None,
 			}
 		}
 	};
@@ -87,6 +91,7 @@ pub fn check_syntax(email_address: &str) -> SyntaxDetails {
 		domain,
 		is_valid_syntax: true,
 		username,
+		suggestion: None,
 	}
 }
 
@@ -103,6 +108,7 @@ mod tests {
 				domain: "".into(),
 				is_valid_syntax: false,
 				username: "".into(),
+				suggestion: None,
 			}
 		);
 	}
@@ -116,6 +122,7 @@ mod tests {
 				domain: "".into(),
 				is_valid_syntax: false,
 				username: "".into(),
+				suggestion: None,
 			}
 		);
 	}
@@ -129,6 +136,7 @@ mod tests {
 				domain: "bar.com".into(),
 				is_valid_syntax: true,
 				username: "foo".into(),
+				suggestion: None,
 			}
 		);
 	}
