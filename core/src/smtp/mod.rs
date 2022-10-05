@@ -19,6 +19,7 @@ mod error;
 mod gmail;
 #[cfg(feature = "headless")]
 mod hotmail;
+mod http_api;
 mod parser;
 mod yahoo;
 

@@ -15,8 +15,11 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use super::SmtpDetails;
-use crate::util::{
-	constants::LOG_TARGET, input_output::CheckEmailInput, ser_with_display::ser_with_display,
+use crate::{
+	smtp::http_api::create_client,
+	util::{
+		constants::LOG_TARGET, input_output::CheckEmailInput, ser_with_display::ser_with_display,
+	},
 };
 use async_smtp::EmailAddress;
 use reqwest::Error as ReqwestError;
@@ -45,31 +48,13 @@ impl From<ReqwestError> for GmailError {
 	}
 }
 
-/// Helper function to create a reqwest client, with optional proxy.
-fn create_client(input: &CheckEmailInput) -> Result<reqwest::Client, ReqwestError> {
-	if let Some(proxy) = &input.proxy {
-		log::debug!(
-			target: LOG_TARGET,
-			"[email={}] Using proxy socks://{}:{} for gmail API",
-			input.to_email,
-			proxy.host,
-			proxy.port
-		);
-
-		let proxy = reqwest::Proxy::all(&format!("socks5://{}:{}", proxy.host, proxy.port))?;
-		reqwest::Client::builder().proxy(proxy).build()
-	} else {
-		Ok(reqwest::Client::new())
-	}
-}
-
 /// Use HTTP request to verify if a Gmail email address exists.
 /// See: <https://blog.0day.rocks/abusing-gmail-to-get-previously-unlisted-e-mail-addresses-41544b62b2>
 pub async fn check_gmail(
 	to_email: &EmailAddress,
 	input: &CheckEmailInput,
 ) -> Result<SmtpDetails, GmailError> {
-	let response = create_client(input)?
+	let response = create_client(input, "gmail")?
 		.head(GLXU_PAGE)
 		.query(&[("email", to_email)])
 		.send()
