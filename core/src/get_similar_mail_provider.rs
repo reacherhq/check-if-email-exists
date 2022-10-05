@@ -2,20 +2,18 @@ use levenshtein::levenshtein;
 
 use crate::syntax::SyntaxDetails;
 
-const MAIL_PROVIDERS: &'static [&'static str] = &["gmail", "yahoo"];
+const MAIL_PROVIDERS: &[&str] = &["gmail", "yahoo"];
 
 pub fn get_similar_mail_provider(syntax: &mut SyntaxDetails) {
 	let domain: &str = syntax.domain.as_ref();
-	let mut domain_parts = domain.split(".");
+	let mut domain_parts = domain.split('.');
 
-	let provider: &str = domain_parts
+	let provider = domain_parts
 		.next()
-		.expect("We already checked that the syntax is valid")
-		.into();
-	let tld: &str = domain_parts
+		.expect("We already checked that the syntax is valid");
+	let tld = domain_parts
 		.next()
-		.expect("We already checked that the syntax is valid")
-		.into();
+		.expect("We already checked that the syntax is valid");
 
 	for possible_provider in MAIL_PROVIDERS {
 		let distance = levenshtein(provider, possible_provider);
