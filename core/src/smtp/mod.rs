@@ -64,9 +64,7 @@ pub async fn check_smtp(
 			.await
 			.map_err(|err| err.into());
 	}
-	if input.gmail_use_api
-		&& (host_lowercase.contains("gmail") || host_lowercase.contains("googlemail"))
-	{
+	if input.gmail_use_api && host_lowercase.ends_with(".google.com.") {
 		return gmail::check_gmail(to_email, input)
 			.await
 			.map_err(|err| err.into());
