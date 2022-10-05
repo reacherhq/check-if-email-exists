@@ -75,3 +75,21 @@ pub async fn check_gmail(
 		..Default::default()
 	})
 }
+
+#[cfg(test)]
+mod tests {
+	use std::str::FromStr;
+
+	use super::*;
+
+	#[tokio::test]
+	async fn should_return_is_deliverable_true() {
+		let to_email = EmailAddress::from_str("someone@gmail.com").unwrap();
+		let input = CheckEmailInput::new("someone@gmail.com".to_owned());
+
+		let smtp_details = check_gmail(&to_email, &input).await;
+
+		assert!(smtp_details.is_ok());
+		assert!(smtp_details.unwrap().is_deliverable);
+	}
+}
