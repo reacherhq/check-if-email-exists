@@ -25,6 +25,9 @@ ARGS:
     <TO_EMAIL>    The email to check
 
 OPTIONS:
+        --check-gravatar <CHECK_GRAVATAR>
+            Whether to check for an existing gravatar image [env: CHECK_GRAVATAR=] [default: false]
+
         --from-email <FROM_EMAIL>
             The email to use in the `MAIL FROM:` SMTP command [env: FROM_EMAIL=] [default:
             user@example.org]

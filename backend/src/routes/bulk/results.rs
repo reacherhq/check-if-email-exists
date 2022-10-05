@@ -67,6 +67,8 @@ struct JobResultCsvResponse {
 	misc_is_disposable: bool,
 	#[serde(rename = "misc.is_role_account")]
 	misc_is_role_account: bool,
+	#[serde(rename = "misc.gravatar_url")]
+	misc_gravatar_url: Option<String>,
 	#[serde(rename = "mx.accepts_mail")]
 	mx_accepts_mail: bool,
 	#[serde(rename = "smtp.can_connect")]
@@ -99,6 +101,7 @@ impl TryFrom<CsvWrapper> for JobResultCsvResponse {
 		let mut is_reachable: String = String::default();
 		let mut misc_is_disposable: bool = false;
 		let mut misc_is_role_account: bool = false;
+		let mut misc_gravatar_url: Option<String> = None;
 		let mut mx_accepts_mail: bool = false;
 		let mut smtp_can_connect: bool = false;
 		let mut smtp_has_full_inbox: bool = false;
@@ -135,6 +138,11 @@ impl TryFrom<CsvWrapper> for JobResultCsvResponse {
 							"is_role_account" => {
 								misc_is_role_account =
 									val.as_bool().ok_or("is_role_account should be a boolean")?
+							}
+							"gravatar_url" => {
+								if val.as_str() != None {
+									misc_gravatar_url = Some(val.to_string())
+								}
 							}
 							_ => {}
 						}
@@ -216,6 +224,7 @@ impl TryFrom<CsvWrapper> for JobResultCsvResponse {
 			is_reachable,
 			misc_is_disposable,
 			misc_is_role_account,
+			misc_gravatar_url,
 			mx_accepts_mail,
 			smtp_can_connect,
 			smtp_has_full_inbox,

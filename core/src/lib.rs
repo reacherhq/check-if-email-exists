@@ -63,6 +63,7 @@
 //! ```
 
 pub mod get_similar_mail_provider;
+pub mod gravatar;
 pub mod misc;
 pub mod mx;
 pub mod smtp;
@@ -177,7 +178,7 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 			.collect::<Vec<String>>()
 	);
 
-	let my_misc = check_misc(&my_syntax);
+	let my_misc = check_misc(&my_syntax, input.check_gravatar).await;
 	log::debug!(
 		target: LOG_TARGET,
 		"[email={}] Found the following misc details: {:?}",
