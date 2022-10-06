@@ -15,6 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use async_smtp::EmailAddress;
+use levenshtein::levenshtein;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
@@ -32,6 +33,7 @@ pub struct SyntaxDetails {
 	/// The username, before "@". It will be the empty string if the email
 	/// address if ill-formed.
 	pub username: String,
+	pub suggestion: Option<String>,
 }
 
 impl Default for SyntaxDetails {
@@ -41,6 +43,7 @@ impl Default for SyntaxDetails {
 			domain: "".into(),
 			is_valid_syntax: false,
 			username: "".into(),
+			suggestion: None,
 		}
 	}
 }
@@ -58,6 +61,7 @@ pub fn check_syntax(email_address: &str) -> SyntaxDetails {
 					domain: "".into(),
 					is_valid_syntax: false,
 					username: "".into(),
+					suggestion: None,
 				};
 			}
 		}
@@ -67,6 +71,7 @@ pub fn check_syntax(email_address: &str) -> SyntaxDetails {
 				domain: "".into(),
 				is_valid_syntax: false,
 				username: "".into(),
+				suggestion: None,
 			}
 		}
 	};
@@ -87,6 +92,34 @@ pub fn check_syntax(email_address: &str) -> SyntaxDetails {
 		domain,
 		is_valid_syntax: true,
 		username,
+		suggestion: None,
+	}
+}
+
+const MAIL_PROVIDERS: &[&str] = &[
+	"gmail.com",
+	"yahoo.com",
+	"outlook.com",
+	"hotmail.com",
+	"protonmail.com",
+	"icloud.com",
+	"yandex.com",
+];
+// Supplies the syntax parameter with a suggestion that matches the mail domain best by levenshtein
+// distance.
+pub fn get_similar_mail_provider(syntax: &mut SyntaxDetails) {
+	for possible_provider in MAIL_PROVIDERS {
+		let distance = levenshtein(&syntax.domain, possible_provider);
+
+		if distance < 3 {
+			// Return full address
+			syntax.suggestion = Some(format!(
+				"{}@{}",
+				syntax.username,
+				String::from(*possible_provider),
+			));
+			break;
+		}
 	}
 }
 
@@ -103,6 +136,7 @@ mod tests {
 				domain: "".into(),
 				is_valid_syntax: false,
 				username: "".into(),
+				suggestion: None,
 			}
 		);
 	}
@@ -116,6 +150,7 @@ mod tests {
 				domain: "".into(),
 				is_valid_syntax: false,
 				username: "".into(),
+				suggestion: None,
 			}
 		);
 	}
@@ -129,7 +164,21 @@ mod tests {
 				domain: "bar.com".into(),
 				is_valid_syntax: true,
 				username: "foo".into(),
+				suggestion: None,
 			}
 		);
+	}
+
+	#[test]
+	fn should_suggest_a_correct_mail_if_similar() {
+		let mut syntax = SyntaxDetails {
+			address: Some(EmailAddress::new("test@gmali.com".into()).unwrap()),
+			domain: "gmali.com".into(),
+			is_valid_syntax: true,
+			username: "test".into(),
+			suggestion: None,
+		};
+		get_similar_mail_provider(&mut syntax);
+		assert_eq!(syntax.suggestion, Some("test@gmail.com".to_string()))
 	}
 }

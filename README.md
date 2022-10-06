@@ -127,7 +127,8 @@ The output will be a JSON with the below format, the fields should be self-expla
 	"syntax": {
 		"domain": "gmail.com",
 		"is_valid_syntax": true,
-		"username": "someone"
+		"username": "someone",
+		"suggestion": null
 	}
 }
 ```
