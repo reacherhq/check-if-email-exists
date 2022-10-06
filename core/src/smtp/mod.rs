@@ -69,7 +69,7 @@ pub async fn check_smtp(
 			.await
 			.map_err(|err| err.into());
 	}
-	if input.outlook_use_api && host_lowercase.ends_with(".outlook.com.") {
+	if input.outlook_use_api && host_lowercase.ends_with(".mail.protection.outlook.com.") {
 		return hotmail::check_outlook_api(to_email, input)
 			.await
 			.map_err(|err| err.into());
