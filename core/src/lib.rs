@@ -62,7 +62,6 @@
 //! }
 //! ```
 
-pub mod get_similar_mail_provider;
 pub mod gravatar;
 pub mod misc;
 pub mod mx;
@@ -70,11 +69,10 @@ pub mod smtp;
 pub mod syntax;
 mod util;
 
-use crate::get_similar_mail_provider::get_similar_mail_provider;
 use misc::{check_misc, MiscDetails};
 use mx::check_mx;
 use smtp::{check_smtp, SmtpDetails, SmtpError};
-use syntax::check_syntax;
+use syntax::{check_syntax, get_similar_mail_provider};
 pub use util::constants::LOG_TARGET;
 pub use util::input_output::*;
 
