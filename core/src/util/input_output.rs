@@ -90,6 +90,11 @@ pub struct CheckEmailInput {
 	///
 	/// Defaults to true.
 	pub yahoo_use_api: bool,
+	/// For Gmail email addresses, use Gmail's API instead of connecting
+	/// directly to their SMTP servers.
+	///
+	/// Defaults to false.
+	pub gmail_use_api: bool,
 	// Whether to check if a gravatar image is existing for the given email.
 	//
 	// Defaults to false
@@ -126,6 +131,7 @@ impl Default for CheckEmailInput {
 			smtp_security: SmtpSecurity::Opportunistic,
 			smtp_timeout: None,
 			yahoo_use_api: true,
+			gmail_use_api: false,
 			check_gravatar: false,
 			retries: 2,
 		}
@@ -231,6 +237,13 @@ impl CheckEmailInput {
 	/// servers. Defaults to true.
 	pub fn set_yahoo_use_api(&mut self, use_api: bool) -> &mut CheckEmailInput {
 		self.yahoo_use_api = use_api;
+		self
+	}
+
+	/// Set whether to use Gmail's API or connecting directly to their SMTP
+	/// servers. Defaults to false.
+	pub fn set_gmail_use_api(&mut self, use_api: bool) -> &mut CheckEmailInput {
+		self.gmail_use_api = use_api;
 		self
 	}
 

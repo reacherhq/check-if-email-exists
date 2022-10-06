@@ -16,8 +16,10 @@
 
 mod connect;
 mod error;
+mod gmail;
 #[cfg(feature = "headless")]
 mod hotmail;
+mod http_api;
 mod parser;
 mod yahoo;
 
@@ -59,6 +61,11 @@ pub async fn check_smtp(
 	// FIXME Is this `contains` too lenient?
 	if input.yahoo_use_api && host_lowercase.contains("yahoo") {
 		return yahoo::check_yahoo(to_email, input)
+			.await
+			.map_err(|err| err.into());
+	}
+	if input.gmail_use_api && host_lowercase.ends_with(".google.com.") {
+		return gmail::check_gmail(to_email, input)
 			.await
 			.map_err(|err| err.into());
 	}
