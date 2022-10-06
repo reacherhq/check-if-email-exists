@@ -15,8 +15,11 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use super::SmtpDetails;
-use crate::util::{
-	constants::LOG_TARGET, input_output::CheckEmailInput, ser_with_display::ser_with_display,
+use crate::{
+	smtp::http_api::create_client,
+	util::{
+		constants::LOG_TARGET, input_output::CheckEmailInput, ser_with_display::ser_with_display,
+	},
 };
 use async_smtp::EmailAddress;
 use regex::Regex;
@@ -105,31 +108,13 @@ impl From<SerdeError> for YahooError {
 	}
 }
 
-/// Helper function to create a reqwest client, with optional proxy.
-fn create_client(input: &CheckEmailInput) -> Result<reqwest::Client, ReqwestError> {
-	if let Some(proxy) = &input.proxy {
-		log::debug!(
-			target: LOG_TARGET,
-			"[email={}] Using proxy socks://{}:{} for Yahoo API",
-			input.to_email,
-			proxy.host,
-			proxy.port
-		);
-
-		let proxy = reqwest::Proxy::all(&format!("socks5://{}:{}", proxy.host, proxy.port))?;
-		reqwest::Client::builder().proxy(proxy).build()
-	} else {
-		Ok(reqwest::Client::new())
-	}
-}
-
 /// Use well-crafted HTTP requests to verify if a Yahoo email address exists.
 /// Inspired by https://github.com/hbattat/verifyEmail.
 pub async fn check_yahoo(
 	to_email: &EmailAddress,
 	input: &CheckEmailInput,
 ) -> Result<SmtpDetails, YahooError> {
-	let response = create_client(input)?
+	let response = create_client(input, "yahoo")?
 		.get(SIGNUP_PAGE)
 		.header("User-Agent", USER_AGENT)
 		.send()
@@ -178,7 +163,7 @@ pub async fn check_yahoo(
 	};
 
 	// Mimic a real HTTP request.
-	let response = create_client(input)?
+	let response = create_client(input, "yahoo")?
 		.post(SIGNUP_API)
 		.header("Origin", "https://login.yahoo.com")
 		.header("X-Requested-With", "XMLHttpRequest")

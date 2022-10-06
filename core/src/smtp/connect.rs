@@ -352,6 +352,7 @@ pub async fn check_smtp_with_retry(
 		#[cfg(feature = "headless")]
 		Err(SmtpError::HotmailError(_)) => result,
 		Err(SmtpError::YahooError(_)) => result,
+		Err(SmtpError::GmailError(_)) => result,
 		// Only retry if the SMTP error was unknown.
 		Err(err) if err.get_description().is_none() => {
 			if count <= 1 {
