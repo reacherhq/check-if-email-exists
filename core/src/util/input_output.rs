@@ -95,6 +95,11 @@ pub struct CheckEmailInput {
 	///
 	/// Defaults to false.
 	pub gmail_use_api: bool,
+	/// For Outlook/Office 365 email addresses, use Outlook's API instead of
+	/// connecting directly to their SMTP servers.
+	///
+	/// Defaults to false.
+	pub outlook_use_api: bool,
 	// Whether to check if a gravatar image is existing for the given email.
 	//
 	// Defaults to false
@@ -132,6 +137,7 @@ impl Default for CheckEmailInput {
 			smtp_timeout: None,
 			yahoo_use_api: true,
 			gmail_use_api: false,
+			outlook_use_api: false,
 			check_gravatar: false,
 			retries: 2,
 		}
@@ -244,6 +250,13 @@ impl CheckEmailInput {
 	/// servers. Defaults to false.
 	pub fn set_gmail_use_api(&mut self, use_api: bool) -> &mut CheckEmailInput {
 		self.gmail_use_api = use_api;
+		self
+	}
+
+	/// Set whether to use Outlook's API or connecting directly to their SMTP
+	/// servers. Defaults to false.
+	pub fn set_outlook_use_api(&mut self, use_api: bool) -> &mut CheckEmailInput {
+		self.outlook_use_api = use_api;
 		self
 	}
 

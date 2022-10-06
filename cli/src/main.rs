@@ -63,6 +63,11 @@ pub struct Cli {
 	#[clap(long, env, default_value = "false", parse(try_from_str))]
 	pub gmail_use_api: bool,
 
+	/// For Outlook/Office 365 email addresses, use Outlook's API instead of
+	/// connecting directly to their SMTP servers.
+	#[clap(long, env, default_value = "false", parse(try_from_str))]
+	pub outlook_use_api: bool,
+
 	/// Whether to check if a gravatar image is existing for the given email.
 	#[clap(long, env, default_value = "false", parse(try_from_str))]
 	pub check_gravatar: bool,
@@ -87,6 +92,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 		.set_smtp_port(CONF.smtp_port)
 		.set_yahoo_use_api(CONF.yahoo_use_api)
 		.set_gmail_use_api(CONF.gmail_use_api)
+		.set_outlook_use_api(CONF.outlook_use_api)
 		.set_check_gravatar(CONF.check_gravatar);
 	if let Some(proxy_host) = &CONF.proxy_host {
 		input.set_proxy(CheckEmailInputProxy {

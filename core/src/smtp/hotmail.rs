@@ -23,12 +23,15 @@ use fantoccini::{
 	ClientBuilder, Locator,
 };
 use futures::TryFutureExt;
+use reqwest::Error as ReqwestError;
 use serde::Serialize;
 use serde_json::Map;
 
 use super::SmtpDetails;
-use crate::util::ser_with_display::ser_with_display;
 use crate::LOG_TARGET;
+use crate::{
+	smtp::http_api::create_client, util::ser_with_display::ser_with_display, CheckEmailInput,
+};
 
 #[derive(Debug, Serialize)]
 pub enum HotmailError {
@@ -36,6 +39,8 @@ pub enum HotmailError {
 	Cmd(CmdError),
 	#[serde(serialize_with = "ser_with_display")]
 	NewSession(NewSessionError),
+	#[serde(serialize_with = "ser_with_display")]
+	ReqwestError(ReqwestError),
 }
 
 impl From<CmdError> for HotmailError {
@@ -47,6 +52,12 @@ impl From<CmdError> for HotmailError {
 impl From<NewSessionError> for HotmailError {
 	fn from(e: NewSessionError) -> Self {
 		Self::NewSession(e)
+	}
+}
+
+impl From<ReqwestError> for HotmailError {
+	fn from(error: ReqwestError) -> Self {
+		HotmailError::ReqwestError(error)
 	}
 }
 
@@ -140,9 +151,52 @@ pub async fn check_password_recovery(
 	})
 }
 
+/// Convert an email address to its corresponding OneDrive URL.
+fn get_onedrive_url(email_address: &str) -> String {
+	let (username, domain) = email_address
+		.split_once('@')
+		.expect("Email address syntax already validated.");
+	let (tenant, _) = domain
+		.split_once('.')
+		.expect("Email domain syntax already validated.");
+
+	format!(
+		"https://{}-my.sharepoint.com/personal/{}_{}/_layouts/15/onedrive.aspx",
+		tenant,
+		username.replace('.', "_"),
+		domain.replace('.', "_"),
+	)
+}
+
+/// Use HTTP request to verify if an Outlook email address exists.
+/// See: <https://www.trustedsec.com/blog/achieving-passive-user-enumeration-with-onedrive/>
+pub async fn check_outlook_api(
+	to_email: &EmailAddress,
+	input: &CheckEmailInput,
+) -> Result<SmtpDetails, HotmailError> {
+	let url = get_onedrive_url(to_email.as_ref());
+
+	let response = create_client(input, "outlook")?.head(url).send().await?;
+
+	let email_exists = response.status() == 403;
+
+	log::debug!(
+		target: LOG_TARGET,
+		"[email={}] outlook response: {:?}",
+		to_email,
+		response
+	);
+
+	Ok(SmtpDetails {
+		can_connect_smtp: true,
+		is_deliverable: email_exists,
+		..Default::default()
+	})
+}
+
 #[cfg(test)]
 mod tests {
-	use super::check_password_recovery;
+	use super::{check_password_recovery, get_onedrive_url};
 	use async_smtp::EmailAddress;
 	use async_std::prelude::FutureExt;
 	use std::str::FromStr;
@@ -192,5 +246,13 @@ mod tests {
 
 		let f = f1.try_join(f2).await;
 		assert!(f.is_ok(), "{:?}", f);
+	}
+
+	#[test]
+	fn test_onedrive_url() {
+		let email_address = "lightmand@acmecomputercompany.com";
+		let expected = "https://acmecomputercompany-my.sharepoint.com/personal/lightmand_acmecomputercompany_com/_layouts/15/onedrive.aspx";
+
+		assert_eq!(expected, get_onedrive_url(email_address));
 	}
 }

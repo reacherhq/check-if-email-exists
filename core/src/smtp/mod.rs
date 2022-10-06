@@ -69,6 +69,11 @@ pub async fn check_smtp(
 			.await
 			.map_err(|err| err.into());
 	}
+	if input.outlook_use_api && host_lowercase.ends_with(".outlook.com.") {
+		return hotmail::check_outlook_api(to_email, input)
+			.await
+			.map_err(|err| err.into());
+	}
 	#[cfg(feature = "headless")]
 	if let Some(webdriver) = &input.hotmail_use_headless {
 		// The password recovery page do not always work with Microsoft 365
