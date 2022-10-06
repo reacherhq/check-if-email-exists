@@ -71,7 +71,18 @@ pub async fn check_smtp(
 	}
 	#[cfg(feature = "headless")]
 	if let Some(webdriver) = &input.hotmail_use_headless {
-		if host_lowercase.contains("outlook") {
+		// The password recovery page do not always work with Microsoft 365
+		// addresses. So we only test with @hotmail and @outlook addresses.
+		// ref: https://github.com/reacherhq/check-if-email-exists/issues/1185
+		//
+		// After some testing, I got:
+		// - *@outlook.com -> `outlook-com.olc.protection.outlook.com.`
+		// - *@outlook.fr -> `eur.olc.protection.outlook.com.`
+		// - *@hotmail.com -> `hotmail-com.olc.protection.outlook.com.`
+		// - *@hotmail.fr -> `eur.olc.protection.outlook.com.`
+		//
+		// So it seems that outlook/hotmail addresses end with `olc.protection.outlook.com.`
+		if host_lowercase.ends_with("olc.protection.outlook.com.") {
 			return hotmail::check_password_recovery(to_email, webdriver)
 				.await
 				.map_err(|err| err.into());
