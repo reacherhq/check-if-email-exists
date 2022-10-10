@@ -19,5 +19,5 @@ serde_json = "1.0"
 sqlx = { version = "0.6", features = [ "runtime-tokio-native-tls", "postgres", "uuid", "chrono", "json", "offline", "migrate" ] }
 sqlxmq = "0.4"
 tokio = { version = "1.21", features = ["macros"] }
-uuid = "1.1"
+uuid = "1.2"
 warp = "0.3"
