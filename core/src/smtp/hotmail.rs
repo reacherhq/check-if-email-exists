@@ -168,17 +168,23 @@ fn get_onedrive_url(email_address: &str) -> String {
 	)
 }
 
-/// Use HTTP request to verify if an Outlook email address exists.
-/// See: <https://www.trustedsec.com/blog/achieving-passive-user-enumeration-with-onedrive/>
+/// Use a HTTP request to verify if an Outlook email address exists.
+///
+/// See
+/// [this article](<https://www.trustedsec.com/blog/achieving-passive-user-enumeration-with-onedrive/>)
+/// for details on the underlying principles.
+///
+/// Note that a positive response from this function is (at present) considered
+/// a reliable indicator that an email-address is valid. However, a negative
+/// response is ambigious: the email address may or may not be valid but this
+/// cannot be determined by the method outlined here.
 pub async fn check_outlook_api(
 	to_email: &EmailAddress,
 	input: &CheckEmailInput,
-) -> Result<SmtpDetails, HotmailError> {
+) -> Result<Option<SmtpDetails>, HotmailError> {
 	let url = get_onedrive_url(to_email.as_ref());
 
 	let response = create_client(input, "outlook")?.head(url).send().await?;
-
-	let email_exists = response.status() == 403;
 
 	log::debug!(
 		target: LOG_TARGET,
@@ -187,11 +193,15 @@ pub async fn check_outlook_api(
 		response
 	);
 
-	Ok(SmtpDetails {
-		can_connect_smtp: true,
-		is_deliverable: email_exists,
-		..Default::default()
-	})
+	if response.status() == 403 {
+		Ok(Some(SmtpDetails {
+			can_connect_smtp: true,
+			is_deliverable: true,
+			..Default::default()
+		}))
+	} else {
+		Ok(None)
+	}
 }
 
 #[cfg(test)]
