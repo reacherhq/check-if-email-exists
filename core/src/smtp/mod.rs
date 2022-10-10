@@ -69,9 +69,9 @@ pub async fn check_smtp(
 			.await
 			.map_err(|err| err.into());
 	}
-	if input.outlook_use_api && host_lowercase.ends_with(".mail.protection.outlook.com.") {
+	if input.microsoft365_use_api && host_lowercase.ends_with(".mail.protection.outlook.com.") {
 		// Continue in the event of an ambiguous result.
-		if let Some(smtp_details) = hotmail::check_outlook_api(to_email, input).await? {
+		if let Some(smtp_details) = hotmail::check_microsoft365_api(to_email, input).await? {
 			return Ok(smtp_details);
 		}
 	}

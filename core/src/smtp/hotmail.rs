@@ -168,7 +168,7 @@ fn get_onedrive_url(email_address: &str) -> String {
 	)
 }
 
-/// Use a HTTP request to verify if an Outlook email address exists.
+/// Use a HTTP request to verify if an Microsoft 365 email address exists.
 ///
 /// See
 /// [this article](<https://www.trustedsec.com/blog/achieving-passive-user-enumeration-with-onedrive/>)
@@ -178,17 +178,20 @@ fn get_onedrive_url(email_address: &str) -> String {
 /// a reliable indicator that an email-address is valid. However, a negative
 /// response is ambigious: the email address may or may not be valid but this
 /// cannot be determined by the method outlined here.
-pub async fn check_outlook_api(
+pub async fn check_microsoft365_api(
 	to_email: &EmailAddress,
 	input: &CheckEmailInput,
 ) -> Result<Option<SmtpDetails>, HotmailError> {
 	let url = get_onedrive_url(to_email.as_ref());
 
-	let response = create_client(input, "outlook")?.head(url).send().await?;
+	let response = create_client(input, "microsoft365")?
+		.head(url)
+		.send()
+		.await?;
 
 	log::debug!(
 		target: LOG_TARGET,
-		"[email={}] outlook response: {:?}",
+		"[email={}] microsoft365 response: {:?}",
 		to_email,
 		response
 	);
