@@ -29,7 +29,7 @@ use async_smtp::EmailAddress;
 use serde::{Deserialize, Serialize};
 use trust_dns_proto::rr::Name;
 
-use crate::util::input_output::CheckEmailInput;
+use crate::{util::input_output::CheckEmailInput, LOG_TARGET};
 use connect::check_smtp_with_retry;
 pub use error::*;
 
@@ -68,6 +68,21 @@ pub async fn check_smtp(
 		return gmail::check_gmail(to_email, input)
 			.await
 			.map_err(|err| err.into());
+	}
+	if input.microsoft365_use_api && host_lowercase.ends_with(".mail.protection.outlook.com.") {
+		match hotmail::check_microsoft365_api(to_email, input).await {
+			Ok(Some(smtp_details)) => return Ok(smtp_details),
+			// Continue in the event of an error/ambiguous result.
+			Err(err) => {
+				log::debug!(
+					target: LOG_TARGET,
+					"[email={}] microsoft365 error: {:?}",
+					to_email,
+					err,
+				);
+			}
+			_ => {}
+		}
 	}
 	#[cfg(feature = "headless")]
 	if let Some(webdriver) = &input.hotmail_use_headless {
