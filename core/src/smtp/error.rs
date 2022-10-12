@@ -46,6 +46,7 @@ pub enum SmtpError {
 	/// Error when verifying a Hotmail email via headless browser.
 	#[cfg(feature = "headless")]
 	HotmailError(HotmailError),
+	/// Error when verifying a Microsoft 365 email via HTTP request.
 	Microsoft365Error(Microsoft365Error),
 }
 
