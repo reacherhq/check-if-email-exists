@@ -17,9 +17,8 @@
 mod connect;
 mod error;
 mod gmail;
-#[cfg(feature = "headless")]
-mod hotmail;
 mod http_api;
+mod microsoft;
 mod parser;
 mod yahoo;
 
@@ -70,7 +69,7 @@ pub async fn check_smtp(
 			.map_err(|err| err.into());
 	}
 	if input.microsoft365_use_api && host_lowercase.ends_with(".mail.protection.outlook.com.") {
-		match hotmail::check_microsoft365_api(to_email, input).await {
+		match microsoft::microsoft365::check_microsoft365_api(to_email, input).await {
 			Ok(Some(smtp_details)) => return Ok(smtp_details),
 			// Continue in the event of an error/ambiguous result.
 			Err(err) => {
@@ -98,7 +97,7 @@ pub async fn check_smtp(
 		//
 		// So it seems that outlook/hotmail addresses end with `olc.protection.outlook.com.`
 		if host_lowercase.ends_with("olc.protection.outlook.com.") {
-			return hotmail::check_password_recovery(to_email, webdriver)
+			return microsoft::hotmail::check_password_recovery(to_email, webdriver)
 				.await
 				.map_err(|err| err.into());
 		}
