@@ -16,7 +16,8 @@
 
 use super::gmail::GmailError;
 #[cfg(feature = "headless")]
-use super::hotmail::HotmailError;
+use super::microsoft::hotmail::HotmailError;
+use super::microsoft::microsoft365::Microsoft365Error;
 use super::parser;
 use super::yahoo::YahooError;
 use crate::util::ser_with_display::ser_with_display;
@@ -45,6 +46,8 @@ pub enum SmtpError {
 	/// Error when verifying a Hotmail email via headless browser.
 	#[cfg(feature = "headless")]
 	HotmailError(HotmailError),
+	/// Error when verifying a Microsoft 365 email via HTTP request.
+	Microsoft365Error(Microsoft365Error),
 }
 
 impl From<SocksError> for SmtpError {
@@ -75,6 +78,12 @@ impl From<GmailError> for SmtpError {
 impl From<HotmailError> for SmtpError {
 	fn from(e: HotmailError) -> Self {
 		SmtpError::HotmailError(e)
+	}
+}
+
+impl From<Microsoft365Error> for SmtpError {
+	fn from(e: Microsoft365Error) -> Self {
+		SmtpError::Microsoft365Error(e)
 	}
 }
 
