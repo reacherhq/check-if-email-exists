@@ -65,6 +65,7 @@
 pub mod gravatar;
 pub mod misc;
 pub mod mx;
+mod normalize;
 pub mod smtp;
 pub mod syntax;
 mod util;

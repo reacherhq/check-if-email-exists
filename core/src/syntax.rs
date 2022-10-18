@@ -19,6 +19,8 @@ use levenshtein::levenshtein;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
+use crate::normalize::normalize_email;
+
 /// Syntax information after parsing an email address
 #[derive(Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct SyntaxDetails {
@@ -33,6 +35,9 @@ pub struct SyntaxDetails {
 	/// The username, before "@". It will be the empty string if the email
 	/// address if ill-formed.
 	pub username: String,
+	/// The normalized form of `address`. It will be `None` if the email
+	/// address is ill-formed.
+	pub normalized_email: Option<String>,
 	pub suggestion: Option<String>,
 }
 
@@ -43,6 +48,7 @@ impl Default for SyntaxDetails {
 			domain: "".into(),
 			is_valid_syntax: false,
 			username: "".into(),
+			normalized_email: None,
 			suggestion: None,
 		}
 	}
@@ -61,6 +67,7 @@ pub fn check_syntax(email_address: &str) -> SyntaxDetails {
 					domain: "".into(),
 					is_valid_syntax: false,
 					username: "".into(),
+					normalized_email: None,
 					suggestion: None,
 				};
 			}
@@ -71,6 +78,7 @@ pub fn check_syntax(email_address: &str) -> SyntaxDetails {
 				domain: "".into(),
 				is_valid_syntax: false,
 				username: "".into(),
+				normalized_email: None,
 				suggestion: None,
 			}
 		}
@@ -86,12 +94,14 @@ pub fn check_syntax(email_address: &str) -> SyntaxDetails {
 		.next()
 		.expect("We checked above that email is valid. qed.")
 		.into();
+	let normalized_email = normalize_email(email_address.as_ref());
 
 	SyntaxDetails {
 		address: Some(email_address),
 		domain,
 		is_valid_syntax: true,
 		username,
+		normalized_email: Some(normalized_email),
 		suggestion: None,
 	}
 }
@@ -136,6 +146,7 @@ mod tests {
 				domain: "".into(),
 				is_valid_syntax: false,
 				username: "".into(),
+				normalized_email: None,
 				suggestion: None,
 			}
 		);
@@ -150,6 +161,7 @@ mod tests {
 				domain: "".into(),
 				is_valid_syntax: false,
 				username: "".into(),
+				normalized_email: None,
 				suggestion: None,
 			}
 		);
@@ -164,6 +176,7 @@ mod tests {
 				domain: "bar.com".into(),
 				is_valid_syntax: true,
 				username: "foo".into(),
+				normalized_email: Some("foo@bar.com".into()),
 				suggestion: None,
 			}
 		);
@@ -176,6 +189,7 @@ mod tests {
 			domain: "gmali.com".into(),
 			is_valid_syntax: true,
 			username: "test".into(),
+			normalized_email: Some("test@gmali.com".into()),
 			suggestion: None,
 		};
 		get_similar_mail_provider(&mut syntax);
