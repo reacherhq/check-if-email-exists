@@ -57,6 +57,13 @@ mod tests {
 
 	#[test]
 	fn test_gmail() {
-		assert_eq!(normalize_email("ABC+123@googlemail.com"), "abc@gmail.com");
+		assert_eq!(normalize_email("A.B.C+123@googlemail.com"), "abc@gmail.com");
+	}
+
+	#[test]
+	fn test_gmail_idempotent() {
+		let normalized = normalize_email("A.B.C+123@googlemail.com");
+
+		assert_eq!(normalize_email(&normalized), normalized);
 	}
 }
