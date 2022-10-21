@@ -1,11 +1,7 @@
-pub fn normalize_email(email_address: &str) -> String {
-	let (username, domain) = email_address
-		.rsplit_once('@')
-		.expect("Email syntax already verified.");
-
+pub fn normalize_email(username: &str, domain: &str) -> String {
 	match domain {
 		"gmail.com" | "googlemail.com" => normalize_gmail(username),
-		_ => email_address.into(),
+		_ => format!("{}@{}", username, domain),
 	}
 }
 
@@ -42,28 +38,33 @@ mod tests {
 
 	#[test]
 	fn test_gmail_removes_periods() {
-		assert_eq!(normalize_email("a.b.c@gmail.com"), "abc@gmail.com");
+		assert_eq!(normalize_email("a.b.c", "gmail.com"), "abc@gmail.com");
 	}
 
 	#[test]
 	fn test_gmail_removes_subaddress() {
-		assert_eq!(normalize_email("abc+123@gmail.com"), "abc@gmail.com");
+		assert_eq!(normalize_email("abc+123", "gmail.com"), "abc@gmail.com");
 	}
 
 	#[test]
 	fn test_gmail_uses_gmail_com() {
-		assert_eq!(normalize_email("abc@googlemail.com"), "abc@gmail.com");
+		assert_eq!(normalize_email("abc", "googlemail.com"), "abc@gmail.com");
 	}
 
 	#[test]
 	fn test_gmail() {
-		assert_eq!(normalize_email("A.B.C+123@googlemail.com"), "abc@gmail.com");
+		assert_eq!(
+			normalize_email("A.B.C+123", "googlemail.com"),
+			"abc@gmail.com"
+		);
 	}
 
 	#[test]
 	fn test_gmail_idempotent() {
-		let normalized = normalize_email("A.B.C+123@googlemail.com");
+		let normalized = normalize_email("A.B.C+123", "googlemail.com");
 
-		assert_eq!(normalize_email(&normalized), normalized);
+		let (username, domain) = normalized.rsplit_once('@').unwrap();
+
+		assert_eq!(normalize_email(username, domain), normalized);
 	}
 }

@@ -86,15 +86,15 @@ pub fn check_syntax(email_address: &str) -> SyntaxDetails {
 
 	let iter: &str = email_address.as_ref();
 	let mut iter = iter.split('@');
-	let username = iter
+	let username: String = iter
 		.next()
 		.expect("We checked above that email is valid. qed.")
 		.into();
-	let domain = iter
+	let domain: String = iter
 		.next()
 		.expect("We checked above that email is valid. qed.")
 		.into();
-	let normalized_email = normalize_email(email_address.as_ref());
+	let normalized_email = normalize_email(&username, &domain);
 
 	SyntaxDetails {
 		address: Some(email_address),
