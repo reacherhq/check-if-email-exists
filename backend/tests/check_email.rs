@@ -18,7 +18,7 @@ use std::env;
 
 use reacher_backend::check::REACHER_SECRET_HEADER;
 use reacher_backend::routes::{check_email::post::EndpointRequest, create_routes};
-use serde_json;
+
 use warp::http::StatusCode;
 use warp::test::request;
 
