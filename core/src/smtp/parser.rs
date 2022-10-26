@@ -233,26 +233,20 @@ mod tests {
 	fn test_is_invalid() {
 		let email = EmailAddress::from_str("foo@bar.baz").unwrap();
 
-		assert_eq!(
-			is_invalid(
-				"554 5.7.1 <mta.voipdir.net[]>: Client host rejected: Access denied",
-				&email
-			),
-			false
-		);
+		assert!(!is_invalid(
+			"554 5.7.1 <mta.voipdir.net[]>: Client host rejected: Access denied",
+			&email
+		));
 
-		assert_eq!(
-			is_invalid("RCPT (***@stigpods.com.cn) dosn't exist", &email),
-			true
-		);
+		assert!(is_invalid(
+			"RCPT (***@stigpods.com.cn) dosn't exist",
+			&email
+		));
 
-		assert_eq!(
-			is_invalid(
-				"permanent: 5.1.1 MXIN501 mailbox foo@bar.baz unknown (on @virginmedia.com)",
-				&email
-			),
-			true
-		);
+		assert!(is_invalid(
+			"permanent: 5.1.1 MXIN501 mailbox foo@bar.baz unknown (on @virginmedia.com)",
+			&email
+		));
 	}
 
 	#[test]
