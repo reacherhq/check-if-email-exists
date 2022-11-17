@@ -63,6 +63,11 @@ pub struct Cli {
 	#[clap(long, env, default_value = "false", parse(try_from_str))]
 	pub gmail_use_api: bool,
 
+	/// For Hotmail addresses, use a headless browser to connect to the
+	/// Microsoft account recovery page.
+	#[clap(long, env)]
+	pub hotmail_use_headless: Option<String>,
+
 	/// For Microsoft 365 email addresses, use OneDrive's API instead of
 	/// connecting directly to their SMTP servers.
 	#[clap(long, env, default_value = "false", parse(try_from_str))]
@@ -93,7 +98,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 		.set_yahoo_use_api(CONF.yahoo_use_api)
 		.set_gmail_use_api(CONF.gmail_use_api)
 		.set_microsoft365_use_api(CONF.microsoft365_use_api)
-		.set_check_gravatar(CONF.check_gravatar);
+		.set_check_gravatar(CONF.check_gravatar)
+		.set_hotmail_use_headless(CONF.hotmail_use_headless.clone());
+
 	if let Some(proxy_host) = &CONF.proxy_host {
 		input.set_proxy(CheckEmailInputProxy {
 			host: proxy_host.clone(),
