@@ -10,7 +10,7 @@ async-smtp = "0.5"
 check-if-email-exists = { path = "../core", features = ["headless"] }
 csv = "1.1.6"
 dotenv = "0.15.0"
-env_logger = "0.9"
+env_logger = "0.10"
 log = "0.4"
 openssl = { version = "0.10.42", features = ["vendored"] }
 sentry = "0.23"
