@@ -140,7 +140,7 @@ impl TryFrom<CsvWrapper> for JobResultCsvResponse {
 									val.as_bool().ok_or("is_role_account should be a boolean")?
 							}
 							"gravatar_url" => {
-								if val.as_str() != None {
+								if Option::is_some(&val.as_str()) {
 									misc_gravatar_url = Some(val.to_string())
 								}
 							}
