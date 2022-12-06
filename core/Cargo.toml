@@ -26,7 +26,7 @@ mailchecker = "5.0.3"
 rand = { version = "0.8.5", features = ["small_rng"] }
 regex = "1.6.0"
 reqwest = { version = "0.11.13", features = ["json", "socks"] }
-serde = { version = "1.0.147", features = ["derive"] }
+serde = { version = "1.0.148", features = ["derive"] }
 serde_json = "1.0.88"
 trust-dns-proto = "0.21.2"
 md5 = "0.7.0"
