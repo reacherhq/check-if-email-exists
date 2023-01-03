@@ -24,7 +24,7 @@ use warp::Filter;
 
 pub fn create_routes(
 	o: Option<Pool<Postgres>>,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	version::get::get_version()
 		.or(check_email::post::post_check_email())
 		// The 3 following routes will 404 if o is None.
