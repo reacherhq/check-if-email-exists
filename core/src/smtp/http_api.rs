@@ -32,7 +32,7 @@ pub fn create_client(
 			api_name,
 		);
 
-		let proxy = reqwest::Proxy::all(&format!("socks5://{}:{}", proxy.host, proxy.port))?;
+		let proxy = reqwest::Proxy::all(format!("socks5://{}:{}", proxy.host, proxy.port))?;
 		reqwest::Client::builder().proxy(proxy).build()
 	} else {
 		Ok(reqwest::Client::new())
