@@ -14,13 +14,16 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use std::time::Duration;
+
+use async_smtp::{ClientSecurity, ClientTlsParameters};
+use serde::{ser::SerializeMap, Deserialize, Serialize, Serializer};
+use serde_with::{serde_as, DurationSeconds};
+
 use crate::misc::{MiscDetails, MiscError};
 use crate::mx::{MxDetails, MxError};
 use crate::smtp::{SmtpDetails, SmtpError, SmtpErrorDesc};
 use crate::syntax::SyntaxDetails;
-use async_smtp::{ClientSecurity, ClientTlsParameters};
-use serde::{ser::SerializeMap, Deserialize, Serialize, Serializer};
-use std::time::Duration;
 
 /// Perform the email verification via a specified proxy. The usage of a proxy
 /// is optional.
@@ -69,6 +72,7 @@ impl SmtpSecurity {
 
 /// Builder pattern for the input argument into the main `email_exists`
 /// function.
+#[serde_as]
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CheckEmailInput {
 	/// The email to validate.
@@ -96,6 +100,7 @@ pub struct CheckEmailInput {
 	/// want to use a timeout.
 	///
 	/// Defaults to 10s.
+	#[serde_as(as = "Option<DurationSeconds>")]
 	#[serde(default)]
 	pub smtp_timeout: Option<Duration>,
 	/// For Yahoo email addresses, use Yahoo's API instead of connecting
