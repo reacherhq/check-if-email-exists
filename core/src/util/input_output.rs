@@ -225,7 +225,9 @@ impl CheckEmailInput {
 		self
 	}
 
-	/// Add optional timeout for the SMTP verification step.
+	/// Add optional timeout for the SMTP verification step. This is the
+	/// timeout for _each_ SMTP connection attempt, not for the whole email
+	/// verification process.
 	pub fn set_smtp_timeout(&mut self, duration: Duration) -> &mut CheckEmailInput {
 		self.smtp_timeout = Some(duration);
 		self

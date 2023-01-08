@@ -17,23 +17,15 @@
 //! This file contains shared logic for checking one email.
 
 use std::env;
-use std::time::Duration;
 
 use check_if_email_exists::{check_email as ciee_check_email, CheckEmailInput, CheckEmailOutput};
 use warp::Filter;
 
 use super::sentry_util;
 
-/// Timeout after which we drop the `check-if-email-exists` check. We run the
-/// checks twice (to avoid greylisting), so each verification takes 60s max.
-const SMTP_TIMEOUT: u64 = 30;
-
 /// Same as `check-if-email-exists`'s check email, but adds some additional
 /// inputs and error handling.
-pub async fn check_email(mut input: CheckEmailInput) -> CheckEmailOutput {
-	input.set_smtp_timeout(Duration::from_secs(SMTP_TIMEOUT));
-	input.set_hotmail_use_headless(env::var("RCH_HOTMAIL_USE_HEADLESS").ok());
-
+pub async fn check_email(input: CheckEmailInput) -> CheckEmailOutput {
 	let res = ciee_check_email(&input).await;
 
 	sentry_util::log_unknown_errors(&res);
