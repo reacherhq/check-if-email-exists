@@ -16,51 +16,16 @@
 
 //! This file implements the `POST /check_email` endpoint.
 
-use std::env;
-
+use check_if_email_exists::CheckEmailInput;
 use check_if_email_exists::LOG_TARGET;
-use check_if_email_exists::{CheckEmailInput, CheckEmailInputProxy};
-use serde::{Deserialize, Serialize};
 use warp::Filter;
 
 use crate::check::{check_email, check_header};
 
-/// Endpoint request body.
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct EndpointRequest {
-	from_email: Option<String>,
-	hello_name: Option<String>,
-	proxy: Option<CheckEmailInputProxy>,
-	smtp_port: Option<u16>,
-	to_email: String,
-}
-
-impl From<EndpointRequest> for CheckEmailInput {
-	fn from(req: EndpointRequest) -> Self {
-		// Create Request for check_if_email_exists from body
-		let mut input = CheckEmailInput::new(req.to_email);
-		input
-			.set_from_email(req.from_email.unwrap_or_else(|| {
-				env::var("RCH_FROM_EMAIL").unwrap_or_else(|_| "user@example.org".into())
-			}))
-			.set_hello_name(req.hello_name.unwrap_or_else(|| "gmail.com".into()));
-
-		if let Some(proxy_input) = req.proxy {
-			input.set_proxy(proxy_input);
-		}
-
-		if let Some(smtp_port) = req.smtp_port {
-			input.set_smtp_port(smtp_port);
-		}
-
-		input
-	}
-}
-
 /// The main endpoint handler that implements the logic of this route.
-async fn handler(body: EndpointRequest) -> Result<impl warp::Reply, warp::Rejection> {
+async fn handler(body: CheckEmailInput) -> Result<impl warp::Reply, warp::Rejection> {
 	// Run the future to check an email.
-	Ok(warp::reply::json(&check_email(body.into()).await))
+	Ok(warp::reply::json(&check_email(body).await))
 }
 
 /// Create the `POST /check_email` endpoint.

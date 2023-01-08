@@ -14,13 +14,16 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use std::time::Duration;
+
+use async_smtp::{ClientSecurity, ClientTlsParameters};
+use serde::{ser::SerializeMap, Deserialize, Serialize, Serializer};
+use serde_with::{serde_as, DurationSeconds};
+
 use crate::misc::{MiscDetails, MiscError};
 use crate::mx::{MxDetails, MxError};
 use crate::smtp::{SmtpDetails, SmtpError, SmtpErrorDesc};
 use crate::syntax::SyntaxDetails;
-use async_smtp::{ClientSecurity, ClientTlsParameters};
-use serde::{ser::SerializeMap, Deserialize, Serialize, Serializer};
-use std::time::Duration;
 
 /// Perform the email verification via a specified proxy. The usage of a proxy
 /// is optional.
@@ -50,6 +53,12 @@ pub enum SmtpSecurity {
 	Wrapper,
 }
 
+impl Default for SmtpSecurity {
+	fn default() -> Self {
+		Self::Opportunistic
+	}
+}
+
 impl SmtpSecurity {
 	pub fn to_client_security(self, tls_params: ClientTlsParameters) -> ClientSecurity {
 		match self {
@@ -63,6 +72,7 @@ impl SmtpSecurity {
 
 /// Builder pattern for the input argument into the main `email_exists`
 /// function.
+#[serde_as]
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CheckEmailInput {
 	/// The email to validate.
@@ -70,10 +80,12 @@ pub struct CheckEmailInput {
 	/// Email to use in the `MAIL FROM:` SMTP command.
 	///
 	/// Defaults to "user@example.org".
+	#[serde(default)]
 	pub from_email: String,
 	/// Name to use in the `EHLO:` SMTP command.
 	///
 	/// Defaults to "localhost" (note: "localhost" is not a FQDN).
+	#[serde(default)]
 	pub hello_name: String,
 	/// Perform the email verification via the specified SOCK5 proxy. The usage of a
 	/// proxy is optional.
@@ -82,27 +94,37 @@ pub struct CheckEmailInput {
 	/// and 2525 are used.
 	///
 	/// Defaults to 25.
+	#[serde(default)]
 	pub smtp_port: u16,
-	/// Add optional timeout for the SMTP verification step.
+	/// Add timeout for the SMTP verification step. Set to None if you don't
+	/// want to use a timeout.
+	///
+	/// Defaults to 10s.
+	#[serde_as(as = "Option<DurationSeconds>")]
+	#[serde(default)]
 	pub smtp_timeout: Option<Duration>,
 	/// For Yahoo email addresses, use Yahoo's API instead of connecting
 	/// directly to their SMTP servers.
 	///
 	/// Defaults to true.
+	#[serde(default)]
 	pub yahoo_use_api: bool,
 	/// For Gmail email addresses, use Gmail's API instead of connecting
 	/// directly to their SMTP servers.
 	///
 	/// Defaults to false.
+	#[serde(default)]
 	pub gmail_use_api: bool,
 	/// For Microsoft 365 email addresses, use OneDrive's API instead of
 	/// connecting directly to their SMTP servers.
 	///
 	/// Defaults to false.
+	#[serde(default)]
 	pub microsoft365_use_api: bool,
 	// Whether to check if a gravatar image is existing for the given email.
 	//
-	// Defaults to false
+	// Defaults to false.
+	#[serde(default)]
 	pub check_gravatar: bool,
 	/// For Hotmail/Outlook email addresses, use a headless navigator
 	/// connecting to the password recovery page instead of the SMTP server.
@@ -112,14 +134,17 @@ pub struct CheckEmailInput {
 	///
 	/// Defaults to None.
 	#[cfg(feature = "headless")]
+	#[serde(default)]
 	pub hotmail_use_headless: Option<String>,
 	/// Number of retries of SMTP connections to do.
 	///
 	/// Defaults to 2 to avoid greylisting.
+	#[serde(default)]
 	pub retries: usize,
 	/// How to apply TLS to a SMTP client connection.
 	///
 	/// Defaults to Opportunistic.
+	#[serde(default)]
 	pub smtp_security: SmtpSecurity,
 }
 
@@ -128,13 +153,13 @@ impl Default for CheckEmailInput {
 		CheckEmailInput {
 			to_email: "".into(),
 			from_email: "user@example.org".into(),
-			hello_name: "localhost".into(),
+			hello_name: "example.org".into(),
 			#[cfg(feature = "headless")]
 			hotmail_use_headless: None,
 			proxy: None,
 			smtp_port: 25,
-			smtp_security: SmtpSecurity::Opportunistic,
-			smtp_timeout: None,
+			smtp_security: SmtpSecurity::default(),
+			smtp_timeout: Some(Duration::from_secs(10)),
 			yahoo_use_api: true,
 			gmail_use_api: false,
 			microsoft365_use_api: false,
@@ -225,9 +250,11 @@ impl CheckEmailInput {
 		self
 	}
 
-	/// Add optional timeout for the SMTP verification step.
-	pub fn set_smtp_timeout(&mut self, duration: Duration) -> &mut CheckEmailInput {
-		self.smtp_timeout = Some(duration);
+	/// Add optional timeout for the SMTP verification step. This is the
+	/// timeout for _each_ SMTP connection attempt, not for the whole email
+	/// verification process.
+	pub fn set_smtp_timeout(&mut self, duration: Option<Duration>) -> &mut CheckEmailInput {
+		self.smtp_timeout = duration;
 		self
 	}
 

@@ -2,11 +2,11 @@
 	"openapi": "3.0.0",
 	"info": {
 		"title": "Reacher",
-		"version": "0.3.*",
+		"version": "0.4.*",
 		"description": "### What is Reacher?\n\nReacher is a powerful, free and open-source email verification API service. It is provided both as a SaaS and as a self-host solution.",
 		"license": {
 			"name": "AGPL-3.0 OR Commercial",
-			"url": "https://github.com/reacherhq/backend/blob/master/LICENSE.md"
+			"url": "https://github.com/reacherhq/check-if-email-exists/blob/master/LICENSE.md"
 		},
 		"contact": {
 			"name": "Reacher",
@@ -40,8 +40,7 @@
 											"is_reachable": "invalid",
 											"misc": {
 												"is_disposable": false,
-												"is_role_account": true,
-												"gravatar_url": null
+												"is_role_account": true
 											},
 											"mx": {
 												"accepts_mail": true,
@@ -110,8 +109,7 @@
 						"is_reachable": "invalid",
 						"misc": {
 							"is_disposable": false,
-							"is_role_account": true,
-							"gravatar_url": null
+							"is_role_account": true
 						},
 						"mx": {
 							"accepts_mail": true,
@@ -207,10 +205,7 @@
 						"description": "A human-readable description of the error."
 					}
 				},
-				"required": [
-					"type",
-					"message"
-				]
+				"required": ["type", "message"]
 			},
 			"MiscDetails": {
 				"title": "MiscDetails",
@@ -227,13 +222,10 @@
 					},
 					"gravatar_url": {
 						"type": "string",
-						"description": "The Gravatar url of the image belonging to the given email."
+						"description": "URL to the email's Gravatar profile picture. It is only populated if check_gravatar is set to true in the request, and if the email has an associated Gravatar."
 					}
 				},
-				"required": [
-					"is_disposable",
-					"is_role_account"
-				]
+				"required": ["is_disposable", "is_role_account"]
 			},
 			"MxDetails": {
 				"title": "MxDetails",
@@ -251,10 +243,7 @@
 						}
 					}
 				},
-				"required": [
-					"accepts_mail",
-					"records"
-				],
+				"required": ["accepts_mail", "records"],
 				"description": "Object holding the MX details of the mail server."
 			},
 			"SmtpDetails": {
@@ -309,27 +298,18 @@
 						"description": "The username of the email, i.e. the part before the \"@\" symbol."
 					}
 				},
-				"required": [
-					"domain",
-					"is_valid_syntax",
-					"username"
-				]
+				"required": ["domain", "is_valid_syntax", "username"]
 			},
 			"Reachable": {
 				"type": "string",
 				"title": "Reachable",
-				"enum": [
-					"invalid",
-					"unknown",
-					"safe",
-					"risky"
-				],
+				"enum": ["invalid", "unknown", "safe", "risky"],
 				"description": "An enum to describe how confident we are that the recipient address is real: `safe`, `risky`, `invalid` and `unknown`. Check our FAQ to know the meanings of the 4 possibilities: https://help.reacher.email/email-attributes-inside-json."
 			},
 			"CheckEmailInput": {
 				"title": "CheckEmailInput",
 				"type": "object",
-				"description": "Input containing all parameters necessary for an email verification.",
+				"description": "Input containing all parameters necessary for an email verification, as well as some config on how to perform the verification.",
 				"properties": {
 					"from_email": {
 						"type": "string",
@@ -345,11 +325,53 @@
 					},
 					"proxy": {
 						"$ref": "#/components/schemas/CheckEmailInputProxy"
+					},
+					"smtp_port": {
+						"type": "number",
+						"description": "SMTP port to use for email validation. Generally, ports 25, 465, 587 and 2525 are used."
+					},
+					"smtp_timeout": {
+						"type": "number",
+						"description": "Add optional timeout for the SMTP verification step, in seconds."
+					},
+					"yahoo_use_api": {
+						"type": "boolean",
+						"description": "For Yahoo email addresses, use Yahoo's API instead of connecting directly to their SMTP servers."
+					},
+					"gmail_use_api": {
+						"type": "boolean",
+						"description": "For Gmail email addresses, use Gmail's API instead of connecting directly to their SMTP servers."
+					},
+					"microsoft365_use_api": {
+						"type": "boolean",
+						"description": "For Microsoft 365 email addresses, use OneDrive's API instead of connecting directly to their SMTP servers."
+					},
+					"check_gravatar": {
+						"type": "boolean",
+						"description": "Whether to check if a gravatar image is existing for the given email."
+					},
+					"hotmail_use_headless": {
+						"type": "string",
+						"description": "For Hotmail/Outlook email addresses, use a headless navigator connecting to the password recovery page instead of the SMTP server. This assumes you have a WebDriver compatible process running, then pass its endpoint, usually http://localhost:4444. We recommend running chromedriver (and not geckodriver) as it allows parallel requests."
+					},
+					"retries": {
+						"type": "number",
+						"default": 2,
+						"description": "Number of retries of SMTP connections to do."
+					},
+					"smtp_security": {
+						"type": "string",
+						"example": "Opportunistic",
+						"enum": [
+							"None",
+							"Opportunistic",
+							"Required",
+							"Wrapper"
+						],
+						"description": "How to apply TLS to a SMTP client connection."
 					}
 				},
-				"required": [
-					"to_email"
-				]
+				"required": ["to_email"]
 			},
 			"CheckEmailInputProxy": {
 				"title": "CheckEmailInputProxy",
@@ -370,12 +392,17 @@
 					"port": {
 						"type": "integer",
 						"description": "The proxy port."
+					},
+					"username": {
+						"type": "string",
+						"description": "Username to pass to proxy authentication."
+					},
+					"password": {
+						"type": "string",
+						"description": "Password to pass to proxy authentication."
 					}
 				},
-				"required": [
-					"host",
-					"port"
-				]
+				"required": ["host", "port"]
 			}
 		},
 		"securitySchemes": {

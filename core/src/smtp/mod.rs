@@ -121,7 +121,7 @@ mod tests {
 		let to_email = EmailAddress::from_str("foo@gmail.com").unwrap();
 		let host = Name::from_str("gmail.com").unwrap();
 		let mut input = CheckEmailInput::default();
-		input.set_smtp_timeout(Duration::from_millis(1));
+		input.set_smtp_timeout(Some(Duration::from_millis(1)));
 
 		let res = runtime.block_on(check_smtp(&to_email, &host, 25, "gmail.com", &input));
 		match res {

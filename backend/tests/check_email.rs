@@ -16,8 +16,9 @@
 
 use std::env;
 
+use check_if_email_exists::CheckEmailInput;
 use reacher_backend::check::REACHER_SECRET_HEADER;
-use reacher_backend::routes::{check_email::post::EndpointRequest, create_routes};
+use reacher_backend::routes::create_routes;
 
 use warp::http::StatusCode;
 use warp::test::request;
@@ -33,7 +34,7 @@ async fn test_input_foo_bar() {
 		.path("/v0/check_email")
 		.method("POST")
 		.header(REACHER_SECRET_HEADER, "foobar")
-		.json(&serde_json::from_str::<EndpointRequest>(r#"{"to_email": "foo@bar"}"#).unwrap())
+		.json(&serde_json::from_str::<CheckEmailInput>(r#"{"to_email": "foo@bar"}"#).unwrap())
 		.reply(&create_routes(None))
 		.await;
 
@@ -49,7 +50,7 @@ async fn test_input_foo_bar_baz() {
 		.path("/v0/check_email")
 		.method("POST")
 		.header(REACHER_SECRET_HEADER, "foobar")
-		.json(&serde_json::from_str::<EndpointRequest>(r#"{"to_email": "foo@bar.baz"}"#).unwrap())
+		.json(&serde_json::from_str::<CheckEmailInput>(r#"{"to_email": "foo@bar.baz"}"#).unwrap())
 		.reply(&create_routes(None))
 		.await;
 
@@ -64,7 +65,7 @@ async fn test_reacher_secret_missing_header() {
 	let resp = request()
 		.path("/v0/check_email")
 		.method("POST")
-		.json(&serde_json::from_str::<EndpointRequest>(r#"{"to_email": "foo@bar.baz"}"#).unwrap())
+		.json(&serde_json::from_str::<CheckEmailInput>(r#"{"to_email": "foo@bar.baz"}"#).unwrap())
 		.reply(&create_routes(None))
 		.await;
 
@@ -80,7 +81,7 @@ async fn test_reacher_secret_wrong_secret() {
 		.path("/v0/check_email")
 		.method("POST")
 		.header(REACHER_SECRET_HEADER, "barbaz")
-		.json(&serde_json::from_str::<EndpointRequest>(r#"{"to_email": "foo@bar.baz"}"#).unwrap())
+		.json(&serde_json::from_str::<CheckEmailInput>(r#"{"to_email": "foo@bar.baz"}"#).unwrap())
 		.reply(&create_routes(None))
 		.await;
 
@@ -96,7 +97,7 @@ async fn test_reacher_secret_correct_secret() {
 		.path("/v0/check_email")
 		.method("POST")
 		.header(REACHER_SECRET_HEADER, "foobar")
-		.json(&serde_json::from_str::<EndpointRequest>(r#"{"to_email": "foo@bar"}"#).unwrap())
+		.json(&serde_json::from_str::<CheckEmailInput>(r#"{"to_email": "foo@bar"}"#).unwrap())
 		.reply(&create_routes(None))
 		.await;
 
