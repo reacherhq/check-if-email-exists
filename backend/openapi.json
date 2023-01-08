@@ -392,6 +392,14 @@
 					"port": {
 						"type": "integer",
 						"description": "The proxy port."
+					},
+					"username": {
+						"type": "string",
+						"description": "Username to pass to proxy authentication."
+					},
+					"password": {
+						"type": "string",
+						"description": "Password to pass to proxy authentication."
 					}
 				},
 				"required": ["host", "port"]
