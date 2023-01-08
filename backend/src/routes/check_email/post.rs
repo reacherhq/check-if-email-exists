@@ -16,62 +16,11 @@
 
 //! This file implements the `POST /check_email` endpoint.
 
-use std::env;
-use std::time::Duration;
-
+use check_if_email_exists::CheckEmailInput;
 use check_if_email_exists::LOG_TARGET;
-use check_if_email_exists::{CheckEmailInput, CheckEmailInputProxy};
-use serde::{Deserialize, Serialize};
 use warp::Filter;
 
 use crate::check::{check_email, check_header};
-
-/// Endpoint request body.
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct EndpointRequest {
-	from_email: Option<String>,
-	hello_name: Option<String>,
-	proxy: Option<CheckEmailInputProxy>,
-	smtp_port: Option<u16>,
-	smtp_timeout: Option<u64>,
-	to_email: String,
-}
-
-impl From<EndpointRequest> for CheckEmailInput {
-	fn from(req: EndpointRequest) -> Self {
-		// Create Request for check_if_email_exists from body
-		let mut input = CheckEmailInput::new(req.to_email);
-		input
-			.set_from_email(
-				req.from_email
-					.unwrap_or_else(|| "support@reacher.email".into()),
-			)
-			.set_hello_name(req.hello_name.unwrap_or_else(|| "reacher.email".into()));
-
-		if let Some(proxy_input) = req.proxy {
-			input.set_proxy(proxy_input);
-		}
-
-		if let Some(smtp_port) = req.smtp_port {
-			input.set_smtp_port(smtp_port);
-		}
-
-		if let Some(smtp_timeout) = req.smtp_timeout {
-			input.set_smtp_timeout(Duration::from_secs(smtp_timeout));
-		} else {
-			input.set_smtp_timeout(Duration::from_secs(
-				env::var("RCH_SMTP_TIMEOUT")
-					.ok()
-					.and_then(|v| v.parse().ok())
-					.unwrap_or(10),
-			));
-		}
-
-		input.set_hotmail_use_headless(env::var("RCH_HOTMAIL_USE_HEADLESS").ok());
-
-		input
-	}
-}
 
 /// The main endpoint handler that implements the logic of this route.
 async fn handler(body: CheckEmailInput) -> Result<impl warp::Reply, warp::Rejection> {
