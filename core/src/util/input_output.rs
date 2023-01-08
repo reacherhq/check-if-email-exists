@@ -153,7 +153,7 @@ impl Default for CheckEmailInput {
 		CheckEmailInput {
 			to_email: "".into(),
 			from_email: "user@example.org".into(),
-			hello_name: "localhost".into(),
+			hello_name: "example.org".into(),
 			#[cfg(feature = "headless")]
 			hotmail_use_headless: None,
 			proxy: None,
