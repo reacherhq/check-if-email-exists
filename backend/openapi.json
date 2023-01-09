@@ -330,10 +330,6 @@
 						"type": "number",
 						"description": "SMTP port to use for email validation. Generally, ports 25, 465, 587 and 2525 are used."
 					},
-					"smtp_timeout": {
-						"type": "number",
-						"description": "Add optional timeout for the SMTP verification step, in seconds."
-					},
 					"yahoo_use_api": {
 						"type": "boolean",
 						"description": "For Yahoo email addresses, use Yahoo's API instead of connecting directly to their SMTP servers."
@@ -369,6 +365,9 @@
 							"Wrapper"
 						],
 						"description": "How to apply TLS to a SMTP client connection."
+					},
+					"smtp_timeout": {
+						"$ref": "#/components/schemas/Duration"
 					}
 				},
 				"required": ["to_email"]
@@ -403,6 +402,25 @@
 					}
 				},
 				"required": ["host", "port"]
+			},
+			"Duration": {
+				"title": "Duration",
+				"x-stoplight": {
+					"id": "0s9q75wxim1iw"
+				},
+				"type": "object",
+				"description": "An object representing a duration (seconds + nanoseconds).",
+				"properties": {
+					"secs": {
+						"type": "number",
+						"description": "Seconds"
+					},
+					"nanos": {
+						"type": "string",
+						"description": "Nanoseconds"
+					}
+				},
+				"required": ["secs", "nanos"]
 			}
 		},
 		"securitySchemes": {

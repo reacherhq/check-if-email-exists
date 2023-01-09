@@ -18,7 +18,6 @@ use std::time::Duration;
 
 use async_smtp::{ClientSecurity, ClientTlsParameters};
 use serde::{ser::SerializeMap, Deserialize, Serialize, Serializer};
-use serde_with::{serde_as, DurationSeconds};
 
 use crate::misc::{MiscDetails, MiscError};
 use crate::mx::{MxDetails, MxError};
@@ -72,20 +71,18 @@ impl SmtpSecurity {
 
 /// Builder pattern for the input argument into the main `email_exists`
 /// function.
-#[serde_as]
 #[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(default)]
 pub struct CheckEmailInput {
 	/// The email to validate.
 	pub to_email: String,
 	/// Email to use in the `MAIL FROM:` SMTP command.
 	///
 	/// Defaults to "user@example.org".
-	#[serde(default)]
 	pub from_email: String,
 	/// Name to use in the `EHLO:` SMTP command.
 	///
 	/// Defaults to "localhost" (note: "localhost" is not a FQDN).
-	#[serde(default)]
 	pub hello_name: String,
 	/// Perform the email verification via the specified SOCK5 proxy. The usage of a
 	/// proxy is optional.
@@ -94,37 +91,30 @@ pub struct CheckEmailInput {
 	/// and 2525 are used.
 	///
 	/// Defaults to 25.
-	#[serde(default)]
 	pub smtp_port: u16,
 	/// Add timeout for the SMTP verification step. Set to None if you don't
 	/// want to use a timeout.
 	///
 	/// Defaults to 10s.
-	#[serde_as(as = "Option<DurationSeconds>")]
-	#[serde(default)]
 	pub smtp_timeout: Option<Duration>,
 	/// For Yahoo email addresses, use Yahoo's API instead of connecting
 	/// directly to their SMTP servers.
 	///
 	/// Defaults to true.
-	#[serde(default)]
 	pub yahoo_use_api: bool,
 	/// For Gmail email addresses, use Gmail's API instead of connecting
 	/// directly to their SMTP servers.
 	///
 	/// Defaults to false.
-	#[serde(default)]
 	pub gmail_use_api: bool,
 	/// For Microsoft 365 email addresses, use OneDrive's API instead of
 	/// connecting directly to their SMTP servers.
 	///
 	/// Defaults to false.
-	#[serde(default)]
 	pub microsoft365_use_api: bool,
 	// Whether to check if a gravatar image is existing for the given email.
 	//
 	// Defaults to false.
-	#[serde(default)]
 	pub check_gravatar: bool,
 	/// For Hotmail/Outlook email addresses, use a headless navigator
 	/// connecting to the password recovery page instead of the SMTP server.
@@ -134,17 +124,14 @@ pub struct CheckEmailInput {
 	///
 	/// Defaults to None.
 	#[cfg(feature = "headless")]
-	#[serde(default)]
 	pub hotmail_use_headless: Option<String>,
 	/// Number of retries of SMTP connections to do.
 	///
 	/// Defaults to 2 to avoid greylisting.
-	#[serde(default)]
 	pub retries: usize,
 	/// How to apply TLS to a SMTP client connection.
 	///
 	/// Defaults to Opportunistic.
-	#[serde(default)]
 	pub smtp_security: SmtpSecurity,
 }
 
