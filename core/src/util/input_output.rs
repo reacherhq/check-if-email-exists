@@ -78,11 +78,12 @@ pub struct CheckEmailInput {
 	pub to_email: String,
 	/// Email to use in the `MAIL FROM:` SMTP command.
 	///
-	/// Defaults to "user@example.org".
+	/// Defaults to "reacher.email@gmail.com", which is an unused addressed
+	/// owned by Reacher.
 	pub from_email: String,
 	/// Name to use in the `EHLO:` SMTP command.
 	///
-	/// Defaults to "localhost" (note: "localhost" is not a FQDN).
+	/// Defaults to "gmail.com" (note: "localhost" is not a FQDN).
 	pub hello_name: String,
 	/// Perform the email verification via the specified SOCK5 proxy. The usage of a
 	/// proxy is optional.

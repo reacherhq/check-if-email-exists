@@ -23,11 +23,11 @@ use once_cell::sync::Lazy;
 #[clap(version, about)]
 pub struct Cli {
 	/// The email to use in the `MAIL FROM:` SMTP command.
-	#[clap(long, env, default_value = "user@example.org")]
+	#[clap(long, env, default_value = "reacher.email@gmail.com")]
 	pub from_email: String,
 
 	/// The name to use in the `EHLO:` SMTP command.
-	#[clap(long, env, default_value = "localhost")]
+	#[clap(long, env, default_value = "gmail.com")]
 	pub hello_name: String,
 
 	/// Use the specified SOCKS5 proxy host to perform email verification.
