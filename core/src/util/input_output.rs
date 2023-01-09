@@ -139,8 +139,8 @@ impl Default for CheckEmailInput {
 	fn default() -> Self {
 		CheckEmailInput {
 			to_email: "".into(),
-			from_email: "user@example.org".into(),
-			hello_name: "example.org".into(),
+			from_email: "reacher.email@gmail.com".into(), // Unused, owned by Reacher
+			hello_name: "gmail.com".into(),
 			#[cfg(feature = "headless")]
 			hotmail_use_headless: None,
 			proxy: None,
