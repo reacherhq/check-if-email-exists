@@ -77,6 +77,10 @@ pub struct Cli {
 	#[clap(long, env, default_value = "false", parse(try_from_str))]
 	pub check_gravatar: bool,
 
+	/// HaveIBeenPnwed API key, ignore if not provided.
+	#[clap(long, env, parse(try_from_str))]
+	pub haveibeenpwned_api_key: Option<String>,
+
 	/// The email to check.
 	pub to_email: String,
 }
@@ -99,7 +103,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 		.set_gmail_use_api(CONF.gmail_use_api)
 		.set_microsoft365_use_api(CONF.microsoft365_use_api)
 		.set_check_gravatar(CONF.check_gravatar)
-		.set_hotmail_use_headless(CONF.hotmail_use_headless.clone());
+		.set_hotmail_use_headless(CONF.hotmail_use_headless.clone())
+		.set_haveibeenpwned_api_key(CONF.haveibeenpwned_api_key.clone());
 
 	if let Some(proxy_host) = &CONF.proxy_host {
 		input.set_proxy(CheckEmailInputProxy {

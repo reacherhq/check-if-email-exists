@@ -15,6 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 mod gravatar;
+use crate::haveibeenpwned::check_haveibeenpwned;
 
 use serde::{Deserialize, Serialize};
 use std::default::Default;
@@ -32,6 +33,9 @@ pub struct MiscDetails {
 	/// Is this email a role-based account?
 	pub is_role_account: bool,
 	pub gravatar_url: Option<String>,
+	/// Is this email address listed in the haveibeenpwned database for
+	/// previous breaches?
+	pub haveibeenpwned: Option<bool>,
 }
 
 /// Error occured connecting to this email server via SMTP. Right now this
@@ -42,7 +46,11 @@ pub struct MiscDetails {
 pub enum MiscError {}
 
 /// Fetch misc details about the email address, such as whether it's disposable.
-pub async fn check_misc(syntax: &SyntaxDetails, cfg_check_gravatar: bool) -> MiscDetails {
+pub async fn check_misc(
+	syntax: &SyntaxDetails,
+	cfg_check_gravatar: bool,
+	haveibeenpwned_api_key: Option<String>,
+) -> MiscDetails {
 	let role_accounts: Vec<&str> =
 		serde_json::from_str(ROLE_ACCOUNTS).expect("roles.json is a valid json. qed.");
 
@@ -58,6 +66,12 @@ pub async fn check_misc(syntax: &SyntaxDetails, cfg_check_gravatar: bool) -> Mis
 		gravatar_url = check_gravatar(address.as_ref()).await;
 	}
 
+	let mut haveibeenpwned: Option<bool> = None;
+
+	if haveibeenpwned_api_key.is_some() {
+		haveibeenpwned = check_haveibeenpwned(address.as_ref(), haveibeenpwned_api_key).await;
+	}
+
 	MiscDetails {
 		// mailchecker::is_valid checks also if the syntax is valid. But if
 		// we're here, it means we're sure the syntax is valid, so is_valid
@@ -65,5 +79,6 @@ pub async fn check_misc(syntax: &SyntaxDetails, cfg_check_gravatar: bool) -> Mis
 		is_disposable: !mailchecker::is_valid(address.as_ref()),
 		is_role_account: role_accounts.contains(&syntax.username.to_lowercase().as_ref()),
 		gravatar_url,
+		haveibeenpwned,
 	}
 }
