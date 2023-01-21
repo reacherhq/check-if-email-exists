@@ -208,7 +208,7 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		let index = rng.gen_range(1..mx_records.len() - 2);
 		mx_records[index]
 	} else {
-		mx_records[0]
+		mx_records[mx_records.len() - 1]
 	};
 
 	let my_smtp = check_smtp(
