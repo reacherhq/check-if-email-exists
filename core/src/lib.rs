@@ -71,7 +71,7 @@ pub mod syntax;
 mod util;
 
 use misc::{check_misc, MiscDetails};
-use mx::check_mx;
+use mx::{check_mx, is_antispam_mx};
 use smtp::{check_smtp, SmtpDetails, SmtpError};
 use syntax::{check_syntax, get_similar_mail_provider};
 pub use util::constants::LOG_TARGET;
@@ -173,7 +173,7 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 			.as_ref()
 			.expect("If lookup is error, we already returned. qed.")
 			.iter()
-			.map(|host| host.exchange().to_string())
+			.map(|host| format!("{} (P={})", host.exchange().to_string(), host.preference()))
 			.collect::<Vec<String>>()
 	);
 
@@ -185,9 +185,10 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		my_misc
 	);
 
-	// We loop through all the MX records, and check each one of them. This is
-	// because to prevent SPAM, some servers put a dummy server as 1st MX
-	// record.
+	// From the list of MX records, we only choose one: we don't choose the
+	// first or last ones, because some domains put dummy MX records at the
+	// beginning or end of the list. Instead, we choose a random one in the
+	// middle of the list.
 	// ref: https://github.com/reacherhq/check-if-email-exists/issues/1049
 	let mut my_smtp: Option<Result<SmtpDetails, SmtpError>> = None;
 	for host in my_mx
@@ -195,6 +196,7 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		.as_ref()
 		.expect("If lookup is error, we already returned. qed.")
 		.iter()
+		.filter(|host| !is_antispam_mx(host.exchange()))
 	{
 		let res = check_smtp(
 			my_syntax
