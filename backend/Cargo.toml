@@ -6,7 +6,7 @@ license = "AGPL-3.0"
 publish = false
 
 [dependencies]
-async-smtp = "0.5"
+async-smtp = "0.6"
 check-if-email-exists = { path = "../core", features = ["headless"] }
 csv = "1.1.6"
 dotenv = "0.15.0"
