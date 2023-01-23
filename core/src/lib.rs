@@ -71,9 +71,11 @@ pub mod syntax;
 mod util;
 
 use misc::{check_misc, MiscDetails};
-use mx::check_mx;
+use mx::{check_mx, is_antispam_mx};
+use rand::Rng;
 use smtp::{check_smtp, SmtpDetails, SmtpError};
 use syntax::{check_syntax, get_similar_mail_provider};
+use trust_dns_proto::rr::rdata::MX;
 pub use util::constants::LOG_TARGET;
 pub use util::input_output::*;
 
@@ -173,7 +175,7 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 			.as_ref()
 			.expect("If lookup is error, we already returned. qed.")
 			.iter()
-			.map(|host| host.exchange().to_string())
+			.map(|host| host.to_string())
 			.collect::<Vec<String>>()
 	);
 
@@ -185,39 +187,42 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		my_misc
 	);
 
-	// We loop through all the MX records, and check each one of them. This is
-	// because to prevent SPAM, some servers put a dummy server as 1st MX
-	// record.
+	// From the list of MX records, we only choose one: we don't choose the
+	// first or last ones, because some domains put dummy MX records at the
+	// beginning or end of the list (sorted by priority). Instead, we choose a
+	// random one in the middle of the list.
+	//
+	// If anyone has a better algorithm, let me know by creating an issue on
+	// Github.
 	// ref: https://github.com/reacherhq/check-if-email-exists/issues/1049
-	let mut my_smtp: Option<Result<SmtpDetails, SmtpError>> = None;
-	for host in my_mx
+	let mut mx_records = my_mx
 		.lookup
 		.as_ref()
 		.expect("If lookup is error, we already returned. qed.")
 		.iter()
-	{
-		let res = check_smtp(
-			my_syntax
-				.address
-				.as_ref()
-				.expect("We already checked that the email has valid format. qed."),
-			host.exchange(),
-			input.smtp_port,
-			my_syntax.domain.as_ref(),
-			input,
-		)
-		.await;
-		let is_reachable = res.is_ok();
-		my_smtp = Some(res);
-		if !is_reachable {
-			continue; // If error, then we move on to next MX record.
-		} else {
-			break; // If successful, then we break.
-		}
-	}
-	let my_smtp = my_smtp.expect(
-		"As long as lookup has at least 1 element (which we checked), my_smtp will be a Some. qed.",
-	);
+		.filter(|host| !is_antispam_mx(host.exchange()))
+		.collect::<Vec<&MX>>();
+	mx_records.sort_by_key(|a| a.preference());
+	let host = if mx_records.len() >= 3 {
+		let mut rng = rand::thread_rng();
+		let index = rng.gen_range(1..mx_records.len() - 2);
+		mx_records[index]
+	} else {
+		mx_records[mx_records.len() - 1]
+	};
+
+	let my_smtp = check_smtp(
+		my_syntax
+			.address
+			.as_ref()
+			.expect("We already checked that the email has valid format. qed."),
+		host.exchange(),
+		input.smtp_port,
+		my_syntax.domain.as_ref(),
+		input,
+	)
+	.await;
+
 	if my_smtp.is_err() {
 		get_similar_mail_provider(&mut my_syntax);
 	}
