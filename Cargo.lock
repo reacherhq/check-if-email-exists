@@ -175,9 +175,9 @@ dependencies = [
 
 [[package]]
 name = "async-smtp"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6da21e1dd19fbad3e095ad519fb1558ab77fd82e5c4778dca8f9be0464589e1e"
+checksum = "2ade89127f9e0d44f9e83cf574d499060005cd45b7dc76be89c0167487fe8edd"
 dependencies = [
  "async-native-tls",
  "async-trait",
