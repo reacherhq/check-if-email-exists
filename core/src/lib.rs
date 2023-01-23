@@ -202,7 +202,7 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		.iter()
 		.filter(|host| !is_antispam_mx(host.exchange()))
 		.collect::<Vec<&MX>>();
-	mx_records.sort_by(|a, b| a.preference().cmp(&b.preference()));
+	mx_records.sort_by_key(|a| a.preference());
 	let host = if mx_records.len() >= 3 {
 		let mut rng = rand::thread_rng();
 		let index = rng.gen_range(1..mx_records.len() - 2);

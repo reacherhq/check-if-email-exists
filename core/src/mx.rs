@@ -101,7 +101,7 @@ pub async fn check_mx(syntax: &SyntaxDetails) -> Result<MxDetails, MxError> {
 pub fn is_antispam_mx(host: &Name) -> bool {
 	let host = host.to_string();
 	// filter20.antispamcloud.com. (on @computan.net)
-	return host.contains("antispamcloud.com") 
+	host.contains("antispamcloud.com") 
 	// mx.spamexperts.com (see https://documentation.n-able.com/spamexperts/userguide/Content/B_Admin%20Level/domains/mx-records.htm)
-	|| host.contains("spamexperts.com");
+	|| host.contains("spamexperts.com")
 }
