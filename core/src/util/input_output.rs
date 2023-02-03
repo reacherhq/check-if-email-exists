@@ -96,7 +96,7 @@ pub struct CheckEmailInput {
 	/// Add timeout for the SMTP verification step. Set to None if you don't
 	/// want to use a timeout.
 	///
-	/// Defaults to 10s.
+	/// Defaults to 15s.
 	pub smtp_timeout: Option<Duration>,
 	/// For Yahoo email addresses, use Yahoo's API instead of connecting
 	/// directly to their SMTP servers.
@@ -147,7 +147,7 @@ impl Default for CheckEmailInput {
 			proxy: None,
 			smtp_port: 25,
 			smtp_security: SmtpSecurity::default(),
-			smtp_timeout: Some(Duration::from_secs(10)),
+			smtp_timeout: Some(Duration::from_secs(15)),
 			yahoo_use_api: true,
 			gmail_use_api: false,
 			microsoft365_use_api: false,
