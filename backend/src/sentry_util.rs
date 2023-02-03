@@ -82,7 +82,7 @@ impl<'a> SentryError<'a> {
 /// Helper function to send an Error event to Sentry. We redact all sensitive
 /// info before sending to Sentry, by removing all instances of `username`.
 fn error(err: SentryError, result: &CheckEmailOutput) {
-	let exception_value = redact(format!("{:?}", err).as_str(), &result.syntax.username);
+	let exception_value = redact(format!("{err:?}").as_str(), &result.syntax.username);
 	log::debug!(
 		target: LOG_TARGET,
 		"Sending error to Sentry: {}",
@@ -103,7 +103,7 @@ fn error(err: SentryError, result: &CheckEmailOutput) {
 		environment: Some("production".into()),
 		release: Some(CARGO_PKG_VERSION.into()),
 		message: Some(redact(
-			format!("{:#?}", result).as_str(),
+			format!("{result:#?}").as_str(),
 			&result.syntax.username,
 		)),
 		server_name: get_backend_name(),
