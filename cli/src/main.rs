@@ -114,10 +114,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
 	match serde_json::to_string_pretty(&result) {
 		Ok(output) => {
-			println!("{}", output);
+			println!("{output}");
 		}
 		Err(err) => {
-			println!("{}", err);
+			println!("{err}");
 		}
 	};
 
