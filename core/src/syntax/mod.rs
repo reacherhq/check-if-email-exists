@@ -14,12 +14,13 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+mod normalize;
+
 use async_smtp::EmailAddress;
 use levenshtein::levenshtein;
+use normalize::normalize_email;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
-
-use crate::normalize::normalize_email;
 
 /// Syntax information after parsing an email address
 #[derive(Debug, Eq, PartialEq, Deserialize, Serialize)]

@@ -14,13 +14,15 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::gravatar::check_gravatar;
+mod gravatar;
 
-use super::syntax::SyntaxDetails;
 use serde::{Deserialize, Serialize};
 use std::default::Default;
 
-const ROLE_ACCOUNTS: &str = include_str!("./util/roles.json");
+use crate::syntax::SyntaxDetails;
+use gravatar::check_gravatar;
+
+const ROLE_ACCOUNTS: &str = include_str!("./roles.json");
 
 /// Miscelleanous details about the email address.
 #[derive(Debug, Default, Deserialize, Serialize)]
