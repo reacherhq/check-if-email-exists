@@ -33,7 +33,7 @@ md5 = "0.7.0"
 levenshtein = "1.0.5"
 
 [dev-dependencies]
-tokio = { version = "1.24.2" }
+tokio = { version = "1.25.0" }
 
 [features]
 headless = ["fantoccini", "futures"]
