@@ -25,7 +25,7 @@ pub async fn check_gravatar(to_email: &str) -> Option<String> {
 
 	let mail_hash: Digest = md5::compute(to_email);
 
-	let url = format!("{}{:x}", API_BASE_URL, mail_hash);
+	let url = format!("{API_BASE_URL}{mail_hash:x}");
 
 	log::debug!(
 		target: LOG_TARGET,

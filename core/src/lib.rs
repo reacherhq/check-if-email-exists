@@ -205,7 +205,7 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 	mx_records.sort_by_key(|a| a.preference());
 	let host = if mx_records.len() >= 3 {
 		let mut rng = rand::thread_rng();
-		let index = rng.gen_range(1..mx_records.len() - 2);
+		let index = rng.gen_range(1..mx_records.len() - 1);
 		mx_records[index]
 	} else {
 		mx_records[mx_records.len() - 1]
