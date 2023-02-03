@@ -59,7 +59,7 @@ pub fn is_invalid(e: &str, email: &EmailAddress) -> bool {
 	// 550 No such user here
 	|| e.contains("no such user")
 	// permanent: 5.1.1 MXIN501 mailbox <EMAIL> unknown (on @virginmedia.com)
-	|| e.contains(format!("mailbox {} unknown", email).as_str())
+	|| e.contains(format!("mailbox {email} unknown").as_str())
 	// 550 5.1.1 : Mailbox not found
 	// 550 Unknown address error ‘MAILBOX NOT FOUND’
 	|| e.contains("mailbox not found")

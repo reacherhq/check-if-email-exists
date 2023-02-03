@@ -228,7 +228,7 @@ async fn smtp_is_catch_all(
 		.map(char::from)
 		.take(15)
 		.collect();
-	let random_email = EmailAddress::new(format!("{}@{}", random_email, domain));
+	let random_email = EmailAddress::new(format!("{random_email}@{domain}"));
 
 	email_deliverable(
 		smtp_transport,

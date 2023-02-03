@@ -1,7 +1,7 @@
 pub fn normalize_email(username: &str, domain: &str) -> String {
 	match domain {
 		"gmail.com" | "googlemail.com" => normalize_gmail(username),
-		_ => format!("{}@{}", username, domain),
+		_ => format!("{username}@{domain}"),
 	}
 }
 
@@ -29,7 +29,7 @@ fn normalize_gmail(username: &str) -> String {
 	})
 	.collect::<String>();
 
-	format!("{}@gmail.com", username)
+	format!("{username}@gmail.com",)
 }
 
 #[cfg(test)]

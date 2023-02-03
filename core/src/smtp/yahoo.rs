@@ -92,7 +92,7 @@ pub enum YahooError {
 impl fmt::Display for YahooError {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		// Customize so only `x` and `y` are denoted.
-		write!(f, "{:?}", self)
+		write!(f, "{self:?}")
 	}
 }
 
