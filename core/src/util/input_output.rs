@@ -117,6 +117,9 @@ pub struct CheckEmailInput {
 	//
 	// Defaults to false.
 	pub check_gravatar: bool,
+	/// Check if a the email address is present in HaveIBeenPwned API.
+	// If the api_key is filled, HaveIBeenPwned API is checked
+	pub haveibeenpwned_api_key: Option<String>,
 	/// For Hotmail/Outlook email addresses, use a headless navigator
 	/// connecting to the password recovery page instead of the SMTP server.
 	/// This assumes you have a WebDriver compatible process running, then pass
@@ -152,6 +155,7 @@ impl Default for CheckEmailInput {
 			gmail_use_api: false,
 			microsoft365_use_api: false,
 			check_gravatar: false,
+			haveibeenpwned_api_key: None,
 			retries: 2,
 		}
 	}
@@ -279,6 +283,13 @@ impl CheckEmailInput {
 	/// Defaults to false.
 	pub fn set_check_gravatar(&mut self, check_gravatar: bool) -> &mut CheckEmailInput {
 		self.check_gravatar = check_gravatar;
+		self
+	}
+
+	/// Whether to haveibeenpwned' API for the given email
+	/// check only if the api_key is set
+	pub fn set_haveibeenpwned_api_key(&mut self, api_key: Option<String>) -> &mut CheckEmailInput {
+		self.haveibeenpwned_api_key = api_key;
 		self
 	}
 
@@ -433,20 +444,20 @@ mod tests {
 		let res = dummy_response_with_message("blacklist");
 		let actual = serde_json::to_string(&res).unwrap();
 		// Make sure the `description` is present with IpBlacklisted.
-		let expected = r#"{"input":"foo","is_reachable":"unknown","misc":{"is_disposable":false,"is_role_account":false,"gravatar_url":null},"mx":{"accepts_mail":false,"records":[]},"smtp":{"error":{"type":"SmtpError","message":"transient: blacklist"},"description":"IpBlacklisted"},"syntax":{"address":null,"domain":"","is_valid_syntax":false,"username":"","normalized_email":null,"suggestion":null}}"#;
+		let expected = r#"{"input":"foo","is_reachable":"unknown","misc":{"is_disposable":false,"is_role_account":false,"gravatar_url":null,"haveibeenpwned":null},"mx":{"accepts_mail":false,"records":[]},"smtp":{"error":{"type":"SmtpError","message":"transient: blacklist"},"description":"IpBlacklisted"},"syntax":{"address":null,"domain":"","is_valid_syntax":false,"username":"","normalized_email":null,"suggestion":null}}"#;
 		assert_eq!(expected, actual);
 
 		let res =
 			dummy_response_with_message("Client host rejected: cannot find your reverse hostname");
 		let actual = serde_json::to_string(&res).unwrap();
 		// Make sure the `description` is present with NeedsRDNs.
-		let expected = r#"{"input":"foo","is_reachable":"unknown","misc":{"is_disposable":false,"is_role_account":false,"gravatar_url":null},"mx":{"accepts_mail":false,"records":[]},"smtp":{"error":{"type":"SmtpError","message":"transient: Client host rejected: cannot find your reverse hostname"},"description":"NeedsRDNS"},"syntax":{"address":null,"domain":"","is_valid_syntax":false,"username":"","normalized_email":null,"suggestion":null}}"#;
+		let expected = r#"{"input":"foo","is_reachable":"unknown","misc":{"is_disposable":false,"is_role_account":false,"gravatar_url":null,"haveibeenpwned":null},"mx":{"accepts_mail":false,"records":[]},"smtp":{"error":{"type":"SmtpError","message":"transient: Client host rejected: cannot find your reverse hostname"},"description":"NeedsRDNS"},"syntax":{"address":null,"domain":"","is_valid_syntax":false,"username":"","normalized_email":null,"suggestion":null}}"#;
 		assert_eq!(expected, actual);
 
 		let res = dummy_response_with_message("foobar");
 		let actual = serde_json::to_string(&res).unwrap();
 		// Make sure the `description` is NOT present.
-		let expected = r#"{"input":"foo","is_reachable":"unknown","misc":{"is_disposable":false,"is_role_account":false,"gravatar_url":null},"mx":{"accepts_mail":false,"records":[]},"smtp":{"error":{"type":"SmtpError","message":"transient: foobar"}},"syntax":{"address":null,"domain":"","is_valid_syntax":false,"username":"","normalized_email":null,"suggestion":null}}"#;
+		let expected = r#"{"input":"foo","is_reachable":"unknown","misc":{"is_disposable":false,"is_role_account":false,"gravatar_url":null,"haveibeenpwned":null},"mx":{"accepts_mail":false,"records":[]},"smtp":{"error":{"type":"SmtpError","message":"transient: foobar"}},"syntax":{"address":null,"domain":"","is_valid_syntax":false,"username":"","normalized_email":null,"suggestion":null}}"#;
 		assert_eq!(expected, actual);
 	}
 }
