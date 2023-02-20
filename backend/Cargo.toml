@@ -8,7 +8,7 @@ publish = false
 [dependencies]
 async-smtp = "0.6"
 check-if-email-exists = { path = "../core", features = ["headless"] }
-csv = "1.1.6"
+csv = "1.2.0"
 dotenv = "0.15.0"
 env_logger = "0.10"
 log = "0.4"
