@@ -14,6 +14,13 @@ body:
       placeholder: ex. example.com
     validations:
       required: false
+  - type: input
+    id: version
+    attributes:
+      label: check-if-email-exists
+      description: When you're running check-if-email-exists yourself, which version are you using?
+    validations:
+      required: false
   - type: textarea
     id: what-happened
     attributes:
