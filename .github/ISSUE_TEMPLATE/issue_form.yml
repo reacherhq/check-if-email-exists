@@ -17,8 +17,8 @@ body:
   - type: input
     id: version
     attributes:
-      label: check-if-email-exists
-      description: When you're running check-if-email-exists yourself, which version are you using?
+      label: Version of check-if-email-exists (if running it yourself)
+      description: When you're running check-if-email-exists yourself, which version are you using? You can also put the Docker tag you're using.
     validations:
       required: false
   - type: textarea
