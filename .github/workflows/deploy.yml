@@ -201,7 +201,7 @@ jobs:
         id: vars
         run: echo ::set-output name=GITHUB_TAG::${GITHUB_REF:10} # Remove /refs/head/
       - name: Publish to Registry
-        uses: elgohr/Publish-Docker-Github-Action@master
+        uses: elgohr/Publish-Docker-Github-Action@v5
         with:
           name: reacherhq/check-if-email-exists
           username: ${{ secrets.DOCKER_USERNAME }}
