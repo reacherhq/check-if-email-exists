@@ -57,6 +57,17 @@ pub async fn check_smtp(
 	input: &CheckEmailInput,
 ) -> Result<SmtpDetails, SmtpError> {
 	let host_lowercase = host.to_lowercase().to_string();
+
+	if input
+		.skipped_domains
+		.iter()
+		.any(|d| host_lowercase.contains(d))
+	{
+		return Err(SmtpError::SkippedDomain(format!(
+			"Reacher currently cannot verify emails from @{domain}"
+		)));
+	}
+
 	// FIXME Is this `contains` too lenient?
 	if input.yahoo_use_api && host_lowercase.contains("yahoo") {
 		return yahoo::check_yahoo(to_email, input)
@@ -127,6 +138,21 @@ mod tests {
 		match res {
 			Err(SmtpError::TimeoutError(_)) => (),
 			_ => panic!("check_smtp did not time out"),
+		}
+	}
+
+	#[test]
+	fn should_skip_domains() {
+		let runtime = Runtime::new().unwrap();
+
+		let to_email = EmailAddress::from_str("foo@icloud.com").unwrap();
+		let host = Name::from_str("mx01.mail.icloud.com.").unwrap();
+		let input = CheckEmailInput::default();
+
+		let res = runtime.block_on(check_smtp(&to_email, &host, 25, "icloud.com", &input));
+		match res {
+			Err(SmtpError::SkippedDomain(_)) => (),
+			r => panic!("{:?}", r),
 		}
 	}
 }
