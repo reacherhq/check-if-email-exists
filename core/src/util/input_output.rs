@@ -137,6 +137,25 @@ pub struct CheckEmailInput {
 	///
 	/// Defaults to Opportunistic.
 	pub smtp_security: SmtpSecurity,
+	/// **IMPORTANT:** This is a beta feature, and might be completely removed,
+	/// or moved somewhere else, before the next release.
+	///
+	/// List of domains to skip when doing an SMTP connection, because we know
+	/// they return "unknown". For each string in this list, we check if the MX
+	/// record **contains** the string; if yes, we return an error saying the
+	/// SMTP verification is skipped.
+	///
+	/// Related issue: https://github.com/reacherhq/check-if-email-exists/issues/937
+	///
+	/// ## Example
+	///
+	/// If you want to skip Zoho emails, it's good enough to ".zoho.com." to
+	/// the list. This way it will skip all Zoho emails as their MX records
+	/// show "mx{N}.zoho.com.". Simply putting "zoho" might give false
+	/// positives if you have an email provider like "mycustomzoho.com".
+	///
+	/// Defaults to: [""]
+	pub skipped_domains: Vec<String>,
 }
 
 impl Default for CheckEmailInput {
@@ -157,6 +176,21 @@ impl Default for CheckEmailInput {
 			check_gravatar: false,
 			haveibeenpwned_api_key: None,
 			retries: 2,
+			skipped_domains: vec![
+				// on @bluewin.ch
+				// - mx-v02.bluewin.ch.
+				".bluewin.ch.".into(),
+				// on @bluewin.ch
+				// - mxbw-bluewin-ch.hdb-cs04.ellb.ch.
+				"bluewin-ch.".into(),
+				// on @gmx.de, @gmx.ch, @gmx.net
+				".gmx.net.".into(),
+				// on @icloud.com
+				".mail.icloud.com.".into(),
+				// on @web.de
+				".web.de.".into(),
+				".zoho.com.".into(),
+			],
 		}
 	}
 }
@@ -303,6 +337,16 @@ impl CheckEmailInput {
 		use_headless: Option<String>,
 	) -> &mut CheckEmailInput {
 		self.hotmail_use_headless = use_headless;
+		self
+	}
+
+	/// **IMPORTANT:** This is a beta feature, and might be completely removed,
+	/// or moved somewhere else, before the next release.
+	///
+	/// List of domains to skip when doing an SMTP connection, because we know
+	/// they return "unknown".
+	pub fn set_skipped_domains(&mut self, domains: Vec<String>) -> &mut CheckEmailInput {
+		self.skipped_domains = domains;
 		self
 	}
 }

@@ -48,6 +48,8 @@ pub enum SmtpError {
 	HotmailError(HotmailError),
 	/// Error when verifying a Microsoft 365 email via HTTP request.
 	Microsoft365Error(Microsoft365Error),
+	/// Email is in the `skipped_domains` parameter.
+	SkippedDomain(String),
 }
 
 impl From<SocksError> for SmtpError {
