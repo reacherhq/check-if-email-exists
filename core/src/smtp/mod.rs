@@ -61,12 +61,11 @@ pub async fn check_smtp(
 	if input
 		.skipped_domains
 		.iter()
-		.find(|d| host_lowercase.contains(*d))
-		.is_some()
+		.any(|d| host_lowercase.contains(d))
 	{
-		return Err(SmtpError::SkippedDomain(
-			format!("Reacher currently cannot verify emails from @{domain}").into(),
-		));
+		return Err(SmtpError::SkippedDomain(format!(
+			"Reacher currently cannot verify emails from @{domain}"
+		)));
 	}
 
 	// FIXME Is this `contains` too lenient?
