@@ -27,7 +27,7 @@ rand = { version = "0.8.5", features = ["small_rng"] }
 regex = "1.7.1"
 reqwest = { version = "0.11.15", features = ["json", "socks"] }
 serde = { version = "1.0.157", features = ["derive"] }
-serde_json = "1.0.94"
+serde_json = "1.0.95"
 trust-dns-proto = "0.21.2"
 md5 = "0.7.0"
 levenshtein = "1.0.5"
