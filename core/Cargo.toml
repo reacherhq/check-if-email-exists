@@ -17,7 +17,7 @@ async-native-tls = { version = "0.4", default-features = false }
 async-recursion = "1.0.4"
 async-smtp = { version = "0.6.0", features = ["socks5"] }
 async-std = "1.12.0"
-async-std-resolver = "0.21.2"
+async-std-resolver = "0.22.0"
 fantoccini = { version = "0.19.3", optional = true }
 futures = { version = "0.3.27", optional = true }
 fast-socks5 = "0.8.1"
