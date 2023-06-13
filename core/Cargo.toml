@@ -34,7 +34,7 @@ levenshtein = "1.0.5"
 pwned = "0.5.0"
 
 [dev-dependencies]
-tokio = { version = "1.26.0" }
+tokio = { version = "1.28.2" }
 
 [features]
 headless = ["fantoccini", "futures"]
