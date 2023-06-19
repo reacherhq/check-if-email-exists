@@ -135,7 +135,6 @@ pub async fn check_yahoo(
 		}
 	};
 
-
 	let to_email = to_email.to_string();
 	log::debug!(
 		target: LOG_TARGET,
@@ -172,7 +171,9 @@ pub async fn check_yahoo(
 		}
 	};
 
-	let re = Regex::new(r#"<input type="hidden" value="(?P<sessionIndex>.*)" name="sessionIndex">"#).expect("Correct regex. qed");
+	let re =
+		Regex::new(r#"<input type="hidden" value="(?P<sessionIndex>.*)" name="sessionIndex">"#)
+			.expect("Correct regex. qed");
 	let session_index = match re.captures(&body) {
 		Some(y) => y,
 		_ => {
