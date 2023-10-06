@@ -76,6 +76,11 @@ pub async fn check_gmail(
 	})
 }
 
+/// Check if the MX host is from Gmail.
+pub fn is_gmail(host: &str) -> bool {
+	host.to_lowercase().ends_with(".google.com.")
+}
+
 #[cfg(test)]
 mod tests {
 	use std::str::FromStr;
