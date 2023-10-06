@@ -29,7 +29,7 @@ use std::time::Duration;
 
 use trust_dns_proto::rr::Name;
 
-use super::parser;
+use super::{gmail::is_gmail, outlook::is_hotmail, parser, yahoo::is_yahoo};
 use super::{SmtpDetails, SmtpError};
 use crate::util::{constants::LOG_TARGET, input_output::CheckEmailInput};
 
@@ -220,7 +220,14 @@ async fn email_deliverable(
 async fn smtp_is_catch_all(
 	smtp_transport: &mut SmtpTransport,
 	domain: &str,
+	host: &Name,
 ) -> Result<bool, SmtpError> {
+	// Skip catch-all check for known providers.
+	let host = host.to_string();
+	if is_gmail(&host) || is_hotmail(&host) || is_yahoo(&host) {
+		return Ok(false);
+	}
+
 	// Create a random 15-char alphanumerical string.
 	let mut rng = SmallRng::from_entropy();
 	let random_email: String = iter::repeat(())
@@ -249,7 +256,7 @@ async fn create_smtp_future(
 	// Ok(SmtpDetails { can_connect_smtp: false, ... }).
 	let mut smtp_transport = connect_to_host(host, port, input).await?;
 
-	let is_catch_all = smtp_is_catch_all(&mut smtp_transport, domain)
+	let is_catch_all = smtp_is_catch_all(&mut smtp_transport, domain, host)
 		.await
 		.unwrap_or(false);
 	let deliverability = if is_catch_all {

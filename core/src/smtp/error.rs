@@ -16,8 +16,8 @@
 
 use super::gmail::GmailError;
 #[cfg(feature = "headless")]
-use super::microsoft::hotmail::HotmailError;
-use super::microsoft::microsoft365::Microsoft365Error;
+use super::outlook::hotmail::HotmailError;
+use super::outlook::microsoft365::Microsoft365Error;
 use super::parser;
 use super::yahoo::YahooError;
 use crate::util::ser_with_display::ser_with_display;

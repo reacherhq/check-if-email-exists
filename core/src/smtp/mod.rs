@@ -18,7 +18,7 @@ mod connect;
 mod error;
 mod gmail;
 mod http_api;
-mod microsoft;
+mod outlook;
 mod parser;
 mod yahoo;
 
@@ -31,6 +31,12 @@ use trust_dns_proto::rr::Name;
 use crate::{util::input_output::CheckEmailInput, LOG_TARGET};
 use connect::check_smtp_with_retry;
 pub use error::*;
+
+use self::{
+	gmail::is_gmail,
+	outlook::{is_hotmail, is_outlook},
+	yahoo::is_yahoo,
+};
 
 /// Details that we gathered from connecting to this email via SMTP
 #[derive(Debug, Default, Deserialize, Serialize)]
@@ -68,19 +74,18 @@ pub async fn check_smtp(
 		)));
 	}
 
-	// FIXME Is this `contains` too lenient?
-	if input.yahoo_use_api && host_lowercase.contains("yahoo") {
+	if input.yahoo_use_api && is_yahoo(&host_lowercase) {
 		return yahoo::check_yahoo(to_email, input)
 			.await
 			.map_err(|err| err.into());
 	}
-	if input.gmail_use_api && host_lowercase.ends_with(".google.com.") {
+	if input.gmail_use_api && is_gmail(&host_lowercase) {
 		return gmail::check_gmail(to_email, input)
 			.await
 			.map_err(|err| err.into());
 	}
-	if input.microsoft365_use_api && host_lowercase.ends_with(".mail.protection.outlook.com.") {
-		match microsoft::microsoft365::check_microsoft365_api(to_email, input).await {
+	if input.microsoft365_use_api && is_outlook(&host_lowercase) {
+		match outlook::microsoft365::check_microsoft365_api(to_email, input).await {
 			Ok(Some(smtp_details)) => return Ok(smtp_details),
 			// Continue in the event of an error/ambiguous result.
 			Err(err) => {
@@ -99,16 +104,8 @@ pub async fn check_smtp(
 		// The password recovery page do not always work with Microsoft 365
 		// addresses. So we only test with @hotmail and @outlook addresses.
 		// ref: https://github.com/reacherhq/check-if-email-exists/issues/1185
-		//
-		// After some testing, I got:
-		// - *@outlook.com -> `outlook-com.olc.protection.outlook.com.`
-		// - *@outlook.fr -> `eur.olc.protection.outlook.com.`
-		// - *@hotmail.com -> `hotmail-com.olc.protection.outlook.com.`
-		// - *@hotmail.fr -> `eur.olc.protection.outlook.com.`
-		//
-		// So it seems that outlook/hotmail addresses end with `olc.protection.outlook.com.`
-		if host_lowercase.ends_with("olc.protection.outlook.com.") {
-			return microsoft::hotmail::check_password_recovery(to_email, webdriver)
+		if is_hotmail(&host_lowercase) {
+			return outlook::hotmail::check_password_recovery(to_email, webdriver)
 				.await
 				.map_err(|err| err.into());
 		}
