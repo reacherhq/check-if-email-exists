@@ -32,7 +32,11 @@ use crate::{util::input_output::CheckEmailInput, LOG_TARGET};
 use connect::check_smtp_with_retry;
 pub use error::*;
 
-use self::{gmail::is_gmail, outlook::is_outlook, yahoo::is_yahoo};
+use self::{
+	gmail::is_gmail,
+	outlook::{is_hotmail, is_outlook},
+	yahoo::is_yahoo,
+};
 
 /// Details that we gathered from connecting to this email via SMTP
 #[derive(Debug, Default, Deserialize, Serialize)]
@@ -100,15 +104,7 @@ pub async fn check_smtp(
 		// The password recovery page do not always work with Microsoft 365
 		// addresses. So we only test with @hotmail and @outlook addresses.
 		// ref: https://github.com/reacherhq/check-if-email-exists/issues/1185
-		//
-		// After some testing, I got:
-		// - *@outlook.com -> `outlook-com.olc.protection.outlook.com.`
-		// - *@outlook.fr -> `eur.olc.protection.outlook.com.`
-		// - *@hotmail.com -> `hotmail-com.olc.protection.outlook.com.`
-		// - *@hotmail.fr -> `eur.olc.protection.outlook.com.`
-		//
-		// So it seems that outlook/hotmail addresses end with `olc.protection.outlook.com.`
-		if host_lowercase.ends_with("olc.protection.outlook.com.") {
+		if is_hotmail(&host_lowercase) {
 			return outlook::hotmail::check_password_recovery(to_email, webdriver)
 				.await
 				.map_err(|err| err.into());

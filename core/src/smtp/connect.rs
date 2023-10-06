@@ -29,7 +29,7 @@ use std::time::Duration;
 
 use trust_dns_proto::rr::Name;
 
-use super::{gmail::is_gmail, outlook::is_outlook, parser, yahoo::is_yahoo};
+use super::{gmail::is_gmail, outlook::is_hotmail, parser, yahoo::is_yahoo};
 use super::{SmtpDetails, SmtpError};
 use crate::util::{constants::LOG_TARGET, input_output::CheckEmailInput};
 
@@ -224,7 +224,7 @@ async fn smtp_is_catch_all(
 ) -> Result<bool, SmtpError> {
 	// Skip catch-all check for known providers.
 	let host = host.to_string();
-	if is_gmail(&host) || is_outlook(&host) || is_yahoo(&host) {
+	if is_gmail(&host) || is_hotmail(&host) || is_yahoo(&host) {
 		return Ok(false);
 	}
 
