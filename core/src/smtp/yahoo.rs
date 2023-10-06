@@ -36,26 +36,31 @@ const USER_AGENT: &str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleW
 #[derive(Serialize)]
 struct FormRequest {
 	acrumb: String,
+	#[serde(rename(serialize = "sessionIndex"))]
+	session_index: String,
 	#[serde(rename(serialize = "specId"))]
 	spec_id: String,
-	yid: String,
+	#[serde(rename(serialize = "userId"))]
+	user_id: String,
 }
 
 impl Default for FormRequest {
 	fn default() -> Self {
 		FormRequest {
 			acrumb: "".into(),
+			session_index: "".into(),
 			spec_id: "yidReg".into(),
-			yid: "".into(),
+			user_id: "".into(),
 		}
 	}
 }
 
 impl FormRequest {
-	fn new(acrumb: String, yid: String) -> Self {
+	fn new(acrumb: String, session_index: String, user_id: String) -> Self {
 		FormRequest {
 			acrumb,
-			yid,
+			session_index,
+			user_id,
 			..Default::default()
 		}
 	}
@@ -79,6 +84,8 @@ struct FormResponse {
 pub enum YahooError {
 	/// Cannot find "acrumb" field in cookie.
 	NoAcrumb,
+	/// Cannot find "sessionIndex" hidden input in body
+	NoSessionIndex,
 	/// Cannot find cookie in Yahoo response.
 	NoCookie,
 	/// Error when serializing or deserializing HTTP requests and responses.
@@ -122,7 +129,7 @@ pub async fn check_yahoo(
 
 	// Get the cookies from the response.
 	let cookies = match response.headers().get("Set-Cookie") {
-		Some(x) => x,
+		Some(x) => x.to_owned(),
 		_ => {
 			return Err(YahooError::NoCookie);
 		}
@@ -142,6 +149,8 @@ pub async fn check_yahoo(
 		cookies
 	);
 
+	let body = response.text().await?;
+
 	let username = to_email
 		.split('@')
 		.next()
@@ -154,11 +163,21 @@ pub async fn check_yahoo(
 			return Err(YahooError::NoAcrumb);
 		}
 	};
-	let re = Regex::new(r"s=(?P<acrumb>[^;]*)").expect("Correct regex. qed.");
+	let re = Regex::new(r"s=(?P<acrumb>[^;]*)&d").expect("Correct regex. qed.");
 	let acrumb = match re.captures(acrumb) {
 		Some(x) => x,
 		_ => {
 			return Err(YahooError::NoAcrumb);
+		}
+	};
+
+	let re =
+		Regex::new(r#"<input type="hidden" value="(?P<sessionIndex>.*)" name="sessionIndex">"#)
+			.expect("Correct regex. qed");
+	let session_index = match re.captures(&body) {
+		Some(y) => y,
+		_ => {
+			return Err(YahooError::NoSessionIndex);
 		}
 	};
 
@@ -176,9 +195,10 @@ pub async fn check_yahoo(
 		.header("Referer", SIGNUP_PAGE)
 		.header("Accept-Encoding", "gzip, deflate, br")
 		.header("Accept-Language", "en-US,en;q=0.8,ar;q=0.6")
-		.header("Cookie", cookies)
+		.header("Cookie", &cookies)
 		.json(&FormRequest::new(
 			acrumb["acrumb"].to_string(),
+			session_index["sessionIndex"].to_string(),
 			username.into(),
 		))
 		.send()
@@ -196,7 +216,7 @@ pub async fn check_yahoo(
 	let username_exists = response
 		.errors
 		.iter()
-		.any(|item| item.name == "yid" && item.error == "IDENTIFIER_EXISTS");
+		.any(|item| item.name == "userId" && item.error == "IDENTIFIER_NOT_AVAILABLE");
 
 	Ok(SmtpDetails {
 		can_connect_smtp: true,
