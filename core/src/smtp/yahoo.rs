@@ -213,10 +213,10 @@ pub async fn check_yahoo(
 		response
 	);
 
-	let username_exists = response
-		.errors
-		.iter()
-		.any(|item| item.name == "userId" && item.error == "IDENTIFIER_NOT_AVAILABLE");
+	let username_exists = response.errors.iter().any(|item| {
+		item.name == "userId"
+			&& (item.error == "IDENTIFIER_NOT_AVAILABLE" || item.error == "IDENTIFIER_EXISTS")
+	});
 
 	Ok(SmtpDetails {
 		can_connect_smtp: true,
