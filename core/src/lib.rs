@@ -70,7 +70,7 @@ pub mod syntax;
 mod util;
 
 use misc::{check_misc, MiscDetails};
-use mx::{check_mx, is_antispam_mx};
+use mx::check_mx;
 use rand::Rng;
 use smtp::{check_smtp, SmtpDetails, SmtpError};
 use syntax::{check_syntax, get_similar_mail_provider};
@@ -196,6 +196,8 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 	// beginning or end of the list (sorted by priority). Instead, we choose a
 	// random one in the middle of the list.
 	//
+	// See here for explanation: https://cwiki.apache.org/confluence/display/SPAMASSASSIN/OtherTricks
+	//
 	// If anyone has a better algorithm, let me know by creating an issue on
 	// Github.
 	// ref: https://github.com/reacherhq/check-if-email-exists/issues/1049
@@ -204,7 +206,6 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		.as_ref()
 		.expect("If lookup is error, we already returned. qed.")
 		.iter()
-		.filter(|host| !is_antispam_mx(host.exchange()))
 		.collect::<Vec<&MX>>();
 	mx_records.sort_by_key(|a| a.preference());
 	let host = if mx_records.len() >= 3 {
