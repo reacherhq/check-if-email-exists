@@ -19,7 +19,6 @@ use crate::util::ser_with_display::ser_with_display;
 use async_std_resolver::{lookup::MxLookup, resolver_from_system_conf, ResolveError};
 use serde::{ser::SerializeMap, Serialize, Serializer};
 use std::io::Error;
-use trust_dns_proto::rr::Name;
 
 /// Details about the MX lookup.
 #[derive(Debug)]
@@ -95,13 +94,4 @@ pub async fn check_mx(syntax: &SyntaxDetails) -> Result<MxDetails, MxError> {
 		Ok(lookup) => Ok(MxDetails::from(lookup)),
 		Err(err) => Ok(MxDetails { lookup: Err(err) }),
 	}
-}
-
-// is_antispam_mx checks if the MX record is an antispam MX record.
-pub fn is_antispam_mx(host: &Name) -> bool {
-	let host = host.to_string();
-	// filter20.antispamcloud.com. (on @computan.net)
-	host.contains("antispamcloud.com") 
-	// mx.spamexperts.com (see https://documentation.n-able.com/spamexperts/userguide/Content/B_Admin%20Level/domains/mx-records.htm)
-	|| host.contains("spamexperts.com")
 }
