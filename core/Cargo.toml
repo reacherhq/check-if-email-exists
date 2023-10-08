@@ -28,7 +28,7 @@ regex = "1.9.4"
 reqwest = { version = "0.11.16", features = ["json", "socks"] }
 serde = { version = "1.0.157", features = ["derive"] }
 serde_json = "1.0.95"
-trust-dns-proto = "0.21.2"
+trust-dns-proto = "0.22.0"
 md5 = "0.7.0"
 levenshtein = "1.0.5"
 pwned = "0.5.0"
