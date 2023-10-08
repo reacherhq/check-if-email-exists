@@ -9,9 +9,17 @@ body:
   - type: input
     id: email
     attributes:
-      label: Email Provider
+      label: Email to check
       description: To preserve privacy, don't use a full email. But if relevant, please tell us which provider is used (e.g. gmail, hotmail...)
       placeholder: ex. example.com
+    validations:
+      required: false
+  - type: input
+    id: server
+    attributes:
+      label: From where did you run check-if-email-exists?
+      description: Was it from Reacher dashboard? Or give the provider where you installed check-if-email-exists
+      placeholder: ex. Reacher Dashboard, or self-host: OVH, Heroku, Digital Ocean...
     validations:
       required: false
   - type: input
