@@ -2,6 +2,56 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.9.1](https://github.com/reacherhq/check-if-email-exists/compare/v0.9.0...v0.9.1) (2023-10-08)
+
+
+### Features
+
+* **#289:** add haveibeenpwned check ([#1253](https://github.com/reacherhq/check-if-email-exists/issues/1253)) ([166dbd2](https://github.com/reacherhq/check-if-email-exists/commit/166dbd2cc878e30c51538b919abc1aaea4465c45)), closes [#289](https://github.com/reacherhq/check-if-email-exists/issues/289)
+* add email address normalisation ([#1206](https://github.com/reacherhq/check-if-email-exists/issues/1206)) ([f8ec348](https://github.com/reacherhq/check-if-email-exists/commit/f8ec348883cd4f4a20a8acbb38d54b69e798222b)), closes [#952](https://github.com/reacherhq/check-if-email-exists/issues/952)
+* add Microsoft 365 HTTP API validation ([#1194](https://github.com/reacherhq/check-if-email-exists/issues/1194)) ([5d3c49f](https://github.com/reacherhq/check-if-email-exists/commit/5d3c49f41ef1369efe2a9e63b24543e281ae0776)), closes [#937](https://github.com/reacherhq/check-if-email-exists/issues/937)
+* Add skipped domains ([#1293](https://github.com/reacherhq/check-if-email-exists/issues/1293)) ([29119fa](https://github.com/reacherhq/check-if-email-exists/commit/29119fa72027c9830396bbdf3e90f08c0c89d7a7))
+* Add suggestions for syntax errors ([#1192](https://github.com/reacherhq/check-if-email-exists/issues/1192)) ([2d385f3](https://github.com/reacherhq/check-if-email-exists/commit/2d385f30f7a62ab2706599fbb89fb50275cffb5f))
+* additional Gmail validation ([#1193](https://github.com/reacherhq/check-if-email-exists/issues/1193)) ([49c8f5c](https://github.com/reacherhq/check-if-email-exists/commit/49c8f5c3b4a3db04533d06d7267b0f15ebda3285)), closes [#937](https://github.com/reacherhq/check-if-email-exists/issues/937)
+* **backend:** Add header secret to protect against public requests ([#1158](https://github.com/reacherhq/check-if-email-exists/issues/1158)) ([fa6a56b](https://github.com/reacherhq/check-if-email-exists/commit/fa6a56b62f4b3aeeec704cfe4882755998d40833))
+* **core:** Add check for antispam MX records ([#1257](https://github.com/reacherhq/check-if-email-exists/issues/1257)) ([c9771da](https://github.com/reacherhq/check-if-email-exists/commit/c9771da66c7869a4d0a255e2e2536f2863e8958c))
+* **core:** Add check gravatar image ([#1188](https://github.com/reacherhq/check-if-email-exists/issues/1188)) ([6a26035](https://github.com/reacherhq/check-if-email-exists/commit/6a26035327ab681a65a4f4ba284e155f00680e89))
+* **core:** Add Hotmail checks via headless password recovery ([#1165](https://github.com/reacherhq/check-if-email-exists/issues/1165)) ([7517ed9](https://github.com/reacherhq/check-if-email-exists/commit/7517ed98ba966158deebba6a1a4745c931bfed18))
+* **core:** Fix disabled accts on hanmail.net ([#1339](https://github.com/reacherhq/check-if-email-exists/issues/1339)) ([90393c8](https://github.com/reacherhq/check-if-email-exists/commit/90393c8dda39267da7eb5efe6f112c8f25a593f4))
+* **core:** Skip catch-all for known domains ([#1336](https://github.com/reacherhq/check-if-email-exists/issues/1336)) ([c40a46c](https://github.com/reacherhq/check-if-email-exists/commit/c40a46c4555129346bd9efa444a483bf25b679fe))
+* **core:** Update default MAIL-FROM and HELO ([743a811](https://github.com/reacherhq/check-if-email-exists/commit/743a8111b4831ee19e7ac887c39a8da2775acd4c))
+* Set default timeout to 10s ([#1251](https://github.com/reacherhq/check-if-email-exists/issues/1251)) ([d04f84c](https://github.com/reacherhq/check-if-email-exists/commit/d04f84cc1e7b30e02d3717ab1af9f680cdb2c27f))
+
+
+### Bug Fixes
+
+* **backend:** Fix CI priting ([748940c](https://github.com/reacherhq/check-if-email-exists/commit/748940ca2fa7fb59aac8e07a408a22d1ab688527))
+* **backend:** Fix deploy to docker ([20fcfa6](https://github.com/reacherhq/check-if-email-exists/commit/20fcfa6032e4614dc459a34183958fde63199acf))
+* **backend:** Fix dockerfile ([f0ed49f](https://github.com/reacherhq/check-if-email-exists/commit/f0ed49f50238c1c71a130f3db19ec047af00b8df))
+* **backend:** Improve sentry error messages ([#1155](https://github.com/reacherhq/check-if-email-exists/issues/1155)) ([d90d998](https://github.com/reacherhq/check-if-email-exists/commit/d90d998d1cb189fed3f888659aa08fd4fabf6e93))
+* **backend:** Redact email in sentry bug tracking ([2c2d1d8](https://github.com/reacherhq/check-if-email-exists/commit/2c2d1d88c0086196bc09359e32c96638124d9539))
+* **cli:** Update flags default values ([a4fe57e](https://github.com/reacherhq/check-if-email-exists/commit/a4fe57e9ab89659e12182719ccb12fb2cdcb5f2e))
+* **core:** Add more invalid parsing and improve logging ([#1156](https://github.com/reacherhq/check-if-email-exists/issues/1156)) ([b5ae9f8](https://github.com/reacherhq/check-if-email-exists/commit/b5ae9f8ad910b77ad6a179ecb5d4b633011ed2f4))
+* **core:** Default SMTP timeout to 15 ([0d4fa4d](https://github.com/reacherhq/check-if-email-exists/commit/0d4fa4d8f662ecfd3fa2e0359322f324a8ef86db))
+* **core:** Don't use headless on Microsoft 465 addresses ([#1196](https://github.com/reacherhq/check-if-email-exists/issues/1196)) ([0c3c21d](https://github.com/reacherhq/check-if-email-exists/commit/0c3c21daf6ea79875835121fb86ab7c0c86d55eb))
+* **core:** Fix default CheckEmailInput ([09215a1](https://github.com/reacherhq/check-if-email-exists/commit/09215a13ac3525861e6cd1dea3fc71c13dfffe52))
+* **core:** Fix hotmail headless option parsing ([6ddc3b9](https://github.com/reacherhq/check-if-email-exists/commit/6ddc3b96da0d01b02711d62873ad0d0df6bf1b33))
+* **core:** Fix hotmail headless with authenticator ([51cdb2e](https://github.com/reacherhq/check-if-email-exists/commit/51cdb2e3c13a433fff92f1d3dcf1bfcb90f6ce7b))
+* **core:** Fix MX random record selection ([#1263](https://github.com/reacherhq/check-if-email-exists/issues/1263)) ([9fae593](https://github.com/reacherhq/check-if-email-exists/commit/9fae593b8590ad5efb3e7d16bbd25cc05c228cb9))
+* **core:** Improve invalid parser ([#1166](https://github.com/reacherhq/check-if-email-exists/issues/1166)) ([bb46004](https://github.com/reacherhq/check-if-email-exists/commit/bb460046bf1cb031fee706d836c8a737157f803c))
+* **core:** Improve parser and headless hotmail runner ([#1167](https://github.com/reacherhq/check-if-email-exists/issues/1167)) ([0de33a5](https://github.com/reacherhq/check-if-email-exists/commit/0de33a5f265105a769c7ca6125df0fd4f88b89e2))
+* **core:** Improve parser from Sentry errors ([fbaf588](https://github.com/reacherhq/check-if-email-exists/commit/fbaf58824a339e546d50c2125a459161769dda6e))
+* **core:** Improve parser's `is_invalid` ([#1159](https://github.com/reacherhq/check-if-email-exists/issues/1159)) ([ec1c4d5](https://github.com/reacherhq/check-if-email-exists/commit/ec1c4d5e5d4c94d75d255a0699402f75eb29f7ab))
+* **core:** No sandbox in headless Hotmail check ([0590438](https://github.com/reacherhq/check-if-email-exists/commit/0590438310f3c052b2748a8c408e0d8dbfb777b7))
+* **core:** Remove antispam check ([#1337](https://github.com/reacherhq/check-if-email-exists/issues/1337)) ([06f18ed](https://github.com/reacherhq/check-if-email-exists/commit/06f18edf7aee5640b3725feedfa7b7f213da83a8))
+* **core:** Yahoo add back IDENTIFIER_EXISTS ([2b63556](https://github.com/reacherhq/check-if-email-exists/commit/2b635564efb37b0aa891bbba77244e6cf2d611bb))
+* **core:** yahoo api changes: yid is userId now, sessionIndex is required and fo… ([#1314](https://github.com/reacherhq/check-if-email-exists/issues/1314)) ([0209111](https://github.com/reacherhq/check-if-email-exists/commit/02091115026520596fc5b4b2a6757169e91cba15))
+* Don't auto-fetch Chrome, install in Docker ([84fcc0d](https://github.com/reacherhq/check-if-email-exists/commit/84fcc0de40567126ce3a385934086450c3a89ccf))
+* split Microsoft 365/Hotmail functionality ([#1204](https://github.com/reacherhq/check-if-email-exists/issues/1204)) ([e987b13](https://github.com/reacherhq/check-if-email-exists/commit/e987b13a5ccd98d28fb756f1bf41427c337750c4))
+* Switch back to upstream fast-socks ([#1164](https://github.com/reacherhq/check-if-email-exists/issues/1164)) ([db356f1](https://github.com/reacherhq/check-if-email-exists/commit/db356f19374843ca135de8ebd8a6c34bfeb017a8))
+* TLS accept unsafe ([778692b](https://github.com/reacherhq/check-if-email-exists/commit/778692bce760c0a1e1201dd3e11b41e7ccb7e2e8))
+* Use chromedriver instead of gecko for parallel requests ([e282e28](https://github.com/reacherhq/check-if-email-exists/commit/e282e28aeb7259d800f7faad97173c3a216095a4))
+
 ## [0.9.0](https://github.com/reacherhq/check-if-email-exists/compare/v0.8.32...v0.9.0) (2022-08-15)
 
 
