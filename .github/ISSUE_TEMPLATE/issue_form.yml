@@ -19,7 +19,7 @@ body:
     attributes:
       label: From where did you run check-if-email-exists?
       description: Was it from Reacher dashboard? Or give the provider where you installed check-if-email-exists
-      placeholder: ex. Reacher Dashboard, or self-host: OVH, Heroku, Digital Ocean...
+      placeholder: ex. Reacher Dashboard, or OVH, Heroku, Digital Ocean...
     validations:
       required: false
   - type: input
