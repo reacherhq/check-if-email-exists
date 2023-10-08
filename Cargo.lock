@@ -183,7 +183,7 @@ dependencies = [
  "async-trait",
  "base64 0.13.0",
  "bufstream",
- "fast-socks5",
+ "fast-socks5 0.8.2",
  "futures",
  "hostname",
  "log",
@@ -396,7 +396,7 @@ dependencies = [
  "async-std",
  "async-std-resolver",
  "fantoccini",
- "fast-socks5",
+ "fast-socks5 0.9.1",
  "futures",
  "levenshtein",
  "log",
@@ -808,11 +808,25 @@ dependencies = [
 
 [[package]]
 name = "fast-socks5"
-version = "0.8.1"
+version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d2687b5a6108f18ba8621e0e618a3be1dcc2768632dad24b7cea1f87975375a9"
+checksum = "961ce1761191c157145a8c9f0c3ceabecd3a729d65c9a8d443674eaee3420f7e"
 dependencies = [
  "anyhow",
+ "log",
+ "thiserror",
+ "tokio",
+ "tokio-stream",
+]
+
+[[package]]
+name = "fast-socks5"
+version = "0.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aa6a4a9ab1f87e2d8e9345ce944de7c45d065ee89f5942512f32698e48a8429a"
+dependencies = [
+ "anyhow",
+ "async-trait",
  "log",
  "thiserror",
  "tokio",

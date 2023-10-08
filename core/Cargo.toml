@@ -20,7 +20,7 @@ async-std = "1.12.0"
 async-std-resolver = "0.21.2"
 fantoccini = { version = "0.19.3", optional = true }
 futures = { version = "0.3.27", optional = true }
-fast-socks5 = "0.8.1"
+fast-socks5 = "0.9.1"
 log = "0.4.20"
 mailchecker = "5.0.7"
 rand = { version = "0.8.5", features = ["small_rng"] }
