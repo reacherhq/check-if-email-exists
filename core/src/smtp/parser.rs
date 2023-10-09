@@ -98,7 +98,7 @@ pub fn is_invalid(e: &str, email: &EmailAddress) -> bool {
 	// permanent: 5.1.1 recipient is not exist (on @sim.com)
 	|| e.contains("recipient is not exist")
 	// permanent: 5.1.1 <EMAIL>  Recipient not found. (on @4polymer.com)
-	|| e.contains("Recipient not found")
+	|| e.contains("recipient not found")
 }
 
 /// Check that the mailbox has a full inbox.
