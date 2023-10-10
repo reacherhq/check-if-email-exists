@@ -176,21 +176,7 @@ impl Default for CheckEmailInput {
 			check_gravatar: false,
 			haveibeenpwned_api_key: None,
 			retries: 2,
-			skipped_domains: vec![
-				// on @bluewin.ch
-				// - mx-v02.bluewin.ch.
-				".bluewin.ch.".into(),
-				// on @bluewin.ch
-				// - mxbw-bluewin-ch.hdb-cs04.ellb.ch.
-				"bluewin-ch.".into(),
-				// on @gmx.de, @gmx.ch, @gmx.net
-				".gmx.net.".into(),
-				// on @icloud.com
-				".mail.icloud.com.".into(),
-				// on @web.de
-				".web.de.".into(),
-				".zoho.com.".into(),
-			],
+			skipped_domains: vec![],
 		}
 	}
 }

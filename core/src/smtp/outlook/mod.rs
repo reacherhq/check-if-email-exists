@@ -28,3 +28,8 @@ pub fn is_hotmail(host: &str) -> bool {
 	host.to_lowercase()
 		.ends_with(".olc.protection.outlook.com.")
 }
+
+/// Check if an address is a Microsoft365 email address.
+pub fn is_microsoft365(host: &str) -> bool {
+	is_outlook(host) && !is_hotmail(host)
+}
