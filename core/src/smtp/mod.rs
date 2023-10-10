@@ -34,7 +34,7 @@ pub use error::*;
 
 use self::{
 	gmail::is_gmail,
-	outlook::{is_hotmail, is_outlook},
+	outlook::{is_microsoft365, is_outlook},
 	yahoo::is_yahoo,
 };
 
@@ -84,7 +84,7 @@ pub async fn check_smtp(
 			.await
 			.map_err(|err| err.into());
 	}
-	if input.microsoft365_use_api && is_outlook(&host_lowercase) {
+	if input.microsoft365_use_api && is_microsoft365(&host_lowercase) {
 		match outlook::microsoft365::check_microsoft365_api(to_email, input).await {
 			Ok(Some(smtp_details)) => return Ok(smtp_details),
 			// Continue in the event of an error/ambiguous result.
@@ -101,10 +101,7 @@ pub async fn check_smtp(
 	}
 	#[cfg(feature = "headless")]
 	if let Some(webdriver) = &input.hotmail_use_headless {
-		// The password recovery page do not always work with Microsoft 365
-		// addresses. So we only test with @hotmail and @outlook addresses.
-		// ref: https://github.com/reacherhq/check-if-email-exists/issues/1185
-		if is_hotmail(&host_lowercase) {
+		if is_outlook(&host_lowercase) {
 			return outlook::hotmail::check_password_recovery(to_email, webdriver)
 				.await
 				.map_err(|err| err.into());
@@ -144,7 +141,8 @@ mod tests {
 
 		let to_email = EmailAddress::from_str("foo@icloud.com").unwrap();
 		let host = Name::from_str("mx01.mail.icloud.com.").unwrap();
-		let input = CheckEmailInput::default();
+		let mut input = CheckEmailInput::default();
+		input.set_skipped_domains(vec![".mail.icloud.com.".into()]);
 
 		let res = runtime.block_on(check_smtp(&to_email, &host, 25, "icloud.com", &input));
 		match res {
