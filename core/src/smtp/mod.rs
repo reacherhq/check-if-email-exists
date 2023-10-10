@@ -141,7 +141,8 @@ mod tests {
 
 		let to_email = EmailAddress::from_str("foo@icloud.com").unwrap();
 		let host = Name::from_str("mx01.mail.icloud.com.").unwrap();
-		let input = CheckEmailInput::default();
+		let mut input = CheckEmailInput::default();
+		input.set_skipped_domains(vec![".mail.icloud.com.".into()]);
 
 		let res = runtime.block_on(check_smtp(&to_email, &host, 25, "icloud.com", &input));
 		match res {
