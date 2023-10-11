@@ -110,7 +110,7 @@ pub async fn check_smtp(
 #[cfg(test)]
 mod tests {
 	use super::{check_smtp, CheckEmailInput, SmtpError};
-	use async_smtp::EmailAddress;
+	use async_smtp::{smtp::error::Error, EmailAddress};
 	use std::{str::FromStr, time::Duration};
 	use tokio::runtime::Runtime;
 	use trust_dns_proto::rr::Name;
@@ -120,13 +120,13 @@ mod tests {
 		let runtime = Runtime::new().unwrap();
 
 		let to_email = EmailAddress::from_str("foo@gmail.com").unwrap();
-		let host = Name::from_str("gmail.com").unwrap();
+		let host = Name::from_str("alt4.aspmx.l.google.com.").unwrap();
 		let mut input = CheckEmailInput::default();
 		input.set_smtp_timeout(Some(Duration::from_millis(1)));
 
 		let res = runtime.block_on(check_smtp(&to_email, &host, 25, "gmail.com", &input));
 		match res {
-			Err(SmtpError::TimeoutError(_)) => (),
+			Err(SmtpError::SmtpError(Error::Io(_))) => (), // ErrorKind == Timeout
 			_ => panic!("check_smtp did not time out"),
 		}
 	}

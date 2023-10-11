@@ -9,11 +9,14 @@
 	},
 	"by_mx_suffix": {
 		".antispamcloud.com.": {
-			"rules": ["SkipCatchAll"],
-			"_comment": "Some <RCPT TO> take exactly 30s to respond, so we skip the catch-all one, and bump the timeout."
+			"rules": ["SmtpTimeout45s", "SkipCatchAll"],
+			"_comment": "Some <RCPT TO> take 30s to respond (sometimes only on 2nd attempt, not deterministic), so we skip the catch-all one, and bump the timeout to well over 30s."
 		}
 	},
 	"rules": {
-		"SkipCatchAll": { "_comment": "Don't perform catch-all check." }
+		"SkipCatchAll": { "_comment": "Don't perform catch-all check" },
+		"SmtpTimeout45s": {
+			"_comment": "Set SMTP connection timeout to at least 45s. If the user request set an even higher timeout, take that one. Please note that this timeout is **per SMTP connection**. By default, we try 2 connections per email: if the 1st one failed, then we connect again to avoid potential greylisting, in which case the whole verification takes 1min30s."
+		}
 	}
 }
