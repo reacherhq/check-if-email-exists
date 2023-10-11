@@ -25,24 +25,47 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 #[derive(Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
-pub enum Rules {
+pub enum Rule {
 	/// Don't perform catch-all check.
 	SkipCatchAll,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct RulesByDomain {
-	pub rules: Vec<Rules>,
+struct RulesByDomain {
+	rules: Vec<Rule>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct AllRules {
+struct AllRules {
 	/// Apply rules by domain name, i.e. after the @ symbol.
-	pub by_domain: HashMap<String, RulesByDomain>,
+	by_domain: HashMap<String, RulesByDomain>,
 	/// Apply rules by the MX host. Since each domain potentially has multiple
 	/// MX records, we match by their suffix.
-	pub by_mx_suffix: HashMap<String, RulesByDomain>,
+	by_mx_suffix: HashMap<String, RulesByDomain>,
 }
 
-pub(crate) static ALL_RULES: Lazy<AllRules> =
+static ALL_RULES: Lazy<AllRules> =
 	Lazy::new(|| serde_json::from_str::<AllRules>(include_str!("rules.json")).unwrap());
+
+fn does_domain_have_rule(domain: &str, rule: &Rule) -> bool {
+	if let Some(v) = ALL_RULES.by_domain.get(domain) {
+		return v.rules.contains(rule);
+	}
+
+	false
+}
+
+fn does_mx_have_rule(host: &str, rule: &Rule) -> bool {
+	for (k, v) in ALL_RULES.by_mx_suffix.iter() {
+		if host.ends_with(k) {
+			return v.rules.contains(rule);
+		}
+	}
+
+	false
+}
+
+/// Check if either the domain or the MX host has any given rule.
+pub fn has_rule(domain: &str, host: &str, rule: &Rule) -> bool {
+	does_domain_have_rule(domain, rule) || does_mx_have_rule(host, rule)
+}

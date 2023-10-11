@@ -27,10 +27,10 @@ use std::iter;
 use std::str::FromStr;
 use std::time::Duration;
 
-use super::{gmail::is_gmail, outlook::is_hotmail, parser, yahoo::is_yahoo};
+use super::parser;
 use super::{SmtpDetails, SmtpError};
 use crate::{
-	rules::{Rules, ALL_RULES},
+	rules::{has_rule, Rule},
 	util::{constants::LOG_TARGET, input_output::CheckEmailInput},
 };
 
@@ -223,18 +223,7 @@ async fn smtp_is_catch_all(
 	host: &str,
 ) -> Result<bool, SmtpError> {
 	// Skip catch-all check for known providers.
-	if let Some(d) = ALL_RULES.by_domain.get(domain) {
-		if d.rules.contains(&Rules::SkipCatchAll) {
-			return Ok(false);
-		}
-	}
-	for (key, val) in ALL_RULES.by_mx_suffix.iter() {
-		if host.ends_with(key) && val.rules.contains(&Rules::SkipCatchAll) {
-			return Ok(false);
-		}
-	}
-
-	if is_gmail(&host) || is_hotmail(&host) || is_yahoo(&host) {
+	if has_rule(domain, host, &Rule::SkipCatchAll) {
 		return Ok(false);
 	}
 
