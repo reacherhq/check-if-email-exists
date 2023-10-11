@@ -10,7 +10,7 @@
 	"by_mx_suffix": {
 		".antispamcloud.com.": {
 			"rules": ["SmtpTimeout45s", "SkipCatchAll"],
-			"_comment": "Some <RCPT TO> take 30s to respond (sometimes only on 2nd attempt, not deterministic), so we skip the catch-all one, and bump the timeout to over well 30s."
+			"_comment": "Some <RCPT TO> take 30s to respond (sometimes only on 2nd attempt, not deterministic), so we skip the catch-all one, and bump the timeout to well over 30s."
 		}
 	},
 	"rules": {
