@@ -48,16 +48,32 @@ macro_rules! try_smtp (
 
 /// Attempt to connect to host via SMTP, and return SMTP client on success.
 async fn connect_to_host(
+	domain: &str,
 	host: &str,
 	port: u16,
 	input: &CheckEmailInput,
 ) -> Result<SmtpTransport, SmtpError> {
+	let smtp_timeout = if let Some(t) = input.smtp_timeout {
+		if has_rule(domain, host, &Rule::SmtpTimeout45s) {
+			log::debug!(
+				target: LOG_TARGET,
+				"[email={}] Bumping SMTP timeout from at least 45s",
+				input.to_email,
+			);
+			Some(t.max(Duration::from_secs(45)))
+		} else {
+			input.smtp_timeout
+		}
+	} else {
+		None
+	};
+
 	// hostname verification fails if it ends with '.', for example, using
 	// SOCKS5 proxies we can `io: incomplete` error.
-	let host = host.trim_end_matches('.').to_string();
+	let host: String = host.trim_end_matches('.').to_string();
 
-	let security = {
-		let tls_params = ClientTlsParameters::new(
+	let security: async_smtp::ClientSecurity = {
+		let tls_params: ClientTlsParameters = ClientTlsParameters::new(
 			host.clone(),
 			TlsConnector::new()
 				.use_sni(true)
@@ -75,7 +91,8 @@ async fn connect_to_host(
 		},
 		security,
 	)
-	.hello_name(ClientId::Domain(input.hello_name.clone()));
+	.hello_name(ClientId::Domain(input.hello_name.clone()))
+	.timeout(smtp_timeout);
 
 	if let Some(proxy) = &input.proxy {
 		let socks5_config = match (&proxy.username, &proxy.password) {
@@ -257,7 +274,7 @@ async fn create_smtp_future(
 ) -> Result<(bool, Deliverability), SmtpError> {
 	// FIXME If the SMTP is not connectable, we should actually return an
 	// Ok(SmtpDetails { can_connect_smtp: false, ... }).
-	let mut smtp_transport = connect_to_host(host, port, input).await?;
+	let mut smtp_transport = connect_to_host(domain, host, port, input).await?;
 
 	let is_catch_all = smtp_is_catch_all(&mut smtp_transport, domain, host, input)
 		.await
@@ -286,7 +303,7 @@ async fn create_smtp_future(
 				);
 
 				let _ = smtp_transport.close().await;
-				smtp_transport = connect_to_host(host, port, input).await?;
+				smtp_transport = connect_to_host(domain, host, port, input).await?;
 				result = email_deliverable(&mut smtp_transport, to_email).await;
 			}
 		}

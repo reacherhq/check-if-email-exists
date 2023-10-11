@@ -9,14 +9,14 @@
 	},
 	"by_mx_suffix": {
 		".antispamcloud.com.": {
-			"rules": ["SmtpTimeout35s", "SkipCatchAll"],
-			"_comment": "Some <RCPT TO> take exactly 30s to respond, so we skip the catch-all one, and bump the timeout to 35s"
+			"rules": ["SmtpTimeout45s", "SkipCatchAll"],
+			"_comment": "Some <RCPT TO> take exactly 30s to respond, so we skip the catch-all one, and bump the timeout"
 		}
 	},
 	"rules": {
-		"SkipCatchAll": { "_comment": "Don't perform catch-all check." },
-		"SmtpTimeout35s": {
-			"_comment": "Set smtp_timeout to 35s (if not overriden by user in request)."
+		"SkipCatchAll": { "_comment": "Don't perform catch-all check" },
+		"SmtpTimeout45s": {
+			"_comment": "Set timeout per SMTP connection to at least 45s"
 		}
 	}
 }
