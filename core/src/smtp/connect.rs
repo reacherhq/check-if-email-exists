@@ -27,11 +27,12 @@ use std::iter;
 use std::str::FromStr;
 use std::time::Duration;
 
-use trust_dns_proto::rr::Name;
-
 use super::{gmail::is_gmail, outlook::is_hotmail, parser, yahoo::is_yahoo};
 use super::{SmtpDetails, SmtpError};
-use crate::util::{constants::LOG_TARGET, input_output::CheckEmailInput};
+use crate::{
+	rules::{Rules, ALL_RULES},
+	util::{constants::LOG_TARGET, input_output::CheckEmailInput},
+};
 
 /// Try to send an smtp command, close and return Err if fails.
 macro_rules! try_smtp (
@@ -48,13 +49,12 @@ macro_rules! try_smtp (
 
 /// Attempt to connect to host via SMTP, and return SMTP client on success.
 async fn connect_to_host(
-	host: &Name,
+	host: &str,
 	port: u16,
 	input: &CheckEmailInput,
 ) -> Result<SmtpTransport, SmtpError> {
 	// hostname verification fails if it ends with '.', for example, using
 	// SOCKS5 proxies we can `io: incomplete` error.
-	let host = host.to_string();
 	let host = host.trim_end_matches('.').to_string();
 
 	let security = {
@@ -220,10 +220,20 @@ async fn email_deliverable(
 async fn smtp_is_catch_all(
 	smtp_transport: &mut SmtpTransport,
 	domain: &str,
-	host: &Name,
+	host: &str,
 ) -> Result<bool, SmtpError> {
 	// Skip catch-all check for known providers.
-	let host = host.to_string();
+	if let Some(d) = ALL_RULES.by_domain.get(domain) {
+		if d.rules.contains(&Rules::SkipCatchAll) {
+			return Ok(false);
+		}
+	}
+	for (key, val) in ALL_RULES.by_mx_suffix.iter() {
+		if host.ends_with(key) && val.rules.contains(&Rules::SkipCatchAll) {
+			return Ok(false);
+		}
+	}
+
 	if is_gmail(&host) || is_hotmail(&host) || is_yahoo(&host) {
 		return Ok(false);
 	}
@@ -247,7 +257,7 @@ async fn smtp_is_catch_all(
 
 async fn create_smtp_future(
 	to_email: &EmailAddress,
-	host: &Name,
+	host: &str,
 	port: u16,
 	domain: &str,
 	input: &CheckEmailInput,
@@ -299,7 +309,7 @@ async fn create_smtp_future(
 /// retries.
 async fn check_smtp_without_retry(
 	to_email: &EmailAddress,
-	host: &Name,
+	host: &str,
 	port: u16,
 	domain: &str,
 	input: &CheckEmailInput,
@@ -325,7 +335,7 @@ async fn check_smtp_without_retry(
 #[async_recursion]
 pub async fn check_smtp_with_retry(
 	to_email: &EmailAddress,
-	host: &Name,
+	host: &str,
 	port: u16,
 	domain: &str,
 	input: &CheckEmailInput,
@@ -374,5 +384,23 @@ pub async fn check_smtp_with_retry(
 			}
 		}
 		_ => result,
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[tokio::test]
+	async fn should_skip_catch_all() {
+		let smtp_client = SmtpClient::new("gmail.com".into());
+		let mut smtp_transport = smtp_client.into_transport();
+
+		let r =
+			smtp_is_catch_all(&mut smtp_transport, "gmail.com", "alt4.aspmx.l.google.com.").await;
+
+		assert!(!smtp_transport.is_connected()); // We shouldn't connect to google servers.
+		assert!(r.is_ok());
+		assert_eq!(false, r.unwrap())
 	}
 }

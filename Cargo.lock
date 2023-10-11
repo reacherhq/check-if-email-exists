@@ -402,6 +402,7 @@ dependencies = [
  "log",
  "mailchecker",
  "md5",
+ "once_cell",
  "pwned",
  "rand",
  "regex",

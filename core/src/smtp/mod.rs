@@ -62,29 +62,25 @@ pub async fn check_smtp(
 	domain: &str,
 	input: &CheckEmailInput,
 ) -> Result<SmtpDetails, SmtpError> {
-	let host_lowercase = host.to_lowercase().to_string();
+	let host = host.to_string();
 
-	if input
-		.skipped_domains
-		.iter()
-		.any(|d| host_lowercase.contains(d))
-	{
+	if input.skipped_domains.iter().any(|d| host.contains(d)) {
 		return Err(SmtpError::SkippedDomain(format!(
 			"Reacher currently cannot verify emails from @{domain}"
 		)));
 	}
 
-	if input.yahoo_use_api && is_yahoo(&host_lowercase) {
+	if input.yahoo_use_api && is_yahoo(&host) {
 		return yahoo::check_yahoo(to_email, input)
 			.await
 			.map_err(|err| err.into());
 	}
-	if input.gmail_use_api && is_gmail(&host_lowercase) {
+	if input.gmail_use_api && is_gmail(&host) {
 		return gmail::check_gmail(to_email, input)
 			.await
 			.map_err(|err| err.into());
 	}
-	if input.microsoft365_use_api && is_microsoft365(&host_lowercase) {
+	if input.microsoft365_use_api && is_microsoft365(&host) {
 		match outlook::microsoft365::check_microsoft365_api(to_email, input).await {
 			Ok(Some(smtp_details)) => return Ok(smtp_details),
 			// Continue in the event of an error/ambiguous result.
@@ -101,14 +97,14 @@ pub async fn check_smtp(
 	}
 	#[cfg(feature = "headless")]
 	if let Some(webdriver) = &input.hotmail_use_headless {
-		if is_outlook(&host_lowercase) {
+		if is_outlook(&host) {
 			return outlook::hotmail::check_password_recovery(to_email, webdriver)
 				.await
 				.map_err(|err| err.into());
 		}
 	}
 
-	check_smtp_with_retry(to_email, host, port, domain, input, input.retries).await
+	check_smtp_with_retry(to_email, &host, port, domain, input, input.retries).await
 }
 
 #[cfg(test)]
