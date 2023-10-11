@@ -20,7 +20,6 @@ use async_smtp::{
 	smtp::{commands::*, extension::ClientId, ServerAddress, Socks5Config},
 	ClientTlsParameters, EmailAddress, SmtpClient, SmtpTransport,
 };
-use async_std::future;
 use rand::rngs::SmallRng;
 use rand::{distributions::Alphanumeric, Rng, SeedableRng};
 use std::iter;
@@ -76,8 +75,7 @@ async fn connect_to_host(
 		},
 		security,
 	)
-	.hello_name(ClientId::Domain(input.hello_name.clone()))
-	.timeout(Some(Duration::new(30, 0))); // Set timeout to 30s
+	.hello_name(ClientId::Domain(input.hello_name.clone()));
 
 	if let Some(proxy) = &input.proxy {
 		let socks5_config = match (&proxy.username, &proxy.password) {
@@ -311,11 +309,7 @@ async fn check_smtp_without_retry(
 	input: &CheckEmailInput,
 ) -> Result<SmtpDetails, SmtpError> {
 	let fut = create_smtp_future(to_email, host, port, domain, input);
-	let (is_catch_all, deliverability) = if let Some(smtp_timeout) = input.smtp_timeout {
-		future::timeout(smtp_timeout, fut).await??
-	} else {
-		fut.await?
-	};
+	let (is_catch_all, deliverability) = fut.await?;
 
 	Ok(SmtpDetails {
 		can_connect_smtp: true,

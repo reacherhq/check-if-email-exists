@@ -36,9 +36,6 @@ pub enum SmtpError {
 	/// Error when communicating with SMTP server.
 	#[serde(serialize_with = "ser_with_display")]
 	SmtpError(AsyncSmtpError),
-	/// Time-out error.
-	#[serde(serialize_with = "ser_with_display")]
-	TimeoutError(future::TimeoutError),
 	/// Error when verifying a Yahoo email via HTTP requests.
 	YahooError(YahooError),
 	/// Error when verifying a Gmail email via a HTTP request.
@@ -55,12 +52,6 @@ pub enum SmtpError {
 impl From<SocksError> for SmtpError {
 	fn from(e: SocksError) -> Self {
 		SmtpError::SocksError(e)
-	}
-}
-
-impl From<future::TimeoutError> for SmtpError {
-	fn from(e: future::TimeoutError) -> Self {
-		SmtpError::TimeoutError(e)
 	}
 }
 
