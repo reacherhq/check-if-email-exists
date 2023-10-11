@@ -57,7 +57,7 @@ async fn connect_to_host(
 		if has_rule(domain, host, &Rule::SmtpTimeout45s) {
 			log::debug!(
 				target: LOG_TARGET,
-				"[email={}] Bumping SMTP timeout from at least 45s",
+				"[email={}] Bumping SMTP timeout to at least 45s",
 				input.to_email,
 			);
 			Some(t.max(Duration::from_secs(45)))
