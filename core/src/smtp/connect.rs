@@ -221,9 +221,15 @@ async fn smtp_is_catch_all(
 	smtp_transport: &mut SmtpTransport,
 	domain: &str,
 	host: &str,
+	input: &CheckEmailInput,
 ) -> Result<bool, SmtpError> {
 	// Skip catch-all check for known providers.
 	if has_rule(domain, host, &Rule::SkipCatchAll) {
+		log::debug!(
+			target: LOG_TARGET,
+			"[email={}] Skipping catch-all check for [domain={domain}]",
+			input.to_email
+		);
 		return Ok(false);
 	}
 
@@ -255,7 +261,7 @@ async fn create_smtp_future(
 	// Ok(SmtpDetails { can_connect_smtp: false, ... }).
 	let mut smtp_transport = connect_to_host(host, port, input).await?;
 
-	let is_catch_all = smtp_is_catch_all(&mut smtp_transport, domain, host)
+	let is_catch_all = smtp_is_catch_all(&mut smtp_transport, domain, host, input)
 		.await
 		.unwrap_or(false);
 	let deliverability = if is_catch_all {
@@ -277,7 +283,8 @@ async fn create_smtp_future(
 			if parser::is_err_io_errors(e) {
 				log::debug!(
 					target: LOG_TARGET,
-					"Got `io: incomplete` error, reconnecting."
+					"[email={}] Got `io: incomplete` error, reconnecting.",
+					input.to_email
 				);
 
 				let _ = smtp_transport.close().await;
@@ -385,8 +392,13 @@ mod tests {
 		let smtp_client = SmtpClient::new("gmail.com".into());
 		let mut smtp_transport = smtp_client.into_transport();
 
-		let r =
-			smtp_is_catch_all(&mut smtp_transport, "gmail.com", "alt4.aspmx.l.google.com.").await;
+		let r = smtp_is_catch_all(
+			&mut smtp_transport,
+			"gmail.com",
+			"alt4.aspmx.l.google.com.",
+			&CheckEmailInput::default(),
+		)
+		.await;
 
 		assert!(!smtp_transport.is_connected()); // We shouldn't connect to google servers.
 		assert!(r.is_ok());
