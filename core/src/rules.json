@@ -1,0 +1,19 @@
+{
+	"by_domain": {
+		"gmail.com": { "rules": ["SkipCatchAll"] },
+		"hotmail.com": { "rules": ["SkipCatchAll"] },
+		"hotmail.fr": { "rules": ["SkipCatchAll"] },
+		"hotmail.nl": { "rules": ["SkipCatchAll"] },
+		"yahoo.com": { "rules": ["SkipCatchAll"] },
+		"yahoo.fr": { "rules": ["SkipCatchAll"] }
+	},
+	"by_mx_suffix": {
+		".antispamcloud.com.": {
+			"rules": ["SkipCatchAll"],
+			"_comment": "Some <RCPT TO> take exactly 30s to respond, so we skip the catch-all one, and bump the timeout."
+		}
+	},
+	"rules": {
+		"SkipCatchAll": { "_comment": "Don't perform catch-all check." }
+	}
+}
