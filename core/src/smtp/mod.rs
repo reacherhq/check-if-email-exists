@@ -126,7 +126,7 @@ mod tests {
 
 		let res = runtime.block_on(check_smtp(&to_email, &host, 25, "gmail.com", &input));
 		match res {
-			Err(SmtpError::TimeoutError(_)) => (),
+			// Err(SmtpError::TimeoutError(_)) => (),
 			_ => panic!("check_smtp did not time out"),
 		}
 	}

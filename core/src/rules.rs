@@ -28,6 +28,8 @@ use std::collections::HashMap;
 pub enum Rule {
 	/// Don't perform catch-all check.
 	SkipCatchAll,
+	/// Set the SMTP timeout to 35s.
+	SmtpTimeout35s,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
