@@ -36,7 +36,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
 	let is_bulk_enabled = env::var("RCH_ENABLE_BULK").unwrap_or_else(|_| "0".into()) == "1";
 	if is_bulk_enabled {
-		log::info!(target: LOG_TARGET, "Bulk endpoints enabled.");
 		let pool = create_db().await?;
 		let _registry = create_job_registry(&pool).await?;
 		let routes = create_routes(Some(pool));
@@ -103,6 +102,11 @@ async fn create_job_registry(pool: &Pool<Postgres>) -> Result<OwnedHandle, sqlx:
 		// Start the job runner in the background.
 		.run()
 		.await?;
+
+	log::info!(
+		target: LOG_TARGET,
+		"Bulk endpoints enabled with concurrency min={min_task_conc} to max={max_conc_task_fetch}."
+	);
 
 	Ok(registry)
 }
