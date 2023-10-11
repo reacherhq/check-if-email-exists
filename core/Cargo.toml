@@ -30,7 +30,7 @@ pwned = "0.5.0"
 rand = { version = "0.8.5", features = ["small_rng"] }
 regex = "1.9.4"
 reqwest = { version = "0.11.16", features = ["json", "socks"] }
-serde = { version = "1.0.157", features = ["derive"] }
+serde = { version = "1.0.164", features = ["derive"] }
 serde_json = "1.0.95"
 trust-dns-proto = "0.21.2"
 
