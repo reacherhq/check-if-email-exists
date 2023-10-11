@@ -70,9 +70,9 @@ async fn connect_to_host(
 
 	// hostname verification fails if it ends with '.', for example, using
 	// SOCKS5 proxies we can `io: incomplete` error.
-	let host: String = host.trim_end_matches('.').to_string();
+	let host = host.trim_end_matches('.').to_string();
 
-	let security: async_smtp::ClientSecurity = {
+	let security = {
 		let tls_params: ClientTlsParameters = ClientTlsParameters::new(
 			host.clone(),
 			TlsConnector::new()
