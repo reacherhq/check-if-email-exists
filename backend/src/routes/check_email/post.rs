@@ -24,8 +24,13 @@ use crate::check::{check_email, check_header};
 
 /// The main endpoint handler that implements the logic of this route.
 async fn handler(body: CheckEmailInput) -> Result<impl warp::Reply, warp::Rejection> {
-	// Run the future to check an email.
-	Ok(warp::reply::json(&check_email(body).await))
+	// The to_email field must be present
+	if body.to_email.is_empty() {
+		Ok(reply::with_status("to_mail field is required.", StatusCode::BAD_REQUEST))
+	} else {
+		// Run the future to check an email.
+		Ok(warp::reply::json(&check_email(body).await))
+	}
 }
 
 /// Create the `POST /check_email` endpoint.
