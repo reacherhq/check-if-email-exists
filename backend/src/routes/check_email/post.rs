@@ -52,5 +52,5 @@ pub fn post_check_email(
 		.and_then(handler)
 		// View access logs by setting `RUST_LOG=reacher`.
 		.with(warp::log(LOG_TARGET))
-		// .recover(errors::handle_rejection)
+		.recover(errors::handle_rejection)
 }
