@@ -26,6 +26,31 @@ use super::sentry_util;
 /// Same as `check-if-email-exists`'s check email, but adds some additional
 /// inputs and error handling.
 pub async fn check_email(input: CheckEmailInput) -> CheckEmailOutput {
+	let hotmail_use_headless = env::var("RCH_HOTMAIL_USE_HEADLESS").ok();
+	let skipped_domains = vec![
+		// on @bluewin.ch
+		// - mx-v02.bluewin.ch.
+		".bluewin.ch.".into(),
+		// on @bluewin.ch
+		// - mxbw-bluewin-ch.hdb-cs04.ellb.ch.
+		"bluewin-ch.".into(),
+		// on @gmx.de, @gmx.ch, @gmx.net
+		".gmx.net.".into(),
+		// on @icloud.com
+		".mail.icloud.com.".into(),
+		// on @web.de
+		".web.de.".into(),
+		".zoho.com.".into(),
+	];
+
+	let input = CheckEmailInput {
+		// If we want to override core check-if-email-exists's default values
+		// for CheckEmailInput for the backend, we do it here.
+		hotmail_use_headless,
+		skipped_domains,
+		..input
+	};
+
 	let res = ciee_check_email(&input).await;
 
 	sentry_util::log_unknown_errors(&res);

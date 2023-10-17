@@ -76,7 +76,8 @@ pub async fn check_gmail(
 	})
 }
 
-/// Check if the MX host is from Gmail.
+/// Check if the MX host is from Google, i.e. either a @gmail.com address, or
+/// a Google Suite email.
 pub fn is_gmail(host: &str) -> bool {
 	host.to_lowercase().ends_with(".google.com.")
 }

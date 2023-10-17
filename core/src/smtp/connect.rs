@@ -20,18 +20,18 @@ use async_smtp::{
 	smtp::{commands::*, extension::ClientId, ServerAddress, Socks5Config},
 	ClientTlsParameters, EmailAddress, SmtpClient, SmtpTransport,
 };
-use async_std::future;
 use rand::rngs::SmallRng;
 use rand::{distributions::Alphanumeric, Rng, SeedableRng};
 use std::iter;
 use std::str::FromStr;
 use std::time::Duration;
 
-use trust_dns_proto::rr::Name;
-
-use super::{gmail::is_gmail, outlook::is_hotmail, parser, yahoo::is_yahoo};
+use super::parser;
 use super::{SmtpDetails, SmtpError};
-use crate::util::{constants::LOG_TARGET, input_output::CheckEmailInput};
+use crate::{
+	rules::{has_rule, Rule},
+	util::{constants::LOG_TARGET, input_output::CheckEmailInput},
+};
 
 /// Try to send an smtp command, close and return Err if fails.
 macro_rules! try_smtp (
@@ -48,17 +48,32 @@ macro_rules! try_smtp (
 
 /// Attempt to connect to host via SMTP, and return SMTP client on success.
 async fn connect_to_host(
-	host: &Name,
+	domain: &str,
+	host: &str,
 	port: u16,
 	input: &CheckEmailInput,
 ) -> Result<SmtpTransport, SmtpError> {
+	let smtp_timeout = if let Some(t) = input.smtp_timeout {
+		if has_rule(domain, host, &Rule::SmtpTimeout45s) {
+			log::debug!(
+				target: LOG_TARGET,
+				"[email={}] Bumping SMTP timeout to at least 45s",
+				input.to_email,
+			);
+			Some(t.max(Duration::from_secs(45)))
+		} else {
+			input.smtp_timeout
+		}
+	} else {
+		None
+	};
+
 	// hostname verification fails if it ends with '.', for example, using
 	// SOCKS5 proxies we can `io: incomplete` error.
-	let host = host.to_string();
 	let host = host.trim_end_matches('.').to_string();
 
 	let security = {
-		let tls_params = ClientTlsParameters::new(
+		let tls_params: ClientTlsParameters = ClientTlsParameters::new(
 			host.clone(),
 			TlsConnector::new()
 				.use_sni(true)
@@ -77,7 +92,7 @@ async fn connect_to_host(
 		security,
 	)
 	.hello_name(ClientId::Domain(input.hello_name.clone()))
-	.timeout(Some(Duration::new(30, 0))); // Set timeout to 30s
+	.timeout(smtp_timeout);
 
 	if let Some(proxy) = &input.proxy {
 		let socks5_config = match (&proxy.username, &proxy.password) {
@@ -220,11 +235,16 @@ async fn email_deliverable(
 async fn smtp_is_catch_all(
 	smtp_transport: &mut SmtpTransport,
 	domain: &str,
-	host: &Name,
+	host: &str,
+	input: &CheckEmailInput,
 ) -> Result<bool, SmtpError> {
 	// Skip catch-all check for known providers.
-	let host = host.to_string();
-	if is_gmail(&host) || is_hotmail(&host) || is_yahoo(&host) {
+	if has_rule(domain, host, &Rule::SkipCatchAll) {
+		log::debug!(
+			target: LOG_TARGET,
+			"[email={}] Skipping catch-all check for [domain={domain}]",
+			input.to_email
+		);
 		return Ok(false);
 	}
 
@@ -247,16 +267,16 @@ async fn smtp_is_catch_all(
 
 async fn create_smtp_future(
 	to_email: &EmailAddress,
-	host: &Name,
+	host: &str,
 	port: u16,
 	domain: &str,
 	input: &CheckEmailInput,
 ) -> Result<(bool, Deliverability), SmtpError> {
 	// FIXME If the SMTP is not connectable, we should actually return an
 	// Ok(SmtpDetails { can_connect_smtp: false, ... }).
-	let mut smtp_transport = connect_to_host(host, port, input).await?;
+	let mut smtp_transport = connect_to_host(domain, host, port, input).await?;
 
-	let is_catch_all = smtp_is_catch_all(&mut smtp_transport, domain, host)
+	let is_catch_all = smtp_is_catch_all(&mut smtp_transport, domain, host, input)
 		.await
 		.unwrap_or(false);
 	let deliverability = if is_catch_all {
@@ -278,11 +298,12 @@ async fn create_smtp_future(
 			if parser::is_err_io_errors(e) {
 				log::debug!(
 					target: LOG_TARGET,
-					"Got `io: incomplete` error, reconnecting."
+					"[email={}] Got `io: incomplete` error, reconnecting.",
+					input.to_email
 				);
 
 				let _ = smtp_transport.close().await;
-				smtp_transport = connect_to_host(host, port, input).await?;
+				smtp_transport = connect_to_host(domain, host, port, input).await?;
 				result = email_deliverable(&mut smtp_transport, to_email).await;
 			}
 		}
@@ -299,17 +320,13 @@ async fn create_smtp_future(
 /// retries.
 async fn check_smtp_without_retry(
 	to_email: &EmailAddress,
-	host: &Name,
+	host: &str,
 	port: u16,
 	domain: &str,
 	input: &CheckEmailInput,
 ) -> Result<SmtpDetails, SmtpError> {
 	let fut = create_smtp_future(to_email, host, port, domain, input);
-	let (is_catch_all, deliverability) = if let Some(smtp_timeout) = input.smtp_timeout {
-		future::timeout(smtp_timeout, fut).await??
-	} else {
-		fut.await?
-	};
+	let (is_catch_all, deliverability) = fut.await?;
 
 	Ok(SmtpDetails {
 		can_connect_smtp: true,
@@ -325,7 +342,7 @@ async fn check_smtp_without_retry(
 #[async_recursion]
 pub async fn check_smtp_with_retry(
 	to_email: &EmailAddress,
-	host: &Name,
+	host: &str,
 	port: u16,
 	domain: &str,
 	input: &CheckEmailInput,
@@ -374,5 +391,28 @@ pub async fn check_smtp_with_retry(
 			}
 		}
 		_ => result,
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[tokio::test]
+	async fn should_skip_catch_all() {
+		let smtp_client = SmtpClient::new("gmail.com".into());
+		let mut smtp_transport = smtp_client.into_transport();
+
+		let r = smtp_is_catch_all(
+			&mut smtp_transport,
+			"gmail.com",
+			"alt4.aspmx.l.google.com.",
+			&CheckEmailInput::default(),
+		)
+		.await;
+
+		assert!(!smtp_transport.is_connected()); // We shouldn't connect to google servers.
+		assert!(r.is_ok());
+		assert_eq!(false, r.unwrap())
 	}
 }
