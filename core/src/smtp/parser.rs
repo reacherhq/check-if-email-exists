@@ -95,6 +95,10 @@ pub fn is_invalid(e: &str, email: &EmailAddress) -> bool {
 	|| e.contains("address error")
 	// E-mail address is not handled by this system (on @kaimayfair.co.uk)
 	|| e.contains("address is not handled")
+	// permanent: 5.1.1 recipient is not exist (on @sim.com)
+	|| e.contains("recipient is not exist")
+	// permanent: 5.1.1 <EMAIL>  Recipient not found. (on @4polymer.com)
+	|| e.contains("recipient not found")
 }
 
 /// Check that the mailbox has a full inbox.
@@ -116,6 +120,8 @@ pub fn is_disabled_account(e: &str) -> bool {
 	e.contains("disabled")
 	// 554 delivery error: Sorry your message to <EMAIL> cannot be delivered. This account has been disabled or discontinued
  || e.contains("discontinued")
+ //550 5.2.1 RACT MY.IP: Mailbox is inactive: <USER@hanmail.net><CRLF> (on hanmail.net)
+ || e.contains("inactive")
 }
 
 /// Check if the error is an IO "incomplete" error.

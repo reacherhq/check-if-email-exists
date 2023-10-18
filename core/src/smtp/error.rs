@@ -22,7 +22,6 @@ use super::parser;
 use super::yahoo::YahooError;
 use crate::util::ser_with_display::ser_with_display;
 use async_smtp::smtp::error::Error as AsyncSmtpError;
-use async_std::future;
 use fast_socks5::SocksError;
 use serde::Serialize;
 
@@ -36,9 +35,6 @@ pub enum SmtpError {
 	/// Error when communicating with SMTP server.
 	#[serde(serialize_with = "ser_with_display")]
 	SmtpError(AsyncSmtpError),
-	/// Time-out error.
-	#[serde(serialize_with = "ser_with_display")]
-	TimeoutError(future::TimeoutError),
 	/// Error when verifying a Yahoo email via HTTP requests.
 	YahooError(YahooError),
 	/// Error when verifying a Gmail email via a HTTP request.
@@ -55,12 +51,6 @@ pub enum SmtpError {
 impl From<SocksError> for SmtpError {
 	fn from(e: SocksError) -> Self {
 		SmtpError::SocksError(e)
-	}
-}
-
-impl From<future::TimeoutError> for SmtpError {
-	fn from(e: future::TimeoutError) -> Self {
-		SmtpError::TimeoutError(e)
 	}
 }
 

@@ -65,6 +65,7 @@
 mod haveibeenpwned;
 pub mod misc;
 pub mod mx;
+mod rules;
 pub mod smtp;
 pub mod syntax;
 mod util;

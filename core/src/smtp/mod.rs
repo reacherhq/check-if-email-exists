@@ -34,7 +34,7 @@ pub use error::*;
 
 use self::{
 	gmail::is_gmail,
-	outlook::{is_hotmail, is_outlook},
+	outlook::{is_microsoft365, is_outlook},
 	yahoo::is_yahoo,
 };
 
@@ -62,29 +62,25 @@ pub async fn check_smtp(
 	domain: &str,
 	input: &CheckEmailInput,
 ) -> Result<SmtpDetails, SmtpError> {
-	let host_lowercase = host.to_lowercase().to_string();
+	let host = host.to_string();
 
-	if input
-		.skipped_domains
-		.iter()
-		.any(|d| host_lowercase.contains(d))
-	{
+	if input.skipped_domains.iter().any(|d| host.contains(d)) {
 		return Err(SmtpError::SkippedDomain(format!(
 			"Reacher currently cannot verify emails from @{domain}"
 		)));
 	}
 
-	if input.yahoo_use_api && is_yahoo(&host_lowercase) {
+	if input.yahoo_use_api && is_yahoo(&host) {
 		return yahoo::check_yahoo(to_email, input)
 			.await
 			.map_err(|err| err.into());
 	}
-	if input.gmail_use_api && is_gmail(&host_lowercase) {
+	if input.gmail_use_api && is_gmail(&host) {
 		return gmail::check_gmail(to_email, input)
 			.await
 			.map_err(|err| err.into());
 	}
-	if input.microsoft365_use_api && is_outlook(&host_lowercase) {
+	if input.microsoft365_use_api && is_microsoft365(&host) {
 		match outlook::microsoft365::check_microsoft365_api(to_email, input).await {
 			Ok(Some(smtp_details)) => return Ok(smtp_details),
 			// Continue in the event of an error/ambiguous result.
@@ -101,23 +97,20 @@ pub async fn check_smtp(
 	}
 	#[cfg(feature = "headless")]
 	if let Some(webdriver) = &input.hotmail_use_headless {
-		// The password recovery page do not always work with Microsoft 365
-		// addresses. So we only test with @hotmail and @outlook addresses.
-		// ref: https://github.com/reacherhq/check-if-email-exists/issues/1185
-		if is_hotmail(&host_lowercase) {
+		if is_outlook(&host) {
 			return outlook::hotmail::check_password_recovery(to_email, webdriver)
 				.await
 				.map_err(|err| err.into());
 		}
 	}
 
-	check_smtp_with_retry(to_email, host, port, domain, input, input.retries).await
+	check_smtp_with_retry(to_email, &host, port, domain, input, input.retries).await
 }
 
 #[cfg(test)]
 mod tests {
 	use super::{check_smtp, CheckEmailInput, SmtpError};
-	use async_smtp::EmailAddress;
+	use async_smtp::{smtp::error::Error, EmailAddress};
 	use std::{str::FromStr, time::Duration};
 	use tokio::runtime::Runtime;
 	use trust_dns_proto::rr::Name;
@@ -127,13 +120,13 @@ mod tests {
 		let runtime = Runtime::new().unwrap();
 
 		let to_email = EmailAddress::from_str("foo@gmail.com").unwrap();
-		let host = Name::from_str("gmail.com").unwrap();
+		let host = Name::from_str("alt4.aspmx.l.google.com.").unwrap();
 		let mut input = CheckEmailInput::default();
 		input.set_smtp_timeout(Some(Duration::from_millis(1)));
 
 		let res = runtime.block_on(check_smtp(&to_email, &host, 25, "gmail.com", &input));
 		match res {
-			Err(SmtpError::TimeoutError(_)) => (),
+			Err(SmtpError::SmtpError(Error::Io(_))) => (), // ErrorKind == Timeout
 			_ => panic!("check_smtp did not time out"),
 		}
 	}
@@ -144,7 +137,8 @@ mod tests {
 
 		let to_email = EmailAddress::from_str("foo@icloud.com").unwrap();
 		let host = Name::from_str("mx01.mail.icloud.com.").unwrap();
-		let input = CheckEmailInput::default();
+		let mut input = CheckEmailInput::default();
+		input.set_skipped_domains(vec![".mail.icloud.com.".into()]);
 
 		let res = runtime.block_on(check_smtp(&to_email, &host, 25, "icloud.com", &input));
 		match res {
