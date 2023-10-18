@@ -18,25 +18,23 @@
 
 use check_if_email_exists::CheckEmailInput;
 use check_if_email_exists::LOG_TARGET;
-use warp::{Filter, http};
+use warp::{http, Filter};
 
 use crate::check::{check_email, check_header};
 use crate::errors;
-
 
 /// The main endpoint handler that implements the logic of this route.
 async fn handler(body: CheckEmailInput) -> Result<impl warp::Reply, warp::Rejection> {
 	// The to_email field must be present
 	if body.to_email.is_empty() {
-		Err(warp::reject::custom(errors::ReacherResponseError{
-			code : http::StatusCode::BAD_REQUEST,
-			message : "to_mail field is required.".to_string()
+		Err(warp::reject::custom(errors::ReacherResponseError {
+			code: http::StatusCode::BAD_REQUEST,
+			message: "to_email field is required.".to_string(),
 		}))
 	} else {
 		// Run the future to check an email.
 		Ok(warp::reply::json(&check_email(body).await))
 	}
-	
 }
 
 /// Create the `POST /check_email` endpoint.
