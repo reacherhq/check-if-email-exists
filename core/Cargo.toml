@@ -13,7 +13,7 @@ readme = "../README.md"
 repository = "https://github.com/reacherhq/check-if-email-exists"
 
 [dependencies]
-async-native-tls = { version = "0.4", default-features = false }
+async-native-tls = { version = "0.5", default-features = false }
 async-recursion = "1.0.4"
 async-smtp = { version = "0.6.0", features = ["socks5"] }
 async-std = "1.12.0"
