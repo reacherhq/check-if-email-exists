@@ -41,8 +41,7 @@ enum JobResultResponseFormat {
 }
 
 // limit and offset are optional in the request
-// if they are unspecified their default values
-// are 50 and 0 respectively
+// If unspecified, offset will default to 0.
 #[derive(Serialize, Deserialize)]
 struct JobResultRequest {
 	format: Option<JobResultResponseFormat>,
