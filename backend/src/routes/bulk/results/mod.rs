@@ -155,7 +155,7 @@ async fn job_result_as_iter(
 			target: LOG_TARGET,
 			"Failed to get results for [job={}] [limit={}] [offset={}] with [error={}]",
 			job_id,
-			limit.map(|s| s.to_string()).unwrap_or("n/a".into()),
+			limit.map(|s| s.to_string()).unwrap_or_else(|| "n/a".into()),
 			offset,
 			e
 		);
@@ -200,7 +200,7 @@ async fn job_result_csv(
 				target: LOG_TARGET,
 				"Failed to convert json to csv output struct for [job={}] [limit={}] [offset={}] to csv with [error={}]",
 				job_id,
-				limit.map(|s| s.to_string()).unwrap_or("n/a".into()),
+				limit.map(|s| s.to_string()).unwrap_or_else(|| "n/a".into()),
 				offset,
 				e
 			);
@@ -212,7 +212,7 @@ async fn job_result_csv(
 				target: LOG_TARGET,
 				"Failed to serialize result for [job={}] [limit={}] [offset={}] to csv with [error={}]",
 				job_id,
-				limit.map(|s| s.to_string()).unwrap_or("n/a".into()),
+				limit.map(|s| s.to_string()).unwrap_or_else(|| "n/a".into()),
 				offset,
 				e
 			);
@@ -226,7 +226,7 @@ async fn job_result_csv(
 			target: LOG_TARGET,
 			"Failed to convert results for [job={}] [limit={}] [offset={}] to csv with [error={}]",
 			job_id,
-			limit.map(|s| s.to_string()).unwrap_or("n/a".into()),
+			limit.map(|s| s.to_string()).unwrap_or_else(|| "n/a".into()),
 			offset,
 			e
 		);
