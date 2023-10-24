@@ -104,3 +104,35 @@ async fn test_reacher_secret_correct_secret() {
 	assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
 	assert_eq!(resp.body(), FOO_BAR_RESPONSE);
 }
+
+#[tokio::test]
+async fn test_reacher_to_mail_empty() {
+	env::set_var("RCH_HEADER_SECRET", "foobar");
+
+	let resp = request()
+		.path("/v0/check_email")
+		.method("POST")
+		.header(REACHER_SECRET_HEADER, "foobar")
+		.json(&serde_json::from_str::<CheckEmailInput>(r#"{"to_email": ""}"#).unwrap())
+		.reply(&create_routes(None))
+		.await;
+
+	assert_eq!(resp.status(), StatusCode::BAD_REQUEST, "{:?}", resp.body());
+	assert_eq!(resp.body(), r#"{"message":"to_email field is required."}"#);
+}
+
+#[tokio::test]
+async fn test_reacher_to_mail_missing() {
+	env::set_var("RCH_HEADER_SECRET", "foobar");
+
+	let resp = request()
+		.path("/v0/check_email")
+		.method("POST")
+		.header(REACHER_SECRET_HEADER, "foobar")
+		.json(&serde_json::from_str::<CheckEmailInput>(r#"{}"#).unwrap())
+		.reply(&create_routes(None))
+		.await;
+
+	assert_eq!(resp.status(), StatusCode::BAD_REQUEST, "{:?}", resp.body());
+	assert_eq!(resp.body(), r#"{"message":"to_email field is required."}"#);
+}
