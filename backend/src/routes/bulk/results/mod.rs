@@ -314,13 +314,8 @@ async fn job_result(
 			))
 		}
 		JobResultResponseFormat::Csv => {
-			let data = job_result_csv(
-				job_id,
-				req.limit.unwrap_or(5000),
-				req.offset.unwrap_or(0),
-				conn_pool,
-			)
-			.await?;
+			let data =
+				job_result_csv(job_id, req.limit, req.offset.unwrap_or(0), conn_pool).await?;
 
 			Ok(warp::reply::with_header(data, "Content-Type", "text/csv"))
 		}
@@ -329,7 +324,7 @@ async fn job_result(
 
 async fn job_result_json(
 	job_id: i32,
-	limit: u64,
+	limit: Option<u64>,
 	offset: u64,
 	conn_pool: Pool<Postgres>,
 ) -> Result<Vec<serde_json::Value>, warp::Rejection> {
@@ -369,7 +364,7 @@ async fn job_result_json(
 
 async fn job_result_csv(
 	job_id: i32,
-	limit: u64,
+	limit: Option<u64>,
 	offset: u64,
 	conn_pool: Pool<Postgres>,
 ) -> Result<Vec<u8>, warp::Rejection> {
@@ -381,7 +376,7 @@ async fn job_result_csv(
 		LIMIT $2 OFFSET $3
 		"#,
 		job_id,
-		limit as i64,
+		limit,
 		offset as i64
 	);
 
