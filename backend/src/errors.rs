@@ -24,8 +24,8 @@ use warp::{http, reject};
 #[derive(Serialize, Debug)]
 pub struct ReacherResponseError {
 	#[serde(skip)]
-	code: http::StatusCode,
-	message: String,
+	pub code: http::StatusCode,
+	pub message: String,
 }
 
 impl reject::Reject for ReacherResponseError {}
