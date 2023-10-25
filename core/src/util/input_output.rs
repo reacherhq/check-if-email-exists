@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use std::str::FromStr;
 use std::time::Duration;
 
 use async_smtp::{ClientSecurity, ClientTlsParameters};
@@ -69,6 +70,89 @@ impl SmtpSecurity {
 	}
 }
 
+/// Select how to verify Yahoo emails.
+#[derive(Debug, Clone, Copy, Deserialize, Serialize)]
+pub enum YahooVerifyMethod {
+	/// Use Yahoo's API to check if an email exists.
+	Api,
+	/// Use Yahoo's password recovery page to check if an email exists.
+	///
+	/// This assumes you have a WebDriver compatible process running, then pass
+	/// its endpoint, usually http://localhost:9515, into the environment
+	/// variable RCH_WEBDRIVER_ADDR. We recommend running chromedriver (and not
+	/// geckodriver) as it allows parallel requests.
+	#[cfg(feature = "headless")]
+	Headless,
+	/// Use Yahoo's SMTP servers to check if an email exists.
+	Smtp,
+}
+
+impl FromStr for YahooVerifyMethod {
+	type Err = String;
+
+	fn from_str(s: &str) -> Result<Self, Self::Err> {
+		match s {
+			"Api" => Ok(Self::Api),
+			#[cfg(feature = "headless")]
+			"Headless" => Ok(Self::Headless),
+			"Smtp" => Ok(Self::Smtp),
+			_ => Err(format!("Unknown yahoo verify method: {}", s)),
+		}
+	}
+}
+
+/// Select how to verify Gmail emails.
+#[derive(Debug, Clone, Copy, Deserialize, Serialize)]
+pub enum GmailVerifyMethod {
+	/// Use Gmail's API to check if an email exists.
+	Api,
+	/// Use Gmail's SMTP servers to check if an email exists.
+	Smtp,
+}
+
+impl FromStr for GmailVerifyMethod {
+	type Err = String;
+
+	fn from_str(s: &str) -> Result<Self, Self::Err> {
+		match s {
+			"Api" => Ok(Self::Api),
+			"Smtp" => Ok(Self::Smtp),
+			_ => Err(format!("Unknown gmail verify method: {}", s)),
+		}
+	}
+}
+
+/// Select how to verify Hotmail emails.
+#[derive(Debug, Clone, Copy, Deserialize, Serialize)]
+pub enum HotmailVerifyMethod {
+	/// Use OneDrive API to check if an email exists.
+	OneDriveApi,
+	/// Use Hotmail's password recovery page to check if an email exists.
+	///
+	/// This assumes you have a WebDriver compatible process running, then pass
+	/// its endpoint, usually http://localhost:9515, into the environment
+	/// variable RCH_WEBDRIVER_ADDR. We recommend running chromedriver (and not
+	/// geckodriver) as it allows parallel requests.
+	#[cfg(feature = "headless")]
+	Headless,
+	/// Use Hotmail's SMTP servers to check if an email exists.
+	Smtp,
+}
+
+impl FromStr for HotmailVerifyMethod {
+	type Err = String;
+
+	fn from_str(s: &str) -> Result<Self, Self::Err> {
+		match s {
+			"OneDriveApi" => Ok(Self::OneDriveApi),
+			#[cfg(feature = "headless")]
+			"Headless" => Ok(Self::Headless),
+			"Smtp" => Ok(Self::Smtp),
+			_ => Err(format!("Unknown hotmail verify method: {}", s)),
+		}
+	}
+}
+
 /// Builder pattern for the input argument into the main `email_exists`
 /// function.
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -98,32 +182,18 @@ pub struct CheckEmailInput {
 	///
 	/// Defaults to 12s (more than 10s, but when run twice less than 30s).
 	pub smtp_timeout: Option<Duration>,
-	/// For Yahoo email addresses, use Yahoo's API instead of connecting
-	/// directly to their SMTP servers.
+	/// Select how to verify Yahoo emails.
 	///
-	/// Defaults to false.
-	pub yahoo_use_api: bool,
-	/// For Yahoo email addresses, use Yahoo's account recovery page instead
-	/// of connecting directly to their SMTP servers.
+	/// Defaults to Headless.
+	pub yahoo_verify_method: YahooVerifyMethod,
+	/// Select how to verify Gmail addresses.
 	///
-	/// This assumes you have a WebDriver compatible process running, then pass
-	/// its endpoint, usually http://localhost:9515, into the environment
-	/// variable RCH_WEBDRIVER_ADDR. We recommend running chromedriver (and not
-	/// geckodriver) as it allows parallel requests.
+	/// Defaults to Smtp.
+	pub gmail_verify_method: GmailVerifyMethod,
+	/// Select how to verify Hotmail/Outlook/Microsoft email addresses.
 	///
-	/// Defaults to true.
-	#[cfg(feature = "headless")]
-	pub yahoo_use_headless: bool,
-	/// For Gmail email addresses, use Gmail's API instead of connecting
-	/// directly to their SMTP servers.
-	///
-	/// Defaults to false.
-	pub gmail_use_api: bool,
-	/// For Microsoft 365 email addresses, use OneDrive's API instead of
-	/// connecting directly to their SMTP servers.
-	///
-	/// Defaults to false.
-	pub microsoft365_use_api: bool,
+	/// Defaults to Headless.
+	pub hotmail_verify_method: HotmailVerifyMethod,
 	// Whether to check if a gravatar image is existing for the given email.
 	//
 	// Defaults to false.
@@ -131,17 +201,6 @@ pub struct CheckEmailInput {
 	/// Check if a the email address is present in HaveIBeenPwned API.
 	// If the api_key is filled, HaveIBeenPwned API is checked
 	pub haveibeenpwned_api_key: Option<String>,
-	/// For Hotmail/Outlook email addresses, use a headless navigator
-	/// connecting to the password recovery page instead of the SMTP server.
-	///
-	/// This assumes you have a WebDriver compatible process running, then pass
-	/// its endpoint, usually http://localhost:9515, into the environment
-	/// variable RCH_WEBDRIVER_ADDR. We recommend running chromedriver (and not
-	/// geckodriver) as it allows parallel requests.
-	///
-	/// Defaults to true.
-	#[cfg(feature = "headless")]
-	pub hotmail_use_headless: bool,
 	/// Number of retries of SMTP connections to do.
 	///
 	/// Defaults to 2 to avoid greylisting.
@@ -177,20 +236,19 @@ impl Default for CheckEmailInput {
 			to_email: "".into(),
 			from_email: "reacher.email@gmail.com".into(), // Unused, owned by Reacher
 			hello_name: "gmail.com".into(),
-			#[cfg(feature = "headless")]
-			hotmail_use_headless: true,
 			proxy: None,
 			smtp_port: 25,
 			smtp_security: SmtpSecurity::default(),
 			smtp_timeout: Some(Duration::from_secs(12)),
 			#[cfg(not(feature = "headless"))]
-			yahoo_use_api: true,
+			yahoo_verify_method: YahooVerifyMethod::Api,
 			#[cfg(feature = "headless")]
-			yahoo_use_api: false,
+			yahoo_verify_method: YahooVerifyMethod::Headless,
+			gmail_verify_method: GmailVerifyMethod::Smtp,
+			#[cfg(not(feature = "headless"))]
+			yahoo_verify_method: HotmailVerifyMethod::Smtp,
 			#[cfg(feature = "headless")]
-			yahoo_use_headless: true,
-			gmail_use_api: false,
-			microsoft365_use_api: false,
+			hotmail_verify_method: HotmailVerifyMethod::Headless,
 			check_gravatar: false,
 			haveibeenpwned_api_key: None,
 			retries: 2,
@@ -288,40 +346,34 @@ impl CheckEmailInput {
 		self
 	}
 
-	/// Set whether to use Yahoo's API or connecting directly to their SMTP
-	/// servers. Defaults to true.
-	#[deprecated(since = "0.8.24", note = "Please use set_yahoo_use_api instead")]
-	pub fn yahoo_use_api(&mut self, use_api: bool) -> &mut CheckEmailInput {
-		self.yahoo_use_api = use_api;
-		self
-	}
-
-	/// Set whether to use Yahoo's API or connecting directly to their SMTP
-	/// servers. Defaults to true.
-	pub fn set_yahoo_use_api(&mut self, use_api: bool) -> &mut CheckEmailInput {
-		self.yahoo_use_api = use_api;
-		self
-	}
-
-	/// Set whether or not to use a headless navigator to navigate to Yahoo's
-	/// password recovery page to check if an email exists.
-	#[cfg(feature = "headless")]
-	pub fn set_yahoo_use_headless(&mut self, use_headless: bool) -> &mut CheckEmailInput {
-		self.yahoo_use_headless = use_headless;
+	/// Set whether to use Yahoo's API, headless navigator, or connecting
+	/// directly to their SMTP servers. Defaults to Headless.
+	pub fn set_yahoo_verify_method(
+		&mut self,
+		verify_method: YahooVerifyMethod,
+	) -> &mut CheckEmailInput {
+		self.yahoo_verify_method = verify_method;
 		self
 	}
 
 	/// Set whether to use Gmail's API or connecting directly to their SMTP
 	/// servers. Defaults to false.
-	pub fn set_gmail_use_api(&mut self, use_api: bool) -> &mut CheckEmailInput {
-		self.gmail_use_api = use_api;
+	pub fn set_gmail_verify_method(
+		&mut self,
+		verify_method: GmailVerifyMethod,
+	) -> &mut CheckEmailInput {
+		self.gmail_verify_method = verify_method;
 		self
 	}
 
-	/// Set whether to use Microsoft 365's OneDrive API or connecting directly
-	/// to their SMTP servers. Defaults to false.
-	pub fn set_microsoft365_use_api(&mut self, use_api: bool) -> &mut CheckEmailInput {
-		self.microsoft365_use_api = use_api;
+	/// Set whether to use Microsoft 365's OneDrive API, a headless navigator,
+	/// or connecting directly to their SMTP servers for hotmail addresse.
+	/// Defaults to Headless.
+	pub fn set_hotmail_verify_method(
+		&mut self,
+		verify_method: HotmailVerifyMethod,
+	) -> &mut CheckEmailInput {
+		self.hotmail_verify_method = verify_method;
 		self
 	}
 
@@ -336,14 +388,6 @@ impl CheckEmailInput {
 	/// check only if the api_key is set.
 	pub fn set_haveibeenpwned_api_key(&mut self, api_key: Option<String>) -> &mut CheckEmailInput {
 		self.haveibeenpwned_api_key = api_key;
-		self
-	}
-
-	/// Set whether or not to use a headless navigator to navigate to Hotmail's
-	/// password recovery page to check if an email exists.
-	#[cfg(feature = "headless")]
-	pub fn set_hotmail_use_headless(&mut self, use_headless: bool) -> &mut CheckEmailInput {
-		self.hotmail_use_headless = use_headless;
 		self
 	}
 

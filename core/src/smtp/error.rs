@@ -44,8 +44,6 @@ pub enum SmtpError {
 	HeadlessError(HeadlessError),
 	/// Error when verifying a Microsoft 365 email via HTTP request.
 	Microsoft365Error(Microsoft365Error),
-	/// Headless Navigator not running.
-	NoHeadlessNavigator,
 	/// Email is in the `skipped_domains` parameter.
 	SkippedDomain(String),
 }
