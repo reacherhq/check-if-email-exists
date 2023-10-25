@@ -1,5 +1,5 @@
 #[cfg(feature = "headless")]
-pub mod hotmail;
+pub mod headless;
 pub mod microsoft365;
 
 /// Check if a MX host is from outlook (includes @hotmail.*, @outlook.* and

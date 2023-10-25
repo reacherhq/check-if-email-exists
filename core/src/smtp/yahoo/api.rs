@@ -14,19 +14,14 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use super::SmtpDetails;
+use super::YahooError;
 use crate::{
-	smtp::http_api::create_client,
-	util::{
-		constants::LOG_TARGET, input_output::CheckEmailInput, ser_with_display::ser_with_display,
-	},
+	smtp::{http_api::create_client, SmtpDetails},
+	util::{constants::LOG_TARGET, input_output::CheckEmailInput},
 };
 use async_smtp::EmailAddress;
 use regex::Regex;
-use reqwest::Error as ReqwestError;
 use serde::{Deserialize, Serialize};
-use serde_json::error::Error as SerdeError;
-use std::fmt;
 
 const SIGNUP_PAGE: &str = "https://login.yahoo.com/account/create?specId=yidReg&lang=en-US&src=&done=https%3A%2F%2Fwww.yahoo.com&display=login";
 const SIGNUP_API: &str = "https://login.yahoo.com/account/module/create?validateField=yid";
@@ -79,56 +74,20 @@ struct FormResponse {
 	errors: Vec<FormResponseItem>,
 }
 
-/// Possible errors when checking Yahoo email addresses.
-#[derive(Debug, Serialize)]
-pub enum YahooError {
-	/// Cannot find "acrumb" field in cookie.
-	NoAcrumb,
-	/// Cannot find "sessionIndex" hidden input in body
-	NoSessionIndex,
-	/// Cannot find cookie in Yahoo response.
-	NoCookie,
-	/// Error when serializing or deserializing HTTP requests and responses.
-	#[serde(serialize_with = "ser_with_display")]
-	ReqwestError(ReqwestError),
-	/// Error when serializing or deserializing HTTP requests and responses.
-	#[serde(serialize_with = "ser_with_display")]
-	SerdeError(SerdeError),
-}
-
-impl fmt::Display for YahooError {
-	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		// Customize so only `x` and `y` are denoted.
-		write!(f, "{self:?}")
-	}
-}
-
-impl From<ReqwestError> for YahooError {
-	fn from(error: ReqwestError) -> Self {
-		YahooError::ReqwestError(error)
-	}
-}
-
-impl From<SerdeError> for YahooError {
-	fn from(error: SerdeError) -> Self {
-		YahooError::SerdeError(error)
-	}
-}
-
 /// Use well-crafted HTTP requests to verify if a Yahoo email address exists.
 /// Inspired by https://github.com/hbattat/verifyEmail.
-pub async fn check_yahoo(
+pub async fn check_api(
 	to_email: &EmailAddress,
 	input: &CheckEmailInput,
 ) -> Result<SmtpDetails, YahooError> {
-	let response = create_client(input, "yahoo")?
+	let res = create_client(input, "yahoo")?
 		.get(SIGNUP_PAGE)
 		.header("User-Agent", USER_AGENT)
 		.send()
 		.await?;
 
 	// Get the cookies from the response.
-	let cookies = match response.headers().get("Set-Cookie") {
+	let cookies = match res.headers().get("Set-Cookie") {
 		Some(x) => x.to_owned(),
 		_ => {
 			return Err(YahooError::NoCookie);
@@ -138,18 +97,11 @@ pub async fn check_yahoo(
 	let to_email = to_email.to_string();
 	log::debug!(
 		target: LOG_TARGET,
-		"[email={}] Yahoo 1st response: {:?}",
+		"[email={}] Yahoo succesfully got cookies after response",
 		to_email,
-		response
-	);
-	log::debug!(
-		target: LOG_TARGET,
-		"[email={}] Yahoo cookies: {:?}",
-		to_email,
-		cookies
 	);
 
-	let body = response.text().await?;
+	let body = res.text().await?;
 
 	let username = to_email
 		.split('@')
@@ -182,7 +134,7 @@ pub async fn check_yahoo(
 	};
 
 	// Mimic a real HTTP request.
-	let response = create_client(input, "yahoo")?
+	let res = create_client(input, "yahoo")?
 		.post(SIGNUP_API)
 		.header("Origin", "https://login.yahoo.com")
 		.header("X-Requested-With", "XMLHttpRequest")
@@ -210,10 +162,10 @@ pub async fn check_yahoo(
 		target: LOG_TARGET,
 		"[email={}] Yahoo 2nd response: {:?}",
 		to_email,
-		response
+		res
 	);
 
-	let username_exists = response.errors.iter().any(|item| {
+	let username_exists = res.errors.iter().any(|item| {
 		item.name == "userId"
 			&& (item.error == "IDENTIFIER_NOT_AVAILABLE" || item.error == "IDENTIFIER_EXISTS")
 	});
@@ -223,12 +175,4 @@ pub async fn check_yahoo(
 		is_deliverable: username_exists,
 		..Default::default()
 	})
-}
-
-/// Check if the MX host is from Yahoo.
-/// Examples:
-/// - mta7.am0.yahoodns.net.
-/// - mx-eu.mail.am0.yahoodns.net.
-pub fn is_yahoo(host: &str) -> bool {
-	host.to_lowercase().ends_with(".yahoodns.net.")
 }

@@ -26,7 +26,6 @@ use super::sentry_util;
 /// Same as `check-if-email-exists`'s check email, but adds some additional
 /// inputs and error handling.
 pub async fn check_email(input: CheckEmailInput) -> CheckEmailOutput {
-	let hotmail_use_headless = env::var("RCH_HOTMAIL_USE_HEADLESS").ok();
 	let from_email =
 		env::var("RCH_FROM_EMAIL").unwrap_or_else(|_| CheckEmailInput::default().from_email);
 	let hello_name =
@@ -35,7 +34,6 @@ pub async fn check_email(input: CheckEmailInput) -> CheckEmailOutput {
 	let input = CheckEmailInput {
 		// If we want to override core check-if-email-exists's default values
 		// for CheckEmailInput for the backend, we do it here.
-		hotmail_use_headless,
 		from_email,
 		hello_name,
 		..input
