@@ -56,18 +56,15 @@ pub struct Cli {
 	#[clap(long, env, default_value = "25")]
 	pub smtp_port: u16,
 
-	/// Select how to verify Yahoo email addresses: using Yahoo's API, a
-	/// headless navigator, or connecting directly to their SMTP servers.
+	/// Select how to verify Yahoo email addresses: Api, Headless or Smtp.
 	#[clap(long, env, default_value = "Headless", parse(try_from_str))]
 	pub yahoo_verify_method: YahooVerifyMethod,
 
-	/// Select how to verify Gmail email addresses: using Yahoo's API, or
-	/// connecting directly to their SMTP servers.
+	/// Select how to verify Gmail email addresses: Api or Smtp.
 	#[clap(long, env, default_value = "Smtp", parse(try_from_str))]
 	pub gmail_verify_method: GmailVerifyMethod,
 
-	/// Select how to verify Hotmail email addresses: using Yahoo's API, a
-	/// headless navigator, or connecting directly to their SMTP servers.
+	/// Select how to verify Hotmail email addresses: Api, Headless or Smtp.
 	#[clap(long, env, default_value = "Headless", parse(try_from_str))]
 	pub hotmail_verify_method: HotmailVerifyMethod,
 

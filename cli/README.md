@@ -26,17 +26,29 @@ ARGS:
 
 OPTIONS:
         --check-gravatar <CHECK_GRAVATAR>
-            Whether to check for an existing gravatar image [env: CHECK_GRAVATAR=] [default: false]
+            Whether to check if a gravatar image is existing for the given email [env:
+            CHECK_GRAVATAR=] [default: false]
 
         --from-email <FROM_EMAIL>
             The email to use in the `MAIL FROM:` SMTP command [env: FROM_EMAIL=] [default:
-            user@example.org]
+            reacher.email@gmail.com]
+
+        --gmail-verify-method <GMAIL_VERIFY_METHOD>
+            Select how to verify Gmail email addresses: Api or Smtp [env: GMAIL_VERIFY_METHOD=]
+            [default: Smtp]
 
     -h, --help
             Print help information
 
+        --haveibeenpwned-api-key <HAVEIBEENPWNED_API_KEY>
+            HaveIBeenPnwed API key, ignore if not provided [env: HAVEIBEENPWNED_API_KEY=]
+
         --hello-name <HELLO_NAME>
-            The name to use in the `EHLO:` SMTP command [env: HELLO_NAME=] [default: localhost]
+            The name to use in the `EHLO:` SMTP command [env: HELLO_NAME=] [default: gmail.com]
+
+        --hotmail-verify-method <HOTMAIL_VERIFY_METHOD>
+            Select how to verify Hotmail email addresses: Api, Headless or Smtp [env:
+            HOTMAIL_VERIFY_METHOD=] [default: Headless]
 
         --proxy-host <PROXY_HOST>
             Use the specified SOCKS5 proxy host to perform email verification [env: PROXY_HOST=]
@@ -59,13 +71,9 @@ OPTIONS:
     -V, --version
             Print version information
 
-        --yahoo-use-api <YAHOO_USE_API>
-            For Yahoo email addresses, use Yahoo's API instead of connecting directly to their SMTP
-            servers [env: YAHOO_USE_API=] [default: true]
-
-        --gmail-use-api <GMAIL_USE_API>
-            For Gmail email addresses, use Gmail's API instead of connecting directly to their SMTP
-            servers [env: GMAIL_USE_API=] [default: false]
+        --yahoo-verify-method <YAHOO_VERIFY_METHOD>
+            Select how to verify Yahoo email addresses: Api, Headless or Smtp [env:
+            YAHOO_VERIFY_METHOD=] [default: Headless]
 ```
 
 **💡 PRO TIP:** To show debug logs when running the binary, run:
