@@ -16,46 +16,26 @@
 
 use std::{thread::sleep, time::Duration};
 
-use async_smtp::EmailAddress;
 use async_std::prelude::FutureExt;
-use fantoccini::{
-	error::{CmdError, NewSessionError},
-	ClientBuilder, Locator,
-};
+use fantoccini::Locator;
 use futures::TryFutureExt;
-use serde::Serialize;
-use serde_json::Map;
 
-use crate::{smtp::SmtpDetails, util::ser_with_display::ser_with_display, LOG_TARGET};
-
-#[derive(Debug, Serialize)]
-pub enum HotmailError {
-	#[serde(serialize_with = "ser_with_display")]
-	Cmd(CmdError),
-	#[serde(serialize_with = "ser_with_display")]
-	NewSession(NewSessionError),
-}
-
-impl From<CmdError> for HotmailError {
-	fn from(e: CmdError) -> Self {
-		Self::Cmd(e)
-	}
-}
-
-impl From<NewSessionError> for HotmailError {
-	fn from(e: NewSessionError) -> Self {
-		Self::NewSession(e)
-	}
-}
+use crate::{
+	smtp::{
+		headless::{create_headless_client, HeadlessError},
+		SmtpDetails,
+	},
+	LOG_TARGET,
+};
 
 /// Check if a Hotmail/Outlook email exists by connecting to the password
 /// recovery page https://account.live.com/password/reset using a headless
 /// browser. Make sure you have a WebDriver server running locally before
 /// running this, or this will error.
 pub async fn check_password_recovery(
-	to_email: &EmailAddress,
+	to_email: &str,
 	webdriver: &str,
-) -> Result<SmtpDetails, HotmailError> {
+) -> Result<SmtpDetails, HeadlessError> {
 	let to_email = to_email.to_string();
 	log::debug!(
 		target: LOG_TARGET,
@@ -63,26 +43,7 @@ pub async fn check_password_recovery(
 		to_email,
 	);
 
-	// Running in a Docker container, I run into the following error:
-	// Failed to move to new namespace: PID namespaces supported, Network namespace supported, but failed: errno = Operation not permitted
-	// In searching around I found a few different workarounds:
-	// - Enable namespaces: https://github.com/jessfraz/dockerfiles/issues/65#issuecomment-266532289
-	// - Run it with a custom seccomp: https://github.com/jessfraz/dockerfiles/issues/65#issuecomment-217214671
-	// - Run with --no-sandbox: https://github.com/karma-runner/karma-chrome-launcher/issues/125#issuecomment-312668593
-	// For now I went with the --no-sandbox.
-	//
-	// TODO Look into security implications...
-	let mut caps = Map::new();
-	let opts = serde_json::json!({
-		"args": ["--headless", "--disable-gpu", "--no-sandbox", "--disable-dev-shm-usage"],
-	});
-	caps.insert("goog:chromeOptions".to_string(), opts);
-
-	// Connect to WebDriver instance that is listening on `webdriver`
-	let c = ClientBuilder::native()
-		.capabilities(caps)
-		.connect(webdriver)
-		.await?;
+	let c = create_headless_client(webdriver).await?;
 
 	// Navigate to Microsoft password recovery page.
 	c.goto("https://account.live.com/password/reset").await?;
@@ -147,37 +108,29 @@ pub async fn check_password_recovery(
 #[cfg(test)]
 mod tests {
 	use super::check_password_recovery;
-	use async_smtp::EmailAddress;
 	use async_std::prelude::FutureExt;
-	use std::str::FromStr;
 
 	// Ignoring this test as it requires a local process of WebDriver running on
-	// "http://localhost:4444". To debug the headless password recovery page,
+	// "http://localhost:9515". To debug the headless password recovery page,
 	// run chromedriver and remove the "#[ignore]".
 	// Also see: https://github.com/jonhoo/fantoccini
 	#[tokio::test]
-	#[ignore]
+	#[ignore = "Run a webdriver server locally to test this"]
 	async fn test_hotmail_address() {
-		// This email does not exist.
-		let email = EmailAddress::from_str("test42134@hotmail.com").unwrap();
-		// Run 10 headless sessions with the above fake email (not deliverable).
+		// Run 10 headless sessions with dummy emails.
 		// It should not error.
 		for _ in 0..10 {
-			let res = check_password_recovery(&email, "http://localhost:4444")
+			// This email does not exist.
+			let res = check_password_recovery(&"test42134@hotmail.com", "http://localhost:9515")
 				.await
 				.unwrap();
-			assert!(!res.is_deliverable)
-		}
+			assert!(!res.is_deliverable);
 
-		// This email does exist.
-		let email = EmailAddress::from_str("test@hotmail.com").unwrap();
-		// Run 10 headless sessions with the above fake email (not deliverable).
-		// It should not error.
-		for _ in 0..10 {
-			let res = check_password_recovery(&email, "http://localhost:4444")
+			// This email does exist.
+			let res = check_password_recovery("test@hotmail.com", "http://localhost:9515")
 				.await
 				.unwrap();
-			assert!(res.is_deliverable)
+			assert!(res.is_deliverable);
 		}
 	}
 
@@ -186,13 +139,11 @@ mod tests {
 	// but will fail with geckodriver.
 	// ref: https://github.com/jonhoo/fantoccini/issues/111#issuecomment-727650629
 	#[tokio::test]
-	#[ignore]
+	#[ignore = "Run a **chromedriver** server locally to test this"]
 	async fn test_parallel() {
 		// This email does not exist.
-		let email = EmailAddress::from_str("foo@bar.baz").unwrap();
-
-		let f1 = check_password_recovery(&email, "http://localhost:4444");
-		let f2 = check_password_recovery(&email, "http://localhost:4444");
+		let f1 = check_password_recovery("foo@bar.baz", "http://localhost:9515");
+		let f2 = check_password_recovery("foo@bar.baz", "http://localhost:9515");
 
 		let f = f1.try_join(f2).await;
 		assert!(f.is_ok(), "{:?}", f);

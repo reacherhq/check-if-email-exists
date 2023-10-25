@@ -58,15 +58,22 @@ pub struct Cli {
 	#[clap(long, env, default_value = "true", parse(try_from_str))]
 	pub yahoo_use_api: bool,
 
+	/// For Yahoo addresses, use a headless browser to connect to the
+	/// Yahoo account recovery page. Requires a webdriver instance
+	/// listening on RCH_WEBDRIVER_ADDR.
+	#[clap(long, env)]
+	pub yahoo_use_headless: bool,
+
 	/// For Gmail email addresses, use Gmail's API instead of connecting
 	/// directly to their SMTP servers.
 	#[clap(long, env, default_value = "false", parse(try_from_str))]
 	pub gmail_use_api: bool,
 
 	/// For Hotmail addresses, use a headless browser to connect to the
-	/// Microsoft account recovery page.
+	/// Microsoft account recovery page. Requires a webdriver instance
+	/// listening on RCH_WEBDRIVER_ADDR.
 	#[clap(long, env)]
-	pub hotmail_use_headless: Option<String>,
+	pub hotmail_use_headless: bool,
 
 	/// For Microsoft 365 email addresses, use OneDrive's API instead of
 	/// connecting directly to their SMTP servers.
@@ -100,10 +107,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 		.set_hello_name(CONF.hello_name.clone())
 		.set_smtp_port(CONF.smtp_port)
 		.set_yahoo_use_api(CONF.yahoo_use_api)
+		.set_yahoo_use_headless(CONF.yahoo_use_headless)
 		.set_gmail_use_api(CONF.gmail_use_api)
 		.set_microsoft365_use_api(CONF.microsoft365_use_api)
 		.set_check_gravatar(CONF.check_gravatar)
-		.set_hotmail_use_headless(CONF.hotmail_use_headless.clone())
+		.set_hotmail_use_headless(CONF.hotmail_use_headless)
 		.set_haveibeenpwned_api_key(CONF.haveibeenpwned_api_key.clone());
 
 	if let Some(proxy_host) = &CONF.proxy_host {

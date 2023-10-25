@@ -17,12 +17,15 @@
 mod connect;
 mod error;
 mod gmail;
+#[cfg(feature = "headless")]
+mod headless;
 mod http_api;
 mod outlook;
 mod parser;
 mod yahoo;
 
 use std::default::Default;
+use std::env;
 
 use async_smtp::EmailAddress;
 use serde::{Deserialize, Serialize};
@@ -62,7 +65,7 @@ pub async fn check_smtp(
 	domain: &str,
 	input: &CheckEmailInput,
 ) -> Result<SmtpDetails, SmtpError> {
-	let host = host.to_string();
+	let host: String = host.to_string();
 
 	if input.skipped_domains.iter().any(|d| host.contains(d)) {
 		return Err(SmtpError::SkippedDomain(format!(
@@ -70,17 +73,45 @@ pub async fn check_smtp(
 		)));
 	}
 
-	if input.yahoo_use_api && is_yahoo(&host) {
-		return yahoo::check_yahoo(to_email, input)
-			.await
-			.map_err(|err| err.into());
+	// Headless checks. Please note that they take precedence over API checks.
+	#[cfg(feature = "headless")]
+	{
+		let webdriver_addr = env::var("RCH_WEBDRIVER_ADDR");
+
+		if is_outlook(&host) {
+			match &webdriver_addr {
+				Ok(a) => {
+					return outlook::headless::check_password_recovery(
+						to_email.to_string().as_str(),
+						a,
+					)
+					.await
+					.map_err(|err| err.into());
+				}
+				_ => return Err(SmtpError::NoHeadlessNavigator),
+			}
+		} else if is_yahoo(&host) {
+			match &webdriver_addr {
+				Ok(a) => {
+					return yahoo::check_headless(to_email.to_string().as_str(), a)
+						.await
+						.map_err(|err| err.into());
+				}
+				_ => return Err(SmtpError::NoHeadlessNavigator),
+			}
+		}
 	}
+
+	// API checks
 	if input.gmail_use_api && is_gmail(&host) {
 		return gmail::check_gmail(to_email, input)
 			.await
 			.map_err(|err| err.into());
-	}
-	if input.microsoft365_use_api && is_microsoft365(&host) {
+	} else if input.yahoo_use_api && is_yahoo(&host) {
+		return yahoo::check_api(to_email, input)
+			.await
+			.map_err(|err| err.into());
+	} else if input.microsoft365_use_api && is_microsoft365(&host) {
 		match outlook::microsoft365::check_microsoft365_api(to_email, input).await {
 			Ok(Some(smtp_details)) => return Ok(smtp_details),
 			// Continue in the event of an error/ambiguous result.
@@ -93,14 +124,6 @@ pub async fn check_smtp(
 				);
 			}
 			_ => {}
-		}
-	}
-	#[cfg(feature = "headless")]
-	if let Some(webdriver) = &input.hotmail_use_headless {
-		if is_outlook(&host) {
-			return outlook::hotmail::check_password_recovery(to_email, webdriver)
-				.await
-				.map_err(|err| err.into());
 		}
 	}
 

@@ -101,8 +101,19 @@ pub struct CheckEmailInput {
 	/// For Yahoo email addresses, use Yahoo's API instead of connecting
 	/// directly to their SMTP servers.
 	///
-	/// Defaults to true.
+	/// Defaults to false.
 	pub yahoo_use_api: bool,
+	/// For Yahoo email addresses, use Yahoo's account recovery page instead
+	/// of connecting directly to their SMTP servers.
+	///
+	/// This assumes you have a WebDriver compatible process running, then pass
+	/// its endpoint, usually http://localhost:9515, into the environment
+	/// variable RCH_WEBDRIVER_ADDR. We recommend running chromedriver (and not
+	/// geckodriver) as it allows parallel requests.
+	///
+	/// Defaults to true.
+	#[cfg(feature = "headless")]
+	pub yahoo_use_headless: bool,
 	/// For Gmail email addresses, use Gmail's API instead of connecting
 	/// directly to their SMTP servers.
 	///
@@ -122,13 +133,15 @@ pub struct CheckEmailInput {
 	pub haveibeenpwned_api_key: Option<String>,
 	/// For Hotmail/Outlook email addresses, use a headless navigator
 	/// connecting to the password recovery page instead of the SMTP server.
-	/// This assumes you have a WebDriver compatible process running, then pass
-	/// its endpoint, usually http://localhost:4444. We recommend running
-	/// chromedriver (and not geckodriver) as it allows parallel requests.
 	///
-	/// Defaults to None.
+	/// This assumes you have a WebDriver compatible process running, then pass
+	/// its endpoint, usually http://localhost:9515, into the environment
+	/// variable RCH_WEBDRIVER_ADDR. We recommend running chromedriver (and not
+	/// geckodriver) as it allows parallel requests.
+	///
+	/// Defaults to true.
 	#[cfg(feature = "headless")]
-	pub hotmail_use_headless: Option<String>,
+	pub hotmail_use_headless: bool,
 	/// Number of retries of SMTP connections to do.
 	///
 	/// Defaults to 2 to avoid greylisting.
@@ -165,12 +178,17 @@ impl Default for CheckEmailInput {
 			from_email: "reacher.email@gmail.com".into(), // Unused, owned by Reacher
 			hello_name: "gmail.com".into(),
 			#[cfg(feature = "headless")]
-			hotmail_use_headless: None,
+			hotmail_use_headless: true,
 			proxy: None,
 			smtp_port: 25,
 			smtp_security: SmtpSecurity::default(),
 			smtp_timeout: Some(Duration::from_secs(12)),
+			#[cfg(not(feature = "headless"))]
 			yahoo_use_api: true,
+			#[cfg(feature = "headless")]
+			yahoo_use_api: false,
+			#[cfg(feature = "headless")]
+			yahoo_use_headless: true,
 			gmail_use_api: false,
 			microsoft365_use_api: false,
 			check_gravatar: false,
@@ -285,6 +303,14 @@ impl CheckEmailInput {
 		self
 	}
 
+	/// Set whether or not to use a headless navigator to navigate to Yahoo's
+	/// password recovery page to check if an email exists.
+	#[cfg(feature = "headless")]
+	pub fn set_yahoo_use_headless(&mut self, use_headless: bool) -> &mut CheckEmailInput {
+		self.yahoo_use_headless = use_headless;
+		self
+	}
+
 	/// Set whether to use Gmail's API or connecting directly to their SMTP
 	/// servers. Defaults to false.
 	pub fn set_gmail_use_api(&mut self, use_api: bool) -> &mut CheckEmailInput {
@@ -307,21 +333,16 @@ impl CheckEmailInput {
 	}
 
 	/// Whether to haveibeenpwned' API for the given email
-	/// check only if the api_key is set
+	/// check only if the api_key is set.
 	pub fn set_haveibeenpwned_api_key(&mut self, api_key: Option<String>) -> &mut CheckEmailInput {
 		self.haveibeenpwned_api_key = api_key;
 		self
 	}
 
 	/// Set whether or not to use a headless navigator to navigate to Hotmail's
-	/// password recovery page to check if an email exists. If set to
-	/// `Some(<endpoint>)`, this endpoint must point to a WebDriver process,
-	/// usually listening on http://localhost:4444. Defaults to None.
+	/// password recovery page to check if an email exists.
 	#[cfg(feature = "headless")]
-	pub fn set_hotmail_use_headless(
-		&mut self,
-		use_headless: Option<String>,
-	) -> &mut CheckEmailInput {
+	pub fn set_hotmail_use_headless(&mut self, use_headless: bool) -> &mut CheckEmailInput {
 		self.hotmail_use_headless = use_headless;
 		self
 	}

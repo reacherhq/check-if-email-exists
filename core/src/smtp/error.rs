@@ -16,7 +16,7 @@
 
 use super::gmail::GmailError;
 #[cfg(feature = "headless")]
-use super::outlook::hotmail::HotmailError;
+use super::headless::HeadlessError;
 use super::outlook::microsoft365::Microsoft365Error;
 use super::parser;
 use super::yahoo::YahooError;
@@ -41,9 +41,11 @@ pub enum SmtpError {
 	GmailError(GmailError),
 	/// Error when verifying a Hotmail email via headless browser.
 	#[cfg(feature = "headless")]
-	HotmailError(HotmailError),
+	HeadlessError(HeadlessError),
 	/// Error when verifying a Microsoft 365 email via HTTP request.
 	Microsoft365Error(Microsoft365Error),
+	/// Headless Navigator not running.
+	NoHeadlessNavigator,
 	/// Email is in the `skipped_domains` parameter.
 	SkippedDomain(String),
 }
@@ -67,9 +69,9 @@ impl From<GmailError> for SmtpError {
 }
 
 #[cfg(feature = "headless")]
-impl From<HotmailError> for SmtpError {
-	fn from(e: HotmailError) -> Self {
-		SmtpError::HotmailError(e)
+impl From<HeadlessError> for SmtpError {
+	fn from(e: HeadlessError) -> Self {
+		SmtpError::HeadlessError(e)
 	}
 }
 
