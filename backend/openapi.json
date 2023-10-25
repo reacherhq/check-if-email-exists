@@ -2,7 +2,7 @@
 	"openapi": "3.0.0",
 	"info": {
 		"title": "Reacher",
-		"version": "0.4.*",
+		"version": "0.5.0",
 		"description": "### What is Reacher?\n\nReacher is a powerful, free and open-source email verification API service. It is provided both as a SaaS and as a self-host solution.",
 		"license": {
 			"name": "AGPL-3.0 OR Commercial",
@@ -334,6 +334,10 @@
 						"type": "boolean",
 						"description": "For Yahoo email addresses, use Yahoo's API instead of connecting directly to their SMTP servers."
 					},
+					"yahoo_use_headless": {
+						"type": "boolean",
+						"description": "For Yahoo email addresses, use Yahoo's account recovery page instead of connecting directly to their SMTP servers."
+					},
 					"gmail_use_api": {
 						"type": "boolean",
 						"description": "For Gmail email addresses, use Gmail's API instead of connecting directly to their SMTP servers."
@@ -347,8 +351,8 @@
 						"description": "Whether to check if a gravatar image is existing for the given email."
 					},
 					"hotmail_use_headless": {
-						"type": "string",
-						"description": "For Hotmail/Outlook email addresses, use a headless navigator connecting to the password recovery page instead of the SMTP server. This assumes you have a WebDriver compatible process running, then pass its endpoint, usually http://localhost:4444. We recommend running chromedriver (and not geckodriver) as it allows parallel requests."
+						"type": "boolean",
+						"description": "For Hotmail/Outlook email addresses, use a headless navigator connecting to the password recovery page instead of the SMTP server. This assumes you have a WebDriver compatible process running at the address provided by the environment variable `RCH_WEBDRIVER_ADDR`, usually http://localhost:9515. We recommend running chromedriver (and not geckodriver) as it allows parallel requests."
 					},
 					"retries": {
 						"type": "number",

@@ -1,6 +1,6 @@
 [package]
 name = "reacher_backend"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2018"
 license = "AGPL-3.0"
 publish = false
@@ -16,7 +16,15 @@ openssl = { version = "0.10.57", features = ["vendored"] }
 sentry = "0.23"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-sqlx = { version = "0.6", features = [ "runtime-tokio-native-tls", "postgres", "uuid", "chrono", "json", "offline", "migrate" ] }
+sqlx = { version = "0.6", features = [
+    "runtime-tokio-native-tls",
+    "postgres",
+    "uuid",
+    "chrono",
+    "json",
+    "offline",
+    "migrate",
+] }
 sqlxmq = "0.4"
 tokio = { version = "1.28", features = ["macros"] }
 uuid = "1.5"
