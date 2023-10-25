@@ -19,7 +19,6 @@ use crate::{
 	smtp::{http_api::create_client, SmtpDetails},
 	util::{constants::LOG_TARGET, input_output::CheckEmailInput},
 };
-use async_smtp::EmailAddress;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
@@ -76,10 +75,7 @@ struct FormResponse {
 
 /// Use well-crafted HTTP requests to verify if a Yahoo email address exists.
 /// Inspired by https://github.com/hbattat/verifyEmail.
-pub async fn check_api(
-	to_email: &EmailAddress,
-	input: &CheckEmailInput,
-) -> Result<SmtpDetails, YahooError> {
+pub async fn check_api(to_email: &str, input: &CheckEmailInput) -> Result<SmtpDetails, YahooError> {
 	let res = create_client(input, "yahoo")?
 		.get(SIGNUP_PAGE)
 		.header("User-Agent", USER_AGENT)
@@ -94,7 +90,6 @@ pub async fn check_api(
 		}
 	};
 
-	let to_email = to_email.to_string();
 	log::debug!(
 		target: LOG_TARGET,
 		"[email={}] Yahoo succesfully got cookies after response",

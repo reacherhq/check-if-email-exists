@@ -31,13 +31,15 @@ use async_smtp::EmailAddress;
 use serde::{Deserialize, Serialize};
 use trust_dns_proto::rr::Name;
 
-use crate::{util::input_output::CheckEmailInput, LOG_TARGET};
+use crate::{
+	util::input_output::CheckEmailInput, GmailVerifyMethod, HotmailVerifyMethod, YahooVerifyMethod,
+};
 use connect::check_smtp_with_retry;
 pub use error::*;
 
 use self::{
 	gmail::is_gmail,
-	outlook::{is_microsoft365, is_outlook},
+	outlook::{is_hotmail, is_microsoft365},
 	yahoo::is_yahoo,
 };
 
@@ -65,7 +67,8 @@ pub async fn check_smtp(
 	domain: &str,
 	input: &CheckEmailInput,
 ) -> Result<SmtpDetails, SmtpError> {
-	let host: String = host.to_string();
+	let host = host.to_string();
+	let to_email_str = to_email.to_string();
 
 	if input.skipped_domains.iter().any(|d| host.contains(d)) {
 		return Err(SmtpError::SkippedDomain(format!(
@@ -73,58 +76,54 @@ pub async fn check_smtp(
 		)));
 	}
 
-	// Headless checks. Please note that they take precedence over API checks.
-	#[cfg(feature = "headless")]
-	{
-		let webdriver_addr = env::var("RCH_WEBDRIVER_ADDR");
+	let webdriver_addr = env::var("RCH_WEBDRIVER_ADDR");
 
-		if is_outlook(&host) {
-			match &webdriver_addr {
-				Ok(a) => {
-					return outlook::headless::check_password_recovery(
-						to_email.to_string().as_str(),
-						a,
-					)
-					.await
-					.map_err(|err| err.into());
+	if is_hotmail(&host) {
+		match (&input.hotmail_verify_method, webdriver_addr) {
+			(HotmailVerifyMethod::OneDriveApi, _) => {
+				if is_microsoft365(&host) {
+					match outlook::microsoft365::check_microsoft365_api(to_email, input).await {
+						Ok(Some(smtp_details)) => return Ok(smtp_details),
+						// Continue in the event of an error/ambiguous result.
+						Err(err) => {
+							return Err(err.into());
+						}
+						_ => {}
+					}
 				}
-				_ => return Err(SmtpError::NoHeadlessNavigator),
 			}
-		} else if is_yahoo(&host) {
-			match &webdriver_addr {
-				Ok(a) => {
-					return yahoo::check_headless(to_email.to_string().as_str(), a)
-						.await
-						.map_err(|err| err.into());
-				}
-				_ => return Err(SmtpError::NoHeadlessNavigator),
-			}
-		}
-	}
-
-	// API checks
-	if input.gmail_use_api && is_gmail(&host) {
-		return gmail::check_gmail(to_email, input)
-			.await
-			.map_err(|err| err.into());
-	} else if input.yahoo_use_api && is_yahoo(&host) {
-		return yahoo::check_api(to_email, input)
-			.await
-			.map_err(|err| err.into());
-	} else if input.microsoft365_use_api && is_microsoft365(&host) {
-		match outlook::microsoft365::check_microsoft365_api(to_email, input).await {
-			Ok(Some(smtp_details)) => return Ok(smtp_details),
-			// Continue in the event of an error/ambiguous result.
-			Err(err) => {
-				log::debug!(
-					target: LOG_TARGET,
-					"[email={}] microsoft365 error: {:?}",
-					to_email,
-					err,
-				);
+			#[cfg(feature = "headless")]
+			(HotmailVerifyMethod::Headless, Ok(a)) => {
+				return outlook::headless::check_password_recovery(
+					to_email.to_string().as_str(),
+					&a,
+				)
+				.await
+				.map_err(|err| err.into());
 			}
 			_ => {}
-		}
+		};
+	} else if is_gmail(&host) {
+		if let GmailVerifyMethod::Api = &input.gmail_verify_method {
+			return gmail::check_gmail(to_email, input)
+				.await
+				.map_err(|err| err.into());
+		};
+	} else if is_yahoo(&host) {
+		match (&input.yahoo_verify_method, webdriver_addr) {
+			(YahooVerifyMethod::Api, _) => {
+				return yahoo::check_api(&to_email_str, input)
+					.await
+					.map_err(|e| e.into())
+			}
+			#[cfg(feature = "headless")]
+			(YahooVerifyMethod::Headless, Ok(a)) => {
+				return yahoo::check_headless(&to_email_str, &a)
+					.await
+					.map_err(|e| e.into())
+			}
+			_ => {}
+		};
 	}
 
 	check_smtp_with_retry(to_email, &host, port, domain, input, input.retries).await

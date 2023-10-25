@@ -76,8 +76,18 @@ pub async fn check_headless(to_email: &str, webdriver: &str) -> Result<SmtpDetai
 		.wait()
 		.for_element(Locator::Id("email-verify-challenge"))
 		.and_then(|_| async { Ok((true, false)) });
+	// "Select an option to sign in to your account"
+	let f5 = c
+		.wait()
+		.for_element(Locator::Id("challenge-selector-challenge"))
+		.and_then(|_| async { Ok((true, false)) });
 
-	let (is_deliverable, is_disabled) = f1.try_race(f2).try_race(f3).try_race(f4).await?;
+	let (is_deliverable, is_disabled) = f1
+		.try_race(f2)
+		.try_race(f3)
+		.try_race(f4)
+		.try_race(f5)
+		.await?;
 
 	if is_deliverable {
 		log::debug!(
