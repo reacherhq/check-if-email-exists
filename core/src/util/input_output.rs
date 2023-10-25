@@ -183,6 +183,9 @@ impl Default for CheckEmailInput {
 			smtp_port: 25,
 			smtp_security: SmtpSecurity::default(),
 			smtp_timeout: Some(Duration::from_secs(12)),
+			#[cfg(not(feature = "headless"))]
+			yahoo_use_api: true,
+			#[cfg(feature = "headless")]
 			yahoo_use_api: false,
 			#[cfg(feature = "headless")]
 			yahoo_use_headless: true,

@@ -113,6 +113,7 @@ mod tests {
 	// run chromedriver and remove the "#[ignore]".
 	// Also see: https://github.com/jonhoo/fantoccini
 	#[tokio::test]
+	#[ignore = "Run a webdriver server locally to test this"]
 	async fn test_yahoo_address() {
 		// Run 5 headless sessions with the below dummy emails.
 		for _ in 0..5 {
