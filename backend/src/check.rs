@@ -27,27 +27,17 @@ use super::sentry_util;
 /// inputs and error handling.
 pub async fn check_email(input: CheckEmailInput) -> CheckEmailOutput {
 	let hotmail_use_headless = env::var("RCH_HOTMAIL_USE_HEADLESS").ok();
-	let skipped_domains = vec![
-		// on @bluewin.ch
-		// - mx-v02.bluewin.ch.
-		".bluewin.ch.".into(),
-		// on @bluewin.ch
-		// - mxbw-bluewin-ch.hdb-cs04.ellb.ch.
-		"bluewin-ch.".into(),
-		// on @gmx.de, @gmx.ch, @gmx.net
-		".gmx.net.".into(),
-		// on @icloud.com
-		".mail.icloud.com.".into(),
-		// on @web.de
-		".web.de.".into(),
-		".zoho.com.".into(),
-	];
+	let from_email =
+		env::var("RCH_FROM_EMAIL").unwrap_or_else(|_| CheckEmailInput::default().from_email);
+	let hello_name =
+		env::var("RCH_HELLO_NAME").unwrap_or_else(|_| CheckEmailInput::default().hello_name);
 
 	let input = CheckEmailInput {
 		// If we want to override core check-if-email-exists's default values
 		// for CheckEmailInput for the backend, we do it here.
 		hotmail_use_headless,
-		skipped_domains,
+		from_email,
+		hello_name,
 		..input
 	};
 
