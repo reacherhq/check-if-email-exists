@@ -42,7 +42,7 @@ USER chrome
 ENV RUST_LOG=reacher=info
 ENV RCH_HTTP_HOST=0.0.0.0
 ENV PORT=8080
-ENV RCH_HOTMAIL_USE_HEADLESS=http://localhost:9515
+ENV RCH_WEBDRIVER_ADDR=http://localhost:9515
 # Bulk verification is disabled by default. Set to 1 to enable it.
 ENV RCH_ENABLE_BULK=0
 

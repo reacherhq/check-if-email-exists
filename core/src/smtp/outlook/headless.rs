@@ -111,7 +111,7 @@ mod tests {
 	use async_std::prelude::FutureExt;
 
 	// Ignoring this test as it requires a local process of WebDriver running on
-	// "http://localhost:4444". To debug the headless password recovery page,
+	// "http://localhost:9515". To debug the headless password recovery page,
 	// run chromedriver and remove the "#[ignore]".
 	// Also see: https://github.com/jonhoo/fantoccini
 	#[tokio::test]
@@ -121,13 +121,13 @@ mod tests {
 		// It should not error.
 		for _ in 0..10 {
 			// This email does not exist.
-			let res = check_password_recovery(&"test42134@hotmail.com", "http://localhost:4444")
+			let res = check_password_recovery(&"test42134@hotmail.com", "http://localhost:9515")
 				.await
 				.unwrap();
 			assert!(!res.is_deliverable);
 
 			// This email does exist.
-			let res = check_password_recovery("test@hotmail.com", "http://localhost:4444")
+			let res = check_password_recovery("test@hotmail.com", "http://localhost:9515")
 				.await
 				.unwrap();
 			assert!(res.is_deliverable);
@@ -142,8 +142,8 @@ mod tests {
 	#[ignore]
 	async fn test_parallel() {
 		// This email does not exist.
-		let f1 = check_password_recovery("foo@bar.baz", "http://localhost:4444");
-		let f2 = check_password_recovery("foo@bar.baz", "http://localhost:4444");
+		let f1 = check_password_recovery("foo@bar.baz", "http://localhost:9515");
+		let f2 = check_password_recovery("foo@bar.baz", "http://localhost:9515");
 
 		let f = f1.try_join(f2).await;
 		assert!(f.is_ok(), "{:?}", f);

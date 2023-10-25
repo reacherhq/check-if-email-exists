@@ -107,7 +107,7 @@ pub struct CheckEmailInput {
 	/// of connecting directly to their SMTP servers.
 	///
 	/// This assumes you have a WebDriver compatible process running, then pass
-	/// its endpoint, usually http://localhost:4444, into the environment
+	/// its endpoint, usually http://localhost:9515, into the environment
 	/// variable RCH_WEBDRIVER_ADDR. We recommend running chromedriver (and not
 	/// geckodriver) as it allows parallel requests.
 	///
@@ -135,7 +135,7 @@ pub struct CheckEmailInput {
 	/// connecting to the password recovery page instead of the SMTP server.
 	///
 	/// This assumes you have a WebDriver compatible process running, then pass
-	/// its endpoint, usually http://localhost:4444, into the environment
+	/// its endpoint, usually http://localhost:9515, into the environment
 	/// variable RCH_WEBDRIVER_ADDR. We recommend running chromedriver (and not
 	/// geckodriver) as it allows parallel requests.
 	///
