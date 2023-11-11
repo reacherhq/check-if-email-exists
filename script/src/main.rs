@@ -7,17 +7,15 @@ async fn main() -> Result<()> {
     dotenv::dotenv().expect("Unable to load environment variables from .env file");
 
     let db_url = std::env::var("DATABASE_URL").expect("Unable to read DATABASE_URL env var");
+    let days_old_str = std::env::var("DAYS_OLD").expect("Unable to read DAYS_OLD env var");
+    let days_old: i32 = days_old_str.parse().expect("Unable to parse DAYS_OLD as integer");
+
     let pool = PgPool::connect(&db_url).await?;
 
-    // Define a struct to represent the rows returned by the query
-    #[derive(sqlx::FromRow)]
-    struct JobId {
-        id: i32,
-    }
-
-    // Define the SQL query to identify job IDs where total_processed in email_results is equal to total_records in bulk_jobs
-    let job_ids_to_delete_query = r#"
-        SELECT b.id
+    // Fetch the list of job IDs that match the criteria
+    let interval_days: i32 = 1; // Set the interval to 1 for testing purposes, adjust as needed
+    let query = format!(
+        "SELECT b.id
         FROM bulk_jobs b
         JOIN (
             SELECT job_id, COUNT(*) as total_processed
@@ -25,35 +23,37 @@ async fn main() -> Result<()> {
             GROUP BY job_id
         ) e ON b.id = e.job_id
         WHERE b.total_records = e.total_processed
-    "#;
+        AND b.created_at <= current_date - interval '{} days'",
+        interval_days
+    );
 
-    // Fetch the list of job IDs that match the criteria
-    let job_ids_to_delete: Vec<JobId> = sqlx::query_as(job_ids_to_delete_query)
-        .fetch_all(&pool)
-        .await?;
+    let job_ids_to_delete: Vec<(i32,)> = sqlx::query_as(&query).fetch_all(&pool).await?;
 
-    for job_id in job_ids_to_delete {
-        // Before deleting from bulk_jobs, delete the corresponding records from email_results
-        let delete_email_results_query = "DELETE FROM email_results WHERE job_id = $1";
+    if !job_ids_to_delete.is_empty() {
+        // Before deleting from bulk_jobs, delete the corresponding records from email_results in a batch
+        let delete_email_results_query = "DELETE FROM email_results WHERE job_id = ANY($1::int[])";
 
-        // Execute the delete query for email_results
+        // Convert job_ids_to_delete to Vec<i32> before binding
+        let job_ids_to_delete_vec: Vec<i32> = job_ids_to_delete.iter().map(|&(id,)| id).collect();
+
+        // Execute the delete query for email_results in a batch
         sqlx::query(delete_email_results_query)
-            .bind(job_id.id)
+            .bind(&job_ids_to_delete_vec)
             .execute(&pool)
             .await?;
 
-        println!("Email results for job id {} deleted successfully.", job_id.id);
+        println!("Email results for job IDs {:?} deleted successfully.", job_ids_to_delete);
 
-        // Now, you can safely delete the record from bulk_jobs
-        let delete_bulk_jobs_query = "DELETE FROM bulk_jobs WHERE id = $1";
+        // Now, you can safely delete the records from bulk_jobs
+        let delete_bulk_jobs_query = "DELETE FROM bulk_jobs WHERE id = ANY($1::int[])";
 
-        // Execute the delete query for bulk_jobs
+        // Execute the delete query for bulk_jobs in a batch
         sqlx::query(delete_bulk_jobs_query)
-            .bind(job_id.id)
+            .bind(&job_ids_to_delete_vec)
             .execute(&pool)
             .await?;
 
-        println!("Bulk jobs record with id {} deleted successfully.", job_id.id);
+        println!("Bulk jobs records with IDs {:?} deleted successfully.", job_ids_to_delete);
     }
 
     Ok(())
