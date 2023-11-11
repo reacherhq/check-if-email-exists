@@ -11,3 +11,5 @@ dotenv = "0.15.0"
 tokio = { version = "1", features = ["full"] }
 sqlx-macros = "0.7.2"
 chrono = "0.4.31"
+log = "0.4"
+env_logger = "0.10.1"
