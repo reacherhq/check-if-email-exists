@@ -3,18 +3,5 @@ members = [
 	"backend",
 	"cli",
 	"core",
+	"script",
 ]
-
-[package]
-name = "script"
-version = "0.1.0"
-edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-sqlx = { version = "0.7.2", features = ["runtime-tokio-rustls", "postgres", "macros"] }
-dotenv = "0.15.0"
-tokio = { version = "1", features = ["full"] }
-sqlx-macros = "0.7.2"
-chrono = "0.4.31"
