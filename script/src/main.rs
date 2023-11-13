@@ -17,7 +17,6 @@ async fn main() -> Result<()> {
 	let pool = PgPool::connect(&db_url).await?;
 
 	// Fetch the list of job IDs that match the criteria
-	let interval_days: i32 = 1; // Set the interval to 1 for testing purposes, adjust as needed
 	let query = format!(
 		"SELECT b.id
         FROM bulk_jobs b
