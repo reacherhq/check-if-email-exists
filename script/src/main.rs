@@ -32,7 +32,7 @@ async fn main() -> Result<()> {
 
 	let job_ids_to_delete: Vec<(i32,)> = sqlx::query_as(&query).fetch_all(&pool).await?;
 
-	match (debug_mode, job_ids_to_delete.is_empty()) {
+	match (dry_mode, job_ids_to_delete.is_empty()) {
 		(true, _) => info!("Job ids to delete {:?}", job_ids_to_delete),
 		(false, true) => info!("No jobs to delete"),
 		(false, false) => {
