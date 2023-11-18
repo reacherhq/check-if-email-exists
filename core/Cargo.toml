@@ -19,7 +19,7 @@ async-smtp = { version = "0.6.0", features = ["socks5"] }
 async-std = "1.12.0"
 async-std-resolver = "0.21.2"
 fantoccini = { version = "0.19.3", optional = true }
-futures = { version = "0.3.27", optional = true }
+futures = { version = "0.3.28", optional = true }
 fast-socks5 = "0.9.1"
 levenshtein = "1.0.5"
 log = "0.4.20"
@@ -28,9 +28,9 @@ md5 = "0.7.0"
 once_cell = "1.18.0"
 pwned = "0.5.0"
 rand = { version = "0.8.5", features = ["small_rng"] }
-regex = "1.9.4"
+regex = "1.10.2"
 reqwest = { version = "0.11.22", features = ["json", "socks"] }
-serde = { version = "1.0.164", features = ["derive"] }
+serde = { version = "1.0.192", features = ["derive"] }
 serde_json = "1.0.107"
 trust-dns-proto = "0.21.2"
 

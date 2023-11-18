@@ -2658,16 +2658,6 @@ dependencies = [
 
 [[package]]
 name = "sqlx"
-version = "0.6.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f8de3b03a925878ed54a954f621e64bf55a3c1bd29652d0d1a17830405350188"
-dependencies = [
- "sqlx-core 0.6.3",
- "sqlx-macros 0.6.3",
-]
-
-[[package]]
-name = "sqlx"
 version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0e50c216e3624ec8e7ecd14c6a6a6370aad6ee5d8cfc3ab30b5162eeeef2ed33"
@@ -2678,6 +2668,7 @@ dependencies = [
  "sqlx-postgres",
  "sqlx-sqlite",
 ]
+
 
 [[package]]
 name = "sqlx-core"
@@ -3096,7 +3087,18 @@ checksum = "266b2e40bc00e5a6c09c3584011e08b06f123c00362c92b975ba9843aaaa14b8"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.38",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "time"
+version = "0.1.44"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6db9e6914ab8b1ae1c260a4ae7a49b6c5611b40328a735b21862567685e73255"
+dependencies = [
+ "libc",
+ "wasi 0.10.0+wasi-snapshot-preview1",
+ "winapi",
 ]
 
 [[package]]
