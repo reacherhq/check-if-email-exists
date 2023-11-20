@@ -27,5 +27,5 @@ sqlx = { version = "0.6", features = [
 ] }
 sqlxmq = "0.4"
 tokio = { version = "1.28", features = ["macros"] }
-uuid = "1.5"
+uuid = "1.6"
 warp = "0.3"
