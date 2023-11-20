@@ -13,4 +13,6 @@ sqlx-macros = "0.7.2"
 chrono = "0.4.31"
 log = "0.4"
 env_logger = "0.10.1"
+
+[target.'cfg(target_os = "linux")'.dependencies]
 openssl = { version = "0.10", features = ["vendored"] }
