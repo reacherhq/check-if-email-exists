@@ -4,5 +4,4 @@ members = [
 	"backend",
 	"cli",
 	"core",
-	"script",
 ]
