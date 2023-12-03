@@ -113,3 +113,14 @@ $ RUST_LOG=info ./target/release/reacher_backend
 ```
 
 The server will then be listening on `http://127.0.0.1:8080`.
+
+## Prune DB
+
+-   Start a PostgreSQL Server
+-   Start Reacher with Bulk Endpoints enabled.
+    -   e.g `.env` :
+        RCH_ENABLE_BULK=1
+        DATABASE_URL="postgresql://user:temporary@localhost"
+-   Inside `.env` set `DAYS_OLD` e.g 1,2 etc
+-   Send a request to the Bulk End point and wait for the job id to be allotted.
+-   Build and Run `script` with `cargo run --bin prune_db`

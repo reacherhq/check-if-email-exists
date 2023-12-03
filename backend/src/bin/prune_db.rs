@@ -8,7 +8,7 @@ async fn main() -> Result<()> {
 	env_logger::init(); // Initialize the logger
 
 	let db_url = std::env::var("DATABASE_URL").expect("Unable to read DATABASE_URL env var");
-	let dry_mode: bool = std::env::var("DEBUG_MODE").is_ok();
+	let dry_mode: bool = std::env::var("DRY_RUN").is_ok();
 	let days_old_str = std::env::var("DAYS_OLD").expect("Unable to read DAYS_OLD env var");
 	let days_old: i32 = days_old_str
 		.parse()
