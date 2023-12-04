@@ -19,7 +19,7 @@ async-smtp = { version = "0.6.0", features = ["socks5"] }
 async-std = "1.12.0"
 async-std-resolver = "0.21.2"
 fantoccini = { version = "0.19.3", optional = true }
-futures = { version = "0.3.28", optional = true }
+futures = { version = "0.3.29", optional = true }
 fast-socks5 = "0.9.1"
 levenshtein = "1.0.5"
 log = "0.4.20"
