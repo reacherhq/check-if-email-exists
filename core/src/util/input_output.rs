@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use std::env;
 use std::net::IpAddr;
 use std::str::FromStr;
 use std::time::{Duration, SystemTime};
@@ -427,8 +428,12 @@ pub enum Reachable {
 	Unknown,
 }
 
+/// Details about the email verification used for debugging.
 #[derive(Debug)]
 pub struct DebugDetails {
+	/// The name of the server that performed the email verification.
+	/// It's generally passed as an environment variable RCH_BACKEND_NAME.
+	pub server_name: String,
 	/// The IP address of the server that performed the email verification.
 	pub server_ip: Result<IpAddr, LocalIpError>,
 	/// The time when the email verification started.
@@ -455,6 +460,7 @@ impl Serialize for DebugDetails {
 				Err(e) => e.to_string(),
 			},
 		)?;
+		map.serialize_entry("server_name", &self.server_name)?;
 		map.end()
 	}
 }
@@ -462,6 +468,7 @@ impl Serialize for DebugDetails {
 impl Default for DebugDetails {
 	fn default() -> Self {
 		Self {
+			server_name: env::var("RCH_BACKEND_NAME").unwrap_or_else(|_| String::new()),
 			start_time: SystemTime::now().into(),
 			end_time: SystemTime::now().into(),
 			duration: Duration::default(),
