@@ -48,18 +48,13 @@ pub struct SmtpConnection {
 	pub host: String,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 pub enum SmtpMethod {
 	SmtpConnection(SmtpConnection),
 	Api,
 	Headless,
+	#[default]
 	Skipped,
-}
-
-impl Default for SmtpMethod {
-	fn default() -> Self {
-		SmtpMethod::Skipped
-	}
 }
 
 /// Details that we gathered from connecting to this email via SMTP
