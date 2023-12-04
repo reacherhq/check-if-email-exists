@@ -74,6 +74,7 @@ use misc::{check_misc, MiscDetails};
 use mx::check_mx;
 use rand::Rng;
 use smtp::{check_smtp, SmtpDetails, SmtpError};
+use std::time::{Duration, SystemTime};
 use syntax::{check_syntax, get_similar_mail_provider};
 use trust_dns_proto::rr::rdata::MX;
 pub use util::constants::LOG_TARGET;
@@ -111,6 +112,7 @@ fn calculate_reachable(misc: &MiscDetails, smtp: &Result<SmtpDetails, SmtpError>
 /// Returns a `CheckEmailOutput` output, whose `is_reachable` field is one of
 /// `Safe`, `Invalid`, `Risky` or `Unknown`.
 pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
+	let start_time = SystemTime::now();
 	let to_email = &input.to_email;
 
 	log::debug!(
@@ -233,6 +235,7 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		get_similar_mail_provider(&mut my_syntax);
 	}
 
+	let end_time = SystemTime::now();
 	CheckEmailOutput {
 		input: to_email.to_string(),
 		is_reachable: calculate_reachable(&my_misc, &my_smtp),
@@ -240,5 +243,13 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		mx: Ok(my_mx),
 		smtp: my_smtp,
 		syntax: my_syntax,
+		debug: DebugDetails {
+			start_time: start_time.into(),
+			end_time: end_time.into(),
+			duration: end_time
+				.duration_since(start_time)
+				.unwrap_or(Duration::from_secs(0)),
+			..Default::default()
+		},
 	}
 }

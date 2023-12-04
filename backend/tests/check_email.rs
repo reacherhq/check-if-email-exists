@@ -23,8 +23,8 @@ use reacher_backend::routes::create_routes;
 use warp::http::StatusCode;
 use warp::test::request;
 
-const FOO_BAR_RESPONSE: &str = r#"{"input":"foo@bar","is_reachable":"invalid","misc":{"is_disposable":false,"is_role_account":false,"gravatar_url":null,"haveibeenpwned":null},"mx":{"accepts_mail":false,"records":[]},"smtp":{"can_connect_smtp":false,"has_full_inbox":false,"is_catch_all":false,"is_deliverable":false,"is_disabled":false},"syntax":{"address":null,"domain":"","is_valid_syntax":false,"username":"","normalized_email":null,"suggestion":null}}"#;
-const FOO_BAR_BAZ_RESPONSE: &str = r#"{"input":"foo@bar.baz","is_reachable":"invalid","misc":{"is_disposable":false,"is_role_account":false,"gravatar_url":null,"haveibeenpwned":null},"mx":{"accepts_mail":false,"records":[]},"smtp":{"can_connect_smtp":false,"has_full_inbox":false,"is_catch_all":false,"is_deliverable":false,"is_disabled":false},"syntax":{"address":"foo@bar.baz","domain":"bar.baz","is_valid_syntax":true,"username":"foo","normalized_email":"foo@bar.baz","suggestion":null}}"#;
+const FOO_BAR_RESPONSE: &str = r#"{"input":"foo@bar","is_reachable":"invalid","misc":{"is_disposable":false,"is_role_account":false,"gravatar_url":null,"haveibeenpwned":null},"mx":{"accepts_mail":false,"records":[]},"smtp":{"can_connect_smtp":false,"has_full_inbox":false,"is_catch_all":false,"is_deliverable":false,"is_disabled":false,"method":"Skipped"},"syntax":{"address":null,"domain":"","is_valid_syntax":false,"username":"","normalized_email":null,"suggestion":null}"#;
+const FOO_BAR_BAZ_RESPONSE: &str = r#"{"input":"foo@bar.baz","is_reachable":"invalid","misc":{"is_disposable":false,"is_role_account":false,"gravatar_url":null,"haveibeenpwned":null},"mx":{"accepts_mail":false,"records":[]},"smtp":{"can_connect_smtp":false,"has_full_inbox":false,"is_catch_all":false,"is_deliverable":false,"is_disabled":false,"method":"Skipped"},"syntax":{"address":"foo@bar.baz","domain":"bar.baz","is_valid_syntax":true,"username":"foo","normalized_email":"foo@bar.baz","suggestion":null}"#;
 
 #[tokio::test]
 async fn test_input_foo_bar() {
@@ -39,7 +39,8 @@ async fn test_input_foo_bar() {
 		.await;
 
 	assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
-	assert_eq!(resp.body(), FOO_BAR_RESPONSE);
+	println!("{:?}", resp.body());
+	assert!(resp.body().starts_with(FOO_BAR_RESPONSE.as_bytes()));
 }
 
 #[tokio::test]
@@ -55,7 +56,7 @@ async fn test_input_foo_bar_baz() {
 		.await;
 
 	assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
-	assert_eq!(resp.body(), FOO_BAR_BAZ_RESPONSE);
+	assert!(resp.body().starts_with(FOO_BAR_BAZ_RESPONSE.as_bytes()));
 }
 
 #[tokio::test]
@@ -102,7 +103,7 @@ async fn test_reacher_secret_correct_secret() {
 		.await;
 
 	assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
-	assert_eq!(resp.body(), FOO_BAR_RESPONSE);
+	assert!(resp.body().starts_with(FOO_BAR_RESPONSE.as_bytes()));
 }
 
 #[tokio::test]

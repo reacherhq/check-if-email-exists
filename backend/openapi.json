@@ -57,7 +57,8 @@
 												"has_full_inbox": false,
 												"is_catch_all": false,
 												"is_deliverable": false,
-												"is_disabled": false
+												"is_disabled": false,
+												"method": "SmtpConnection"
 											},
 											"syntax": {
 												"domain": "gmail.com",
@@ -180,15 +181,18 @@
 					},
 					"syntax": {
 						"$ref": "#/components/schemas/SyntaxDetails"
+					},
+					"debug": {
+						"$ref": "#/components/schemas/DebugDetails"
 					}
 				},
 				"required": [
 					"input",
+					"is_reachable",
 					"misc",
 					"mx",
 					"smtp",
-					"syntax",
-					"is_reachable"
+					"syntax"
 				]
 			},
 			"Error": {
@@ -270,6 +274,18 @@
 					"is_disabled": {
 						"type": "boolean",
 						"description": "Has this email address been disabled by the email provider?"
+					},
+					"method": {
+						"x-stoplight": {
+							"id": "axwtm6b7ao9n6"
+						},
+						"enum": [
+							"Headless",
+							"Api",
+							"Skipped",
+							"SmtpConnection"
+						],
+						"description": "The method used to verify this email."
 					}
 				},
 				"required": [
@@ -277,7 +293,8 @@
 					"has_full_inbox",
 					"is_catch_all",
 					"is_deliverable",
-					"is_disabled"
+					"is_disabled",
+					"method"
 				]
 			},
 			"SyntaxDetails": {
@@ -314,12 +331,18 @@
 			},
 			"HotmailVerifyMethod": {
 				"type": "string",
+				"x-stoplight": {
+					"id": "o6xocxf6tktur"
+				},
 				"title": "HotmailVerifyMethod",
 				"enum": ["Api", "Headless", "Smtp"],
 				"description": "An enum to describe how we verify Hotmail emails."
 			},
 			"GmailVerifyMethod": {
 				"type": "string",
+				"x-stoplight": {
+					"id": "jbq83vpkfcmth"
+				},
 				"title": "GmailVerifyMethod",
 				"enum": ["Api", "Smtp"],
 				"description": "An enum to describe how we verify Gmail emails.",
@@ -433,6 +456,42 @@
 					}
 				},
 				"required": ["secs", "nanos"]
+			},
+			"DebugDetails": {
+				"title": "DebugDetails",
+				"x-stoplight": {
+					"id": "ndv3lpqeuypvn"
+				},
+				"type": "object",
+				"properties": {
+					"start_time": {
+						"type": "string",
+						"x-stoplight": {
+							"id": "hxi446woaebm1"
+						}
+					},
+					"end_time": {
+						"type": "string",
+						"x-stoplight": {
+							"id": "m4p986hhzuzbl"
+						}
+					},
+					"duration": {
+						"$ref": "#/components/schemas/Duration"
+					},
+					"server_ip": {
+						"type": "string",
+						"x-stoplight": {
+							"id": "ld3cp67qd2nx8"
+						}
+					},
+					"server_name": {
+						"type": "string",
+						"x-stoplight": {
+							"id": "yy9pz1lxrr4si"
+						}
+					}
+				}
 			}
 		},
 		"securitySchemes": {

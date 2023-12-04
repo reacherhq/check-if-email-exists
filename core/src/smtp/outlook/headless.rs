@@ -23,7 +23,7 @@ use futures::TryFutureExt;
 use crate::{
 	smtp::{
 		headless::{create_headless_client, HeadlessError},
-		SmtpDetails,
+		SmtpDetails, SmtpMethod,
 	},
 	LOG_TARGET,
 };
@@ -102,6 +102,7 @@ pub async fn check_password_recovery(
 		is_catch_all: false,
 		is_deliverable,
 		is_disabled: false,
+		method: SmtpMethod::Headless,
 	})
 }
 
