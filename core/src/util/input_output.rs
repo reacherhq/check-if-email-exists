@@ -15,13 +15,11 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use std::env;
-use std::net::IpAddr;
 use std::str::FromStr;
 use std::time::{Duration, SystemTime};
 
 use async_smtp::{ClientSecurity, ClientTlsParameters};
 use chrono::{DateTime, Utc};
-use local_ip_address::{local_ip, Error as LocalIpError};
 use serde::{ser::SerializeMap, Deserialize, Serialize, Serializer};
 
 use crate::misc::{MiscDetails, MiscError};
@@ -429,40 +427,17 @@ pub enum Reachable {
 }
 
 /// Details about the email verification used for debugging.
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct DebugDetails {
 	/// The name of the server that performed the email verification.
 	/// It's generally passed as an environment variable RCH_BACKEND_NAME.
 	pub server_name: String,
-	/// The IP address of the server that performed the email verification.
-	pub server_ip: Result<IpAddr, LocalIpError>,
 	/// The time when the email verification started.
 	pub start_time: DateTime<Utc>,
 	/// The time when the email verification ended.
 	pub end_time: DateTime<Utc>,
 	/// The duration of the email verification.
 	pub duration: Duration,
-}
-
-impl Serialize for DebugDetails {
-	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-	where
-		S: Serializer,
-	{
-		let mut map = serializer.serialize_map(Some(4))?;
-		map.serialize_entry("start_time", &self.start_time)?;
-		map.serialize_entry("end_time", &self.end_time)?;
-		map.serialize_entry("duration", &self.duration)?;
-		map.serialize_entry(
-			"server_ip",
-			&match &self.server_ip {
-				Ok(ip) => ip.to_string(),
-				Err(e) => e.to_string(),
-			},
-		)?;
-		map.serialize_entry("server_name", &self.server_name)?;
-		map.end()
-	}
 }
 
 impl Default for DebugDetails {
@@ -472,7 +447,6 @@ impl Default for DebugDetails {
 			start_time: SystemTime::now().into(),
 			end_time: SystemTime::now().into(),
 			duration: Duration::default(),
-			server_ip: local_ip(),
 		}
 	}
 }

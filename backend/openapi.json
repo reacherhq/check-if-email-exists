@@ -484,12 +484,6 @@
 						"x-stoplight": {
 							"id": "ld3cp67qd2nx8"
 						}
-					},
-					"server_name": {
-						"type": "string",
-						"x-stoplight": {
-							"id": "yy9pz1lxrr4si"
-						}
 					}
 				}
 			}
