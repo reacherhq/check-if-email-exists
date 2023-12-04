@@ -2049,7 +2049,7 @@ dependencies = [
  "sqlx",
  "sqlxmq",
  "tokio",
- "uuid 1.5.0",
+ "uuid 1.6.1",
  "warp",
 ]
 
@@ -2579,7 +2579,7 @@ dependencies = [
  "tokio-stream",
  "tracing",
  "url",
- "uuid 1.5.0",
+ "uuid 1.6.1",
 ]
 
 [[package]]
@@ -2662,7 +2662,7 @@ dependencies = [
  "stringprep",
  "thiserror",
  "tracing",
- "uuid 1.5.0",
+ "uuid 1.6.1",
  "whoami",
 ]
 
@@ -2703,7 +2703,7 @@ dependencies = [
  "stringprep",
  "thiserror",
  "tracing",
- "uuid 1.5.0",
+ "uuid 1.6.1",
  "whoami",
 ]
 
@@ -2729,7 +2729,7 @@ dependencies = [
  "tracing",
  "url",
  "urlencoding",
- "uuid 1.5.0",
+ "uuid 1.6.1",
 ]
 
 [[package]]
@@ -2747,7 +2747,7 @@ dependencies = [
  "sqlx",
  "sqlxmq_macros",
  "tokio",
- "uuid 1.5.0",
+ "uuid 1.6.1",
 ]
 
 [[package]]
@@ -3216,9 +3216,9 @@ dependencies = [
 
 [[package]]
 name = "uuid"
-version = "1.5.0"
+version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "88ad59a7560b41a70d191093a945f0b87bc1deeda46fb237479708a1d6b6cdfc"
+checksum = "5e395fcf16a7a3d8127ec99782007af141946b4795001f876d54fb0d55978560"
 dependencies = [
  "getrandom",
 ]
