@@ -26,6 +26,6 @@ sqlx = { version = "0.6", features = [
     "migrate",
 ] }
 sqlxmq = "0.4"
-tokio = { version = "1.28", features = ["macros"] }
+tokio = { version = "1.29", features = ["macros"] }
 uuid = "1.5"
 warp = "0.3"
