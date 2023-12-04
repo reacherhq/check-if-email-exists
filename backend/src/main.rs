@@ -22,7 +22,7 @@ use dotenv::dotenv;
 use reacher_backend::routes::{bulk::email_verification_task, create_routes};
 use reacher_backend::sentry_util::{setup_sentry, CARGO_PKG_VERSION};
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
-use sqlxmq::{JobRegistry, OwnedHandle};
+use sqlxmq::{JobRegistry, JobRunnerHandle};
 use std::{env, net::IpAddr};
 use warp::Filter;
 
@@ -78,7 +78,7 @@ pub async fn create_db() -> Result<Pool<Postgres>, sqlx::Error> {
 }
 
 /// Create a job registry with one task: the email verification task.
-async fn create_job_registry(pool: &Pool<Postgres>) -> Result<OwnedHandle, sqlx::Error> {
+async fn create_job_registry(pool: &Pool<Postgres>) -> Result<JobRunnerHandle, sqlx::Error> {
 	let min_task_conc = env::var("RCH_MINIMUM_TASK_CONCURRENCY").map_or(10, |var| {
 		var.parse::<usize>()
 			.expect("Environment variable RCH_MINIMUM_TASK_CONCURRENCY should parse to usize")
