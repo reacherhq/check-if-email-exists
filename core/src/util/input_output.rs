@@ -14,10 +14,13 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use std::net::IpAddr;
 use std::str::FromStr;
-use std::time::Duration;
+use std::time::{Duration, SystemTime};
 
 use async_smtp::{ClientSecurity, ClientTlsParameters};
+use chrono::{DateTime, Utc};
+use local_ip_address::{local_ip, Error as LocalIpError};
 use serde::{ser::SerializeMap, Deserialize, Serialize, Serializer};
 
 use crate::misc::{MiscDetails, MiscError};
@@ -424,6 +427,49 @@ pub enum Reachable {
 	Unknown,
 }
 
+#[derive(Debug)]
+pub struct DebugDetails {
+	/// The IP address of the server that performed the email verification.
+	pub server_ip: Result<IpAddr, LocalIpError>,
+	/// The time when the email verification started.
+	pub start_time: DateTime<Utc>,
+	/// The time when the email verification ended.
+	pub end_time: DateTime<Utc>,
+	/// The duration of the email verification.
+	pub duration: Duration,
+}
+
+impl Serialize for DebugDetails {
+	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+	where
+		S: Serializer,
+	{
+		let mut map = serializer.serialize_map(Some(4))?;
+		map.serialize_entry("start_time", &self.start_time)?;
+		map.serialize_entry("end_time", &self.end_time)?;
+		map.serialize_entry("duration", &self.duration)?;
+		map.serialize_entry(
+			"server_ip",
+			&match &self.server_ip {
+				Ok(ip) => ip.to_string(),
+				Err(e) => e.to_string(),
+			},
+		)?;
+		map.end()
+	}
+}
+
+impl Default for DebugDetails {
+	fn default() -> Self {
+		Self {
+			start_time: SystemTime::now().into(),
+			end_time: SystemTime::now().into(),
+			duration: Duration::default(),
+			server_ip: local_ip(),
+		}
+	}
+}
+
 /// The result of the [check_email](check_email) function.
 #[derive(Debug)]
 pub struct CheckEmailOutput {
@@ -438,6 +484,8 @@ pub struct CheckEmailOutput {
 	pub smtp: Result<SmtpDetails, SmtpError>,
 	/// Details about the email address.
 	pub syntax: SyntaxDetails,
+	/// Details about the email verification used for debugging.
+	pub debug: DebugDetails,
 }
 
 impl Default for CheckEmailOutput {
@@ -449,6 +497,7 @@ impl Default for CheckEmailOutput {
 			mx: Ok(MxDetails::default()),
 			smtp: Ok(SmtpDetails::default()),
 			syntax: SyntaxDetails::default(),
+			debug: DebugDetails::default(),
 		}
 	}
 }
@@ -503,13 +552,14 @@ impl Serialize for CheckEmailOutput {
 			)?,
 		}
 		map.serialize_entry("syntax", &self.syntax)?;
+		map.serialize_entry("debug", &self.debug)?;
 		map.end()
 	}
 }
 
 #[cfg(test)]
 mod tests {
-	use super::CheckEmailOutput;
+	use super::{CheckEmailOutput, DebugDetails};
 	use async_smtp::smtp::response::{Category, Code, Detail, Response, Severity};
 
 	#[test]
@@ -533,6 +583,7 @@ mod tests {
 				mx: Ok(super::MxDetails::default()),
 				syntax: super::SyntaxDetails::default(),
 				smtp: Err(super::SmtpError::SmtpError(r.into())),
+				debug: DebugDetails::default(),
 			}
 		}
 

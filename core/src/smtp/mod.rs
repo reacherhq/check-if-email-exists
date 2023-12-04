@@ -43,6 +43,25 @@ use self::{
 	yahoo::is_yahoo,
 };
 
+#[derive(Debug, Default, Deserialize, Serialize)]
+pub struct SmtpConnection {
+	pub host: String,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub enum SmtpMethod {
+	SmtpConnection(SmtpConnection),
+	Api,
+	Headless,
+	Skipped,
+}
+
+impl Default for SmtpMethod {
+	fn default() -> Self {
+		SmtpMethod::Skipped
+	}
+}
+
 /// Details that we gathered from connecting to this email via SMTP
 #[derive(Debug, Default, Deserialize, Serialize)]
 pub struct SmtpDetails {
@@ -56,6 +75,7 @@ pub struct SmtpDetails {
 	pub is_deliverable: bool,
 	/// Is the email blocked or disabled by the provider?
 	pub is_disabled: bool,
+	pub method: SmtpMethod,
 }
 
 /// Get all email details we can from one single `EmailAddress`, without
