@@ -277,9 +277,6 @@
 					"is_disabled": {
 						"type": "boolean",
 						"description": "Has this email address been disabled by the email provider?"
-					},
-					"verif_method": {
-						"$ref": "#/components/schemas/VerifMethod"
 					}
 				},
 				"required": [
@@ -287,8 +284,7 @@
 					"has_full_inbox",
 					"is_catch_all",
 					"is_deliverable",
-					"is_disabled",
-					"verif_method"
+					"is_disabled"
 				]
 			},
 			"SyntaxDetails": {
@@ -326,7 +322,7 @@
 			"HotmailVerifMethod": {
 				"type": "string",
 				"x-stoplight": {
-					"id": "tiy37w0jp5x13"
+					"id": "ntdugsleyotut"
 				},
 				"title": "HotmailVerifMethod",
 				"enum": ["Api", "Headless", "Smtp"],
@@ -335,7 +331,7 @@
 			"GmailVerifMethod": {
 				"type": "string",
 				"x-stoplight": {
-					"id": "2p7yqzxi6n3bj"
+					"id": "xo5r48yhtxiwr"
 				},
 				"title": "GmailVerifMethod",
 				"enum": ["Api", "Smtp"],
@@ -430,12 +426,56 @@
 						"description": "Password to pass to proxy authentication."
 					}
 				},
-				"required": ["host", "port"]
+				"required": ["host", "port"],
+				"description": "Proxy information for email verification."
+			},
+			"DebugDetails": {
+				"title": "DebugDetails",
+				"x-stoplight": {
+					"id": "4wxlk39h8v9kz"
+				},
+				"type": "object",
+				"properties": {
+					"start_time": {
+						"type": "string",
+						"x-stoplight": {
+							"id": "60i65k60m8e8d"
+						},
+						"description": "The time when the email verification started."
+					},
+					"end_time": {
+						"type": "string",
+						"x-stoplight": {
+							"id": "zw4ccbvwsoh6q"
+						},
+						"description": "The time when the email verification ended."
+					},
+					"duration": {
+						"$ref": "#/components/schemas/Duration"
+					},
+					"server_name": {
+						"type": "string",
+						"x-stoplight": {
+							"id": "2jrbdecvqh4t5"
+						},
+						"description": "The name of the server that performed the email verification."
+					},
+					"smtp": {
+						"$ref": "#/components/schemas/DebugDetailsSmtp"
+					}
+				},
+				"required": [
+					"start_time",
+					"end_time",
+					"duration",
+					"server_name",
+					"smtp"
+				]
 			},
 			"Duration": {
 				"title": "Duration",
 				"x-stoplight": {
-					"id": "kwbhwi9fkpg6q"
+					"id": "bg9y0iez4zati"
 				},
 				"type": "object",
 				"description": "An object representing a duration (seconds + nanoseconds).",
@@ -451,46 +491,29 @@
 				},
 				"required": ["secs", "nanos"]
 			},
-			"DebugDetails": {
-				"title": "DebugDetails",
+			"DebugDetailsSmtp": {
+				"title": "DebugDetailsSmtp",
 				"x-stoplight": {
-					"id": "jhror15zeepgx"
+					"id": "2a90bzapppo0j"
 				},
 				"type": "object",
 				"properties": {
-					"start_time": {
-						"type": "string",
-						"x-stoplight": {
-							"id": "ms8ftx9vwth1a"
-						}
-					},
-					"end_time": {
-						"type": "string",
-						"x-stoplight": {
-							"id": "g2kydtwtmr7po"
-						}
-					},
-					"duration": {
-						"$ref": "#/components/schemas/Duration"
-					},
-					"server_ip": {
-						"type": "string",
-						"x-stoplight": {
-							"id": "ktn104e8oyu6d"
-						}
+					"verif_method": {
+						"$ref": "#/components/schemas/VerifMethod"
 					}
-				}
+				},
+				"description": "Smtp details used for debugging, such as which method is used."
 			},
 			"VerifMethod": {
 				"title": "VerifMethod",
 				"x-stoplight": {
-					"id": "yfa2hjmyy321x"
+					"id": "9xw9e1jwti230"
 				},
 				"type": "object",
 				"properties": {
 					"type": {
 						"x-stoplight": {
-							"id": "dzmw4acub9xp6"
+							"id": "4ogsz639tcdb6"
 						},
 						"enum": ["Smtp", "Headless", "Api", "Skipped"],
 						"description": "The method used to perform the email verification"
@@ -498,19 +521,20 @@
 					"host": {
 						"type": "string",
 						"x-stoplight": {
-							"id": "nvnjrm1137x96"
+							"id": "lxbxckircn0sk"
 						},
 						"description": "If `type` is `SmtpConnection`, the hostname that Reacher connected to."
 					},
 					"port": {
 						"type": "number",
 						"x-stoplight": {
-							"id": "xpxzvllzxxyyn"
+							"id": "xqfdjyoiodq23"
 						},
 						"description": "If `type` is `SmtpConnection`, the port that Reacher connected to."
 					}
 				},
-				"required": ["type"]
+				"required": ["type"],
+				"description": "The verification method used for the email."
 			}
 		},
 		"securitySchemes": {

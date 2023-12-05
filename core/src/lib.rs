@@ -219,7 +219,7 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		mx_records[mx_records.len() - 1]
 	};
 
-	let my_smtp = check_smtp(
+	let (my_smtp, smtp_debug) = check_smtp(
 		my_syntax
 			.address
 			.as_ref()
@@ -249,6 +249,7 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 			duration: end_time
 				.duration_since(start_time)
 				.unwrap_or(Duration::from_secs(0)),
+			smtp: smtp_debug,
 			..Default::default()
 		},
 	}

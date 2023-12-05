@@ -20,10 +20,7 @@ use async_std::prelude::FutureExt;
 use fantoccini::Locator;
 use futures::TryFutureExt;
 
-use crate::smtp::{
-	headless::{create_headless_client, HeadlessError},
-	VerifMethod,
-};
+use crate::smtp::headless::{create_headless_client, HeadlessError};
 use crate::{smtp::SmtpDetails, LOG_TARGET};
 
 /// Check if a Hotmail/Outlook email exists by connecting to the password
@@ -114,7 +111,6 @@ pub async fn check_headless(to_email: &str, webdriver: &str) -> Result<SmtpDetai
 		is_catch_all: false,
 		is_deliverable,
 		is_disabled,
-		verif_method: VerifMethod::Headless,
 	})
 }
 

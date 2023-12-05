@@ -24,7 +24,7 @@ use serde::{ser::SerializeMap, Deserialize, Serialize, Serializer};
 
 use crate::misc::{MiscDetails, MiscError};
 use crate::mx::{MxDetails, MxError};
-use crate::smtp::{SmtpDetails, SmtpError, SmtpErrorDesc};
+use crate::smtp::{SmtpDebug, SmtpDetails, SmtpError, SmtpErrorDesc};
 use crate::syntax::SyntaxDetails;
 
 /// Perform the email verification via a specified proxy. The usage of a proxy
@@ -438,6 +438,8 @@ pub struct DebugDetails {
 	pub end_time: DateTime<Utc>,
 	/// The duration of the email verification.
 	pub duration: Duration,
+	/// Details about the email verification used for debugging.
+	pub smtp: SmtpDebug,
 }
 
 impl Default for DebugDetails {
@@ -447,6 +449,7 @@ impl Default for DebugDetails {
 			start_time: SystemTime::now().into(),
 			end_time: SystemTime::now().into(),
 			duration: Duration::default(),
+			smtp: SmtpDebug::default(),
 		}
 	}
 }

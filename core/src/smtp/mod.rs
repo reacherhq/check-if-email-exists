@@ -43,7 +43,7 @@ use self::{
 	yahoo::is_yahoo,
 };
 
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, PartialEq, Serialize)]
 pub struct SmtpConnection {
 	/// The host we connected to via SMTP.
 	pub host: String,
@@ -51,7 +51,7 @@ pub struct SmtpConnection {
 	pub port: u16,
 }
 
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(tag = "type")]
 pub enum VerifMethod {
 	/// Email verification was done via SMTP.
@@ -78,6 +78,11 @@ pub struct SmtpDetails {
 	pub is_deliverable: bool,
 	/// Is the email blocked or disabled by the provider?
 	pub is_disabled: bool,
+}
+
+#[derive(Debug, Default, Deserialize, Serialize)]
+pub struct SmtpDebug {
+	/// The verification method used for the email.
 	pub verif_method: VerifMethod,
 }
 
@@ -89,14 +94,19 @@ pub async fn check_smtp(
 	port: u16,
 	domain: &str,
 	input: &CheckEmailInput,
-) -> Result<SmtpDetails, SmtpError> {
+) -> (Result<SmtpDetails, SmtpError>, SmtpDebug) {
 	let host = host.to_string();
 	let to_email_str = to_email.to_string();
 
 	if input.skipped_domains.iter().any(|d| host.contains(d)) {
-		return Err(SmtpError::SkippedDomain(format!(
-			"Reacher currently cannot verify emails from @{domain}"
-		)));
+		return (
+			Err(SmtpError::SkippedDomain(format!(
+				"Reacher currently cannot verify emails from @{domain}"
+			))),
+			SmtpDebug {
+				verif_method: VerifMethod::Skipped,
+			},
+		);
 	}
 
 	let webdriver_addr = env::var("RCH_WEBDRIVER_ADDR");
@@ -106,10 +116,24 @@ pub async fn check_smtp(
 			(HotmailVerifMethod::OneDriveApi, _) => {
 				if is_microsoft365(&host) {
 					match outlook::microsoft365::check_microsoft365_api(to_email, input).await {
-						Ok(Some(smtp_details)) => return Ok(smtp_details),
+						Ok(Some(smtp_details)) => {
+							return {
+								(
+									Ok(smtp_details),
+									SmtpDebug {
+										verif_method: VerifMethod::Api,
+									},
+								)
+							}
+						}
 						// Continue in the event of an error/ambiguous result.
 						Err(err) => {
-							return Err(err.into());
+							return (
+								Err(err.into()),
+								SmtpDebug {
+									verif_method: VerifMethod::Api,
+								},
+							);
 						}
 						_ => {}
 					}
@@ -117,44 +141,66 @@ pub async fn check_smtp(
 			}
 			#[cfg(feature = "headless")]
 			(HotmailVerifMethod::Headless, Ok(a)) => {
-				return outlook::headless::check_password_recovery(
-					to_email.to_string().as_str(),
-					&a,
-				)
-				.await
-				.map_err(|err| err.into());
+				return (
+					outlook::headless::check_password_recovery(to_email.to_string().as_str(), &a)
+						.await
+						.map_err(|err| err.into()),
+					SmtpDebug {
+						verif_method: VerifMethod::Headless,
+					},
+				);
 			}
 			_ => {}
 		};
 	} else if is_gmail(&host) {
 		if let GmailVerifMethod::Api = &input.gmail_verif_method {
-			return gmail::check_gmail(to_email, input)
-				.await
-				.map_err(|err| err.into());
+			return (
+				gmail::check_gmail(to_email, input)
+					.await
+					.map_err(|err| err.into()),
+				SmtpDebug {
+					verif_method: VerifMethod::Api,
+				},
+			);
 		};
 	} else if is_yahoo(&host) {
 		match (&input.yahoo_verif_method, webdriver_addr) {
 			(YahooVerifMethod::Api, _) => {
-				return yahoo::check_api(&to_email_str, input)
-					.await
-					.map_err(|e| e.into())
+				return (
+					yahoo::check_api(&to_email_str, input)
+						.await
+						.map_err(|e| e.into()),
+					SmtpDebug {
+						verif_method: VerifMethod::Api,
+					},
+				)
 			}
 			#[cfg(feature = "headless")]
 			(YahooVerifMethod::Headless, Ok(a)) => {
-				return yahoo::check_headless(&to_email_str, &a)
-					.await
-					.map_err(|e| e.into())
+				return (
+					yahoo::check_headless(&to_email_str, &a)
+						.await
+						.map_err(|e| e.into()),
+					SmtpDebug {
+						verif_method: VerifMethod::Headless,
+					},
+				)
 			}
 			_ => {}
 		};
 	}
 
-	check_smtp_with_retry(to_email, &host, port, domain, input, input.retries).await
+	(
+		check_smtp_with_retry(to_email, &host, port, domain, input, input.retries).await,
+		SmtpDebug {
+			verif_method: VerifMethod::Smtp(SmtpConnection { host, port }),
+		},
+	)
 }
 
 #[cfg(test)]
 mod tests {
-	use super::{check_smtp, CheckEmailInput, SmtpError};
+	use super::{check_smtp, CheckEmailInput, SmtpConnection, SmtpError};
 	use async_smtp::{smtp::error::Error, EmailAddress};
 	use std::{str::FromStr, time::Duration};
 	use tokio::runtime::Runtime;
@@ -169,7 +215,15 @@ mod tests {
 		let mut input = CheckEmailInput::default();
 		input.set_smtp_timeout(Some(Duration::from_millis(1)));
 
-		let res = runtime.block_on(check_smtp(&to_email, &host, 25, "gmail.com", &input));
+		let (res, smtp_debug) =
+			runtime.block_on(check_smtp(&to_email, &host, 25, "gmail.com", &input));
+		assert_eq!(
+			smtp_debug.verif_method,
+			super::VerifMethod::Smtp(SmtpConnection {
+				host: host.to_string(),
+				port: 25
+			})
+		);
 		match res {
 			Err(SmtpError::SmtpError(Error::Io(_))) => (), // ErrorKind == Timeout
 			_ => panic!("check_smtp did not time out"),
@@ -185,7 +239,9 @@ mod tests {
 		let mut input = CheckEmailInput::default();
 		input.set_skipped_domains(vec![".mail.icloud.com.".into()]);
 
-		let res = runtime.block_on(check_smtp(&to_email, &host, 25, "icloud.com", &input));
+		let (res, smtp_debug) =
+			runtime.block_on(check_smtp(&to_email, &host, 25, "icloud.com", &input));
+		assert_eq!(smtp_debug.verif_method, super::VerifMethod::Skipped);
 		match res {
 			Err(SmtpError::SkippedDomain(_)) => (),
 			r => panic!("{:?}", r),

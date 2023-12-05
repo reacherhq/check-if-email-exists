@@ -19,7 +19,7 @@ use reqwest::Error as ReqwestError;
 use serde::Serialize;
 
 use crate::{
-	smtp::{http_api::create_client, SmtpDetails, VerifMethod},
+	smtp::{http_api::create_client, SmtpDetails},
 	util::ser_with_display::ser_with_display,
 	CheckEmailInput, LOG_TARGET,
 };
@@ -85,7 +85,6 @@ pub async fn check_microsoft365_api(
 		Ok(Some(SmtpDetails {
 			can_connect_smtp: true,
 			is_deliverable: true,
-			verif_method: VerifMethod::Api,
 			..Default::default()
 		}))
 	} else {
