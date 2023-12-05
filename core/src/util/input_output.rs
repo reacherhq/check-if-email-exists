@@ -74,7 +74,7 @@ impl SmtpSecurity {
 
 /// Select how to verify Yahoo emails.
 #[derive(Debug, Clone, Copy, Deserialize, Serialize)]
-pub enum YahooVerifyMethod {
+pub enum YahooVerifMethod {
 	/// Use Yahoo's API to check if an email exists.
 	Api,
 	/// Use Yahoo's password recovery page to check if an email exists.
@@ -89,7 +89,7 @@ pub enum YahooVerifyMethod {
 	Smtp,
 }
 
-impl FromStr for YahooVerifyMethod {
+impl FromStr for YahooVerifMethod {
 	type Err = String;
 
 	fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -105,14 +105,14 @@ impl FromStr for YahooVerifyMethod {
 
 /// Select how to verify Gmail emails.
 #[derive(Debug, Clone, Copy, Deserialize, Serialize)]
-pub enum GmailVerifyMethod {
+pub enum GmailVerifMethod {
 	/// Use Gmail's API to check if an email exists.
 	Api,
 	/// Use Gmail's SMTP servers to check if an email exists.
 	Smtp,
 }
 
-impl FromStr for GmailVerifyMethod {
+impl FromStr for GmailVerifMethod {
 	type Err = String;
 
 	fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -126,7 +126,7 @@ impl FromStr for GmailVerifyMethod {
 
 /// Select how to verify Hotmail emails.
 #[derive(Debug, Clone, Copy, Deserialize, Serialize)]
-pub enum HotmailVerifyMethod {
+pub enum HotmailVerifMethod {
 	/// Use OneDrive API to check if an email exists.
 	OneDriveApi,
 	/// Use Hotmail's password recovery page to check if an email exists.
@@ -141,7 +141,7 @@ pub enum HotmailVerifyMethod {
 	Smtp,
 }
 
-impl FromStr for HotmailVerifyMethod {
+impl FromStr for HotmailVerifMethod {
 	type Err = String;
 
 	fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -187,15 +187,15 @@ pub struct CheckEmailInput {
 	/// Select how to verify Yahoo emails.
 	///
 	/// Defaults to Headless.
-	pub yahoo_verify_method: YahooVerifyMethod,
+	pub yahoo_verif_method: YahooVerifMethod,
 	/// Select how to verify Gmail addresses.
 	///
 	/// Defaults to Smtp.
-	pub gmail_verify_method: GmailVerifyMethod,
+	pub gmail_verif_method: GmailVerifMethod,
 	/// Select how to verify Hotmail/Outlook/Microsoft email addresses.
 	///
 	/// Defaults to Headless.
-	pub hotmail_verify_method: HotmailVerifyMethod,
+	pub hotmail_verif_method: HotmailVerifMethod,
 	// Whether to check if a gravatar image is existing for the given email.
 	//
 	// Defaults to false.
@@ -243,14 +243,14 @@ impl Default for CheckEmailInput {
 			smtp_security: SmtpSecurity::default(),
 			smtp_timeout: Some(Duration::from_secs(12)),
 			#[cfg(not(feature = "headless"))]
-			yahoo_verify_method: YahooVerifyMethod::Api,
+			yahoo_verif_method: YahooVerifMethod::Api,
 			#[cfg(feature = "headless")]
-			yahoo_verify_method: YahooVerifyMethod::Headless,
-			gmail_verify_method: GmailVerifyMethod::Smtp,
+			yahoo_verif_method: YahooVerifMethod::Headless,
+			gmail_verif_method: GmailVerifMethod::Smtp,
 			#[cfg(not(feature = "headless"))]
-			yahoo_verify_method: HotmailVerifyMethod::Smtp,
+			yahoo_verif_method: HotmailVerifMethod::Smtp,
 			#[cfg(feature = "headless")]
-			hotmail_verify_method: HotmailVerifyMethod::Headless,
+			hotmail_verif_method: HotmailVerifMethod::Headless,
 			check_gravatar: false,
 			haveibeenpwned_api_key: None,
 			retries: 2,
@@ -350,32 +350,32 @@ impl CheckEmailInput {
 
 	/// Set whether to use Yahoo's API, headless navigator, or connecting
 	/// directly to their SMTP servers. Defaults to Headless.
-	pub fn set_yahoo_verify_method(
+	pub fn set_yahoo_verif_method(
 		&mut self,
-		verify_method: YahooVerifyMethod,
+		verif_method: YahooVerifMethod,
 	) -> &mut CheckEmailInput {
-		self.yahoo_verify_method = verify_method;
+		self.yahoo_verif_method = verif_method;
 		self
 	}
 
 	/// Set whether to use Gmail's API or connecting directly to their SMTP
 	/// servers. Defaults to false.
-	pub fn set_gmail_verify_method(
+	pub fn set_gmail_verif_method(
 		&mut self,
-		verify_method: GmailVerifyMethod,
+		verif_method: GmailVerifMethod,
 	) -> &mut CheckEmailInput {
-		self.gmail_verify_method = verify_method;
+		self.gmail_verif_method = verif_method;
 		self
 	}
 
 	/// Set whether to use Microsoft 365's OneDrive API, a headless navigator,
 	/// or connecting directly to their SMTP servers for hotmail addresse.
 	/// Defaults to Headless.
-	pub fn set_hotmail_verify_method(
+	pub fn set_hotmail_verif_method(
 		&mut self,
-		verify_method: HotmailVerifyMethod,
+		verif_method: HotmailVerifMethod,
 	) -> &mut CheckEmailInput {
-		self.hotmail_verify_method = verify_method;
+		self.hotmail_verif_method = verif_method;
 		self
 	}
 

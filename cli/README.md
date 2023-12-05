@@ -33,8 +33,8 @@ OPTIONS:
             The email to use in the `MAIL FROM:` SMTP command [env: FROM_EMAIL=] [default:
             reacher.email@gmail.com]
 
-        --gmail-verify-method <GMAIL_VERIFY_METHOD>
-            Select how to verify Gmail email addresses: Api or Smtp [env: GMAIL_VERIFY_METHOD=]
+        --gmail-verif-method <GMAIL_VERIF_METHOD>
+            Select how to verify Gmail email addresses: Api or Smtp [env: GMAIL_VERIF_METHOD=]
             [default: Smtp]
 
     -h, --help
@@ -46,9 +46,9 @@ OPTIONS:
         --hello-name <HELLO_NAME>
             The name to use in the `EHLO:` SMTP command [env: HELLO_NAME=] [default: gmail.com]
 
-        --hotmail-verify-method <HOTMAIL_VERIFY_METHOD>
+        --hotmail-verif-method <HOTMAIL_VERIF_METHOD>
             Select how to verify Hotmail email addresses: Api, Headless or Smtp [env:
-            HOTMAIL_VERIFY_METHOD=] [default: Headless]
+            HOTMAIL_VERIF_METHOD=] [default: Headless]
 
         --proxy-host <PROXY_HOST>
             Use the specified SOCKS5 proxy host to perform email verification [env: PROXY_HOST=]
@@ -71,9 +71,9 @@ OPTIONS:
     -V, --version
             Print version information
 
-        --yahoo-verify-method <YAHOO_VERIFY_METHOD>
+        --yahoo-verif-method <YAHOO_VERIF_METHOD>
             Select how to verify Yahoo email addresses: Api, Headless or Smtp [env:
-            YAHOO_VERIFY_METHOD=] [default: Headless]
+            YAHOO_VERIF_METHOD=] [default: Headless]
 ```
 
 **💡 PRO TIP:** To show debug logs when running the binary, run:

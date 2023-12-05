@@ -32,7 +32,7 @@ use serde::{Deserialize, Serialize};
 use trust_dns_proto::rr::Name;
 
 use crate::{
-	util::input_output::CheckEmailInput, GmailVerifyMethod, HotmailVerifyMethod, YahooVerifyMethod,
+	util::input_output::CheckEmailInput, GmailVerifMethod, HotmailVerifMethod, YahooVerifMethod,
 };
 use connect::check_smtp_with_retry;
 pub use error::*;
@@ -102,8 +102,8 @@ pub async fn check_smtp(
 	let webdriver_addr = env::var("RCH_WEBDRIVER_ADDR");
 
 	if is_hotmail(&host) {
-		match (&input.hotmail_verify_method, webdriver_addr) {
-			(HotmailVerifyMethod::OneDriveApi, _) => {
+		match (&input.hotmail_verif_method, webdriver_addr) {
+			(HotmailVerifMethod::OneDriveApi, _) => {
 				if is_microsoft365(&host) {
 					match outlook::microsoft365::check_microsoft365_api(to_email, input).await {
 						Ok(Some(smtp_details)) => return Ok(smtp_details),
@@ -116,7 +116,7 @@ pub async fn check_smtp(
 				}
 			}
 			#[cfg(feature = "headless")]
-			(HotmailVerifyMethod::Headless, Ok(a)) => {
+			(HotmailVerifMethod::Headless, Ok(a)) => {
 				return outlook::headless::check_password_recovery(
 					to_email.to_string().as_str(),
 					&a,
@@ -127,20 +127,20 @@ pub async fn check_smtp(
 			_ => {}
 		};
 	} else if is_gmail(&host) {
-		if let GmailVerifyMethod::Api = &input.gmail_verify_method {
+		if let GmailVerifMethod::Api = &input.gmail_verif_method {
 			return gmail::check_gmail(to_email, input)
 				.await
 				.map_err(|err| err.into());
 		};
 	} else if is_yahoo(&host) {
-		match (&input.yahoo_verify_method, webdriver_addr) {
-			(YahooVerifyMethod::Api, _) => {
+		match (&input.yahoo_verif_method, webdriver_addr) {
+			(YahooVerifMethod::Api, _) => {
 				return yahoo::check_api(&to_email_str, input)
 					.await
 					.map_err(|e| e.into())
 			}
 			#[cfg(feature = "headless")]
-			(YahooVerifyMethod::Headless, Ok(a)) => {
+			(YahooVerifMethod::Headless, Ok(a)) => {
 				return yahoo::check_headless(&to_email_str, &a)
 					.await
 					.map_err(|e| e.into())

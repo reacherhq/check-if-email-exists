@@ -58,7 +58,7 @@
 												"is_catch_all": false,
 												"is_deliverable": false,
 												"is_disabled": false,
-												"method": {
+												"verif_method": {
 													"type": "Smtp",
 													"host": "alt3.gmail-smtp-in.l.google.com."
 												}
@@ -278,7 +278,7 @@
 						"type": "boolean",
 						"description": "Has this email address been disabled by the email provider?"
 					},
-					"method": {
+					"verif_method": {
 						"$ref": "#/components/schemas/VerifMethod"
 					}
 				},
@@ -288,7 +288,7 @@
 					"is_catch_all",
 					"is_deliverable",
 					"is_disabled",
-					"method"
+					"verif_method"
 				]
 			},
 			"SyntaxDetails": {
@@ -317,27 +317,27 @@
 				"enum": ["invalid", "unknown", "safe", "risky"],
 				"description": "An enum to describe how confident we are that the recipient address is real: `safe`, `risky`, `invalid` and `unknown`. Check our FAQ to know the meanings of the 4 possibilities: https://help.reacher.email/email-attributes-inside-json."
 			},
-			"YahooVerifyMethod": {
+			"YahooVerifMethod": {
 				"type": "string",
-				"title": "YahooVerifyMethod",
+				"title": "YahooVerifMethod",
 				"enum": ["Api", "Headless", "Smtp"],
 				"description": "An enum to describe how we verify Yahoo emails."
 			},
-			"HotmailVerifyMethod": {
+			"HotmailVerifMethod": {
 				"type": "string",
 				"x-stoplight": {
 					"id": "tiy37w0jp5x13"
 				},
-				"title": "HotmailVerifyMethod",
+				"title": "HotmailVerifMethod",
 				"enum": ["Api", "Headless", "Smtp"],
 				"description": "An enum to describe how we verify Hotmail emails."
 			},
-			"GmailVerifyMethod": {
+			"GmailVerifMethod": {
 				"type": "string",
 				"x-stoplight": {
 					"id": "2p7yqzxi6n3bj"
 				},
-				"title": "GmailVerifyMethod",
+				"title": "GmailVerifMethod",
 				"enum": ["Api", "Smtp"],
 				"description": "An enum to describe how we verify Gmail emails.",
 				"x-internal": false
@@ -366,14 +366,14 @@
 						"type": "number",
 						"description": "SMTP port to use for email validation. Generally, ports 25, 465, 587 and 2525 are used."
 					},
-					"yahoo_verify_method": {
-						"$ref": "#/components/schemas/YahooVerifyMethod"
+					"yahoo_verif_method": {
+						"$ref": "#/components/schemas/YahooVerifMethod"
 					},
-					"gmail_verify_method": {
-						"$ref": "#/components/schemas/GmailVerifyMethod"
+					"gmail_verif_method": {
+						"$ref": "#/components/schemas/GmailVerifMethod"
 					},
-					"hotmail_verify_method": {
-						"$ref": "#/components/schemas/HotmailVerifyMethod"
+					"hotmail_verif_method": {
+						"$ref": "#/components/schemas/HotmailVerifMethod"
 					},
 					"check_gravatar": {
 						"type": "boolean",

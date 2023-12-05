@@ -15,8 +15,8 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use check_if_email_exists::{
-	check_email, CheckEmailInput, CheckEmailInputProxy, GmailVerifyMethod, HotmailVerifyMethod,
-	YahooVerifyMethod,
+	check_email, CheckEmailInput, CheckEmailInputProxy, GmailVerifMethod, HotmailVerifMethod,
+	YahooVerifMethod,
 };
 use clap::Parser;
 use once_cell::sync::Lazy;
@@ -58,15 +58,15 @@ pub struct Cli {
 
 	/// Select how to verify Yahoo email addresses: Api, Headless or Smtp.
 	#[clap(long, env, default_value = "Headless", parse(try_from_str))]
-	pub yahoo_verify_method: YahooVerifyMethod,
+	pub yahoo_verif_method: YahooVerifMethod,
 
 	/// Select how to verify Gmail email addresses: Api or Smtp.
 	#[clap(long, env, default_value = "Smtp", parse(try_from_str))]
-	pub gmail_verify_method: GmailVerifyMethod,
+	pub gmail_verif_method: GmailVerifMethod,
 
 	/// Select how to verify Hotmail email addresses: Api, Headless or Smtp.
 	#[clap(long, env, default_value = "Headless", parse(try_from_str))]
-	pub hotmail_verify_method: HotmailVerifyMethod,
+	pub hotmail_verif_method: HotmailVerifMethod,
 
 	/// Whether to check if a gravatar image is existing for the given email.
 	#[clap(long, env, default_value = "false", parse(try_from_str))]
@@ -94,9 +94,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 		.set_from_email(CONF.from_email.clone())
 		.set_hello_name(CONF.hello_name.clone())
 		.set_smtp_port(CONF.smtp_port)
-		.set_yahoo_verify_method(CONF.yahoo_verify_method)
-		.set_gmail_verify_method(CONF.gmail_verify_method)
-		.set_hotmail_verify_method(CONF.hotmail_verify_method)
+		.set_yahoo_verif_method(CONF.yahoo_verif_method)
+		.set_gmail_verif_method(CONF.gmail_verif_method)
+		.set_hotmail_verif_method(CONF.hotmail_verif_method)
 		.set_check_gravatar(CONF.check_gravatar)
 		.set_haveibeenpwned_api_key(CONF.haveibeenpwned_api_key.clone());
 
