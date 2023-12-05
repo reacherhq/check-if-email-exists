@@ -58,7 +58,10 @@
 												"is_catch_all": false,
 												"is_deliverable": false,
 												"is_disabled": false,
-												"method": "SmtpConnection"
+												"method": {
+													"type": "SmtpConnection",
+													"host": "alt3.gmail-smtp-in.l.google.com."
+												}
 											},
 											"syntax": {
 												"domain": "gmail.com",
@@ -276,16 +279,7 @@
 						"description": "Has this email address been disabled by the email provider?"
 					},
 					"method": {
-						"x-stoplight": {
-							"id": "axwtm6b7ao9n6"
-						},
-						"enum": [
-							"Headless",
-							"Api",
-							"Skipped",
-							"SmtpConnection"
-						],
-						"description": "The method used to verify this email."
+						"$ref": "#/components/schemas/SmtpMethod"
 					}
 				},
 				"required": [
@@ -486,6 +480,35 @@
 						}
 					}
 				}
+			},
+			"SmtpMethod": {
+				"title": "SmtpMethod",
+				"x-stoplight": {
+					"id": "hbfxytnpskv3z"
+				},
+				"type": "object",
+				"properties": {
+					"type": {
+						"x-stoplight": {
+							"id": "leobepj9orvp2"
+						},
+						"enum": [
+							"SmtpConnection",
+							"Headless",
+							"Api",
+							"Skipped"
+						],
+						"description": "The method used to perform the email verification"
+					},
+					"host": {
+						"type": "string",
+						"x-stoplight": {
+							"id": "25lammyt3h5qc"
+						},
+						"description": "If `type` is `SmtpConnection`, the hostname that Reacher connected to."
+					}
+				},
+				"required": ["type"]
 			}
 		},
 		"securitySchemes": {
