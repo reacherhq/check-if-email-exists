@@ -16,7 +16,7 @@
 
 use super::YahooError;
 use crate::{
-	smtp::{http_api::create_client, SmtpDetails, SmtpMethod},
+	smtp::{http_api::create_client, SmtpDetails, VerifMethod},
 	util::{constants::LOG_TARGET, input_output::CheckEmailInput},
 };
 use regex::Regex;
@@ -168,7 +168,7 @@ pub async fn check_api(to_email: &str, input: &CheckEmailInput) -> Result<SmtpDe
 	Ok(SmtpDetails {
 		can_connect_smtp: true,
 		is_deliverable: username_exists,
-		method: SmtpMethod::Api,
+		verif_method: VerifMethod::Api,
 		..Default::default()
 	})
 }

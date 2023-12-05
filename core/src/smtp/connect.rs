@@ -26,7 +26,7 @@ use std::iter;
 use std::str::FromStr;
 use std::time::Duration;
 
-use super::{parser, SmtpConnection, SmtpMethod};
+use super::{parser, SmtpConnection, VerifMethod};
 use super::{SmtpDetails, SmtpError};
 use crate::{
 	rules::{has_rule, Rule},
@@ -334,8 +334,9 @@ async fn check_smtp_without_retry(
 		is_catch_all,
 		is_deliverable: deliverability.is_deliverable,
 		is_disabled: deliverability.is_disabled,
-		method: SmtpMethod::SmtpConnection(SmtpConnection {
+		verif_method: VerifMethod::Smtp(SmtpConnection {
 			host: host.to_string(),
+			port,
 		}),
 	})
 }

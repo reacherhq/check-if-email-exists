@@ -22,7 +22,7 @@ use futures::TryFutureExt;
 
 use crate::smtp::{
 	headless::{create_headless_client, HeadlessError},
-	SmtpMethod,
+	VerifMethod,
 };
 use crate::{smtp::SmtpDetails, LOG_TARGET};
 
@@ -114,7 +114,7 @@ pub async fn check_headless(to_email: &str, webdriver: &str) -> Result<SmtpDetai
 		is_catch_all: false,
 		is_deliverable,
 		is_disabled,
-		method: SmtpMethod::Headless,
+		verif_method: VerifMethod::Headless,
 	})
 }
 

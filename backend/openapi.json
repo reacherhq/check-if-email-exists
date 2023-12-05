@@ -59,7 +59,7 @@
 												"is_deliverable": false,
 												"is_disabled": false,
 												"method": {
-													"type": "SmtpConnection",
+													"type": "Smtp",
 													"host": "alt3.gmail-smtp-in.l.google.com."
 												}
 											},
@@ -279,7 +279,7 @@
 						"description": "Has this email address been disabled by the email provider?"
 					},
 					"method": {
-						"$ref": "#/components/schemas/SmtpMethod"
+						"$ref": "#/components/schemas/VerifMethod"
 					}
 				},
 				"required": [
@@ -326,7 +326,7 @@
 			"HotmailVerifyMethod": {
 				"type": "string",
 				"x-stoplight": {
-					"id": "o6xocxf6tktur"
+					"id": "tiy37w0jp5x13"
 				},
 				"title": "HotmailVerifyMethod",
 				"enum": ["Api", "Headless", "Smtp"],
@@ -335,7 +335,7 @@
 			"GmailVerifyMethod": {
 				"type": "string",
 				"x-stoplight": {
-					"id": "jbq83vpkfcmth"
+					"id": "2p7yqzxi6n3bj"
 				},
 				"title": "GmailVerifyMethod",
 				"enum": ["Api", "Smtp"],
@@ -435,7 +435,7 @@
 			"Duration": {
 				"title": "Duration",
 				"x-stoplight": {
-					"id": "0s9q75wxim1iw"
+					"id": "kwbhwi9fkpg6q"
 				},
 				"type": "object",
 				"description": "An object representing a duration (seconds + nanoseconds).",
@@ -454,20 +454,20 @@
 			"DebugDetails": {
 				"title": "DebugDetails",
 				"x-stoplight": {
-					"id": "ndv3lpqeuypvn"
+					"id": "jhror15zeepgx"
 				},
 				"type": "object",
 				"properties": {
 					"start_time": {
 						"type": "string",
 						"x-stoplight": {
-							"id": "hxi446woaebm1"
+							"id": "ms8ftx9vwth1a"
 						}
 					},
 					"end_time": {
 						"type": "string",
 						"x-stoplight": {
-							"id": "m4p986hhzuzbl"
+							"id": "g2kydtwtmr7po"
 						}
 					},
 					"duration": {
@@ -476,36 +476,38 @@
 					"server_ip": {
 						"type": "string",
 						"x-stoplight": {
-							"id": "ld3cp67qd2nx8"
+							"id": "ktn104e8oyu6d"
 						}
 					}
 				}
 			},
-			"SmtpMethod": {
-				"title": "SmtpMethod",
+			"VerifMethod": {
+				"title": "VerifMethod",
 				"x-stoplight": {
-					"id": "hbfxytnpskv3z"
+					"id": "yfa2hjmyy321x"
 				},
 				"type": "object",
 				"properties": {
 					"type": {
 						"x-stoplight": {
-							"id": "leobepj9orvp2"
+							"id": "dzmw4acub9xp6"
 						},
-						"enum": [
-							"SmtpConnection",
-							"Headless",
-							"Api",
-							"Skipped"
-						],
+						"enum": ["Smtp", "Headless", "Api", "Skipped"],
 						"description": "The method used to perform the email verification"
 					},
 					"host": {
 						"type": "string",
 						"x-stoplight": {
-							"id": "25lammyt3h5qc"
+							"id": "nvnjrm1137x96"
 						},
 						"description": "If `type` is `SmtpConnection`, the hostname that Reacher connected to."
+					},
+					"port": {
+						"type": "number",
+						"x-stoplight": {
+							"id": "xpxzvllzxxyyn"
+						},
+						"description": "If `type` is `SmtpConnection`, the port that Reacher connected to."
 					}
 				},
 				"required": ["type"]

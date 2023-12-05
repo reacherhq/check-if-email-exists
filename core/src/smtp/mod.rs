@@ -45,15 +45,22 @@ use self::{
 
 #[derive(Debug, Default, Deserialize, Serialize)]
 pub struct SmtpConnection {
+	/// The host we connected to via SMTP.
 	pub host: String,
+	/// The port we connected to via SMTP.
+	pub port: u16,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize)]
 #[serde(tag = "type")]
-pub enum SmtpMethod {
-	SmtpConnection(SmtpConnection),
+pub enum VerifMethod {
+	/// Email verification was done via SMTP.
+	Smtp(SmtpConnection),
+	/// Email verification was done via an HTTP API.
 	Api,
+	/// Email verification was done via a headless browser.
 	Headless,
+	/// Email verification was skipped.
 	#[default]
 	Skipped,
 }
@@ -71,7 +78,7 @@ pub struct SmtpDetails {
 	pub is_deliverable: bool,
 	/// Is the email blocked or disabled by the provider?
 	pub is_disabled: bool,
-	pub method: SmtpMethod,
+	pub verif_method: VerifMethod,
 }
 
 /// Get all email details we can from one single `EmailAddress`, without
