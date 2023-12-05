@@ -49,6 +49,7 @@ pub struct SmtpConnection {
 }
 
 #[derive(Debug, Default, Deserialize, Serialize)]
+#[serde(tag = "type")]
 pub enum SmtpMethod {
 	SmtpConnection(SmtpConnection),
 	Api,
