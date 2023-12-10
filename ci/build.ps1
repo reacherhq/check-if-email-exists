@@ -7,7 +7,7 @@ $release_build = $args[2]
 # So we only build the check_if_email_exists binary for Windows.
 if ( $release_build -ne "RELEASE" ) {
     Invoke-Expression "$cross build --bin check_if_email_exists --target $target_triple"
-    Invoke-Expression "$cross build --bin check_if_email_exists--target $target_triple --all-features"
+    Invoke-Expression "$cross build --bin check_if_email_exists --target $target_triple --all-features"
 } else {
     Invoke-Expression "$cross build --bin check_if_email_exists --target $target_triple --all-features --release"
 }
