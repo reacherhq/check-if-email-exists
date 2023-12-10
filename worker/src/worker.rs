@@ -1,10 +1,22 @@
+use check_if_email_exists::CheckEmailInput;
 use check_if_email_exists::{check_email, CheckEmailOutput};
 use lapin::message::Delivery;
 use lapin::options::*;
+use serde::Deserialize;
 use serde::Serialize;
 use tracing::{debug, info};
 
-use crate::CheckEmailPayload;
+#[derive(Debug, Deserialize)]
+pub struct CheckEmailPayload {
+	pub input: CheckEmailInput,
+	pub webhook: Option<CheckEmailWebhook>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CheckEmailWebhook {
+	pub url: String,
+	pub extra: serde_json::Value,
+}
 
 #[derive(Debug, Serialize)]
 struct WebhookOutput {

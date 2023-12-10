@@ -4,7 +4,9 @@ use futures_lite::StreamExt;
 use lapin::{options::*, types::FieldTable, Connection, ConnectionProperties};
 use tracing::{error, info};
 
-use reacher_worker::worker::process_check_email;
+mod worker;
+
+use worker::process_check_email;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
