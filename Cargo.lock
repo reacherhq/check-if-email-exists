@@ -2430,10 +2430,12 @@ name = "reacher_worker"
 version = "0.1.0"
 dependencies = [
  "async-global-executor",
+ "async-smtp",
  "check-if-email-exists",
  "futures-lite 2.1.0",
  "lapin",
  "reqwest",
+ "sentry",
  "serde",
  "serde_json",
  "tokio",

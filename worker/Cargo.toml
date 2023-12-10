@@ -9,11 +9,13 @@ publish = false
 
 
 [dependencies]
+async-smtp = "0.6"
 async-global-executor = "2.4.0"
 check-if-email-exists = { path = "../core", features = ["headless"] }
 futures-lite = "2.1.0"
 lapin = "2.3.1"
 reqwest = { version = "0.11.22", features = ["json"] }
+sentry = "0.23"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tokio = { version = "1.29", features = ["macros"] }
