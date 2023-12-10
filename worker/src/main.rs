@@ -26,25 +26,6 @@ mod worker;
 use sentry_util::setup_sentry;
 use worker::process_check_email;
 
-#[derive(Debug, Clone, Copy)]
-enum VerifMethod {
-	Headless,
-	Smtp,
-}
-
-impl From<&str> for VerifMethod {
-	fn from(s: &str) -> Self {
-		match s {
-			"Headless" => Self::Headless,
-			"Smtp" => Self::Smtp,
-			_ => panic!(
-				"Unknown verification method {}, must be one of Headless, Smtp",
-				s
-			),
-		}
-	}
-}
-
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	// Setup sentry bug tracking.
@@ -111,4 +92,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	}
 
 	Ok(())
+}
+
+// Verification method used by the worker.
+#[derive(Debug, Clone, Copy)]
+enum VerifMethod {
+	// This worker will use a headless browser to verify emails.
+	// Oftentimes, this also means that the worker doesn't have port 25 open.
+	Headless,
+	// This worker will use a SMTP server to verify emails.
+	Smtp,
+}
+
+impl From<&str> for VerifMethod {
+	fn from(s: &str) -> Self {
+		match s {
+			"Headless" => Self::Headless,
+			"Smtp" => Self::Smtp,
+			_ => panic!(
+				"Unknown verification method {}, must be one of Headless, Smtp",
+				s
+			),
+		}
+	}
 }
