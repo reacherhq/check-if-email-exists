@@ -55,6 +55,7 @@ pub async fn process_check_email(
 	let output = check_email(payload.input).await;
 	debug!(email=output.input,output=?output, "Done check-if-email-exists");
 
+	// Check if we have a webhook to send the output to.
 	if let Some(webhook) = payload.webhook {
 		let webhook_output = WebhookOutput {
 			output,
