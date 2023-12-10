@@ -1,3 +1,5 @@
+use std::env;
+
 use futures_lite::StreamExt;
 use lapin::{options::*, types::FieldTable, Connection, ConnectionProperties};
 use tracing::{error, info};
@@ -8,9 +10,8 @@ use reacher_worker::worker::process_check_email;
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	tracing_subscriber::fmt::init();
 
-	let addr = std::env::var("RCH_AMQP_ADDR").unwrap_or_else(|_| "amqp://127.0.0.1:5672".into());
-	let backend_name = std::env::var("RCH_BACKEND_NAME").expect("RCH_BACKEND_NAME is not set");
-
+	let addr = env::var("RCH_AMQP_ADDR").unwrap_or_else(|_| "amqp://127.0.0.1:5672".into());
+	let backend_name = env::var("RCH_BACKEND_NAME").expect("RCH_BACKEND_NAME is not set");
 	let options = ConnectionProperties::default()
 		// Use tokio executor and reactor.
 		// At the moment the reactor is only available for unix.
@@ -22,11 +23,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
 	// Receive channel
 	let channel = conn.create_channel().await?;
-	info!(addr=?addr,state=?conn.status().state(), "Connected to AMQP broker");
+	info!(state=?conn.status().state(), "Connected to AMQP broker");
 
-	// Create queue "check_email" if not exists
-	let mut arguments = FieldTable::default();
-	arguments.insert("x-max-priority".into(), 5.into()); // https://www.rabbitmq.com/priority.html
+	// Create queue "check_email" with priority.
+	let mut queue_args = FieldTable::default();
+	queue_args.insert("x-max-priority".into(), 5.into()); // https://www.rabbitmq.com/priority.html
 
 	let queue = channel
 		.queue_declare(
@@ -35,7 +36,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 				durable: true,
 				..Default::default()
 			},
-			arguments,
+			queue_args,
 		)
 		.await?;
 

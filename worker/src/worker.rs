@@ -12,6 +12,7 @@ struct WebhookOutput {
 	extra: serde_json::Value,
 }
 
+/// Processes the check email task asynchronously.
 pub async fn process_check_email(
 	delivery: Delivery,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
