@@ -138,7 +138,7 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		my_syntax
 	);
 
-	let my_mx = match check_mx(&my_syntax).await {
+	let my_mx = match check_mx(&my_syntax) {
 		Ok(m) => m,
 		e => {
 			get_similar_mail_provider(&mut my_syntax);
@@ -209,7 +209,7 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		.as_ref()
 		.expect("If lookup is error, we already returned. qed.")
 		.iter()
-		.collect::<Vec<&MX>>();
+		.collect::<Vec<MX>>();
 	mx_records.sort_by_key(|a| a.preference());
 	let host = if mx_records.len() >= 3 {
 		let mut rng = rand::thread_rng();

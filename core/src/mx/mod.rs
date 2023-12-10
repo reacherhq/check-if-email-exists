@@ -16,9 +16,10 @@
 
 use crate::syntax::SyntaxDetails;
 use crate::util::ser_with_display::ser_with_display;
-use async_std_resolver::{lookup::MxLookup, resolver_from_system_conf, ResolveError};
 use serde::{ser::SerializeMap, Serialize, Serializer};
 use std::io::Error;
+use trust_dns_resolver::config::*;
+use trust_dns_resolver::{error::ResolveError, lookup::MxLookup, Resolver};
 
 /// Details about the MX lookup.
 #[derive(Debug)]
@@ -83,14 +84,16 @@ impl From<ResolveError> for MxError {
 }
 
 /// Make a MX lookup.
-pub async fn check_mx(syntax: &SyntaxDetails) -> Result<MxDetails, MxError> {
+pub fn check_mx(syntax: &SyntaxDetails) -> Result<MxDetails, MxError> {
 	// Construct a new Resolver with default configuration options
-	let resolver = resolver_from_system_conf().await?;
+	let resolver = Resolver::new(ResolverConfig::default(), ResolverOpts::default()).unwrap();
+
+	let mx_response = resolver.mx_lookup("hotmail.com.");
 
 	// Lookup the MX records associated with a name.
 	// The final dot forces this to be an FQDN, otherwise the search rules as specified
 	// in `ResolverOpts` will take effect. FQDN's are generally cheaper queries.
-	match resolver.mx_lookup(syntax.domain.as_str()).await {
+	match resolver.mx_lookup(syntax.domain.as_str()) {
 		Ok(lookup) => Ok(MxDetails::from(lookup)),
 		Err(err) => Ok(MxDetails { lookup: Err(err) }),
 	}

@@ -17,7 +17,6 @@ async-native-tls = { version = "0.4", default-features = false }
 async-recursion = "1.0.5"
 async-smtp = { version = "0.6.0", features = ["socks5"] }
 async-std = "1.12.0"
-async-std-resolver = "0.21.2"
 chrono = "=0.4.22"
 fantoccini = { version = "0.19.3", optional = true }
 futures = { version = "0.3.29", optional = true }
@@ -34,6 +33,7 @@ reqwest = { version = "0.11.22", features = ["json", "socks"] }
 serde = { version = "1.0.192", features = ["derive"] }
 serde_json = "1.0.107"
 trust-dns-proto = "0.21.2"
+trust-dns-resolver = "0.23.2"
 
 [dev-dependencies]
 tokio = { version = "1.29.1" }
