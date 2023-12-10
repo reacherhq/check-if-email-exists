@@ -52,4 +52,4 @@ EXPOSE 8080
 # https://stackoverflow.com/questions/40122152/how-to-remove-entrypoint-from-parent-image-on-dockerfile
 ENTRYPOINT []
 
-CMD ["./backend/docker.sh"]
+CMD ["./docker.sh"]
