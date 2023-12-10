@@ -15,7 +15,6 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use std::env;
-use std::fmt::{Display, Formatter};
 
 use futures_lite::StreamExt;
 use lapin::{options::*, types::FieldTable, Connection, ConnectionProperties};
@@ -31,15 +30,6 @@ use worker::process_check_email;
 enum VerifMethod {
 	Headless,
 	Smtp,
-}
-
-impl Display for VerifMethod {
-	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		match self {
-			Self::Headless => write!(f, "Headless"),
-			Self::Smtp => write!(f, "Smtp"),
-		}
-	}
 }
 
 impl From<&str> for VerifMethod {
@@ -84,7 +74,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	info!(backend=?backend_name,state=?conn.status().state(), "Connected to AMQP broker");
 
 	// Create queue "check_email.{Smtp,Headless}" with priority.
-	let queue_name = format!("check_email.{}", verif_method);
+	let queue_name = format!("check_email.{:?}", verif_method);
 	let mut queue_args = FieldTable::default();
 	queue_args.insert("x-max-priority".into(), 5.into()); // https://www.rabbitmq.com/priority.html
 
