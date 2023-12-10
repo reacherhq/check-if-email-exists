@@ -485,7 +485,7 @@
 						"description": "Seconds"
 					},
 					"nanos": {
-						"type": "string",
+						"type": "number",
 						"description": "Nanoseconds"
 					}
 				},
