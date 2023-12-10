@@ -1,29 +1,33 @@
 use futures_lite::StreamExt;
 use lapin::{options::*, types::FieldTable, Connection, ConnectionProperties};
-use tracing::info;
+use tracing::{error, info};
 
-use reacher_worker::worker::CheckEmailWorker;
+use reacher_worker::worker::process_check_email;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-	// Set default target for tracing to "reacher"
-
 	tracing_subscriber::fmt::init();
 
 	let addr = std::env::var("RCH_AMQP_ADDR").unwrap_or_else(|_| "amqp://127.0.0.1:5672".into());
+	let backend_name = std::env::var("RCH_BACKEND_NAME").expect("RCH_BACKEND_NAME is not set");
+
 	let options = ConnectionProperties::default()
 		// Use tokio executor and reactor.
 		// At the moment the reactor is only available for unix.
 		.with_executor(tokio_executor_trait::Tokio::current())
-		.with_reactor(tokio_reactor_trait::Tokio);
+		.with_reactor(tokio_reactor_trait::Tokio)
+		.with_connection_name(backend_name.clone().into());
 
 	let conn = Connection::connect(&addr, options).await?;
 
-	//receive channel
+	// Receive channel
 	let channel = conn.create_channel().await?;
-	info!(addr=?addr,state=?conn.status().state(), "Connected to AMQP broker.");
+	info!(addr=?addr,state=?conn.status().state(), "Connected to AMQP broker");
 
-	// Create queue "tasks" if not exists
+	// Create queue "check_email" if not exists
+	let mut arguments = FieldTable::default();
+	arguments.insert("x-max-priority".into(), 5.into()); // https://www.rabbitmq.com/priority.html
+
 	let queue = channel
 		.queue_declare(
 			"check_email",
@@ -31,27 +35,28 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 				durable: true,
 				..Default::default()
 			},
-			FieldTable::default(),
+			arguments,
 		)
 		.await?;
 
-	let backend_name = &std::env::var("RCH_BACKEND_NAME").unwrap_or_else(|_| "rch-worker".into());
-	info!(backend=?backend_name,queue=?queue.name().as_str(), "Worker will start consuming messages.");
+	info!(backend=?backend_name,queue=?queue.name().as_str(), "Worker will start consuming messages");
 	let mut consumer = channel
 		.basic_consume(
 			queue.name().as_str(),
-			backend_name,
+			&backend_name,
 			BasicConsumeOptions::default(),
 			FieldTable::default(),
 		)
 		.await?;
 
-	// Define workers:
-	let check_email_worker = CheckEmailWorker::new();
-
 	while let Some(delivery) = consumer.next().await {
 		if let Ok(delivery) = delivery {
-			check_email_worker.process_check_email(delivery).await?;
+			tokio::spawn(async move {
+				let res = process_check_email(delivery).await;
+				if let Err(err) = res {
+					error!(error=?err, "Error processing message");
+				}
+			});
 		}
 	}
 
