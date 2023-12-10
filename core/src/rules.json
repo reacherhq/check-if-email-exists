@@ -7,6 +7,9 @@
 		"yahoo.com": { "rules": ["SkipCatchAll"] },
 		"yahoo.fr": { "rules": ["SkipCatchAll"] }
 	},
+	"by_mx": {
+		"filter30.antispamcloud.com.": { "rules": ["HoneyPot"] }
+	},
 	"by_mx_suffix": {
 		".antispamcloud.com.": {
 			"rules": ["SmtpTimeout45s", "SkipCatchAll"],

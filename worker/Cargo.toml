@@ -1,12 +1,11 @@
 [package]
 name = "reacher_worker"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2018"
 description = "RabbitMQ worker for Reacher"
 authors = ["Amaury <amaury@reacher.email>"]
 license = "AGPL-3.0"
 publish = false
-
 
 [dependencies]
 async-smtp = "0.6"

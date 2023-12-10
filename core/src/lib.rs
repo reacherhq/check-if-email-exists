@@ -80,6 +80,8 @@ use trust_dns_proto::rr::rdata::MX;
 pub use util::constants::LOG_TARGET;
 pub use util::input_output::*;
 
+use crate::rules::{has_rule, Rule};
+
 /// Given an email's misc and smtp details, calculate an estimate of our
 /// confidence on how reachable the email is.
 ///
@@ -209,6 +211,14 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		.as_ref()
 		.expect("If lookup is error, we already returned. qed.")
 		.iter()
+		// Don't try to connect to honey pot servers.
+		.filter(|a| {
+			!has_rule(
+				&my_syntax.domain,
+				&a.exchange().to_string(),
+				&Rule::HoneyPot,
+			)
+		})
 		.collect::<Vec<&MX>>();
 	mx_records.sort_by_key(|a| a.preference());
 	let host = if mx_records.len() >= 3 {
