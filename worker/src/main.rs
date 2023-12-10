@@ -29,7 +29,6 @@ use worker::process_check_email;
 
 #[derive(Debug, Clone, Copy)]
 enum VerifMethod {
-	Api,
 	Headless,
 	Smtp,
 }
@@ -37,7 +36,6 @@ enum VerifMethod {
 impl Display for VerifMethod {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		match self {
-			Self::Api => write!(f, "Api"),
 			Self::Headless => write!(f, "Headless"),
 			Self::Smtp => write!(f, "Smtp"),
 		}
@@ -47,12 +45,12 @@ impl Display for VerifMethod {
 impl From<&str> for VerifMethod {
 	fn from(s: &str) -> Self {
 		match s {
-			"Api" => Self::Api,
 			"Headless" => Self::Headless,
 			"Smtp" => Self::Smtp,
-			_ => panic!(format!(
-				"Unknown verification method {s}, must be one of Api, Headless, Smtp"
-			)),
+			_ => panic!(
+				"Unknown verification method {}, must be one of Headless, Smtp",
+				s
+			),
 		}
 	}
 }
@@ -67,8 +65,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	// Make sure the worker is well configured.
 	let addr = env::var("RCH_AMQP_ADDR").unwrap_or_else(|_| "amqp://127.0.0.1:5672".into());
 	let backend_name = env::var("RCH_BACKEND_NAME").expect("RCH_BACKEND_NAME is not set");
-	let verif_methods = env::var("RCH_VERIF_METHODS").expect("RCH_VERIF_METHODS is not set");
-	let verif_methods: Vec<VerifMethod> = verif_methods.split(',').map(|x| x.into()).collect();
+	let verif_method: VerifMethod = env::var("RCH_VERIF_METHOD")
+		.expect("RCH_VERIF_METHODS is not set")
+		.as_str()
+		.into();
 
 	let options = ConnectionProperties::default()
 		// Use tokio executor and reactor.
@@ -83,33 +83,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	let channel = conn.create_channel().await?;
 	info!(backend=?backend_name,state=?conn.status().state(), "Connected to AMQP broker");
 
-	verif_methods.iter().for_each(|verif_method| {
-		let backend_name_clone = backend_name.clone();
-		let channel_clone = channel.clone();
-		tokio::spawn(async move {
-			if let Err(err) = consume_queue(verif_method, &backend_name_clone, &channel_clone).await
-			{
-				error!(error=?err, "Error consuming queue");
-			}
-		});
-	});
-
-	Ok(())
-}
-
-/// Consumes the queue for the given verification method.
-async fn consume_queue(
-	verif_method: &VerifMethod,
-	backend_name: &str,
-	channel: &lapin::Channel,
-) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-	// Create queue "check_email" with priority.
+	// Create queue "check_email.{Smtp,Headless}" with priority.
+	let queue_name = format!("check_email.{}", verif_method);
 	let mut queue_args = FieldTable::default();
 	queue_args.insert("x-max-priority".into(), 5.into()); // https://www.rabbitmq.com/priority.html
 
-	let queue = channel
+	channel
 		.queue_declare(
-			format!("check_email.{}", verif_method.to_string()).as_str(),
+			&queue_name,
 			QueueDeclareOptions {
 				durable: true,
 				..Default::default()
@@ -118,11 +99,11 @@ async fn consume_queue(
 		)
 		.await?;
 
-	info!(queue=?queue.name().as_str(), "Worker will start consuming messages");
+	info!(queue=?queue_name, "Worker will start consuming messages");
 	let mut consumer = channel
 		.basic_consume(
-			queue.name().as_str(),
-			backend_name,
+			&queue_name,
+			&backend_name,
 			BasicConsumeOptions::default(),
 			FieldTable::default(),
 		)
