@@ -14,7 +14,7 @@ COPY . .
 
 ENV SQLX_OFFLINE=true
 
-RUN cargo build --bin reacher_backend --release --target=x86_64-unknown-linux-musl
+RUN cargo build --bin reacher_worker --release --target=x86_64-unknown-linux-musl
 
 # ------------------------------------------------------------------------------
 # Final Stage
@@ -30,10 +30,10 @@ USER root
 # https://github.com/Zenika/alpine-chrome/blob/master/with-chromedriver/Dockerfile
 RUN apk add --no-cache chromium-chromedriver
 
-COPY --from=cargo-build /usr/src/reacher/target/x86_64-unknown-linux-musl/release/reacher_backend .
+COPY --from=cargo-build /usr/src/reacher/target/x86_64-unknown-linux-musl/release/reacher_worker .
 COPY --from=cargo-build /usr/src/reacher/docker.sh .
 
-RUN chown chrome:chrome reacher_backend
+RUN chown chrome:chrome reacher_worker
 RUN chown chrome:chrome docker.sh
 
 # User chrome was created in zenika/alpine-chrome
@@ -52,4 +52,4 @@ EXPOSE 8080
 # https://stackoverflow.com/questions/40122152/how-to-remove-entrypoint-from-parent-image-on-dockerfile
 ENTRYPOINT []
 
-CMD ["./backend/docker.sh"]
+CMD ["./worker/docker.sh"]
