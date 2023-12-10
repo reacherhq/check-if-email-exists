@@ -15,6 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use std::env;
+use std::fmt::{Display, Formatter};
 
 use futures_lite::StreamExt;
 use lapin::{options::*, types::FieldTable, Connection, ConnectionProperties};
@@ -26,6 +27,36 @@ mod worker;
 use sentry_util::setup_sentry;
 use worker::process_check_email;
 
+#[derive(Debug, Clone, Copy)]
+enum VerifMethod {
+	Api,
+	Headless,
+	Smtp,
+}
+
+impl Display for VerifMethod {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		match self {
+			Self::Api => write!(f, "Api"),
+			Self::Headless => write!(f, "Headless"),
+			Self::Smtp => write!(f, "Smtp"),
+		}
+	}
+}
+
+impl From<&str> for VerifMethod {
+	fn from(s: &str) -> Self {
+		match s {
+			"Api" => Self::Api,
+			"Headless" => Self::Headless,
+			"Smtp" => Self::Smtp,
+			_ => panic!(format!(
+				"Unknown verification method {s}, must be one of Api, Headless, Smtp"
+			)),
+		}
+	}
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	// Setup sentry bug tracking.
@@ -33,8 +64,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
 	tracing_subscriber::fmt::init();
 
+	// Make sure the worker is well configured.
 	let addr = env::var("RCH_AMQP_ADDR").unwrap_or_else(|_| "amqp://127.0.0.1:5672".into());
 	let backend_name = env::var("RCH_BACKEND_NAME").expect("RCH_BACKEND_NAME is not set");
+	let verif_methods = env::var("RCH_VERIF_METHODS").expect("RCH_VERIF_METHODS is not set");
+	let verif_methods: Vec<VerifMethod> = verif_methods.split(',').map(|x| x.into()).collect();
+
 	let options = ConnectionProperties::default()
 		// Use tokio executor and reactor.
 		// At the moment the reactor is only available for unix.
@@ -46,15 +81,35 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
 	// Receive channel
 	let channel = conn.create_channel().await?;
-	info!(state=?conn.status().state(), "Connected to AMQP broker");
+	info!(backend=?backend_name,state=?conn.status().state(), "Connected to AMQP broker");
 
+	verif_methods.iter().for_each(|verif_method| {
+		let backend_name_clone = backend_name.clone();
+		let channel_clone = channel.clone();
+		tokio::spawn(async move {
+			if let Err(err) = consume_queue(verif_method, &backend_name_clone, &channel_clone).await
+			{
+				error!(error=?err, "Error consuming queue");
+			}
+		});
+	});
+
+	Ok(())
+}
+
+/// Consumes the queue for the given verification method.
+async fn consume_queue(
+	verif_method: &VerifMethod,
+	backend_name: &str,
+	channel: &lapin::Channel,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	// Create queue "check_email" with priority.
 	let mut queue_args = FieldTable::default();
 	queue_args.insert("x-max-priority".into(), 5.into()); // https://www.rabbitmq.com/priority.html
 
 	let queue = channel
 		.queue_declare(
-			"check_email",
+			format!("check_email.{}", verif_method.to_string()).as_str(),
 			QueueDeclareOptions {
 				durable: true,
 				..Default::default()
@@ -63,11 +118,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 		)
 		.await?;
 
-	info!(backend=?backend_name,queue=?queue.name().as_str(), "Worker will start consuming messages");
+	info!(queue=?queue.name().as_str(), "Worker will start consuming messages");
 	let mut consumer = channel
 		.basic_consume(
 			queue.name().as_str(),
-			&backend_name,
+			backend_name,
 			BasicConsumeOptions::default(),
 			FieldTable::default(),
 		)
