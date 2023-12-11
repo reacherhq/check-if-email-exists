@@ -244,5 +244,5 @@ pub fn get_bulk_job_result(
 		.and(warp::query::<JobResultRequest>())
 		.and_then(job_result)
 		// View access logs by setting `RUST_LOG=reacher_backend`.
-		.with(warp::log("reacher_backend"))
+		.with(warp::log(LOG_TARGET))
 }

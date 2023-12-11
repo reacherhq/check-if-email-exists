@@ -167,5 +167,5 @@ pub fn get_bulk_job_status(
 		.and(with_db(o))
 		.and_then(job_status)
 		// View access logs by setting `RUST_LOG=reacher`.
-		.with(warp::log("reacher_backend"))
+		.with(warp::log(LOG_TARGET))
 }

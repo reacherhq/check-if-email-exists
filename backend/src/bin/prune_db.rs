@@ -1,4 +1,3 @@
-use check_if_email_exists::LOG_TARGET;
 use sqlx::PgPool;
 use sqlx::Result;
 use tracing::info;
@@ -34,8 +33,8 @@ async fn main() -> Result<()> {
 	let job_ids_to_delete: Vec<(i32,)> = sqlx::query_as(&query).fetch_all(&pool).await?;
 
 	match (dry_mode, job_ids_to_delete.is_empty()) {
-		(true, _) => info!(target: LOG_TARGET, "Job ids to delete {:?}", job_ids_to_delete),
-		(false, true) => info!(target: LOG_TARGET, "No jobs to delete"),
+		(true, _) => info!("Job ids to delete {:?}", job_ids_to_delete),
+		(false, true) => info!("No jobs to delete"),
 		(false, false) => {
 			// Start a transaction
 			let tx = pool.begin().await?;
@@ -54,7 +53,7 @@ async fn main() -> Result<()> {
 				.execute(&pool) // Use execute on the query builder
 				.await?;
 
-			info!(target: LOG_TARGET,
+			info!(
 				"Email results for job IDs {:?} deleted successfully.",
 				job_ids_to_delete
 			);
@@ -68,7 +67,7 @@ async fn main() -> Result<()> {
 				.execute(&pool) // Use execute on the query builder
 				.await?;
 
-			info!(target: LOG_TARGET,
+			info!(
 				"Bulk jobs records with IDs {:?} deleted successfully.",
 				job_ids_to_delete
 			);

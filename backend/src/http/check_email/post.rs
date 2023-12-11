@@ -17,6 +17,7 @@
 //! This file implements the `POST /check_email` endpoint.
 
 use check_if_email_exists::CheckEmailInput;
+use check_if_email_exists::LOG_TARGET;
 use warp::{http, Filter};
 
 use crate::check::{check_email, check_header};
@@ -48,6 +49,6 @@ pub fn post_check_email(
 		.and(warp::body::json())
 		.and_then(handler)
 		// View access logs by setting `RUST_LOG=reacher`.
-		.with(warp::log("reacher_backend"))
+		.with(warp::log(LOG_TARGET))
 		.recover(errors::handle_rejection)
 }

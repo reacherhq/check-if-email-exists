@@ -147,5 +147,5 @@ pub fn create_bulk_job(
 		.and(warp::body::json())
 		.and_then(create_bulk_request)
 		// View access logs by setting `RUST_LOG=reacher_backend`.
-		.with(warp::log("reacher_backend"))
+		.with(warp::log(LOG_TARGET))
 }
