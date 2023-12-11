@@ -17,6 +17,7 @@
 //! Main entry point of the `reacher_backend` binary. It has two `main`
 //! functions, depending on whether the `bulk` feature is enabled or not.
 
+use check_if_email_exists::LOG_TARGET;
 use futures::try_join;
 use tracing::info;
 
@@ -34,7 +35,7 @@ use reacher_backend::{
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	// Initialize logging.
 	tracing_subscriber::fmt::init();
-	info!(version=?CARGO_PKG_VERSION, "Running Reacher");
+	info!(target: LOG_TARGET, version=?CARGO_PKG_VERSION, "Running Reacher");
 
 	// Setup sentry bug tracking.
 	let _guard: sentry::ClientInitGuard = setup_sentry();

@@ -23,6 +23,7 @@ mod task;
 
 use std::env;
 
+use check_if_email_exists::LOG_TARGET;
 use sqlx::{Pool, Postgres};
 use sqlxmq::{JobRegistry, JobRunnerHandle};
 use tracing::info;
@@ -56,6 +57,7 @@ pub async fn create_job_registry(pool: &Pool<Postgres>) -> Result<JobRunnerHandl
 		.await?;
 
 	info!(
+		target: LOG_TARGET,
 		"Bulk endpoints enabled with concurrency min={min_task_conc} to max={max_conc_task_fetch}."
 	);
 

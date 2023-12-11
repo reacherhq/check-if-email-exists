@@ -16,6 +16,7 @@
 
 //! This file implements the `GET /bulk/{id}` endpoint.
 
+use check_if_email_exists::LOG_TARGET;
 use serde::Serialize;
 use sqlx::types::chrono::{DateTime, Utc};
 use sqlx::{Pool, Postgres};
@@ -84,6 +85,7 @@ async fn job_status(
 	.await
 	.map_err(|e| {
 		error!(
+			target: LOG_TARGET, 
 			"Failed to get job record for [job={}] with [error={}]",
 			job_id, e
 		);
@@ -108,6 +110,7 @@ async fn job_status(
 	.await
 	.map_err(|e| {
 		error!(
+			target: LOG_TARGET, 
 			"Failed to get aggregate info for [job={}] with [error={}]",
 			job_id,
 			e

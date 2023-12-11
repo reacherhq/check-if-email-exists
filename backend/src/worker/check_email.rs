@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use check_if_email_exists::CheckEmailInput;
-use check_if_email_exists::CheckEmailOutput;
+use check_if_email_exists::LOG_TARGET;
+use check_if_email_exists::{CheckEmailInput, CheckEmailOutput};
 use lapin::message::Delivery;
 use lapin::options::*;
 use serde::Deserialize;
@@ -47,11 +47,11 @@ pub async fn process_check_email(
 	delivery: Delivery,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	let payload = serde_json::from_slice::<CheckEmailPayload>(&delivery.data)?;
-	info!(email=?payload.input.to_email, "Start check");
-	debug!(target: LOG_TARGET(payload=?payload);
+	info!(target: LOG_TARGET, email=?payload.input.to_email, "New job");
+	debug!(target: LOG_TARGET, payload=?payload);
 
 	let output = check_email(payload.input).await;
-	debug!(target: LOG_TARGET(email=output.input,output=?output, "Done check-if-email-exists");
+	debug!(target: LOG_TARGET, email=output.input,output=?output, "Done check-if-email-exists");
 
 	// Check if we have a webhook to send the output to.
 	if let Some(webhook) = payload.webhook {
@@ -69,8 +69,8 @@ pub async fn process_check_email(
 			.await?
 			.text()
 			.await?;
-		debug!(target: LOG_TARGET(email=?webhook_output.output.input,res=?res, "Received webhook response");
-		info!(email=?webhook_output.output.input, "Finished check");
+		debug!(target: LOG_TARGET, email=?webhook_output.output.input,res=?res, "Received webhook response");
+		info!(target: LOG_TARGET, email=?webhook_output.output.input, is_reachable=?webhook_output.output.is_reachable, "Finished check");
 	}
 
 	delivery.ack(BasicAckOptions::default()).await?;

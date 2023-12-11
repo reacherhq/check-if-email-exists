@@ -26,6 +26,7 @@ use std::env;
 use async_smtp::smtp::error::Error as AsyncSmtpError;
 use check_if_email_exists::misc::MiscError;
 use check_if_email_exists::mx::MxError;
+use check_if_email_exists::LOG_TARGET;
 use check_if_email_exists::{smtp::SmtpError, CheckEmailOutput};
 use sentry::protocol::{Event, Exception, Level, Values};
 use tracing::{debug, info};
@@ -40,7 +41,7 @@ pub fn setup_sentry() -> sentry::ClientInitGuard {
 	// will just silently ignore.
 	let sentry = sentry::init(env::var("RCH_SENTRY_DSN").unwrap_or_else(|_| "".into()));
 	if sentry.is_enabled() {
-		info!("Sentry is successfully set up.")
+		info!(target: LOG_TARGET, "Sentry is successfully set up.")
 	}
 
 	sentry
@@ -83,7 +84,7 @@ impl<'a> SentryError<'a> {
 /// info before sending to Sentry, by removing all instances of `username`.
 fn error(err: SentryError, result: &CheckEmailOutput) {
 	let exception_value = redact(format!("{err:?}").as_str(), &result.syntax.username);
-	debug!("Sending error to Sentry: {}", exception_value);
+	debug!(target: LOG_TARGET, "Sending error to Sentry: {}", exception_value);
 
 	let exception = Exception {
 		ty: err.get_exception_type(),
@@ -144,7 +145,7 @@ pub fn log_unknown_errors(result: &CheckEmailOutput) {
 		{
 			// If the SMTP error is transient and known, we don't track it in
 			// Sentry, just log it locally.
-			debug!(
+			debug!(target: LOG_TARGET,
 				"Transient error: {}",
 				redact(
 					response.message[0].as_str(),

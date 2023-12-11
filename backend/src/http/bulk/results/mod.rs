@@ -16,6 +16,7 @@
 
 //! This file implements the /bulk/{id}/results endpoints.
 
+use check_if_email_exists::LOG_TARGET;
 use csv::WriterBuilder;
 use serde::{Deserialize, Serialize};
 use sqlx::{Executor, Pool, Postgres, Row};
@@ -69,6 +70,7 @@ async fn job_result(
 	.await
 	.map_err(|e| {
 		error!(
+			target: LOG_TARGET, 
 			"Failed to fetch total_records for [job={}] with [error={}]",
 			job_id, e
 		);
@@ -83,6 +85,7 @@ async fn job_result(
 	.await
 	.map_err(|e| {
 		error!(
+			target: LOG_TARGET, 
 			"Failed to get total_processed for [job={}] with [error={}]",
 			job_id, e
 		);
@@ -104,6 +107,7 @@ async fn job_result(
 			let reply =
 				serde_json::to_vec(&JobResultJsonResponse { results: data }).map_err(|e| {
 					error!(
+						target: LOG_TARGET, 
 						"Failed to convert json results to string for [job={}] with [error={}]",
 						job_id, e
 					);
@@ -146,6 +150,7 @@ async fn job_result_as_iter(
 
 	let rows = conn_pool.fetch_all(query).await.map_err(|e| {
 		error!(
+			target: LOG_TARGET, 
 			"Failed to get results for [job={}] [limit={}] [offset={}] with [error={}]",
 			job_id,
 			limit.map(|s| s.to_string()).unwrap_or_else(|| "n/a".into()),
@@ -190,6 +195,7 @@ async fn job_result_csv(
 	for json_value in rows {
 		let result_csv: JobResultCsvResponse = CsvWrapper(json_value).try_into().map_err(|e: &'static str| {
 			error!(
+				target: LOG_TARGET, 
 				"Failed to convert json to csv output struct for [job={}] [limit={}] [offset={}] to csv with [error={}]",
 				job_id,
 				limit.map(|s| s.to_string()).unwrap_or_else(|| "n/a".into()),
@@ -201,6 +207,7 @@ async fn job_result_csv(
 		})?;
 		wtr.serialize(result_csv).map_err(|e| {
 			error!(
+				target: LOG_TARGET, 
 				"Failed to serialize result for [job={}] [limit={}] [offset={}] to csv with [error={}]",
 				job_id,
 				limit.map(|s| s.to_string()).unwrap_or_else(|| "n/a".into()),
@@ -214,6 +221,7 @@ async fn job_result_csv(
 
 	let data = wtr.into_inner().map_err(|e| {
 		error!(
+			target: LOG_TARGET, 
 			"Failed to convert results for [job={}] [limit={}] [offset={}] to csv with [error={}]",
 			job_id,
 			limit.map(|s| s.to_string()).unwrap_or_else(|| "n/a".into()),

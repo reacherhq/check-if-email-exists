@@ -17,6 +17,7 @@
 //! This file implements the `POST /bulk` endpoint.
 
 use check_if_email_exists::CheckEmailInputProxy;
+use check_if_email_exists::LOG_TARGET;
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres};
 use tracing::{debug, error};
@@ -107,6 +108,7 @@ async fn create_bulk_request(
 	.await
 	.map_err(|e| {
 		error!(
+			target: LOG_TARGET,
 			"Failed to create job record for [body={:?}] with [error={}]",
 			&body, e
 		);
@@ -117,6 +119,7 @@ async fn create_bulk_request(
 		let task_uuid = submit_job(&conn_pool, rec.id, task_input).await?;
 
 		debug!(
+			target: LOG_TARGET,
 			"Submitted task to sqlxmq for [job={}] with [uuid={}]",
 			rec.id, task_uuid
 		);

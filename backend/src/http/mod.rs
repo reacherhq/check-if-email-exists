@@ -21,6 +21,7 @@ mod version;
 use std::env;
 use std::net::IpAddr;
 
+use check_if_email_exists::LOG_TARGET;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use tracing::info;
 use warp::Filter;
@@ -77,7 +78,7 @@ pub async fn run_warp_server() -> Result<(), Box<dyn std::error::Error + Send + 
 
 	let routes = create_routes(db);
 
-	info!(host=?host,port=?port, "Server is listening");
+	info!(target: LOG_TARGET, host=?host,port=?port, "Server is listening");
 	warp::serve(routes).run((host, port)).await;
 
 	Ok(())

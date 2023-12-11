@@ -16,8 +16,7 @@
 
 //! This file implements the `POST /bulk` endpoint.
 
-use super::error::BulkError;
-use crate::check::check_email;
+use check_if_email_exists::LOG_TARGET;
 use check_if_email_exists::{CheckEmailInput, CheckEmailInputProxy, CheckEmailOutput, Reachable};
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres};
@@ -25,6 +24,9 @@ use sqlxmq::{job, CurrentJob};
 use std::error::Error;
 use tracing::{debug, error};
 use uuid::Uuid;
+
+use super::error::BulkError;
+use crate::check::check_email;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct TaskInput {
@@ -105,6 +107,7 @@ pub async fn submit_job(
 		.set_json(&task_payload)
 		.map_err(|e| {
 			error!(
+				target: LOG_TARGET,
 				"Failed to submit task with the following [input={:?}] with [error={}]",
 				task_payload.input, e
 			);
@@ -115,6 +118,7 @@ pub async fn submit_job(
 		.await
 		.map_err(|e| {
 			error!(
+				target: LOG_TARGET,
 				"Failed to submit task for [bulk_req={}] with [error={}]",
 				job_id, e
 			);
@@ -147,6 +151,7 @@ pub async fn email_verification_task(
 
 	for check_email_input in task_payload.input {
 		debug!(
+			target: LOG_TARGET,
 			"Starting task [email={}] for [job={}] and [uuid={}]",
 			check_email_input.to_email,
 			task_payload.id,
@@ -157,6 +162,7 @@ pub async fn email_verification_task(
 		let response = check_email(check_email_input).await;
 
 		debug!(
+			target: LOG_TARGET,
 			"Got task result [email={}] for [job={}] and [uuid={}] with [is_reachable={:?}]",
 			to_email,
 			task_payload.id,
@@ -199,6 +205,7 @@ pub async fn email_verification_task(
 		.await
 		.map_err(|e| {
 			error!(
+				target: LOG_TARGET,
 				"Failed to write [email={}] result to db for [job={}] and [uuid={}] with [error={}]",
 				response.input,
 				job_id,
@@ -210,6 +217,7 @@ pub async fn email_verification_task(
 		})?;
 
 		debug!(
+			target: LOG_TARGET,
 			"Wrote result for [email={}] for [job={}] and [uuid={}]",
 			response.input,
 			job_id,
