@@ -17,22 +17,27 @@
 //! Main entry point of the `reacher_backend` binary. It has two `main`
 //! functions, depending on whether the `bulk` feature is enabled or not.
 
-use check_if_email_exists::LOG_TARGET;
 use dotenv::dotenv;
-use reacher_backend::routes::{bulk::email_verification_task, create_routes};
-use reacher_backend::sentry_util::{setup_sentry, CARGO_PKG_VERSION};
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use sqlxmq::{JobRegistry, JobRunnerHandle};
 use std::{env, net::IpAddr};
+use tracing::info;
 use warp::Filter;
 
+use reacher_backend::routes::{bulk::email_verification_task, create_routes};
+use reacher_backend::sentry_util::{setup_sentry, CARGO_PKG_VERSION};
+#[cfg(feature = "worker")]
+use reacher_backend::worker;
+
 /// Run a HTTP server using warp with bulk endpoints.
+/// If the worker feature is enabled, this function will also start a worker
+/// that listens to an AMQP message queue.
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	init_logger();
 
 	// Setup sentry bug tracking.
-	let _guard = setup_sentry();
+	let _guard: sentry::ClientInitGuard = setup_sentry();
 
 	let is_bulk_enabled = env::var("RCH_ENABLE_BULK").unwrap_or_else(|_| "0".into()) == "1";
 	if is_bulk_enabled {
@@ -45,14 +50,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 		run_warp_server(routes).await?;
 	}
 
+	#[cfg(feature = "worker")]
+	return worker::run_worker().await;
+
+	#[cfg(not(feature = "worker"))]
 	Ok(())
 }
 
 fn init_logger() {
 	// Read from .env file if present.
 	let _ = dotenv();
-	env_logger::init();
-	log::info!(target: LOG_TARGET, "Running Reacher v{}", CARGO_PKG_VERSION);
+
+	// Initialize tracing.
+	tracing_subscriber::fmt::init();
+	info!("Running Reacher v{}", CARGO_PKG_VERSION);
 }
 
 /// Create a DB pool.
@@ -103,8 +114,7 @@ async fn create_job_registry(pool: &Pool<Postgres>) -> Result<JobRunnerHandle, s
 		.run()
 		.await?;
 
-	log::info!(
-		target: LOG_TARGET,
+	info!(
 		"Bulk endpoints enabled with concurrency min={min_task_conc} to max={max_conc_task_fetch}."
 	);
 
@@ -128,7 +138,7 @@ async fn run_warp_server(
 				.expect("Environment variable PORT is malformed.")
 		})
 		.unwrap_or(8080);
-	println!("Server is listening on {host}:{port}.");
+	info!(host=?host,port=?port, "Server is listening");
 
 	warp::serve(routes).run((host, port)).await;
 

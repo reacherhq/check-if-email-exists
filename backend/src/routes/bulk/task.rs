@@ -18,12 +18,12 @@
 
 use super::error::BulkError;
 use crate::check::check_email;
-use check_if_email_exists::LOG_TARGET;
 use check_if_email_exists::{CheckEmailInput, CheckEmailInputProxy, CheckEmailOutput, Reachable};
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres};
 use sqlxmq::{job, CurrentJob};
 use std::error::Error;
+use tracing::{debug, error};
 use uuid::Uuid;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -104,11 +104,9 @@ pub async fn submit_job(
 		.builder()
 		.set_json(&task_payload)
 		.map_err(|e| {
-			log::error!(
-				target: LOG_TARGET,
+			error!(
 				"Failed to submit task with the following [input={:?}] with [error={}]",
-				task_payload.input,
-				e
+				task_payload.input, e
 			);
 
 			BulkError::Json(e)
@@ -116,11 +114,9 @@ pub async fn submit_job(
 		.spawn(conn_pool)
 		.await
 		.map_err(|e| {
-			log::error!(
-				target: LOG_TARGET,
+			error!(
 				"Failed to submit task for [bulk_req={}] with [error={}]",
-				job_id,
-				e
+				job_id, e
 			);
 
 			e
@@ -150,8 +146,7 @@ pub async fn email_verification_task(
 	let mut final_response: Option<CheckEmailOutput> = None;
 
 	for check_email_input in task_payload.input {
-		log::debug!(
-			target: LOG_TARGET,
+		debug!(
 			"Starting task [email={}] for [job={}] and [uuid={}]",
 			check_email_input.to_email,
 			task_payload.id,
@@ -161,8 +156,7 @@ pub async fn email_verification_task(
 		let to_email = check_email_input.to_email.clone();
 		let response = check_email(check_email_input).await;
 
-		log::debug!(
-			target: LOG_TARGET,
+		debug!(
 			"Got task result [email={}] for [job={}] and [uuid={}] with [is_reachable={:?}]",
 			to_email,
 			task_payload.id,
@@ -204,8 +198,7 @@ pub async fn email_verification_task(
 		.fetch_optional(current_job.pool())
 		.await
 		.map_err(|e| {
-			log::error!(
-				target:LOG_TARGET,
+			error!(
 				"Failed to write [email={}] result to db for [job={}] and [uuid={}] with [error={}]",
 				response.input,
 				job_id,
@@ -216,8 +209,7 @@ pub async fn email_verification_task(
 			e
 		})?;
 
-		log::debug!(
-			target: LOG_TARGET,
+		debug!(
 			"Wrote result for [email={}] for [job={}] and [uuid={}]",
 			response.input,
 			job_id,

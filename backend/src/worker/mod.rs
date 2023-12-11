@@ -20,22 +20,14 @@ use futures_lite::StreamExt;
 use lapin::{options::*, types::FieldTable, Connection, ConnectionProperties};
 use tracing::{error, info};
 
-mod sentry_util;
 mod worker;
 
-use sentry_util::setup_sentry;
 use worker::process_check_email;
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-	// Setup sentry bug tracking.
-	let _guard = setup_sentry();
-
-	tracing_subscriber::fmt::init();
-
+pub async fn run_worker() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	// Make sure the worker is well configured.
 	let addr = env::var("RCH_AMQP_ADDR").unwrap_or_else(|_| "amqp://127.0.0.1:5672".into());
-	let backend_name = env::var("RCH_BACKEND_NAME").expect("RCH_BACKEND_NAME is not set");
+	let backend_name: String = env::var("RCH_BACKEND_NAME").expect("RCH_BACKEND_NAME is not set");
 	let verif_method: VerifMethod = env::var("RCH_VERIF_METHOD")
 		.expect("RCH_VERIF_METHODS is not set")
 		.as_str()
