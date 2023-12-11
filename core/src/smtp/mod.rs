@@ -213,6 +213,7 @@ mod tests {
 		let to_email = EmailAddress::from_str("foo@gmail.com").unwrap();
 		let host = Name::from_str("alt4.aspmx.l.google.com.").unwrap();
 		let mut input = CheckEmailInput::default();
+		input.set_gmail_verif_method(crate::GmailVerifMethod::Smtp);
 		input.set_smtp_timeout(Some(Duration::from_millis(1)));
 
 		let (res, smtp_debug) =
