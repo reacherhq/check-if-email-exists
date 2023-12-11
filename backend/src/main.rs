@@ -41,10 +41,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	// Setup sentry bug tracking.
 	let _guard: sentry::ClientInitGuard = setup_sentry();
 
-	let http_server = run_warp_server();
+	let _http_server = run_warp_server();
 
 	#[cfg(feature = "worker")]
-	try_join!(http_server, run_worker())?;
+	try_join!(_http_server, run_worker())?;
 
 	Ok(())
 }
