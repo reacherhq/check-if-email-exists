@@ -18,129 +18,32 @@
 //! functions, depending on whether the `bulk` feature is enabled or not.
 
 use dotenv::dotenv;
-use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
-use sqlxmq::{JobRegistry, JobRunnerHandle};
-use std::{env, net::IpAddr};
 use tracing::info;
-use warp::Filter;
 
-use reacher_backend::routes::{bulk::email_verification_task, create_routes};
-use reacher_backend::sentry_util::{setup_sentry, CARGO_PKG_VERSION};
 #[cfg(feature = "worker")]
 use reacher_backend::worker;
+use reacher_backend::{
+	http::run_warp_server,
+	sentry_util::{setup_sentry, CARGO_PKG_VERSION},
+};
 
 /// Run a HTTP server using warp with bulk endpoints.
 /// If the worker feature is enabled, this function will also start a worker
 /// that listens to an AMQP message queue.
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-	init_logger();
+	// Initialize logging.
+	tracing_subscriber::fmt::init();
+	info!(version=?CARGO_PKG_VERSION, "Running Reacher");
 
 	// Setup sentry bug tracking.
 	let _guard: sentry::ClientInitGuard = setup_sentry();
 
-	let is_bulk_enabled = env::var("RCH_ENABLE_BULK").unwrap_or_else(|_| "0".into()) == "1";
-	if is_bulk_enabled {
-		let pool = create_db().await?;
-		let _registry = create_job_registry(&pool).await?;
-		let routes = create_routes(Some(pool));
-		run_warp_server(routes).await?;
-	} else {
-		let routes = create_routes(None);
-		run_warp_server(routes).await?;
-	}
+	tokio::spawn(async move { run_warp_server().await });
 
 	#[cfg(feature = "worker")]
 	return worker::run_worker().await;
 
 	#[cfg(not(feature = "worker"))]
-	Ok(())
-}
-
-fn init_logger() {
-	// Read from .env file if present.
-	let _ = dotenv();
-
-	// Initialize tracing.
-	tracing_subscriber::fmt::init();
-	info!("Running Reacher v{}", CARGO_PKG_VERSION);
-}
-
-/// Create a DB pool.
-pub async fn create_db() -> Result<Pool<Postgres>, sqlx::Error> {
-	let pg_conn =
-		env::var("DATABASE_URL").expect("Environment variable DATABASE_URL should be set");
-	let pg_max_conn = env::var("RCH_DATABASE_MAX_CONNECTIONS").map_or(5, |var| {
-		var.parse::<u32>()
-			.expect("Environment variable RCH_DATABASE_MAX_CONNECTIONS should parse to u32")
-	});
-
-	// create connection pool with database
-	// connection pool internally the shared db connection
-	// with arc so it can safely be cloned and shared across threads
-	let pool = PgPoolOptions::new()
-		.max_connections(pg_max_conn)
-		.connect(pg_conn.as_str())
-		.await?;
-
-	sqlx::migrate!("./migrations").run(&pool).await?;
-
-	Ok(pool)
-}
-
-/// Create a job registry with one task: the email verification task.
-async fn create_job_registry(pool: &Pool<Postgres>) -> Result<JobRunnerHandle, sqlx::Error> {
-	let min_task_conc = env::var("RCH_MINIMUM_TASK_CONCURRENCY").map_or(10, |var| {
-		var.parse::<usize>()
-			.expect("Environment variable RCH_MINIMUM_TASK_CONCURRENCY should parse to usize")
-	});
-	let max_conc_task_fetch = env::var("RCH_MAXIMUM_CONCURRENT_TASK_FETCH").map_or(20, |var| {
-		var.parse::<usize>()
-			.expect("Environment variable RCH_MAXIMUM_CONCURRENT_TASK_FETCH should parse to usize")
-	});
-
-	// registry needs to be given list of jobs it can accept
-	let registry = JobRegistry::new(&[email_verification_task]);
-
-	// create runner for the message queue associated
-	// with this job registry
-	let registry = registry
-		// Create a job runner using the connection pool.
-		.runner(pool)
-		// Here is where you can configure the job runner
-		// Aim to keep 10-20 jobs running at a time.
-		.set_concurrency(min_task_conc, max_conc_task_fetch)
-		// Start the job runner in the background.
-		.run()
-		.await?;
-
-	info!(
-		"Bulk endpoints enabled with concurrency min={min_task_conc} to max={max_conc_task_fetch}."
-	);
-
-	Ok(registry)
-}
-
-async fn run_warp_server(
-	routes: impl Filter<Extract = impl warp::Reply, Error = warp::Rejection>
-		+ Clone
-		+ Send
-		+ Sync
-		+ 'static,
-) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-	let host = env::var("RCH_HTTP_HOST")
-		.unwrap_or_else(|_| "127.0.0.1".into())
-		.parse::<IpAddr>()
-		.expect("Environment variable RCH_HTTP_HOST is malformed.");
-	let port = env::var("PORT")
-		.map(|port| {
-			port.parse::<u16>()
-				.expect("Environment variable PORT is malformed.")
-		})
-		.unwrap_or(8080);
-	info!(host=?host,port=?port, "Server is listening");
-
-	warp::serve(routes).run((host, port)).await;
-
 	Ok(())
 }
