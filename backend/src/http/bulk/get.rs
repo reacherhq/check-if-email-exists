@@ -85,7 +85,7 @@ async fn job_status(
 	.await
 	.map_err(|e| {
 		error!(
-			target: LOG_TARGET, 
+			target: LOG_TARGET,
 			"Failed to get job record for [job={}] with [error={}]",
 			job_id, e
 		);
