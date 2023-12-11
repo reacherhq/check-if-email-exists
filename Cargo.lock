@@ -2411,6 +2411,8 @@ dependencies = [
  "async-smtp",
  "check-if-email-exists",
  "csv",
+ "dotenv",
+ "futures",
  "futures-lite 2.1.0",
  "lapin",
  "log",

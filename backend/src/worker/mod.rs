@@ -20,9 +20,9 @@ use futures_lite::StreamExt;
 use lapin::{options::*, types::FieldTable, Connection, ConnectionProperties};
 use tracing::{error, info};
 
-mod worker;
+mod check_email;
 
-use worker::process_check_email;
+use check_email::process_check_email;
 
 pub async fn run_worker() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	println!("AAA");

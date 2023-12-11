@@ -17,11 +17,11 @@
 //! Main entry point of the `reacher_backend` binary. It has two `main`
 //! functions, depending on whether the `bulk` feature is enabled or not.
 
-use dotenv::dotenv;
+use futures::try_join;
 use tracing::info;
 
 #[cfg(feature = "worker")]
-use reacher_backend::worker;
+use reacher_backend::worker::run_worker;
 use reacher_backend::{
 	http::run_warp_server,
 	sentry_util::{setup_sentry, CARGO_PKG_VERSION},
@@ -39,11 +39,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	// Setup sentry bug tracking.
 	let _guard: sentry::ClientInitGuard = setup_sentry();
 
-	tokio::spawn(async move { run_warp_server().await });
+	let http_server = run_warp_server();
 
 	#[cfg(feature = "worker")]
-	return worker::run_worker().await;
+	try_join!(http_server, run_worker())?;
 
-	#[cfg(not(feature = "worker"))]
 	Ok(())
 }

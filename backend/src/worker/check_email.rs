@@ -48,10 +48,10 @@ pub async fn process_check_email(
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	let payload = serde_json::from_slice::<CheckEmailPayload>(&delivery.data)?;
 	info!(email=?payload.input.to_email, "Start check");
-	debug!(payload=?payload);
+	debug!(target: LOG_TARGET(payload=?payload);
 
 	let output = check_email(payload.input).await;
-	debug!(email=output.input,output=?output, "Done check-if-email-exists");
+	debug!(target: LOG_TARGET(email=output.input,output=?output, "Done check-if-email-exists");
 
 	// Check if we have a webhook to send the output to.
 	if let Some(webhook) = payload.webhook {
@@ -69,7 +69,7 @@ pub async fn process_check_email(
 			.await?
 			.text()
 			.await?;
-		debug!(email=?webhook_output.output.input,res=?res, "Received webhook response");
+		debug!(target: LOG_TARGET(email=?webhook_output.output.input,res=?res, "Received webhook response");
 		info!(email=?webhook_output.output.input, "Finished check");
 	}
 
