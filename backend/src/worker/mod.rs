@@ -45,16 +45,14 @@ pub async fn run_worker() -> Result<(), Box<dyn std::error::Error + Send + Sync>
 
 	// Receive channel
 	let channel = conn.create_channel().await?;
+	let concurrency = env::var("RCH_WORKER_CONCURRENCY")
+		.ok()
+		.and_then(|s| s.parse::<u16>().ok())
+		.unwrap_or(10);
 	channel
-		.basic_qos(
-			env::var("RCH_WORKER_CONCURRENCY")
-				.ok()
-				.and_then(|s| s.parse::<u16>().ok())
-				.unwrap_or(10),
-			BasicQosOptions { global: false },
-		)
+		.basic_qos(concurrency, BasicQosOptions { global: false })
 		.await?;
-	info!(target: LOG_TARGET, backend=?backend_name,state=?conn.status().state(), "Connected to AMQP broker");
+	info!(target: LOG_TARGET, backend=?backend_name,state=?conn.status().state(), concurrency=?concurrency, "Connected to AMQP broker");
 
 	// Create queue "check_email.{Smtp,Headless}" with priority.
 	let queue_name = format!("check_email.{:?}", verif_method);
