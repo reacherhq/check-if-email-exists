@@ -44,17 +44,6 @@ pub fn create_routes(
 ///
 /// This function starts the Warp server and listens for incoming requests.
 /// It returns a `Result` indicating whether the server started successfully or encountered an error.
-///
-/// # Examples
-///
-/// ```rust
-/// use std::error::Error;
-///
-/// #[tokio::main]
-/// async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
-///     run_warp_server().await
-/// }
-/// ```
 pub async fn run_warp_server() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	let host = env::var("RCH_HTTP_HOST")
 		.unwrap_or_else(|_| "127.0.0.1".into())
