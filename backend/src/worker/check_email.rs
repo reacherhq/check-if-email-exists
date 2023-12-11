@@ -38,8 +38,8 @@ pub async fn process_check_email(
 	debug!(target: LOG_TARGET, payload=?payload);
 
 	let output = check_email(payload.input).await;
-	debug!(target: LOG_TARGET, email=output.input,output=?output, "Done check-if-email-exists");
-
+	info!(target: LOG_TARGET, email=output.input, is_reachable=?output.is_reachable, "Done check");
+	debug!(target: LOG_TARGET, output=?output, "Done check");
 	let reply_payload = serde_json::to_string(&output)?;
 	let reply_payload = reply_payload.as_bytes();
 
@@ -63,6 +63,8 @@ pub async fn process_check_email(
 			)
 			.await?
 			.await?;
+
+		debug!(target: LOG_TARGET, reply_to=?reply_to, correlation_id=?correlation_id,  "Sent reply")
 	}
 
 	delivery.ack(BasicAckOptions::default()).await?;
