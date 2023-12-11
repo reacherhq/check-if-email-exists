@@ -39,7 +39,6 @@ async fn test_input_foo_bar() {
 		.await;
 
 	assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
-	println!("{:?}", resp.body());
 	assert!(resp.body().starts_with(FOO_BAR_RESPONSE.as_bytes()));
 }
 
