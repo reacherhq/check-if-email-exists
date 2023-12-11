@@ -195,7 +195,7 @@ async fn job_result_csv(
 	for json_value in rows {
 		let result_csv: JobResultCsvResponse = CsvWrapper(json_value).try_into().map_err(|e: &'static str| {
 			error!(
-				target: LOG_TARGET, 
+				target: LOG_TARGET,
 				"Failed to convert json to csv output struct for [job={}] [limit={}] [offset={}] to csv with [error={}]",
 				job_id,
 				limit.map(|s| s.to_string()).unwrap_or_else(|| "n/a".into()),
