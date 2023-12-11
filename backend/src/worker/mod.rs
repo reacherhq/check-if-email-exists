@@ -45,6 +45,15 @@ pub async fn run_worker() -> Result<(), Box<dyn std::error::Error + Send + Sync>
 
 	// Receive channel
 	let channel = conn.create_channel().await?;
+	channel
+		.basic_qos(
+			env::var("RCH_WORKER_CONCURRENCY")
+				.ok()
+				.and_then(|s| s.parse::<u16>().ok())
+				.unwrap_or(10),
+			BasicQosOptions { global: false },
+		)
+		.await?;
 	info!(target: LOG_TARGET, backend=?backend_name,state=?conn.status().state(), "Connected to AMQP broker");
 
 	// Create queue "check_email.{Smtp,Headless}" with priority.
@@ -75,8 +84,9 @@ pub async fn run_worker() -> Result<(), Box<dyn std::error::Error + Send + Sync>
 
 	while let Some(delivery) = consumer.next().await {
 		if let Ok(delivery) = delivery {
+			let channel = channel.clone();
 			tokio::spawn(async move {
-				let res = process_check_email(delivery).await;
+				let res = process_check_email(&channel, delivery).await;
 				if let Err(err) = res {
 					error!(target: LOG_TARGET, error=?err, "Error processing message");
 				}
