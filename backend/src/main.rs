@@ -18,6 +18,7 @@
 //! functions, depending on whether the `bulk` feature is enabled or not.
 
 use check_if_email_exists::LOG_TARGET;
+#[cfg(feature = "worker")]
 use futures::try_join;
 use tracing::info;
 
