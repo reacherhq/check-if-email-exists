@@ -16,13 +16,14 @@
 
 //! This file implements the `GET /bulk/{id}` endpoint.
 
+use check_if_email_exists::LOG_TARGET;
 use serde::Serialize;
 use sqlx::types::chrono::{DateTime, Utc};
 use sqlx::{Pool, Postgres};
+use tracing::error;
 use warp::Filter;
 
 use super::{db::with_db, error::BulkError};
-use check_if_email_exists::LOG_TARGET;
 
 /// NOTE: Type conversions from postgres to rust types
 /// are according to the table given by
@@ -83,11 +84,10 @@ async fn job_status(
 	.fetch_one(&conn_pool)
 	.await
 	.map_err(|e| {
-		log::error!(
+		error!(
 			target: LOG_TARGET,
 			"Failed to get job record for [job={}] with [error={}]",
-			job_id,
-			e
+			job_id, e
 		);
 		BulkError::from(e)
 	})?;
@@ -109,7 +109,7 @@ async fn job_status(
 	.fetch_one(&conn_pool)
 	.await
 	.map_err(|e| {
-		log::error!(
+		error!(
 			target: LOG_TARGET,
 			"Failed to get aggregate info for [job={}] with [error={}]",
 			job_id,

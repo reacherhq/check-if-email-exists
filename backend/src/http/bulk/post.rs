@@ -20,6 +20,7 @@ use check_if_email_exists::CheckEmailInputProxy;
 use check_if_email_exists::LOG_TARGET;
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres};
+use tracing::{debug, error};
 use warp::Filter;
 
 use super::{
@@ -106,11 +107,10 @@ async fn create_bulk_request(
 	.fetch_one(&conn_pool)
 	.await
 	.map_err(|e| {
-		log::error!(
+		error!(
 			target: LOG_TARGET,
 			"Failed to create job record for [body={:?}] with [error={}]",
-			&body,
-			e
+			&body, e
 		);
 		BulkError::from(e)
 	})?;
@@ -118,11 +118,10 @@ async fn create_bulk_request(
 	for task_input in body.into_iter() {
 		let task_uuid = submit_job(&conn_pool, rec.id, task_input).await?;
 
-		log::debug!(
+		debug!(
 			target: LOG_TARGET,
 			"Submitted task to sqlxmq for [job={}] with [uuid={}]",
-			rec.id,
-			task_uuid
+			rec.id, task_uuid
 		);
 	}
 
@@ -147,6 +146,6 @@ pub fn create_bulk_job(
 		.and(warp::body::content_length_limit(1024 * 16))
 		.and(warp::body::json())
 		.and_then(create_bulk_request)
-		// View access logs by setting `RUST_LOG=reacher`.
+		// View access logs by setting `RUST_LOG=reacher_backend`.
 		.with(warp::log(LOG_TARGET))
 }

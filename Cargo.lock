@@ -2412,37 +2412,24 @@ dependencies = [
  "check-if-email-exists",
  "csv",
  "dotenv",
- "env_logger",
+ "futures",
+ "futures-lite 2.1.0",
+ "lapin",
  "log",
  "openssl",
+ "reqwest",
  "sentry",
  "serde",
  "serde_json",
  "sqlx",
  "sqlxmq",
  "tokio",
- "uuid 1.6.1",
- "warp",
-]
-
-[[package]]
-name = "reacher_worker"
-version = "1.0.0"
-dependencies = [
- "async-global-executor",
- "async-smtp",
- "check-if-email-exists",
- "futures-lite 2.1.0",
- "lapin",
- "reqwest",
- "sentry",
- "serde",
- "serde_json",
- "tokio",
  "tokio-executor-trait",
  "tokio-reactor-trait",
  "tracing",
  "tracing-subscriber",
+ "uuid 1.6.1",
+ "warp",
 ]
 
 [[package]]
