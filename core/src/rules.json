@@ -8,7 +8,11 @@
 		"yahoo.fr": { "rules": ["SkipCatchAll"] }
 	},
 	"by_mx": {
-		"filter30.antispamcloud.com.": { "rules": ["HoneyPot"] }
+		"filter30.antispamcloud.com.": { "rules": ["HoneyPot"] },
+		"futuresinitiative.org.": { "rules": ["SmtpTimeout45s"] },
+		"mail.digimarcon.com.": { "rules": ["SmtpTimeout45s"] },
+		"mail.glasasoftball.org.": { "rules": ["SmtpTimeout45s"] },
+		"nosotrosorg.com.": { "rules": ["SmtpTimeout45s"] }
 	},
 	"by_mx_suffix": {
 		".antispamcloud.com.": {
@@ -19,7 +23,7 @@
 	"rules": {
 		"SkipCatchAll": { "_comment": "Don't perform catch-all check" },
 		"SmtpTimeout45s": {
-			"_comment": "Set SMTP connection timeout to at least 45s. If the user request set an even higher timeout, take that one. Please note that this timeout is **per SMTP connection**. By default, we try 2 connections per email: if the 1st one failed, then we connect again to avoid potential greylisting, in which case the whole verification takes 1min30s."
+			"_comment": "Set SMTP connection timeout to at least 45s. If the user request set an even higher timeout, take that one. Please note that this timeout is **per SMTP connection**. We might try 2 connections per email: if the 1st one failed, then we connect again to avoid potential greylisting, in which case the whole verification takes 1min30s."
 		}
 	}
 }
