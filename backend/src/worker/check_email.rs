@@ -14,11 +14,11 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use check_if_email_exists::CheckEmailInput;
 use check_if_email_exists::LOG_TARGET;
+use check_if_email_exists::{CheckEmailInput, CheckEmailOutput};
 use lapin::message::Delivery;
 use lapin::{options::*, BasicProperties, Channel};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tracing::{debug, info};
 
 use crate::check::check_email;
@@ -26,6 +26,19 @@ use crate::check::check_email;
 #[derive(Debug, Deserialize)]
 pub struct CheckEmailPayload {
 	pub input: CheckEmailInput,
+	pub webhook: Option<CheckEmailWebhook>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CheckEmailWebhook {
+	pub url: String,
+	pub extra: serde_json::Value,
+}
+
+#[derive(Debug, Serialize)]
+struct WebhookOutput {
+	output: CheckEmailOutput,
+	extra: serde_json::Value,
 }
 
 /// Processes the check email task asynchronously.
@@ -65,6 +78,26 @@ pub async fn process_check_email(
 			.await?;
 
 		debug!(target: LOG_TARGET, reply_to=?reply_to, correlation_id=?correlation_id,  "Sent reply")
+	}
+
+	// Check if we have a webhook to send the output to.
+	if let Some(webhook) = payload.webhook {
+		let webhook_output = WebhookOutput {
+			output,
+			extra: webhook.extra,
+		};
+
+		let client = reqwest::Client::new();
+		let res = client
+			.post(webhook.url)
+			.json(&webhook_output)
+			.header("x-reacher-secret", std::env::var("RCH_HEADER_SECRET")?)
+			.send()
+			.await?
+			.text()
+			.await?;
+		debug!(target: LOG_TARGET, email=?webhook_output.output.input,res=?res, "Received webhook response");
+		info!(target: LOG_TARGET, email=?webhook_output.output.input, is_reachable=?webhook_output.output.is_reachable, "Finished check");
 	}
 
 	delivery.ack(BasicAckOptions::default()).await?;
