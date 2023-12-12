@@ -18,8 +18,7 @@ use std::env;
 
 use check_if_email_exists::CheckEmailInput;
 use reacher_backend::check::REACHER_SECRET_HEADER;
-use reacher_backend::routes::create_routes;
-
+use reacher_backend::http::create_routes;
 use warp::http::StatusCode;
 use warp::test::request;
 
@@ -39,7 +38,6 @@ async fn test_input_foo_bar() {
 		.await;
 
 	assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
-	println!("{:?}", resp.body());
 	assert!(resp.body().starts_with(FOO_BAR_RESPONSE.as_bytes()));
 }
 

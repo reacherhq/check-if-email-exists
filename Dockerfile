@@ -14,7 +14,7 @@ COPY . .
 
 ENV SQLX_OFFLINE=true
 
-RUN cargo build --bin reacher_backend --release --target=x86_64-unknown-linux-musl
+RUN cargo build --features=reacher_backend/worker --bin reacher_backend --release --target=x86_64-unknown-linux-musl
 
 # ------------------------------------------------------------------------------
 # Final Stage
@@ -31,7 +31,7 @@ USER root
 RUN apk add --no-cache chromium-chromedriver
 
 COPY --from=cargo-build /usr/src/reacher/target/x86_64-unknown-linux-musl/release/reacher_backend .
-COPY --from=cargo-build /usr/src/reacher/backend/docker.sh .
+COPY --from=cargo-build /usr/src/reacher/docker.sh .
 
 RUN chown chrome:chrome reacher_backend
 RUN chown chrome:chrome docker.sh

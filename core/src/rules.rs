@@ -30,6 +30,8 @@ pub enum Rule {
 	SkipCatchAll,
 	/// Set the SMTP timeout to 45s.
 	SmtpTimeout45s,
+	/// Honey pot.
+	HoneyPot,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -41,6 +43,8 @@ struct RulesByDomain {
 struct AllRules {
 	/// Apply rules by domain name, i.e. after the @ symbol.
 	by_domain: HashMap<String, RulesByDomain>,
+	/// Apply rules by the MX host.
+	by_mx: HashMap<String, RulesByDomain>,
 	/// Apply rules by the MX host. Since each domain potentially has multiple
 	/// MX records, we match by their suffix.
 	by_mx_suffix: HashMap<String, RulesByDomain>,
@@ -58,6 +62,14 @@ fn does_domain_have_rule(domain: &str, rule: &Rule) -> bool {
 }
 
 fn does_mx_have_rule(host: &str, rule: &Rule) -> bool {
+	if let Some(v) = ALL_RULES.by_mx.get(host) {
+		return v.rules.contains(rule);
+	}
+
+	false
+}
+
+fn does_mx_suffix_have_rule(host: &str, rule: &Rule) -> bool {
 	for (k, v) in ALL_RULES.by_mx_suffix.iter() {
 		if host.ends_with(k) {
 			return v.rules.contains(rule);
@@ -69,5 +81,7 @@ fn does_mx_have_rule(host: &str, rule: &Rule) -> bool {
 
 /// Check if either the domain or the MX host has any given rule.
 pub fn has_rule(domain: &str, host: &str, rule: &Rule) -> bool {
-	does_domain_have_rule(domain, rule) || does_mx_have_rule(host, rule)
+	does_domain_have_rule(domain, rule)
+		|| does_mx_have_rule(host, rule)
+		|| does_mx_suffix_have_rule(host, rule)
 }

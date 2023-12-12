@@ -16,34 +16,27 @@
 
 use std::env;
 
+use check_if_email_exists::LOG_TARGET;
 use futures_lite::StreamExt;
 use lapin::{options::*, types::FieldTable, Connection, ConnectionProperties};
 use tracing::{error, info};
 
-mod sentry_util;
-mod worker;
+mod check_email;
 
-use sentry_util::setup_sentry;
-use worker::process_check_email;
+use check_email::process_check_email;
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-	// Setup sentry bug tracking.
-	let _guard = setup_sentry();
-
-	tracing_subscriber::fmt::init();
-
+pub async fn run_worker() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	// Make sure the worker is well configured.
 	let addr = env::var("RCH_AMQP_ADDR").unwrap_or_else(|_| "amqp://127.0.0.1:5672".into());
 	let backend_name = env::var("RCH_BACKEND_NAME").expect("RCH_BACKEND_NAME is not set");
 	let verif_method: VerifMethod = env::var("RCH_VERIF_METHOD")
-		.expect("RCH_VERIF_METHODS is not set")
+		.expect("RCH_VERIF_METHOD is not set")
 		.as_str()
 		.into();
 
 	let options = ConnectionProperties::default()
 		// Use tokio executor and reactor.
-		// At the moment the reactor is only available for unix.
+		// At the moment the reactor is only available for unix (ref: https://github.com/amqp-rs/reactor-trait/issues/1)
 		.with_executor(tokio_executor_trait::Tokio::current())
 		.with_reactor(tokio_reactor_trait::Tokio)
 		.with_connection_name(backend_name.clone().into());
@@ -52,7 +45,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
 	// Receive channel
 	let channel = conn.create_channel().await?;
-	info!(backend=?backend_name,state=?conn.status().state(), "Connected to AMQP broker");
+	let concurrency = env::var("RCH_WORKER_CONCURRENCY")
+		.ok()
+		.and_then(|s| s.parse::<u16>().ok())
+		.unwrap_or(10);
+	channel
+		.basic_qos(concurrency, BasicQosOptions { global: false })
+		.await?;
+	info!(target: LOG_TARGET, backend=?backend_name,state=?conn.status().state(), concurrency=?concurrency, "Connected to AMQP broker");
 
 	// Create queue "check_email.{Smtp,Headless}" with priority.
 	let queue_name = format!("check_email.{:?}", verif_method);
@@ -70,7 +70,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 		)
 		.await?;
 
-	info!(queue=?queue_name, "Worker will start consuming messages");
+	info!(target: LOG_TARGET, queue=?queue_name, "Worker will start consuming messages");
 	let mut consumer = channel
 		.basic_consume(
 			&queue_name,
@@ -82,10 +82,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
 	while let Some(delivery) = consumer.next().await {
 		if let Ok(delivery) = delivery {
+			let channel = channel.clone();
 			tokio::spawn(async move {
-				let res = process_check_email(delivery).await;
+				let res = process_check_email(&channel, delivery).await;
 				if let Err(err) = res {
-					error!(error=?err, "Error processing message");
+					error!(target: LOG_TARGET, error=?err, "Error processing message");
 				}
 			});
 		}

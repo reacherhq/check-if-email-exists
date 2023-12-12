@@ -22,4 +22,3 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
           tags: "${{ steps.vars.outputs.GITHUB_TAG }}"
-          dockerfile: Dockerfile.backend

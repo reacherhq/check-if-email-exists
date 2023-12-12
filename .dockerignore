@@ -1,5 +1,7 @@
 .git
 .github
+.vscode
 ci
 target/
 Dockerfile
+fly.toml

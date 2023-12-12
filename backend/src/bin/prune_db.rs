@@ -1,11 +1,11 @@
-use log::info;
 use sqlx::PgPool;
 use sqlx::Result;
+use tracing::info;
 
 #[tokio::main]
 async fn main() -> Result<()> {
 	dotenv::dotenv().expect("Unable to load environment variables from .env file");
-	env_logger::init(); // Initialize the logger
+	tracing_subscriber::fmt::init();
 
 	let db_url = std::env::var("DATABASE_URL").expect("Unable to read DATABASE_URL env var");
 	let dry_mode: bool = std::env::var("DRY_RUN").is_ok();
