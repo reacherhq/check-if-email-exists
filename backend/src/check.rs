@@ -33,7 +33,7 @@ pub async fn check_email(input: CheckEmailInput) -> CheckEmailOutput {
 	let smtp_timeout = env::var("RCH_SMTP_TIMEOUT")
 		.ok()
 		.and_then(|s| s.parse::<u64>().ok())
-		.map(|d| Duration::from_secs(d))
+		.map(Duration::from_secs)
 		.or_else(|| CheckEmailInput::default().smtp_timeout);
 
 	let input = CheckEmailInput {
