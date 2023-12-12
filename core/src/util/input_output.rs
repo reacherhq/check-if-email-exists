@@ -182,7 +182,7 @@ pub struct CheckEmailInput {
 	/// Add timeout for the SMTP verification step. Set to None if you don't
 	/// want to use a timeout.
 	///
-	/// Defaults to 12s (more than 10s, but when run twice less than 30s).
+	/// Defaults to 30s.
 	pub smtp_timeout: Option<Duration>,
 	/// Select how to verify Yahoo emails.
 	///
@@ -203,9 +203,10 @@ pub struct CheckEmailInput {
 	/// Check if a the email address is present in HaveIBeenPwned API.
 	// If the api_key is filled, HaveIBeenPwned API is checked
 	pub haveibeenpwned_api_key: Option<String>,
-	/// Number of retries of SMTP connections to do.
+	/// Number of retries of SMTP connections to do. Setting to 2 might bypass
+	/// greylisting on some servers, but takes more time.
 	///
-	/// Defaults to 2 to avoid greylisting.
+	/// Defaults to 1.
 	pub retries: usize,
 	/// How to apply TLS to a SMTP client connection.
 	///
@@ -241,7 +242,7 @@ impl Default for CheckEmailInput {
 			proxy: None,
 			smtp_port: 25,
 			smtp_security: SmtpSecurity::default(),
-			smtp_timeout: Some(Duration::from_secs(12)),
+			smtp_timeout: Some(Duration::from_secs(45)),
 			#[cfg(not(feature = "headless"))]
 			yahoo_verif_method: YahooVerifMethod::Api,
 			#[cfg(feature = "headless")]
@@ -253,7 +254,7 @@ impl Default for CheckEmailInput {
 			hotmail_verif_method: HotmailVerifMethod::Headless,
 			check_gravatar: false,
 			haveibeenpwned_api_key: None,
-			retries: 2,
+			retries: 1,
 			skipped_domains: vec![],
 		}
 	}
