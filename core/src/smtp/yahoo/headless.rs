@@ -14,10 +14,11 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use std::vec;
 use std::{thread::sleep, time::Duration};
 
-use async_std::prelude::FutureExt;
 use fantoccini::Locator;
+use futures::future::select_ok;
 use futures::TryFutureExt;
 
 use crate::smtp::headless::{create_headless_client, HeadlessError};
@@ -82,12 +83,13 @@ pub async fn check_headless(to_email: &str, webdriver: &str) -> Result<SmtpDetai
 		.for_element(Locator::Id("challenge-selector-challenge"))
 		.and_then(|_| async { Ok((true, false)) });
 
-	let (is_deliverable, is_disabled) = f1
-		.try_race(f2)
-		.try_race(f3)
-		.try_race(f4)
-		.try_race(f5)
-		.await?;
+	let (is_deliverable, is_disabled) = select_ok(vec![
+		Box::pin(f1.map_err(|e| e as Box<dyn std::error::Error>)),
+		Box::pin(f2),
+		Box::pin(f3),
+		Box::pin(f4),
+		Box::pin(f5),
+	]).await?;
 
 	if is_deliverable {
 		log::debug!(
@@ -128,22 +130,16 @@ mod tests {
 		// Run 5 headless sessions with the below dummy emails.
 		for _ in 0..5 {
 			// Email does not exist.
-			let res = check_headless("test42134@yahoo.com", "http://localhost:9515")
-				.await
-				.unwrap();
+			let check_headless("test42134@yahoo.com", "http://localhost:9515").await;
 			assert!(!res.is_deliverable);
 
 			// Disabled email.
-			let res = check_headless("amaury@yahoo.com", "http://localhost:9515")
-				.await
-				.unwrap();
+			let check_headless("amaury@yahoo.com", "http://localhost:9515").await;
 			assert!(!res.is_deliverable);
 			assert!(res.is_disabled);
 
 			// OK email.
-			let res = check_headless("test2@yahoo.com", "http://localhost:9515")
-				.await
-				.unwrap();
+			let check_headless("test2@yahoo.com", "http://localhost:9515").await;
 			assert!(res.is_deliverable);
 			assert!(!res.is_disabled);
 		}
