@@ -55,12 +55,13 @@ async fn connect_to_host(
 ) -> Result<SmtpTransport, SmtpError> {
 	let smtp_timeout = if let Some(t) = input.smtp_timeout {
 		if has_rule(domain, host, &Rule::SmtpTimeout45s) {
+			let duration = t.max(Duration::from_secs(45));
 			log::debug!(
 				target: LOG_TARGET,
-				"[email={}] Bumping SMTP timeout to at least 45s",
+				"[email={}] Bumping SMTP timeout to {duration:?} because of rule",
 				input.to_email,
 			);
-			Some(t.max(Duration::from_secs(45)))
+			Some(duration)
 		} else {
 			input.smtp_timeout
 		}
