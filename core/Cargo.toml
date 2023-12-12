@@ -32,7 +32,7 @@ regex = "1.10.2"
 reqwest = { version = "0.11.22", features = ["json", "socks"] }
 serde = { version = "1.0.192", features = ["derive"] }
 serde_json = "1.0.107"
-trust-dns-proto = "0.21.2"
+trust-dns-proto = "0.23.2"
 trust-dns-resolver = "0.23.2"
 
 [dev-dependencies]
