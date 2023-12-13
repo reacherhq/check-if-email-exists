@@ -18,9 +18,9 @@ use std::io;
 
 use crate::syntax::SyntaxDetails;
 use crate::util::ser_with_display::ser_with_display;
+use hickory_resolver::system_conf::read_system_conf;
+use hickory_resolver::{error::ResolveError, lookup::MxLookup, Resolver};
 use serde::{ser::SerializeMap, Serialize, Serializer};
-use trust_dns_resolver::system_conf::read_system_conf;
-use trust_dns_resolver::{error::ResolveError, lookup::MxLookup, Resolver};
 
 /// Details about the MX lookup.
 #[derive(Debug)]
