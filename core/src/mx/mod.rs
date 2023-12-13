@@ -94,7 +94,7 @@ impl From<ResolveError> for MxError {
 pub fn check_mx(syntax: &SyntaxDetails) -> Result<MxDetails, MxError> {
 	// Construct a new Resolver with default configuration options
 	let (config, opts) = read_system_conf()?;
-	let resolver = Resolver::new(config, opts).unwrap();
+	let resolver = Resolver::new(config, opts)?;
 
 	let mx_response: MxLookup = resolver.mx_lookup(&syntax.domain)?;
 	Ok(MxDetails::from(mx_response))
