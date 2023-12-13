@@ -18,7 +18,7 @@ use std::io;
 
 use crate::syntax::SyntaxDetails;
 use crate::util::ser_with_display::ser_with_display;
-use hickory_resolver::error::ResolveError;
+use hickory_resolver::error::{ResolveError, ResolveErrorKind};
 use hickory_resolver::lookup::MxLookup;
 use hickory_resolver::system_conf::read_system_conf;
 use hickory_resolver::TokioAsyncResolver;
@@ -50,7 +50,7 @@ impl Serialize for MxDetails {
 	where
 		S: Serializer,
 	{
-		let records = self
+		let records: Vec<String> = self
 			.lookup
 			.as_ref()
 			.map(|lookup| {
@@ -98,6 +98,12 @@ pub async fn check_mx(syntax: &SyntaxDetails) -> Result<MxDetails, MxError> {
 	let (config, opts) = read_system_conf()?;
 	let resolver = TokioAsyncResolver::tokio(config, opts);
 
-	let mx_response: MxLookup = resolver.mx_lookup(&syntax.domain).await?;
-	Ok(MxDetails::from(mx_response))
+	match resolver.mx_lookup(&syntax.domain).await {
+		Ok(lookup) => Ok(MxDetails::from(lookup)),
+		Err(err) => match err.kind() {
+			// Prefer to return an empty MX lookup if there are no records.
+			ResolveErrorKind::NoRecordsFound { .. } => Ok(MxDetails { lookup: Err(err) }),
+			_ => Err(err.into()),
+		},
+	}
 }
