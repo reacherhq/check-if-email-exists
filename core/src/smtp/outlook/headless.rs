@@ -149,6 +149,7 @@ mod tests {
 	// but will fail with geckodriver.
 	// ref: https://github.com/jonhoo/fantoccini/issues/111#issuecomment-727650629
 	#[tokio::test]
+	#[ignore = "Run a webdriver server locally to test this"]
 	async fn test_parallel() {
 		// This email does not exist.
 		let f1 = check_password_recovery("foo@bar.baz", "http://localhost:9515");
