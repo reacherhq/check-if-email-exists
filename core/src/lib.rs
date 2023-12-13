@@ -140,7 +140,7 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		my_syntax
 	);
 
-	let my_mx = match check_mx(&my_syntax) {
+	let my_mx = match check_mx(&my_syntax).await {
 		Ok(m) => m,
 		e => {
 			get_similar_mail_provider(&mut my_syntax);

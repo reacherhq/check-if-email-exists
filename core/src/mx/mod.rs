@@ -18,8 +18,10 @@ use std::io;
 
 use crate::syntax::SyntaxDetails;
 use crate::util::ser_with_display::ser_with_display;
+use hickory_resolver::error::ResolveError;
+use hickory_resolver::lookup::MxLookup;
 use hickory_resolver::system_conf::read_system_conf;
-use hickory_resolver::{error::ResolveError, lookup::MxLookup, Resolver};
+use hickory_resolver::TokioAsyncResolver;
 use serde::{ser::SerializeMap, Serialize, Serializer};
 
 /// Details about the MX lookup.
@@ -91,11 +93,11 @@ impl From<ResolveError> for MxError {
 }
 
 /// Make a MX lookup.
-pub fn check_mx(syntax: &SyntaxDetails) -> Result<MxDetails, MxError> {
+pub async fn check_mx(syntax: &SyntaxDetails) -> Result<MxDetails, MxError> {
 	// Construct a new Resolver with default configuration options
 	let (config, opts) = read_system_conf()?;
-	let resolver = Resolver::new(config, opts)?;
+	let resolver = TokioAsyncResolver::tokio(config, opts);
 
-	let mx_response: MxLookup = resolver.mx_lookup(&syntax.domain)?;
+	let mx_response: MxLookup = resolver.mx_lookup(&syntax.domain).await?;
 	Ok(MxDetails::from(mx_response))
 }
