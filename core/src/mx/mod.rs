@@ -14,11 +14,15 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use std::io;
+
 use crate::syntax::SyntaxDetails;
 use crate::util::ser_with_display::ser_with_display;
-use async_std_resolver::{lookup::MxLookup, resolver_from_system_conf, ResolveError};
+use hickory_resolver::error::ResolveError;
+use hickory_resolver::lookup::MxLookup;
+use hickory_resolver::system_conf::read_system_conf;
+use hickory_resolver::TokioAsyncResolver;
 use serde::{ser::SerializeMap, Serialize, Serializer};
-use std::io::Error;
 
 /// Details about the MX lookup.
 #[derive(Debug)]
@@ -70,28 +74,30 @@ impl Serialize for MxDetails {
 pub enum MxError {
 	/// Error with IO.
 	#[serde(serialize_with = "ser_with_display")]
-	IoError(Error),
+	IoError(io::Error),
 	/// Error while resolving MX lookups.
 	#[serde(serialize_with = "ser_with_display")]
 	ResolveError(Box<ResolveError>),
 }
 
+impl From<io::Error> for MxError {
+	fn from(e: io::Error) -> Self {
+		MxError::IoError(e)
+	}
+}
+
 impl From<ResolveError> for MxError {
-	fn from(error: ResolveError) -> Self {
-		MxError::ResolveError(Box::new(error))
+	fn from(e: ResolveError) -> Self {
+		MxError::ResolveError(Box::new(e))
 	}
 }
 
 /// Make a MX lookup.
 pub async fn check_mx(syntax: &SyntaxDetails) -> Result<MxDetails, MxError> {
 	// Construct a new Resolver with default configuration options
-	let resolver = resolver_from_system_conf().await?;
+	let (config, opts) = read_system_conf()?;
+	let resolver = TokioAsyncResolver::tokio(config, opts);
 
-	// Lookup the MX records associated with a name.
-	// The final dot forces this to be an FQDN, otherwise the search rules as specified
-	// in `ResolverOpts` will take effect. FQDN's are generally cheaper queries.
-	match resolver.mx_lookup(syntax.domain.as_str()).await {
-		Ok(lookup) => Ok(MxDetails::from(lookup)),
-		Err(err) => Ok(MxDetails { lookup: Err(err) }),
-	}
+	let mx_response: MxLookup = resolver.mx_lookup(&syntax.domain).await?;
+	Ok(MxDetails::from(mx_response))
 }

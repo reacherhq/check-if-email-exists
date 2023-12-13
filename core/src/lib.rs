@@ -70,13 +70,13 @@ pub mod smtp;
 pub mod syntax;
 mod util;
 
+use hickory_proto::rr::rdata::MX;
 use misc::{check_misc, MiscDetails};
 use mx::check_mx;
 use rand::Rng;
 use smtp::{check_smtp, SmtpDetails, SmtpError};
 use std::time::{Duration, SystemTime};
 use syntax::{check_syntax, get_similar_mail_provider};
-use trust_dns_proto::rr::rdata::MX;
 pub use util::constants::LOG_TARGET;
 pub use util::input_output::*;
 

@@ -14,11 +14,14 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use std::pin::Pin;
+use std::vec;
 use std::{thread::sleep, time::Duration};
 
-use async_std::prelude::FutureExt;
+use fantoccini::error::CmdError;
 use fantoccini::Locator;
-use futures::TryFutureExt;
+use futures::future::select_ok;
+use futures::{Future, TryFutureExt};
 
 use crate::smtp::headless::{create_headless_client, HeadlessError};
 use crate::{smtp::SmtpDetails, LOG_TARGET};
@@ -82,26 +85,14 @@ pub async fn check_headless(to_email: &str, webdriver: &str) -> Result<SmtpDetai
 		.for_element(Locator::Id("challenge-selector-challenge"))
 		.and_then(|_| async { Ok((true, false)) });
 
-	let (is_deliverable, is_disabled) = f1
-		.try_race(f2)
-		.try_race(f3)
-		.try_race(f4)
-		.try_race(f5)
-		.await?;
-
-	if is_deliverable {
-		log::debug!(
-			target: LOG_TARGET,
-			"[email={}] Did not find error message in password recovery, email exists",
-			to_email,
-		);
-	} else {
-		log::debug!(
-			target: LOG_TARGET,
-			"[email={}] Found error message in password recovery, email does not exist",
-			to_email,
-		);
-	}
+	let vec = vec![
+		Box::pin(f1) as Pin<Box<dyn Future<Output = Result<(bool, bool), CmdError>> + Send>>,
+		Box::pin(f2),
+		Box::pin(f3),
+		Box::pin(f4),
+		Box::pin(f5),
+	];
+	let ((is_deliverable, is_disabled), _) = select_ok(vec).await?;
 
 	c.close().await?;
 

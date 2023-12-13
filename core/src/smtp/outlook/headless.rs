@@ -14,11 +14,10 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::{thread::sleep, time::Duration};
+use std::{pin::Pin, thread::sleep, time::Duration};
 
-use async_std::prelude::FutureExt;
-use fantoccini::Locator;
-use futures::TryFutureExt;
+use fantoccini::{error::CmdError, Locator};
+use futures::{future::select_ok, Future, TryFutureExt};
 
 use crate::{
 	smtp::{
@@ -83,7 +82,13 @@ pub async fn check_password_recovery(
 		.for_element(Locator::Id("iEnterVerification"))
 		.and_then(|_| async { Ok(true) });
 
-	let is_deliverable = f1.try_race(f2).try_race(f3).try_race(f4).await?;
+	let vec = vec![
+		Box::pin(f1) as Pin<Box<dyn Future<Output = Result<bool, CmdError>> + Send>>,
+		Box::pin(f2),
+		Box::pin(f3),
+		Box::pin(f4),
+	];
+	let (is_deliverable, _) = select_ok(vec).await?;
 
 	if is_deliverable {
 		log::debug!(
@@ -113,7 +118,7 @@ pub async fn check_password_recovery(
 #[cfg(test)]
 mod tests {
 	use super::check_password_recovery;
-	use async_std::prelude::FutureExt;
+	use futures::future::join;
 
 	// Ignoring this test as it requires a local process of WebDriver running on
 	// "http://localhost:9515". To debug the headless password recovery page,
@@ -144,13 +149,13 @@ mod tests {
 	// but will fail with geckodriver.
 	// ref: https://github.com/jonhoo/fantoccini/issues/111#issuecomment-727650629
 	#[tokio::test]
-	#[ignore = "Run a **chromedriver** server locally to test this"]
+	#[ignore = "Run a webdriver server locally to test this"]
 	async fn test_parallel() {
 		// This email does not exist.
 		let f1 = check_password_recovery("foo@bar.baz", "http://localhost:9515");
 		let f2 = check_password_recovery("foo@bar.baz", "http://localhost:9515");
 
-		let f = f1.try_join(f2).await;
-		assert!(f.is_ok(), "{:?}", f);
+		let f = join(f1, f2).await;
+		assert!(f.0.is_ok(), "{:?}", f);
 	}
 }

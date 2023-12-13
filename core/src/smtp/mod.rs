@@ -28,8 +28,8 @@ use std::default::Default;
 use std::env;
 
 use async_smtp::EmailAddress;
+use hickory_proto::rr::Name;
 use serde::{Deserialize, Serialize};
-use trust_dns_proto::rr::Name;
 
 use crate::{
 	util::input_output::CheckEmailInput, GmailVerifMethod, HotmailVerifMethod, YahooVerifMethod,
@@ -202,9 +202,9 @@ pub async fn check_smtp(
 mod tests {
 	use super::{check_smtp, CheckEmailInput, SmtpConnection, SmtpError};
 	use async_smtp::{smtp::error::Error, EmailAddress};
+	use hickory_proto::rr::Name;
 	use std::{str::FromStr, time::Duration};
 	use tokio::runtime::Runtime;
-	use trust_dns_proto::rr::Name;
 
 	#[test]
 	fn should_timeout() {
