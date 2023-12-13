@@ -16,7 +16,7 @@
 
 //! This file contains shared logic for checking one email.
 
-use std::env;
+use std::{env, time::Duration};
 
 use check_if_email_exists::{check_email as ciee_check_email, CheckEmailInput, CheckEmailOutput};
 use warp::Filter;
@@ -30,12 +30,18 @@ pub async fn check_email(input: CheckEmailInput) -> CheckEmailOutput {
 		env::var("RCH_FROM_EMAIL").unwrap_or_else(|_| CheckEmailInput::default().from_email);
 	let hello_name =
 		env::var("RCH_HELLO_NAME").unwrap_or_else(|_| CheckEmailInput::default().hello_name);
+	let smtp_timeout = env::var("RCH_SMTP_TIMEOUT")
+		.ok()
+		.and_then(|s| s.parse::<u64>().ok())
+		.map(Duration::from_secs)
+		.or_else(|| CheckEmailInput::default().smtp_timeout);
 
 	let input = CheckEmailInput {
 		// If we want to override core check-if-email-exists's default values
 		// for CheckEmailInput for the backend, we do it here.
 		from_email,
 		hello_name,
+		smtp_timeout,
 		..input
 	};
 
