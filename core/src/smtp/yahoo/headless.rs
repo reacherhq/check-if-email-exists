@@ -14,12 +14,14 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use std::pin::Pin;
 use std::vec;
 use std::{thread::sleep, time::Duration};
 
+use fantoccini::error::CmdError;
 use fantoccini::Locator;
 use futures::future::select_ok;
-use futures::TryFutureExt;
+use futures::{Future, TryFutureExt};
 
 use crate::smtp::headless::{create_headless_client, HeadlessError};
 use crate::{smtp::SmtpDetails, LOG_TARGET};
@@ -83,27 +85,14 @@ pub async fn check_headless(to_email: &str, webdriver: &str) -> Result<SmtpDetai
 		.for_element(Locator::Id("challenge-selector-challenge"))
 		.and_then(|_| async { Ok((true, false)) });
 
-	let (is_deliverable, is_disabled) = select_ok(vec![
-		Box::pin(f1.map_err(|e| e as Box<dyn std::error::Error>)),
+	let vec = vec![
+		Box::pin(f1) as Pin<Box<dyn Future<Output = Result<(bool, bool), CmdError>> + Send>>,
 		Box::pin(f2),
 		Box::pin(f3),
 		Box::pin(f4),
 		Box::pin(f5),
-	]).await?;
-
-	if is_deliverable {
-		log::debug!(
-			target: LOG_TARGET,
-			"[email={}] Did not find error message in password recovery, email exists",
-			to_email,
-		);
-	} else {
-		log::debug!(
-			target: LOG_TARGET,
-			"[email={}] Found error message in password recovery, email does not exist",
-			to_email,
-		);
-	}
+	];
+	let ((is_deliverable, is_disabled), _) = select_ok(vec).await?;
 
 	c.close().await?;
 
@@ -130,16 +119,22 @@ mod tests {
 		// Run 5 headless sessions with the below dummy emails.
 		for _ in 0..5 {
 			// Email does not exist.
-			let check_headless("test42134@yahoo.com", "http://localhost:9515").await;
+			let res = check_headless("test42134@yahoo.com", "http://localhost:9515")
+				.await
+				.unwrap();
 			assert!(!res.is_deliverable);
 
 			// Disabled email.
-			let check_headless("amaury@yahoo.com", "http://localhost:9515").await;
+			let res = check_headless("amaury@yahoo.com", "http://localhost:9515")
+				.await
+				.unwrap();
 			assert!(!res.is_deliverable);
 			assert!(res.is_disabled);
 
 			// OK email.
-			let check_headless("test2@yahoo.com", "http://localhost:9515").await;
+			let res = check_headless("test2@yahoo.com", "http://localhost:9515")
+				.await
+				.unwrap();
 			assert!(res.is_deliverable);
 			assert!(!res.is_disabled);
 		}

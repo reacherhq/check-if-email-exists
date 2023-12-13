@@ -88,13 +88,6 @@ pub fn check_mx(syntax: &SyntaxDetails) -> Result<MxDetails, MxError> {
 	// Construct a new Resolver with default configuration options
 	let resolver = Resolver::new(ResolverConfig::default(), ResolverOpts::default()).unwrap();
 
-	let mx_response = resolver.mx_lookup("hotmail.com.");
-
-	// Lookup the MX records associated with a name.
-	// The final dot forces this to be an FQDN, otherwise the search rules as specified
-	// in `ResolverOpts` will take effect. FQDN's are generally cheaper queries.
-	match resolver.mx_lookup(syntax.domain.as_str()) {
-		Ok(lookup) => Ok(MxDetails::from(lookup)),
-		Err(err) => Ok(MxDetails { lookup: Err(err) }),
-	}
+	let mx_response: MxLookup = resolver.mx_lookup(&syntax.domain)?;
+	Ok(MxDetails::from(mx_response))
 }
