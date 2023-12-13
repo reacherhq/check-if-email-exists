@@ -14,11 +14,12 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use std::io;
+
 use crate::syntax::SyntaxDetails;
 use crate::util::ser_with_display::ser_with_display;
 use serde::{ser::SerializeMap, Serialize, Serializer};
-use std::io::Error;
-use trust_dns_resolver::config::*;
+use trust_dns_resolver::system_conf::read_system_conf;
 use trust_dns_resolver::{error::ResolveError, lookup::MxLookup, Resolver};
 
 /// Details about the MX lookup.
@@ -71,22 +72,29 @@ impl Serialize for MxDetails {
 pub enum MxError {
 	/// Error with IO.
 	#[serde(serialize_with = "ser_with_display")]
-	IoError(Error),
+	IoError(io::Error),
 	/// Error while resolving MX lookups.
 	#[serde(serialize_with = "ser_with_display")]
 	ResolveError(Box<ResolveError>),
 }
 
+impl From<io::Error> for MxError {
+	fn from(e: io::Error) -> Self {
+		MxError::IoError(e)
+	}
+}
+
 impl From<ResolveError> for MxError {
-	fn from(error: ResolveError) -> Self {
-		MxError::ResolveError(Box::new(error))
+	fn from(e: ResolveError) -> Self {
+		MxError::ResolveError(Box::new(e))
 	}
 }
 
 /// Make a MX lookup.
 pub fn check_mx(syntax: &SyntaxDetails) -> Result<MxDetails, MxError> {
 	// Construct a new Resolver with default configuration options
-	let resolver = Resolver::new(ResolverConfig::default(), ResolverOpts::default()).unwrap();
+	let (config, opts) = read_system_conf()?;
+	let resolver = Resolver::new(config, opts).unwrap();
 
 	let mx_response: MxLookup = resolver.mx_lookup(&syntax.domain)?;
 	Ok(MxDetails::from(mx_response))
