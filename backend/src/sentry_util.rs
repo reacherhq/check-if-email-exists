@@ -99,10 +99,7 @@ fn error(err: SentryError, result: &CheckEmailOutput) {
 		level: Level::Error,
 		environment: Some("production".into()),
 		release: Some(CARGO_PKG_VERSION.into()),
-		message: Some(redact(
-			format!("{result:#?}").as_str(),
-			&result.syntax.username,
-		)),
+		message: Some(format!("{result:#?}")),
 		server_name: get_backend_name(),
 		transaction: Some(format!("check_email:{}", result.syntax.domain)),
 		..Default::default()

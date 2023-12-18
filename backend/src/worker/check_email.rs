@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use check_if_email_exists::LOG_TARGET;
 use check_if_email_exists::{CheckEmailInput, CheckEmailOutput};
+use check_if_email_exists::{Reachable, LOG_TARGET};
 use lapin::message::Delivery;
 use lapin::{options::*, BasicProperties, Channel};
 use serde::{Deserialize, Serialize};
@@ -80,6 +80,8 @@ pub async fn process_check_email(
 		debug!(target: LOG_TARGET, reply_to=?reply_to, correlation_id=?correlation_id,  "Sent reply")
 	}
 
+	let (email, is_reachable) = (output.input.to_owned(), output.is_reachable.clone());
+
 	// Check if we have a webhook to send the output to.
 	if let Some(webhook) = payload.webhook {
 		let webhook_output = WebhookOutput {
@@ -100,7 +102,17 @@ pub async fn process_check_email(
 		info!(target: LOG_TARGET, email=?webhook_output.output.input, is_reachable=?webhook_output.output.is_reachable, "Finished check");
 	}
 
-	delivery.ack(BasicAckOptions::default()).await?;
+	// If is_reachable is unknown, then we requeue the message, but only once.
+	// We might want to add a requeue counter in the future, see:
+	// https://stackoverflow.com/questions/25226080/rabbitmq-how-to-requeue-message-with-counter
+	if is_reachable == Reachable::Unknown && !delivery.redelivered {
+		delivery
+			.reject(BasicRejectOptions { requeue: true })
+			.await?;
+		info!(target: LOG_TARGET, email=?email, "Requeued message");
+	} else {
+		delivery.ack(BasicAckOptions::default()).await?;
+	}
 
 	Ok(())
 }

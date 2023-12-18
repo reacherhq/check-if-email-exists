@@ -1,6 +1,7 @@
 target
 **/*.rs.bk
 .DS_Store
+private
 
 # Output when debugging Hotmail password recovery using a headless browser.
 hotmail.jpeg
