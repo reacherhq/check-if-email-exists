@@ -74,6 +74,7 @@ async fn create_bulk_request(
 		}
 	});
 
+	let n = payloads.len();
 	let stream = futures::stream::iter(payloads);
 
 	stream
@@ -106,7 +107,7 @@ async fn create_bulk_request(
 		.await?;
 
 	Ok(warp::reply::json(&CreateBulkResponse {
-		message: "success".to_string(),
+		message: format!("Successfully added {n} emails to the queue"),
 	}))
 }
 
