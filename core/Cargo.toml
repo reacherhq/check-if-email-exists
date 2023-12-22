@@ -31,7 +31,7 @@ pwned = "0.5.0"
 rand = { version = "0.8.5", features = ["small_rng"] }
 regex = "1.10.2"
 reqwest = { version = "0.11.22", features = ["json", "socks"] }
-serde = { version = "1.0.192", features = ["derive"] }
+serde = { version = "1.0.193", features = ["derive"] }
 serde_json = "1.0.107"
 
 [dev-dependencies]
