@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-mod bulk;
-pub mod check_email;
+mod v0;
+mod v1;
 mod version;
 
 use std::env;
@@ -32,11 +32,12 @@ pub fn create_routes(
 	o: Option<Pool<Postgres>>,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	version::get::get_version()
-		.or(check_email::post::post_check_email())
+		.or(v0::check_email::post::post_check_email())
 		// The 3 following routes will 404 if o is None.
-		.or(bulk::post::create_bulk_job(o.clone()))
-		.or(bulk::get::get_bulk_job_status(o.clone()))
-		.or(bulk::results::get_bulk_job_result(o))
+		.or(v0::bulk::post::create_bulk_job(o.clone()))
+		.or(v0::bulk::get::get_bulk_job_status(o.clone()))
+		.or(v0::bulk::results::get_bulk_job_result(o))
+		.or(v1::bulk::post::create_bulk_job)
 		.recover(errors::handle_rejection)
 }
 
@@ -59,7 +60,7 @@ pub async fn run_warp_server() -> Result<(), Box<dyn std::error::Error + Send + 
 	let is_bulk_enabled = env::var("RCH_ENABLE_BULK").unwrap_or_else(|_| "0".into()) == "1";
 	let db = if is_bulk_enabled {
 		let pool = create_db().await?;
-		let _registry = bulk::create_job_registry(&pool).await?;
+		let _registry = v0::bulk::create_job_registry(&pool).await?;
 		Some(pool)
 	} else {
 		None
