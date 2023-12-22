@@ -23,13 +23,13 @@ use tracing::{debug, info};
 
 use crate::check::check_email;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct CheckEmailPayload {
 	pub input: CheckEmailInput,
 	pub webhook: Option<CheckEmailWebhook>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct CheckEmailWebhook {
 	pub url: String,
 	pub extra: serde_json::Value,
