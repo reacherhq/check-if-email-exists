@@ -33,11 +33,11 @@ pub fn create_routes(
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	version::get::get_version()
 		.or(v0::check_email::post::post_check_email())
+		.or(v1::bulk::post::create_bulk_job())
 		// The 3 following routes will 404 if o is None.
 		.or(v0::bulk::post::create_bulk_job(o.clone()))
 		.or(v0::bulk::get::get_bulk_job_status(o.clone()))
 		.or(v0::bulk::results::get_bulk_job_result(o))
-		.or(v1::bulk::post::create_bulk_job)
 		.recover(errors::handle_rejection)
 }
 
