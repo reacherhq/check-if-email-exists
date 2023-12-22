@@ -20,9 +20,11 @@ use check_if_email_exists::CheckEmailInput;
 use check_if_email_exists::CheckEmailInputProxy;
 use check_if_email_exists::LOG_TARGET;
 use futures::stream::StreamExt;
+use futures::stream::TryStreamExt;
 use lapin::Channel;
 use lapin::{options::*, BasicProperties};
 use serde::{Deserialize, Serialize};
+use tracing::debug;
 use warp::Filter;
 
 use super::error::BulkError;
@@ -46,27 +48,6 @@ struct CreateBulkResponse {
 	message: String,
 }
 
-fn convert_to_worker_payload(email: &str, body: &CreateBulkRequest) -> Result<Vec<u8>, BulkError> {
-	let mut input = CheckEmailInput::new(email.to_string());
-	if let Some(from_email) = &body.from_email {
-		input.set_from_email(from_email.clone());
-	}
-	if let Some(hello_name) = &body.hello_name {
-		input.set_hello_name(hello_name.clone());
-	}
-	if let Some(proxy) = &body.proxy {
-		input.set_proxy(proxy.clone());
-	}
-
-	let payload = CheckEmailPayload {
-		input,
-		webhook: body.webhook.clone(),
-	};
-	let payload = serde_json::to_vec(&payload)?;
-
-	Ok(payload)
-}
-
 async fn create_bulk_request(
 	channel: Channel,
 	body: CreateBulkRequest,
@@ -75,36 +56,54 @@ async fn create_bulk_request(
 		return Err(BulkError::EmptyInput.into());
 	}
 
-	let payloads: Result<Vec<Vec<u8>>, BulkError> = body
-		.input
-		.iter()
-		.map(|email| convert_to_worker_payload(email, &body))
-		.collect();
-	let payloads = payloads?;
+	let payloads = body.input.iter().map(|email| {
+		let mut input = CheckEmailInput::new(email.to_string());
+		if let Some(from_email) = &body.from_email {
+			input.set_from_email(from_email.clone());
+		}
+		if let Some(hello_name) = &body.hello_name {
+			input.set_hello_name(hello_name.clone());
+		}
+		if let Some(proxy) = &body.proxy {
+			input.set_proxy(proxy.clone());
+		}
 
-	let stream = futures::stream::iter(payloads.into_iter());
+		CheckEmailPayload {
+			input,
+			webhook: body.webhook.clone(),
+		}
+	});
+
+	let stream = futures::stream::iter(payloads);
 
 	stream
-		.for_each_concurrent(10, |payload| {
+		.map::<Result<_, BulkError>, _>(Ok)
+		.try_for_each_concurrent(10, |payload| {
 			let channel = channel.clone();
-			let properties = BasicProperties::default()
+			let properties: lapin::protocol::basic::AMQPProperties = BasicProperties::default()
 				.with_content_type("application/json".into())
 				.with_priority(1);
 
 			async move {
+				let payload_u8 = serde_json::to_vec(&payload)?;
+				let queue_name = "check_email.Smtp"; // TODO We might want to make this configurable.
 				channel
 					.basic_publish(
 						"",
-						"check.Smtp", // TODO We might want to make this configurable.
+						queue_name,
 						BasicPublishOptions::default(),
-						&payload,
+						&payload_u8,
 						properties,
 					)
-					.await
-					.expect("Failed to publish message");
+					.await?
+					.await?;
+
+				debug!(target: LOG_TARGET, email=?payload.input.to_email, queue=?queue_name, "Enqueued");
+
+				Ok(())
 			}
 		})
-		.await;
+		.await?;
 
 	Ok(warp::reply::json(&CreateBulkResponse {
 		message: "success".to_string(),
@@ -115,12 +114,12 @@ async fn create_bulk_request(
 /// The endpoint accepts list of email address and creates
 /// a new job to check them.
 pub fn create_bulk_job(
-	channel: Channel,
+	o: Option<Channel>,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v1" / "bulk")
 		.and(warp::post())
 		.and(check_header())
-		.and(with_channel(channel))
+		.and(with_channel(o))
 		// When accepting a body, we want a JSON body (and to reject huge
 		// payloads)...
 		// TODO: Configure max size limit for a bulk job
@@ -132,8 +131,17 @@ pub fn create_bulk_job(
 }
 
 /// Warp filter that extracts lapin Channel.
-pub fn with_channel(
-	channel: Channel,
-) -> impl Filter<Extract = (Channel,), Error = std::convert::Infallible> + Clone {
-	warp::any().map(move || channel.clone())
+fn with_channel(
+	o: Option<Channel>,
+) -> impl Filter<Extract = (Channel,), Error = warp::Rejection> + Clone {
+	warp::any().and_then(move || {
+		let o = o.clone();
+		async move {
+			if let Some(channel) = o {
+				Ok(channel)
+			} else {
+				Err(warp::reject::not_found())
+			}
+		}
+	})
 }

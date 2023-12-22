@@ -17,6 +17,7 @@
 //! Main entry point of the `reacher_backend` binary. It has two `main`
 //! functions, depending on whether the `bulk` feature is enabled or not.
 
+#[cfg(feature = "worker")]
 use std::env;
 
 use check_if_email_exists::LOG_TARGET;
