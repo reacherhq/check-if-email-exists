@@ -34,7 +34,7 @@ async fn test_input_foo_bar() {
 		.method("POST")
 		.header(REACHER_SECRET_HEADER, "foobar")
 		.json(&serde_json::from_str::<CheckEmailInput>(r#"{"to_email": "foo@bar"}"#).unwrap())
-		.reply(&create_routes(None))
+		.reply(&create_routes(None, None))
 		.await;
 
 	assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
@@ -50,7 +50,7 @@ async fn test_input_foo_bar_baz() {
 		.method("POST")
 		.header(REACHER_SECRET_HEADER, "foobar")
 		.json(&serde_json::from_str::<CheckEmailInput>(r#"{"to_email": "foo@bar.baz"}"#).unwrap())
-		.reply(&create_routes(None))
+		.reply(&create_routes(None, None))
 		.await;
 
 	assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
@@ -65,7 +65,7 @@ async fn test_reacher_secret_missing_header() {
 		.path("/v0/check_email")
 		.method("POST")
 		.json(&serde_json::from_str::<CheckEmailInput>(r#"{"to_email": "foo@bar.baz"}"#).unwrap())
-		.reply(&create_routes(None))
+		.reply(&create_routes(None, None))
 		.await;
 
 	assert_eq!(resp.status(), StatusCode::BAD_REQUEST, "{:?}", resp.body());
@@ -81,7 +81,7 @@ async fn test_reacher_secret_wrong_secret() {
 		.method("POST")
 		.header(REACHER_SECRET_HEADER, "barbaz")
 		.json(&serde_json::from_str::<CheckEmailInput>(r#"{"to_email": "foo@bar.baz"}"#).unwrap())
-		.reply(&create_routes(None))
+		.reply(&create_routes(None, None))
 		.await;
 
 	assert_eq!(resp.status(), StatusCode::BAD_REQUEST, "{:?}", resp.body());
@@ -97,7 +97,7 @@ async fn test_reacher_secret_correct_secret() {
 		.method("POST")
 		.header(REACHER_SECRET_HEADER, "foobar")
 		.json(&serde_json::from_str::<CheckEmailInput>(r#"{"to_email": "foo@bar"}"#).unwrap())
-		.reply(&create_routes(None))
+		.reply(&create_routes(None, None))
 		.await;
 
 	assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
@@ -113,7 +113,7 @@ async fn test_reacher_to_mail_empty() {
 		.method("POST")
 		.header(REACHER_SECRET_HEADER, "foobar")
 		.json(&serde_json::from_str::<CheckEmailInput>(r#"{"to_email": ""}"#).unwrap())
-		.reply(&create_routes(None))
+		.reply(&create_routes(None, None))
 		.await;
 
 	assert_eq!(resp.status(), StatusCode::BAD_REQUEST, "{:?}", resp.body());
@@ -129,7 +129,7 @@ async fn test_reacher_to_mail_missing() {
 		.method("POST")
 		.header(REACHER_SECRET_HEADER, "foobar")
 		.json(&serde_json::from_str::<CheckEmailInput>(r#"{}"#).unwrap())
-		.reply(&create_routes(None))
+		.reply(&create_routes(None, None))
 		.await;
 
 	assert_eq!(resp.status(), StatusCode::BAD_REQUEST, "{:?}", resp.body());
