@@ -17,6 +17,8 @@
 //! Main entry point of the `reacher_backend` binary. It has two `main`
 //! functions, depending on whether the `bulk` feature is enabled or not.
 
+use std::env;
+
 use check_if_email_exists::LOG_TARGET;
 #[cfg(feature = "worker")]
 use futures::try_join;
@@ -27,6 +29,7 @@ use reacher_backend::worker::run_worker;
 use reacher_backend::{
 	http::run_warp_server,
 	sentry_util::{setup_sentry, CARGO_PKG_VERSION},
+	worker::create_channel,
 };
 
 /// Run a HTTP server using warp with bulk endpoints.
@@ -41,10 +44,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	// Setup sentry bug tracking.
 	let _guard: sentry::ClientInitGuard = setup_sentry();
 
-	let _http_server = run_warp_server();
+	let backend_name = env::var("RCH_BACKEND_NAME").expect("RCH_BACKEND_NAME is not set");
+	let channel = create_channel(&backend_name).await?;
+
+	let _http_server = run_warp_server(channel.clone());
 
 	#[cfg(feature = "worker")]
-	try_join!(_http_server, run_worker())?;
+	try_join!(_http_server, run_worker(channel, &backend_name))?;
 
 	Ok(())
 }

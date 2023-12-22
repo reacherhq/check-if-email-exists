@@ -18,28 +18,25 @@ use std::env;
 
 use check_if_email_exists::LOG_TARGET;
 use futures_lite::StreamExt;
-use lapin::{options::*, types::FieldTable, Connection, ConnectionProperties};
+use lapin::{options::*, types::FieldTable, Channel, Connection, ConnectionProperties};
 use tracing::{error, info};
 
-mod check_email;
+pub mod check_email;
 
 use check_email::process_check_email;
 
-pub async fn run_worker() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+pub async fn create_channel(
+	backend_name: &str,
+) -> Result<Channel, Box<dyn std::error::Error + Send + Sync>> {
 	// Make sure the worker is well configured.
 	let addr = env::var("RCH_AMQP_ADDR").unwrap_or_else(|_| "amqp://127.0.0.1:5672".into());
-	let backend_name = env::var("RCH_BACKEND_NAME").expect("RCH_BACKEND_NAME is not set");
-	let verif_method: VerifMethod = env::var("RCH_VERIF_METHOD")
-		.expect("RCH_VERIF_METHOD is not set")
-		.as_str()
-		.into();
 
 	let options = ConnectionProperties::default()
 		// Use tokio executor and reactor.
 		// At the moment the reactor is only available for unix (ref: https://github.com/amqp-rs/reactor-trait/issues/1)
 		.with_executor(tokio_executor_trait::Tokio::current())
 		.with_reactor(tokio_reactor_trait::Tokio)
-		.with_connection_name(backend_name.clone().into());
+		.with_connection_name(backend_name.into());
 
 	let conn = Connection::connect(&addr, options).await?;
 
@@ -53,6 +50,17 @@ pub async fn run_worker() -> Result<(), Box<dyn std::error::Error + Send + Sync>
 		.basic_qos(concurrency, BasicQosOptions { global: false })
 		.await?;
 	info!(target: LOG_TARGET, backend=?backend_name,state=?conn.status().state(), concurrency=?concurrency, "Connected to AMQP broker");
+
+	Ok(channel)
+}
+
+pub async fn run_worker(
+	channel: Channel,
+	backend_name: &str,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+	let verif_method: VerifMethod = env::var("RCH_VERIF_METHOD")
+		.map(|s| s.as_str().into())
+		.unwrap_or(VerifMethod::Smtp);
 
 	// Create queue "check_email.{Smtp,Headless}" with priority.
 	let queue_name = format!("check_email.{:?}", verif_method);
@@ -74,7 +82,7 @@ pub async fn run_worker() -> Result<(), Box<dyn std::error::Error + Send + Sync>
 	let mut consumer = channel
 		.basic_consume(
 			&queue_name,
-			&backend_name,
+			backend_name,
 			BasicConsumeOptions::default(),
 			FieldTable::default(),
 		)

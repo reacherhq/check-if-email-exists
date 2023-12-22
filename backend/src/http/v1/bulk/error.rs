@@ -20,7 +20,14 @@ use warp::reject;
 #[derive(Debug)]
 pub enum BulkError {
 	EmptyInput,
+	SerdeError(serde_json::Error),
 }
 
 // Defaults to Internal server error
 impl reject::Reject for BulkError {}
+
+impl From<serde_json::Error> for BulkError {
+	fn from(e: serde_json::Error) -> Self {
+		BulkError::SerdeError(e)
+	}
+}

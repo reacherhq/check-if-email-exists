@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-//! This file implements the `POST /bulk` endpoint.
+//! This file implements the `POST /v0/bulk` endpoint.
 
 use check_if_email_exists::CheckEmailInputProxy;
 use check_if_email_exists::LOG_TARGET;

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-//! This file implements the `POST /check_email` endpoint.
+//! This file implements the `POST /v0/check_email` endpoint.
 
 use check_if_email_exists::CheckEmailInput;
 use check_if_email_exists::LOG_TARGET;
