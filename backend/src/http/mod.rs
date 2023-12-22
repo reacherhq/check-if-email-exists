@@ -29,13 +29,28 @@ use warp::Filter;
 
 use super::errors;
 
+#[cfg(feature = "worker")]
 pub fn create_routes(
 	o: Option<Pool<Postgres>>,
-	channel: Channel,
+	channel: Option<Channel>,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	version::get::get_version()
 		.or(v0::check_email::post::post_check_email())
 		.or(v1::bulk::post::create_bulk_job(channel))
+		// The 3 following routes will 404 if o is None.
+		.or(v0::bulk::post::create_bulk_job(o.clone()))
+		.or(v0::bulk::get::get_bulk_job_status(o.clone()))
+		.or(v0::bulk::results::get_bulk_job_result(o))
+		.recover(errors::handle_rejection)
+}
+
+#[cfg(not(feature = "worker"))]
+pub fn create_routes(
+	o: Option<Pool<Postgres>>,
+	_channel: Option<Channel>,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+	version::get::get_version()
+		.or(v0::check_email::post::post_check_email())
 		// The 3 following routes will 404 if o is None.
 		.or(v0::bulk::post::create_bulk_job(o.clone()))
 		.or(v0::bulk::get::get_bulk_job_status(o.clone()))
@@ -48,7 +63,7 @@ pub fn create_routes(
 /// This function starts the Warp server and listens for incoming requests.
 /// It returns a `Result` indicating whether the server started successfully or encountered an error.
 pub async fn run_warp_server(
-	channel: Channel,
+	channel: Option<Channel>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	let host = env::var("RCH_HTTP_HOST")
 		.unwrap_or_else(|_| "127.0.0.1".into())

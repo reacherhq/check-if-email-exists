@@ -25,11 +25,12 @@ use futures::try_join;
 use tracing::info;
 
 #[cfg(feature = "worker")]
+use reacher_backend::worker::create_channel;
+#[cfg(feature = "worker")]
 use reacher_backend::worker::run_worker;
 use reacher_backend::{
 	http::run_warp_server,
 	sentry_util::{setup_sentry, CARGO_PKG_VERSION},
-	worker::create_channel,
 };
 
 /// Run a HTTP server using warp with bulk endpoints.
@@ -44,13 +45,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	// Setup sentry bug tracking.
 	let _guard: sentry::ClientInitGuard = setup_sentry();
 
+	#[cfg(feature = "worker")]
 	let backend_name = env::var("RCH_BACKEND_NAME").expect("RCH_BACKEND_NAME is not set");
-	let channel = create_channel(&backend_name).await?;
+
+	#[cfg(feature = "worker")]
+	let channel = { Some(create_channel(&backend_name).await?) };
+	#[cfg(not(feature = "worker"))]
+	let channel = None;
 
 	let _http_server = run_warp_server(channel.clone());
 
 	#[cfg(feature = "worker")]
-	try_join!(_http_server, run_worker(channel, &backend_name))?;
+	try_join!(
+		_http_server,
+		run_worker(
+			channel.expect("If worker feature is set, channel is set."),
+			&backend_name
+		)
+	)?;
+	#[cfg(not(feature = "worker"))]
+	_http_server.await?;
 
 	Ok(())
 }
