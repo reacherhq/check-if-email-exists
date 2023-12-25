@@ -18,7 +18,7 @@ async-recursion = "1.0.5"
 async-smtp = { version = "0.6.0", features = ["socks5"] }
 chrono = "=0.4.31"
 fantoccini = { version = "0.19.3", optional = true }
-futures = { version = "0.3.29", optional = true }
+futures = { version = "0.3.30", optional = true }
 fast-socks5 = "0.9.2"
 hickory-proto = "0.24.0"
 hickory-resolver = "0.24.0"
