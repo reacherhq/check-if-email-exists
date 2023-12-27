@@ -120,12 +120,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "508b352bb5c066aac251f6daf6b36eccd03e8a88e8081cd44959ea277a3af9a8"
 
 [[package]]
-name = "anymap2"
-version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d301b3b94cb4b2f23d7917810addbbaff90738e0ca2be692bd027e70d7e0330c"
-
-[[package]]
 name = "ascii_utils"
 version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2370,7 +2364,6 @@ dependencies = [
  "serde",
  "serde_json",
  "sqlx",
- "sqlxmq",
  "tokio",
  "tokio-executor-trait",
  "tokio-reactor-trait",
@@ -2868,15 +2861,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "signal-hook-registry"
-version = "1.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e51e73328dc4ac0c7ccbda3a494dfa03df1de2f46018127f60c693f2648455b0"
-dependencies = [
- "libc",
-]
-
-[[package]]
 name = "signature"
 version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3164,35 +3148,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sqlxmq"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e914521071581f0413516de0e7931086ebe4a22d719c1100de29eb339c712311"
-dependencies = [
- "anymap2",
- "chrono",
- "dotenv",
- "log",
- "serde",
- "serde_json",
- "sqlx",
- "sqlxmq_macros",
- "tokio",
- "uuid 1.6.1",
-]
-
-[[package]]
-name = "sqlxmq_macros"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bd00667edb120f18e14e2b4a71cddb308dc3605171ed7afda3056129d08b9f4f"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 1.0.109",
-]
-
-[[package]]
 name = "stringprep"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3378,9 +3333,7 @@ dependencies = [
  "libc",
  "mio",
  "num_cpus",
- "parking_lot",
  "pin-project-lite",
- "signal-hook-registry",
  "socket2 0.5.5",
  "tokio-macros",
  "windows-sys 0.48.0",
@@ -3672,9 +3625,6 @@ name = "uuid"
 version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5e395fcf16a7a3d8127ec99782007af141946b4795001f876d54fb0d55978560"
-dependencies = [
- "getrandom",
-]
 
 [[package]]
 name = "valuable"

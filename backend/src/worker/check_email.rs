@@ -116,3 +116,26 @@ pub async fn process_check_email(
 
 	Ok(())
 }
+
+async fn save_to_db() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+	let rec = sqlx::query!(
+		r#"
+		INSERT INTO email_results (total_records)
+		VALUES ($1)
+		RETURNING id
+		"#,
+		body.input.len() as i32
+	)
+	.fetch_one(&conn_pool)
+	.await
+	.map_err(|e| {
+		error!(
+			target: LOG_TARGET,
+			"Failed to create job record for [body={:?}] with [error={}]",
+			&body, e
+		);
+		BulkError::from(e)
+	})?;
+
+	Ok(())
+}

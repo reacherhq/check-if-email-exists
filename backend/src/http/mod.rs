@@ -23,6 +23,7 @@ use std::net::IpAddr;
 
 use check_if_email_exists::LOG_TARGET;
 use lapin::Channel;
+#[cfg(feature = "postgres")]
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use tracing::info;
 use warp::Filter;
