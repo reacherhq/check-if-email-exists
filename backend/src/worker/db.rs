@@ -18,20 +18,21 @@ use std::env;
 
 use check_if_email_exists::{CheckEmailOutput, LOG_TARGET};
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
-use tracing::debug;
+use tracing::{debug, info};
 
 pub async fn save_to_db(
 	conn_pool: Pool<Postgres>,
 	output: &CheckEmailOutput,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	let output_json = serde_json::to_value(output)?;
-	let is_reachable = serde_json::to_string(&output.is_reachable)?;
+	let is_reachable = format!("{:?}", output.is_reachable);
 	sqlx::query!(
 		r#"
-		INSERT INTO email_results (is_reachable, full_result)
-		VALUES ($1, $2)
+		INSERT INTO email_results (email, is_reachable, full_result)
+		VALUES ($1, $2, $3)
 		RETURNING id
 		"#,
+		output.input,
 		is_reachable,
 		output_json
 	)
@@ -63,7 +64,7 @@ pub async fn create_db() -> Result<Option<Pool<Postgres>>, sqlx::Error> {
 
 			sqlx::migrate!("./migrations").run(&pool).await?;
 
-			debug!(target: LOG_TARGET, "Connected to DB");
+			info!(target: LOG_TARGET, table="email_results", "Connected to DB, Reacher will write results to DB");
 
 			Some(pool)
 		}
