@@ -14,7 +14,7 @@ COPY . .
 
 ENV SQLX_OFFLINE=true
 
-RUN cargo build --features=reacher_backend/worker --bin reacher_backend --release --target=x86_64-unknown-linux-musl
+RUN cargo build --features=reacher_backend/worker,reacher_backend/postgres --bin reacher_backend --release --target=x86_64-unknown-linux-musl
 
 # ------------------------------------------------------------------------------
 # Final Stage

@@ -29,6 +29,7 @@ pub async fn save_to_db(
 		r#"
 		INSERT INTO email_results (is_reachable, full_result)
 		VALUES ($1, $2)
+		RETURNING id
 		"#,
 		is_reachable,
 		output_json
