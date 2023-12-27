@@ -23,13 +23,14 @@ pub async fn save_to_db(
 	conn_pool: Pool<Postgres>,
 	output: &CheckEmailOutput,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-	let output_json = serde_json::to_string(output)?;
-	let rec = sqlx::query!(
+	let output_json = serde_json::to_value(output)?;
+	let is_reachable = serde_json::to_string(&output.is_reachable)?;
+	sqlx::query!(
 		r#"
 		INSERT INTO email_results (is_reachable, full_result)
 		VALUES ($1, $2)
 		"#,
-		output.is_reachable,
+		is_reachable,
 		output_json
 	)
 	.fetch_one(&conn_pool)
