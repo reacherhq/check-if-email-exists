@@ -16,8 +16,9 @@
 
 use std::env;
 
-use check_if_email_exists::CheckEmailOutput;
+use check_if_email_exists::{CheckEmailOutput, LOG_TARGET};
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
+use tracing::debug;
 
 pub async fn save_to_db(
 	conn_pool: Pool<Postgres>,
@@ -37,13 +38,14 @@ pub async fn save_to_db(
 	.fetch_one(&conn_pool)
 	.await?;
 
+	debug!(target: LOG_TARGET, email=?output.input, is_reachable=?is_reachable, "Wrote to DB");
+
 	Ok(())
 }
 
 /// Create a DB pool.
-pub async fn create_db() -> Result<Pool<Postgres>, sqlx::Error> {
-	let pg_conn =
-		env::var("DATABASE_URL").expect("Environment variable DATABASE_URL should be set");
+pub async fn create_db() -> Result<Option<Pool<Postgres>>, sqlx::Error> {
+	let pg_conn = env::var("DATABASE_URL").ok();
 	let pg_max_conn = env::var("RCH_DATABASE_MAX_CONNECTIONS").map_or(5, |var| {
 		var.parse::<u32>()
 			.expect("Environment variable RCH_DATABASE_MAX_CONNECTIONS should parse to u32")
@@ -52,12 +54,21 @@ pub async fn create_db() -> Result<Pool<Postgres>, sqlx::Error> {
 	// create connection pool with database
 	// connection pool internally the shared db connection
 	// with arc so it can safely be cloned and shared across threads
-	let pool = PgPoolOptions::new()
-		.max_connections(pg_max_conn)
-		.connect(pg_conn.as_str())
-		.await?;
+	let pool = match pg_conn {
+		Some(pg_conn_str) => {
+			let pool = PgPoolOptions::new()
+				.max_connections(pg_max_conn)
+				.connect(pg_conn_str.as_str())
+				.await?;
 
-	sqlx::migrate!("./migrations").run(&pool).await?;
+			sqlx::migrate!("./migrations").run(&pool).await?;
+
+			debug!(target: LOG_TARGET, "Connected to DB");
+
+			Some(pool)
+		}
+		None => None,
+	};
 
 	Ok(pool)
 }
