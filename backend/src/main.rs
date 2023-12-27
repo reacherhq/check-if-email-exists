@@ -47,25 +47,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	let _guard: sentry::ClientInitGuard = setup_sentry();
 
 	#[cfg(feature = "worker")]
-	let backend_name = env::var("RCH_BACKEND_NAME").expect("RCH_BACKEND_NAME is not set");
+	{
+		let backend_name = env::var("RCH_BACKEND_NAME").expect("RCH_BACKEND_NAME is not set");
+		let channel = create_channel(&backend_name).await?;
+		let http_server = run_warp_server(channel.clone());
+		try_join!(http_server, run_worker(channel, &backend_name))?;
+	}
 
-	#[cfg(feature = "worker")]
-	let channel = { Some(create_channel(&backend_name).await?) };
 	#[cfg(not(feature = "worker"))]
-	let channel = None;
-
-	let _http_server = run_warp_server(channel.clone());
-
-	#[cfg(feature = "worker")]
-	try_join!(
-		_http_server,
-		run_worker(
-			channel.expect("If worker feature is set, channel is set."),
-			&backend_name
-		)
-	)?;
-	#[cfg(not(feature = "worker"))]
-	_http_server.await?;
+	{
+		let http_server = run_warp_server();
+		http_server.await?
+	}
 
 	Ok(())
 }

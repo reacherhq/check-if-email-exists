@@ -115,7 +115,7 @@ async fn create_bulk_request(
 /// The endpoint accepts list of email address and creates
 /// a new job to check them.
 pub fn create_bulk_job(
-	o: Option<Channel>,
+	o: Channel,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v1" / "bulk")
 		.and(warp::post())
@@ -133,16 +133,7 @@ pub fn create_bulk_job(
 
 /// Warp filter that extracts lapin Channel.
 fn with_channel(
-	o: Option<Channel>,
-) -> impl Filter<Extract = (Channel,), Error = warp::Rejection> + Clone {
-	warp::any().and_then(move || {
-		let o = o.clone();
-		async move {
-			if let Some(channel) = o {
-				Ok(channel)
-			} else {
-				Err(warp::reject::not_found())
-			}
-		}
-	})
+	channel: Channel,
+) -> impl Filter<Extract = (Channel,), Error = std::convert::Infallible> + Clone {
+	warp::any().map(move || channel.clone())
 }

@@ -22,8 +22,12 @@ use lapin::{options::*, types::FieldTable, Channel, Connection, ConnectionProper
 use tracing::{error, info};
 
 pub mod check_email;
+#[cfg(feature = "postgres")]
+mod db;
 
 use check_email::process_check_email;
+#[cfg(feature = "postgres")]
+use db::create_db;
 
 pub async fn create_channel(
 	backend_name: &str,
@@ -88,10 +92,18 @@ pub async fn run_worker(
 		)
 		.await?;
 
+	#[cfg(feature = "postgres")]
+	let conn_pool = create_db().await?;
+
 	while let Some(delivery) = consumer.next().await {
 		if let Ok(delivery) = delivery {
 			let channel = channel.clone();
+			#[cfg(feature = "postgres")]
+			let conn_pool = conn_pool.clone();
 			tokio::spawn(async move {
+				#[cfg(feature = "postgres")]
+				let res = process_check_email(&channel, delivery, conn_pool).await;
+				#[cfg(not(feature = "postgres"))]
 				let res = process_check_email(&channel, delivery).await;
 				if let Err(err) = res {
 					error!(target: LOG_TARGET, error=?err, "Error processing message");

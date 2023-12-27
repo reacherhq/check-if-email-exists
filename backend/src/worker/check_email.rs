@@ -19,7 +19,12 @@ use check_if_email_exists::{Reachable, LOG_TARGET};
 use lapin::message::Delivery;
 use lapin::{options::*, BasicProperties, Channel};
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "postgres")]
+use sqlx::{Pool, Postgres};
 use tracing::{debug, info};
+
+#[cfg(feature = "postgres")]
+use super::db::save_to_db;
 
 use crate::check::check_email;
 
@@ -45,6 +50,7 @@ struct WebhookOutput {
 pub async fn process_check_email(
 	channel: &Channel,
 	delivery: Delivery,
+	#[cfg(feature = "postgres")] conn_pool: Option<Pool<Postgres>>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	let payload = serde_json::from_slice::<CheckEmailPayload>(&delivery.data)?;
 	info!(target: LOG_TARGET, email=?payload.input.to_email, "New job");
@@ -81,6 +87,12 @@ pub async fn process_check_email(
 	}
 
 	let (email, is_reachable) = (output.input.to_owned(), output.is_reachable.clone());
+
+	// Check if we have a DB to save the results to
+	#[cfg(feature = "postgres")]
+	if let Some(conn_pool) = conn_pool {
+		save_to_db(conn_pool, &output).await?;
+	}
 
 	// Check if we have a webhook to send the output to.
 	if let Some(webhook) = payload.webhook {
