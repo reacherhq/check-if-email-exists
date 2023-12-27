@@ -25,14 +25,25 @@ pub fn create_client(
 	if let Some(proxy) = &input.proxy {
 		log::debug!(
 			target: LOG_TARGET,
-			"[email={}] Using proxy socks://{}:{} for {} API",
+			"[email={}] Using proxy socks5://{}:{} for {} API",
 			input.to_email,
 			proxy.host,
 			proxy.port,
 			api_name,
 		);
 
-		let proxy = reqwest::Proxy::all(format!("socks5://{}:{}", proxy.host, proxy.port))?;
+		let proxy = if proxy.username.is_some() && proxy.password.is_some() {
+			reqwest::Proxy::all(format!(
+				"socks5://{}:{}@{}:{}",
+				proxy.username.as_ref().unwrap(),
+				proxy.password.as_ref().unwrap(),
+				proxy.host,
+				proxy.port
+			))?
+		} else {
+			reqwest::Proxy::all(format!("socks5://{}:{}", proxy.host, proxy.port))?
+		};
+
 		reqwest::Client::builder().proxy(proxy).build()
 	} else {
 		Ok(reqwest::Client::new())
