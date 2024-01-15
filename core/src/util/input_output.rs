@@ -249,7 +249,7 @@ impl Default for CheckEmailInput {
 			yahoo_verif_method: YahooVerifMethod::Headless,
 			gmail_verif_method: GmailVerifMethod::Api,
 			#[cfg(not(feature = "headless"))]
-			yahoo_verif_method: HotmailVerifMethod::Smtp,
+			hotmail_verif_method: HotmailVerifMethod::OneDriveApi,
 			#[cfg(feature = "headless")]
 			hotmail_verif_method: HotmailVerifMethod::Headless,
 			check_gravatar: false,
