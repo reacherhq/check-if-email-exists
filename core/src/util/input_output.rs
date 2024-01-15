@@ -248,8 +248,6 @@ impl Default for CheckEmailInput {
 			#[cfg(feature = "headless")]
 			yahoo_verif_method: YahooVerifMethod::Headless,
 			gmail_verif_method: GmailVerifMethod::Api,
-			#[cfg(not(feature = "headless"))]
-			yahoo_verif_method: HotmailVerifMethod::Smtp,
 			#[cfg(feature = "headless")]
 			hotmail_verif_method: HotmailVerifMethod::Headless,
 			check_gravatar: false,
