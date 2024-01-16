@@ -1,6 +1,6 @@
 [package]
 name = "reacher_backend"
-version = "0.5.0"
+version = "0.7.0"
 edition = "2018"
 license = "AGPL-3.0"
 publish = false
