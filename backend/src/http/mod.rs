@@ -15,7 +15,6 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 mod v0;
-mod v1;
 mod version;
 
 use std::env;
