@@ -12,8 +12,5 @@ TARGET_TRIPLE=$2
 required_arg $CROSS 'CROSS'
 required_arg $TARGET_TRIPLE '<Target Triple>'
 
-# reacher_worker doesn't compile on windows because of this bug:
-# https://github.com/amqp-rs/reactor-trait/issues/1
-# So we only build the check_if_email_exists binary for Windows.
-$CROSS test --bin check_if_email_exists --target $TARGET_TRIPLE
-$CROSS test --bin check_if_email_exists --target $TARGET_TRIPLE --all-features
+$CROSS test --target $TARGET_TRIPLE
+$CROSS test --target $TARGET_TRIPLE --all-features

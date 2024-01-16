@@ -15,29 +15,16 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 mod v0;
-mod v1;
 mod version;
 
 use std::env;
 use std::net::IpAddr;
 
 use check_if_email_exists::LOG_TARGET;
-#[cfg(feature = "worker")]
-use lapin::Channel;
 use tracing::info;
 use warp::Filter;
 
 use super::errors;
-
-#[cfg(feature = "worker")]
-fn create_routes_with_bulk(
-	channel: Channel,
-) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-	version::get::get_version()
-		.or(v0::check_email::post::post_check_email())
-		.or(v1::bulk::post::create_bulk_job(channel))
-		.recover(errors::handle_rejection)
-}
 
 /// Creates the routes for the HTTP server.
 /// Making it public so that it can be used in tests/check_email.rs.
@@ -52,9 +39,7 @@ pub fn create_routes_without_bulk(
 ///
 /// This function starts the Warp server and listens for incoming requests.
 /// It returns a `Result` indicating whether the server started successfully or encountered an error.
-pub async fn run_warp_server(
-	#[cfg(feature = "worker")] channel: Channel,
-) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+pub async fn run_warp_server() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	let host = env::var("RCH_HTTP_HOST")
 		.unwrap_or_else(|_| "127.0.0.1".into())
 		.parse::<IpAddr>()
@@ -66,9 +51,6 @@ pub async fn run_warp_server(
 		})
 		.unwrap_or(8080);
 
-	#[cfg(feature = "worker")]
-	let routes = create_routes_with_bulk(channel);
-	#[cfg(not(feature = "worker"))]
 	let routes = create_routes_without_bulk();
 
 	info!(target: LOG_TARGET, host=?host,port=?port, "Server is listening");

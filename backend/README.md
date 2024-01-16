@@ -14,8 +14,6 @@ This crate holds the backend for [Reacher](https://reacher.email). The backend i
 -   [`check-if-email-exists`](https://github.com/reacherhq/check-if-email-exists), which performs the core email verification logic,
 -   [`warp`](https://github.com/seanmonstar/warp) web framework.
 
-> 💡 Update: Bulk email verification is currently being worked on, and is in **beta** phase. You can try to use the bulk verification endpoints by setting the environment variable `RCH_ENABLE_BULK=1`. The documentation is currently being [worked on](https://github.com/reacherhq/backend/issues/321).
-
 ## Get Started
 
 The [Docker image](./Dockerfile) is hosted on Docker Hub: https://hub.docker.com/r/reacherhq/backend.
@@ -47,19 +45,17 @@ Then send a `POST http://localhost:8080/v0/check_email` request with the followi
 
 These are the environment variables used to configure the HTTP server. To pass them to the Docker container, use the `-e {ENV_VAR}={VALUE}` flag.
 
-| Env Var                        | Required? | Description                                                                                                                                                                                                                                 | Default                 |
-| ------------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
-| `RUST_LOG`                     | No        | One of `trace,debug,warn,error,info`. 💡 PRO TIP: `RUST_LOG=debug` is very handful for debugging purposes.                                                                                                                                  | not defined             |
-| `RCH_HTTP_HOST`                | No        | The host name to bind the HTTP server to.                                                                                                                                                                                                   | `127.0.0.1`             |
-| `PORT`                         | No        | The port to bind the HTTP server to, often populated by the cloud provider.                                                                                                                                                                 | `8080`                  |
-| `RCH_SENTRY_DSN`               | No        | If set, bug reports will be sent to this [Sentry](https://sentry.io) DSN.                                                                                                                                                                   | not defined             |
-| `RCH_HEADER_SECRET`            | No        | If set, then all HTTP requests must have the `x-reacher-secret` header set to this value. This is used to protect the backend against public unwanted HTTP requests.                                                                        | undefined               |
-| `RCH_FROM_EMAIL`               | No        | Email to use in the `<MAIL FROM:>` SMTP step. Can be overwritten by each API request's `from_email` field.                                                                                                                                  | reacher.email@gmail.com |
-| `RCH_HELLO_NAME`               | No        | Name to use in the `<EHLO>` SMTP step. Can be overwritten by each API request's `hello_name` field.                                                                                                                                         | gmail.com               |
-| `RCH_SMTP_TIMEOUT`             | No        | Timeout for each SMTP connection.                                                                                                                                                                                                           | 45s                     |
-| `RCH_WEBDRIVER_ADDR`           | No        | Set to a running WebDriver process endpoint (e.g. `http://localhost:9515`) to use a headless navigator to password recovery pages to check Yahoo and Hotmail/Outlook addresses. We recommend `chromedriver` as it allows parallel requests. | not defined             |
-| `DATABASE_URL`                 | No        | If set, Reacher will write bulk email verification results to this DB.                                                                                                                                                                      | not defined             |
-| `RCH_DATABASE_MAX_CONNECTIONS` | No        | [Bulk] Connections created for the database pool                                                                                                                                                                                            | 5                       |
+| Env Var              | Required? | Description                                                                                                                                                                                                                                 | Default                 |
+| -------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| `RUST_LOG`           | No        | One of `trace,debug,warn,error,info`. 💡 PRO TIP: `RUST_LOG=debug` is very handful for debugging purposes.                                                                                                                                  | not defined             |
+| `RCH_HTTP_HOST`      | No        | The host name to bind the HTTP server to.                                                                                                                                                                                                   | `127.0.0.1`             |
+| `PORT`               | No        | The port to bind the HTTP server to, often populated by the cloud provider.                                                                                                                                                                 | `8080`                  |
+| `RCH_SENTRY_DSN`     | No        | If set, bug reports will be sent to this [Sentry](https://sentry.io) DSN.                                                                                                                                                                   | not defined             |
+| `RCH_HEADER_SECRET`  | No        | If set, then all HTTP requests must have the `x-reacher-secret` header set to this value. This is used to protect the backend against public unwanted HTTP requests.                                                                        | undefined               |
+| `RCH_FROM_EMAIL`     | No        | Email to use in the `<MAIL FROM:>` SMTP step. Can be overwritten by each API request's `from_email` field.                                                                                                                                  | reacher.email@gmail.com |
+| `RCH_HELLO_NAME`     | No        | Name to use in the `<EHLO>` SMTP step. Can be overwritten by each API request's `hello_name` field.                                                                                                                                         | gmail.com               |
+| `RCH_SMTP_TIMEOUT`   | No        | Timeout for each SMTP connection.                                                                                                                                                                                                           | 45s                     |
+| `RCH_WEBDRIVER_ADDR` | No        | Set to a running WebDriver process endpoint (e.g. `http://localhost:9515`) to use a headless navigator to password recovery pages to check Yahoo and Hotmail/Outlook addresses. We recommend `chromedriver` as it allows parallel requests. | not defined             |
 
 ## REST API Documentation
 
@@ -110,14 +106,3 @@ $ RUST_LOG=info ./target/release/reacher_backend
 ```
 
 The server will then be listening on `http://127.0.0.1:8080`.
-
-## Prune DB
-
--   Start a PostgreSQL Server
--   Start Reacher with Bulk Endpoints enabled.
-    -   e.g `.env` :
-        RCH_ENABLE_BULK=1
-        DATABASE_URL="postgresql://user:temporary@localhost"
--   Inside `.env` set `DAYS_OLD` e.g 1,2 etc
--   Send a request to the Bulk End point and wait for the job id to be allotted.
--   Build and Run `script` with `cargo run --bin prune_db`

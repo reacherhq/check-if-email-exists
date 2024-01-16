@@ -14,7 +14,7 @@ COPY . .
 
 ENV SQLX_OFFLINE=true
 
-RUN cargo build --features=reacher_backend/worker,reacher_backend/postgres --bin reacher_backend --release --target=x86_64-unknown-linux-musl
+RUN cargo build --bin reacher_backend --release --target=x86_64-unknown-linux-musl
 
 # ------------------------------------------------------------------------------
 # Final Stage
@@ -43,8 +43,6 @@ ENV RUST_LOG=reacher=info
 ENV RCH_HTTP_HOST=0.0.0.0
 ENV PORT=8080
 ENV RCH_WEBDRIVER_ADDR=http://localhost:9515
-# Bulk verification is disabled by default. Set to 1 to enable it.
-ENV RCH_ENABLE_BULK=0
 
 EXPOSE 8080
 

@@ -17,26 +17,15 @@
 //! Main entry point of the `reacher_backend` binary. It has two `main`
 //! functions, depending on whether the `bulk` feature is enabled or not.
 
-#[cfg(feature = "worker")]
-use std::env;
-
 use check_if_email_exists::LOG_TARGET;
-#[cfg(feature = "worker")]
-use futures::try_join;
 use tracing::info;
 
-#[cfg(feature = "worker")]
-use reacher_backend::worker::create_channel;
-#[cfg(feature = "worker")]
-use reacher_backend::worker::run_worker;
 use reacher_backend::{
 	http::run_warp_server,
 	sentry_util::{setup_sentry, CARGO_PKG_VERSION},
 };
 
 /// Run a HTTP server using warp with bulk endpoints.
-/// If the worker feature is enabled, this function will also start a worker
-/// that listens to an AMQP message queue.
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	// Initialize logging.
@@ -46,19 +35,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	// Setup sentry bug tracking.
 	let _guard: sentry::ClientInitGuard = setup_sentry();
 
-	#[cfg(feature = "worker")]
-	{
-		let backend_name = env::var("RCH_BACKEND_NAME").expect("RCH_BACKEND_NAME is not set");
-		let channel = create_channel(&backend_name).await?;
-		let http_server = run_warp_server(channel.clone());
-		try_join!(http_server, run_worker(channel, &backend_name))?;
-	}
-
-	#[cfg(not(feature = "worker"))]
-	{
-		let http_server = run_warp_server();
-		http_server.await?
-	}
+	let http_server = run_warp_server();
+	http_server.await?;
 
 	Ok(())
 }

@@ -18,5 +18,3 @@ pub mod check;
 mod errors;
 pub mod http;
 pub mod sentry_util;
-#[cfg(feature = "worker")]
-pub mod worker;
