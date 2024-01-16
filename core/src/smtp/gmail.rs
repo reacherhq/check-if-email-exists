@@ -89,6 +89,7 @@ mod tests {
 	use super::*;
 
 	#[tokio::test]
+	#[ignore] // ref: https://github.com/reacherhq/check-if-email-exists/issues/1431
 	async fn should_return_is_deliverable_true() {
 		let to_email = EmailAddress::from_str("someone@gmail.com").unwrap();
 		let input = CheckEmailInput::new("someone@gmail.com".to_owned());
