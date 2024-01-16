@@ -31,15 +31,3 @@ tokio-reactor-trait = { version = "1.1.0", optional = true }
 tracing = "0.1.40"
 tracing-subscriber = "0.3.18"
 warp = "0.3"
-
-[features]
-worker = [
-    "futures",
-    "futures-lite",
-    "lapin",
-    "reqwest",
-    "tokio-executor-trait",
-    "tokio-reactor-trait",
-]
-
-postgres = ["sqlx"]
