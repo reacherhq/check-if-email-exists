@@ -58,7 +58,6 @@ pub async fn process_check_email(
 
 	let output = check_email(payload.input).await;
 	info!(target: LOG_TARGET, email=output.input, is_reachable=?output.is_reachable, "Done check");
-	debug!(target: LOG_TARGET, output=?output, "Done check");
 	let reply_payload = serde_json::to_string(&output)?;
 	let reply_payload = reply_payload.as_bytes();
 
