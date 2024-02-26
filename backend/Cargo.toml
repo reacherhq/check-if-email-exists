@@ -9,7 +9,7 @@ publish = false
 async-smtp = "0.6"
 check-if-email-exists = { path = "../core", features = ["headless"] }
 dotenv = "0.15.0"
-openssl = { version = "0.10.62", features = ["vendored"] }
+openssl = { version = "0.10.64", features = ["vendored"] }
 sentry = "0.23"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
