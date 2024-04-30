@@ -111,6 +111,8 @@ pub fn is_full_inbox(e: &str) -> bool {
 	|| e.contains("over quota")
 	// 550 user has too many messages on the server
 	|| e.contains("too many messages")
+	// https://newsroom.gmx.net/2017/09/28/unzustellbar-fehlermeldungen-email/
+	|| e.comtains("exceeded storage allocation")
 }
 
 /// Check if the email account has been disabled or blocked by the email
