@@ -21,6 +21,7 @@ use std::env;
 use std::net::IpAddr;
 
 use check_if_email_exists::LOG_TARGET;
+use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use tracing::info;
 use warp::Filter;
 
@@ -32,6 +33,10 @@ pub fn create_routes_without_bulk(
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	version::get::get_version()
 		.or(v0::check_email::post::post_check_email())
+		// The 3 following routes will 404 if o is None.
+		.or(v0::bulk::post::create_bulk_job(o.clone()))
+		.or(v0::bulk::get::get_bulk_job_status(o.clone()))
+		.or(v0::bulk::results::get_bulk_job_result(o))
 		.recover(errors::handle_rejection)
 }
 
@@ -57,4 +62,26 @@ pub async fn run_warp_server() -> Result<(), Box<dyn std::error::Error + Send + 
 	warp::serve(routes).run((host, port)).await;
 
 	Ok(())
+}
+
+/// Create a DB pool.
+async fn create_db() -> Result<Pool<Postgres>, sqlx::Error> {
+	let pg_conn =
+		env::var("DATABASE_URL").expect("Environment variable DATABASE_URL should be set");
+	let pg_max_conn = env::var("RCH_DATABASE_MAX_CONNECTIONS").map_or(5, |var| {
+		var.parse::<u32>()
+			.expect("Environment variable RCH_DATABASE_MAX_CONNECTIONS should parse to u32")
+	});
+
+	// create connection pool with database
+	// connection pool internally the shared db connection
+	// with arc so it can safely be cloned and shared across threads
+	let pool = PgPoolOptions::new()
+		.max_connections(pg_max_conn)
+		.connect(pg_conn.as_str())
+		.await?;
+
+	sqlx::migrate!("./migrations").run(&pool).await?;
+
+	Ok(pool)
 }
