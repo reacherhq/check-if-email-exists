@@ -21,7 +21,9 @@ use std::env;
 use std::net::IpAddr;
 
 use check_if_email_exists::LOG_TARGET;
-use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
+use sqlx::postgres::PgPoolOptions;
+use sqlx::{Pool, Postgres};
+use sqlxmq::JobRunnerHandle;
 use tracing::info;
 use warp::Filter;
 
@@ -29,7 +31,8 @@ use super::errors;
 
 /// Creates the routes for the HTTP server.
 /// Making it public so that it can be used in tests/check_email.rs.
-pub fn create_routes_without_bulk(
+pub fn create_routes(
+	o: Option<Pool<Postgres>>,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	version::get::get_version()
 		.or(v0::check_email::post::post_check_email())
@@ -43,8 +46,12 @@ pub fn create_routes_without_bulk(
 /// Runs the Warp server.
 ///
 /// This function starts the Warp server and listens for incoming requests.
-/// It returns a `Result` indicating whether the server started successfully or encountered an error.
-pub async fn run_warp_server() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+/// It returns a `Result` indicating whether the server started successfully or
+/// encountered an error, as well as an optional `JobRunnerHandle` if the bulk
+/// job listener is enabled. The handle can be used to stop the listener or to
+/// keep it alive.
+pub async fn run_warp_server(
+) -> Result<Option<JobRunnerHandle>, Box<dyn std::error::Error + Send + Sync>> {
 	let host = env::var("RCH_HTTP_HOST")
 		.unwrap_or_else(|_| "127.0.0.1".into())
 		.parse::<IpAddr>()
@@ -56,12 +63,23 @@ pub async fn run_warp_server() -> Result<(), Box<dyn std::error::Error + Send + 
 		})
 		.unwrap_or(8080);
 
-	let routes = create_routes_without_bulk();
+	// Run bulk job listener.
+	let is_bulk_enabled = env::var("RCH_ENABLE_BULK").unwrap_or_else(|_| "0".into()) == "1";
+	let (db, runner) = if is_bulk_enabled {
+		let pool = create_db().await?;
+		let runner = v0::bulk::create_job_registry(&pool).await?;
+		(Some(pool), Some(runner))
+	} else {
+		(None, None)
+	};
+
+	let routes = create_routes(db);
 
 	info!(target: LOG_TARGET, host=?host,port=?port, "Server is listening");
 	warp::serve(routes).run((host, port)).await;
 
-	Ok(())
+	// Returning runner, because dropping it would stop the listener.
+	Ok(runner)
 }
 
 /// Create a DB pool.
