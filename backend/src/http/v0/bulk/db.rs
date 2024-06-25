@@ -14,28 +14,22 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-//! Main entry point of the `reacher_backend` binary. It has two `main`
-//! functions, depending on whether the `bulk` feature is enabled or not.
+use sqlx::{Pool, Postgres};
+use warp::Filter;
 
-use check_if_email_exists::LOG_TARGET;
-use tracing::info;
-
-use reacher_backend::{
-	http::run_warp_server,
-	sentry_util::{setup_sentry, CARGO_PKG_VERSION},
-};
-
-/// Run a HTTP server using warp with bulk endpoints.
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-	// Initialize logging.
-	tracing_subscriber::fmt::init();
-	info!(target: LOG_TARGET, version=?CARGO_PKG_VERSION, "Running Reacher");
-
-	// Setup sentry bug tracking.
-	let _guard: sentry::ClientInitGuard = setup_sentry();
-
-	let _bulk_job_runner = run_warp_server().await?;
-
-	Ok(())
+/// Warp filter that extracts a Pg Pool if the option is Some, or else rejects
+/// with a 404.
+pub fn with_db(
+	o: Option<Pool<Postgres>>,
+) -> impl Filter<Extract = (Pool<Postgres>,), Error = warp::Rejection> + Clone {
+	warp::any().and_then(move || {
+		let o = o.clone(); // Still not 100% sure why I need to clone here...
+		async move {
+			if let Some(conn_pool) = o {
+				Ok(conn_pool)
+			} else {
+				Err(warp::reject::not_found())
+			}
+		}
+	})
 }

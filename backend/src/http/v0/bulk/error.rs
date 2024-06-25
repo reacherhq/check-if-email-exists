@@ -14,28 +14,31 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-//! Main entry point of the `reacher_backend` binary. It has two `main`
-//! functions, depending on whether the `bulk` feature is enabled or not.
+use warp::reject;
 
-use check_if_email_exists::LOG_TARGET;
-use tracing::info;
+#[derive(Debug)]
+pub enum CsvError {
+	CsvLib(csv::Error),
+	CsvLibWriter(Box<csv::IntoInnerError<csv::Writer<Vec<u8>>>>),
+	Parse(&'static str),
+}
 
-use reacher_backend::{
-	http::run_warp_server,
-	sentry_util::{setup_sentry, CARGO_PKG_VERSION},
-};
+/// Catch all error struct for the bulk endpoints
+#[derive(Debug)]
+pub enum BulkError {
+	EmptyInput,
+	JobInProgress,
+	Db(sqlx::Error),
+	Csv(CsvError),
+	Json(serde_json::Error),
+}
 
-/// Run a HTTP server using warp with bulk endpoints.
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-	// Initialize logging.
-	tracing_subscriber::fmt::init();
-	info!(target: LOG_TARGET, version=?CARGO_PKG_VERSION, "Running Reacher");
+// Defaults to Internal server error
+impl reject::Reject for BulkError {}
 
-	// Setup sentry bug tracking.
-	let _guard: sentry::ClientInitGuard = setup_sentry();
-
-	let _bulk_job_runner = run_warp_server().await?;
-
-	Ok(())
+// wrap sql errors as db errors for reacher
+impl From<sqlx::Error> for BulkError {
+	fn from(e: sqlx::Error) -> Self {
+		BulkError::Db(e)
+	}
 }

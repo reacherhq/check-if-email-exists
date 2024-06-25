@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n\t\tSELECT\n\t\t\tCOUNT(*) as total_processed,\n\t\t\tCOUNT(CASE WHEN result ->> 'is_reachable' LIKE 'safe' THEN 1 END) as safe_count,\n\t\t\tCOUNT(CASE WHEN result ->> 'is_reachable' LIKE 'risky' THEN 1 END) as risky_count,\n\t\t\tCOUNT(CASE WHEN result ->> 'is_reachable' LIKE 'invalid' THEN 1 END) as invalid_count,\n\t\t\tCOUNT(CASE WHEN result ->> 'is_reachable' LIKE 'unknown' THEN 1 END) as unknown_count,\n\t\t\t(SELECT created_at FROM email_results WHERE job_id = $1 ORDER BY created_at DESC LIMIT 1) as finished_at\n\t\tFROM email_results\n\t\tWHERE job_id = $1\n\t\t",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "total_processed",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "safe_count",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "risky_count",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 3,
+        "name": "invalid_count",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 4,
+        "name": "unknown_count",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 5,
+        "name": "finished_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "13862fe23ea729215fb1cfee3aadc14dfa9373dc8137c4f1da199e3ae66efd50"
+}
