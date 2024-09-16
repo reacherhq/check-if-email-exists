@@ -27,14 +27,14 @@ jobs:
           repo: cross
           matches: ${{ matrix.platform }}
           token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/upload-artifact@v1
+      - uses: actions/upload-artifact@v4
         with:
           name: cross-${{ matrix.platform }}
           path: ${{ steps.cross.outputs.install_path }}
     strategy:
       matrix:
         platform: [linux-musl, apple-darwin]
-        
+
   windows:
     runs-on: windows-latest
     needs: install-cross
@@ -42,7 +42,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: shogo82148/actions-setup-perl@v1
         with:
-          perl-version: '5.32'
+          perl-version: "5.32"
           distribution: strawberry
       - run: ci/set_rust_version.bash ${{ matrix.channel }} ${{ matrix.target }}
         shell: bash
