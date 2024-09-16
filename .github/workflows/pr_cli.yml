@@ -38,7 +38,7 @@ jobs:
     needs: install-cross
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/download-artifact@v1
+      - uses: actions/download-artifact@v4
         with:
           name: cross-apple-darwin
           path: /usr/local/bin/
@@ -92,7 +92,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Download Cross
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v4
         with:
           name: cross-linux-musl
           path: /tmp/
