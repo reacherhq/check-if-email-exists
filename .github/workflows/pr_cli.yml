@@ -25,7 +25,7 @@ jobs:
           repo: cross
           matches: ${{ matrix.platform }}
           token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/upload-artifact@v1
+      - uses: actions/upload-artifact@v4
         with:
           name: cross-${{ matrix.platform }}
           path: ${{ steps.cross.outputs.install_path }}
@@ -61,7 +61,7 @@ jobs:
           # iOS
           # - aarch64-apple-ios
           # - x86_64-apple-ios
-  
+
   windows:
     runs-on: windows-latest
     needs: install-cross
@@ -69,12 +69,12 @@ jobs:
       - uses: actions/checkout@v2
       - uses: shogo82148/actions-setup-perl@v1
         with:
-          perl-version: '5.32'
+          perl-version: "5.32"
           distribution: strawberry
-          
+
       - run: ci/set_rust_version.bash ${{ matrix.channel }} ${{ matrix.target }}
         shell: bash
-      - run: ci/build.ps1 cargo ${{ matrix.target }}      
+      - run: ci/build.ps1 cargo ${{ matrix.target }}
       - run: ci/test.bash cargo ${{ matrix.target }}
         shell: bash
     strategy:
@@ -84,7 +84,6 @@ jobs:
         target:
           - x86_64-pc-windows-msvc
           - i686-pc-windows-msvc
-
 
   linux:
     runs-on: ubuntu-latest
