@@ -49,6 +49,8 @@ pub struct SmtpConnection {
 	pub host: String,
 	/// The port we connected to via SMTP.
 	pub port: u16,
+	/// Whether we used a proxy for the SMTP connection.
+	pub used_proxy: bool,
 }
 
 #[derive(Debug, Default, Deserialize, PartialEq, Serialize)]
@@ -193,7 +195,11 @@ pub async fn check_smtp(
 	(
 		check_smtp_with_retry(to_email, &host, port, domain, input, input.retries).await,
 		SmtpDebug {
-			verif_method: VerifMethod::Smtp(SmtpConnection { host, port }),
+			verif_method: VerifMethod::Smtp(SmtpConnection {
+				host,
+				port,
+				used_proxy: input.proxy.is_some(),
+			}),
 		},
 	)
 }
@@ -222,7 +228,8 @@ mod tests {
 			smtp_debug.verif_method,
 			super::VerifMethod::Smtp(SmtpConnection {
 				host: host.to_string(),
-				port: 25
+				port: 25,
+				used_proxy: input.proxy.is_some(),
 			})
 		);
 		match res {
