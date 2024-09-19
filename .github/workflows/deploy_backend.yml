@@ -21,4 +21,4 @@ jobs:
           name: reacherhq/backend
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-          tags: "${{ steps.vars.outputs.GITHUB_TAG }}"
+          tags: "${{ steps.vars.outputs.GITHUB_TAG }},beta"
