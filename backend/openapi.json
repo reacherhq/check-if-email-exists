@@ -311,7 +311,7 @@
 				"type": "string",
 				"title": "Reachable",
 				"enum": ["invalid", "unknown", "safe", "risky"],
-				"description": "An enum to describe how confident we are that the recipient address is real: `safe`, `risky`, `invalid` and `unknown`. Check our FAQ to know the meanings of the 4 possibilities: https://help.reacher.email/email-attributes-inside-json."
+				"description": "An enum to describe how confident we are that the recipient address is real: `safe`, `risky`, `invalid` and `unknown`. Check our docs to know the meanings of the 4 possibilities: https://docs.reacher.email/getting-started/publish-your-docs."
 			},
 			"YahooVerifMethod": {
 				"type": "string",

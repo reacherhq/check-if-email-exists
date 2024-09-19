@@ -45,17 +45,17 @@ Then send a `POST http://localhost:8080/v0/check_email` request with the followi
 
 These are the environment variables used to configure the HTTP server. To pass them to the Docker container, use the `-e {ENV_VAR}={VALUE}` flag.
 
-| Env Var                             | Required?                   | Description                                                                                                                                                                                                                                 | Default                 |
+| Env Var                             | Required?                   | Description                                                                                                                                                                                                                                 | Dockerfile default      |
 | ----------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
-| `RUST_LOG`                          | No                          | One of `trace,debug,warn,error,info`. 💡 PRO TIP: `RUST_LOG=debug` is very handful for debugging purposes.                                                                                                                                  | not defined             |
-| `RCH_HTTP_HOST`                     | No                          | The host name to bind the HTTP server to.                                                                                                                                                                                                   | `127.0.0.1`             |
+| `RUST_LOG`                          | No                          | One of `trace,debug,warn,error,info`. 💡 PRO TIP: `RUST_LOG=debug` is very handful for debugging purposes.                                                                                                                                  | `reacher=info`          |
+| `RCH_HTTP_HOST`                     | No                          | The host name to bind the HTTP server to.                                                                                                                                                                                                   | `0.0.0.0`               |
 | `PORT`                              | No                          | The port to bind the HTTP server to, often populated by the cloud provider.                                                                                                                                                                 | `8080`                  |
 | `RCH_SENTRY_DSN`                    | No                          | If set, bug reports will be sent to this [Sentry](https://sentry.io) DSN.                                                                                                                                                                   | not defined             |
 | `RCH_HEADER_SECRET`                 | No                          | If set, then all HTTP requests must have the `x-reacher-secret` header set to this value. This is used to protect the backend against public unwanted HTTP requests.                                                                        | undefined               |
 | `RCH_FROM_EMAIL`                    | No                          | Email to use in the `<MAIL FROM:>` SMTP step. Can be overwritten by each API request's `from_email` field.                                                                                                                                  | reacher.email@gmail.com |
 | `RCH_HELLO_NAME`                    | No                          | Name to use in the `<EHLO>` SMTP step. Can be overwritten by each API request's `hello_name` field.                                                                                                                                         | gmail.com               |
 | `RCH_SMTP_TIMEOUT`                  | No                          | Timeout for each SMTP connection.                                                                                                                                                                                                           | 45s                     |
-| `RCH_WEBDRIVER_ADDR`                | No                          | Set to a running WebDriver process endpoint (e.g. `http://localhost:9515`) to use a headless navigator to password recovery pages to check Yahoo and Hotmail/Outlook addresses. We recommend `chromedriver` as it allows parallel requests. | not defined             |
+| `RCH_WEBDRIVER_ADDR`                | No                          | Set to a running WebDriver process endpoint (e.g. `http://localhost:9515`) to use a headless navigator to password recovery pages to check Yahoo and Hotmail/Outlook addresses. We recommend `chromedriver` as it allows parallel requests. | `http://localhost:9515` |
 | **For Bulk Verification:**          |                             |                                                                                                                                                                                                                                             |
 | `RCH_ENABLE_BULK`                   | No                          | If set to `1`, then bulk verification endpoints will be added to the backend.                                                                                                                                                               | 0                       |
 | `DATABASE_URL`                      | Yes if `RCH_ENABLE_BULK==1` | [Bulk] Database connection string for storing results and task queue                                                                                                                                                                        | not defined             |
@@ -64,8 +64,6 @@ These are the environment variables used to configure the HTTP server. To pass t
 | `RCH_MAXIMUM_CONCURRENT_TASK_FETCH` | No                          | [Bulk] Maximum number of tasks fetched at once                                                                                                                                                                                              | 20                      |
 
 ## REST API Documentation
-
-Read docs on https://help.reacher.email/rest-api-documentation.
 
 The API exposes the following endpoint: `POST /v0/check_email` expecting the following body:
 
@@ -93,7 +91,7 @@ curl -X POST \
     http://localhost:8080/v0/check_email
 ```
 
-Also check the [OpenAPI documentation](https://help.reacher.email/rest-api-documentation).
+Also check the [OpenAPI documentation](https://docs.reacher.email/advanced/openapi).
 
 ## Build From Source
 
