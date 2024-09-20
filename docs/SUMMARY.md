@@ -5,7 +5,7 @@
 ## Getting Started
 
 * [Verify your 1st email](getting-started/quickstart.md)
-* [Understanding "is\_reachable"](getting-started/publish-your-docs.md)
+* [Understanding "is\_reachable"](getting-started/is-reachable.md)
 
 ## Self-Hosting
 
