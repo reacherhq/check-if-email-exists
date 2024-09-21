@@ -26,4 +26,4 @@ Reacher's API allows making an email verification using a proxy. Send a request 
 
 ## Which 3rd-party proxies does Reacher recommend?
 
-Please get in touch with [amaury](https://app.gitbook.com/u/F1LnsqPFtfUEGlcILLswbbp5cgk2 "mention")if you are interested in using a proxy.
+Get in touch with [amaury@reacher.email](https://app.gitbook.com/u/F1LnsqPFtfUEGlcILLswbbp5cgk2 "mention") if you are interested in using a proxy.

@@ -130,8 +130,6 @@ In other cases, you can enable the `RUST_LOG=debug` environment variable on your
 * Your `FROM` field does not match the reverse DNE\
   `(mxgmx117) Nemesis ESMTP Service not available; No SMTP service;`
 
-For assistance in debugging these errors, please contact [amaury](https://app.gitbook.com/u/F1LnsqPFtfUEGlcILLswbbp5cgk2 "mention").
-
 ## Contact me
 
-If you encounter any issue that you don't know how to solve, simply send me an email to [amaury](https://app.gitbook.com/u/F1LnsqPFtfUEGlcILLswbbp5cgk2 "mention").
+If you encounter any issue that you don't know how to solve, simply send me an email to [amaury@reacher.email](https://app.gitbook.com/u/F1LnsqPFtfUEGlcILLswbbp5cgk2 "mention").

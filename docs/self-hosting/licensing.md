@@ -24,4 +24,4 @@ Both the open-source and Commercial License give you access to the same Reacher 
 
 ## Does Reacher offer a Free Trial?
 
-Yes, Reacher offers a **free trial** that allows you to use the self-hosted software for a limited time. During this period, you can test Reacher’s features for **internal testing** and **non-commercial purposes**. However, the trial is not intended for full-scale production use or commercial applications. To begin your trial, please contact amaury@reacher.email, and you can then follow the guide to [install.md](install.md "mention").
+Yes, Reacher offers a **free trial** that allows you to use the self-hosted software for a limited time. During this period, you can test Reacher’s features for **internal testing** and **non-commercial purposes**. However, the trial is not intended for full-scale production use or commercial applications. To begin your trial, please contact [amaury@reacher.email](https://app.gitbook.com/u/F1LnsqPFtfUEGlcILLswbbp5cgk2 "mention"), and you can then follow the guide to [install.md](install.md "mention").
