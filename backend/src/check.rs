@@ -16,41 +16,9 @@
 
 //! This file contains shared logic for checking one email.
 
-use std::{env, time::Duration};
+use std::env;
 
-use check_if_email_exists::{check_email as ciee_check_email, CheckEmailInput, CheckEmailOutput};
 use warp::Filter;
-
-use super::sentry_util;
-
-/// Same as `check-if-email-exists`'s check email, but adds some additional
-/// inputs and error handling.
-pub async fn check_email(input: CheckEmailInput) -> CheckEmailOutput {
-	let from_email =
-		env::var("RCH_FROM_EMAIL").unwrap_or_else(|_| CheckEmailInput::default().from_email);
-	let hello_name =
-		env::var("RCH_HELLO_NAME").unwrap_or_else(|_| CheckEmailInput::default().hello_name);
-	let smtp_timeout = env::var("RCH_SMTP_TIMEOUT")
-		.ok()
-		.and_then(|s| s.parse::<u64>().ok())
-		.map(Duration::from_secs)
-		.or_else(|| CheckEmailInput::default().smtp_timeout);
-
-	let input = CheckEmailInput {
-		// If we want to override core check-if-email-exists's default values
-		// for CheckEmailInput for the backend, we do it here.
-		from_email,
-		hello_name,
-		smtp_timeout,
-		..input
-	};
-
-	let res = ciee_check_email(&input).await;
-
-	sentry_util::log_unknown_errors(&res);
-
-	res
-}
 
 /// The header which holds the Reacher backend secret.
 pub const REACHER_SECRET_HEADER: &str = "x-reacher-secret";
@@ -68,7 +36,7 @@ pub fn check_header() -> warp::filters::BoxedFilter<()> {
 
 			let secret: &'static str = Box::leak(Box::new(secret));
 
-			warp::header::exact("x-reacher-secret", secret).boxed()
+			warp::header::exact(REACHER_SECRET_HEADER, secret).boxed()
 		}
 		Err(_) => warp::any().boxed(),
 	}

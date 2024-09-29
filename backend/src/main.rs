@@ -17,13 +17,12 @@
 //! Main entry point of the `reacher_backend` binary. It has two `main`
 //! functions, depending on whether the `bulk` feature is enabled or not.
 
-use check_if_email_exists::LOG_TARGET;
+use check_if_email_exists::{setup_sentry, LOG_TARGET};
 use tracing::info;
 
-use reacher_backend::{
-	http::run_warp_server,
-	sentry_util::{setup_sentry, CARGO_PKG_VERSION},
-};
+use reacher_backend::http::run_warp_server;
+
+const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Run a HTTP server using warp with bulk endpoints.
 #[tokio::main]

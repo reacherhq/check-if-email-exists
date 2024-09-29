@@ -16,7 +16,7 @@
 
 //! This file implements the `GET /version` endpoint.
 
-use crate::sentry_util::CARGO_PKG_VERSION;
+use crate::CARGO_PKG_VERSION;
 use serde::{Deserialize, Serialize};
 use warp::Filter;
 
@@ -39,7 +39,7 @@ pub fn get_version() -> impl Filter<Extract = (impl warp::Reply,), Error = warp:
 #[cfg(test)]
 mod tests {
 	use super::get_version;
-	use crate::sentry_util::CARGO_PKG_VERSION;
+	use crate::CARGO_PKG_VERSION;
 	use warp::http::StatusCode;
 	use warp::test::request;
 

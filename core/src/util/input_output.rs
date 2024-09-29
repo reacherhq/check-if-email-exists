@@ -237,12 +237,17 @@ impl Default for CheckEmailInput {
 	fn default() -> Self {
 		CheckEmailInput {
 			to_email: "".into(),
-			from_email: "reacher.email@gmail.com".into(), // Unused, owned by Reacher
-			hello_name: "gmail.com".into(),
+			from_email: env::var("RCH_FROM_EMAIL")
+				.unwrap_or_else(|_| "reacher.email@gmail.com".into()), // Unused, owned by Reacher
+			hello_name: env::var("RCH_HELLO_NAME").unwrap_or_else(|_| "gmail.com".into()),
 			proxy: None,
 			smtp_port: 25,
 			smtp_security: SmtpSecurity::default(),
-			smtp_timeout: Some(Duration::from_secs(45)),
+			smtp_timeout: env::var("RCH_SMTP_TIMEOUT")
+				.ok()
+				.and_then(|s| s.parse::<u64>().ok())
+				.map(Duration::from_secs)
+				.or(Some(Duration::from_secs(30))),
 			#[cfg(not(feature = "headless"))]
 			yahoo_verif_method: YahooVerifMethod::Api,
 			#[cfg(feature = "headless")]

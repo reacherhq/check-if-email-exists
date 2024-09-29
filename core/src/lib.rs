@@ -79,6 +79,8 @@ use std::time::{Duration, SystemTime};
 use syntax::{check_syntax, get_similar_mail_provider};
 pub use util::constants::LOG_TARGET;
 pub use util::input_output::*;
+#[cfg(feature = "sentry")]
+pub use util::sentry::*;
 
 use crate::rules::{has_rule, Rule};
 
@@ -246,7 +248,7 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 	}
 
 	let end_time = SystemTime::now();
-	CheckEmailOutput {
+	let res = CheckEmailOutput {
 		input: to_email.to_string(),
 		is_reachable: calculate_reachable(&my_misc, &my_smtp),
 		misc: Ok(my_misc),
@@ -262,5 +264,10 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 			smtp: smtp_debug,
 			..Default::default()
 		},
-	}
+	};
+
+	#[cfg(feature = "sentry")]
+	log_unknown_errors(&res);
+
+	res
 }

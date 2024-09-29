@@ -7,7 +7,7 @@ publish = false
 
 [dependencies]
 async-smtp = "0.6"
-check-if-email-exists = { path = "../core", features = ["headless"] }
+check-if-email-exists = { path = "../core", features = ["headless", "sentry"] }
 csv = "1.3.0"
 dotenv = "0.15.0"
 openssl = { version = "0.10.64", features = ["vendored"] }
