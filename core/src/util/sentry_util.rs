@@ -24,16 +24,16 @@ use std::borrow::Cow;
 use std::env;
 
 use async_smtp::smtp::error::Error as AsyncSmtpError;
-use check_if_email_exists::misc::MiscError;
-use check_if_email_exists::mx::MxError;
-use check_if_email_exists::LOG_TARGET;
-use check_if_email_exists::{smtp::SmtpError, CheckEmailOutput};
 use sentry::protocol::{Event, Exception, Level, Values};
 use tracing::{debug, info};
 
 use super::sentry_util;
+use crate::misc::MiscError;
+use crate::mx::MxError;
+use crate::LOG_TARGET;
+use crate::{smtp::SmtpError, CheckEmailOutput};
 
-pub const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
+const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Setup Sentry.
 pub fn setup_sentry() -> sentry::ClientInitGuard {

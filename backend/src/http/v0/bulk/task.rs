@@ -16,8 +16,9 @@
 
 //! This file implements the `POST /bulk` endpoint.
 
-use check_if_email_exists::LOG_TARGET;
-use check_if_email_exists::{CheckEmailInput, CheckEmailInputProxy, CheckEmailOutput, Reachable};
+use check_if_email_exists::{
+	check_email, CheckEmailInput, CheckEmailInputProxy, CheckEmailOutput, Reachable, LOG_TARGET,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres};
 use sqlxmq::{job, CurrentJob};
@@ -26,7 +27,6 @@ use tracing::{debug, error};
 use uuid::Uuid;
 
 use super::error::BulkError;
-use crate::check::check_email;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct TaskInput {
@@ -159,7 +159,7 @@ pub async fn email_verification_task(
 		);
 
 		let to_email = check_email_input.to_email.clone();
-		let response = check_email(check_email_input).await;
+		let response = check_email(&check_email_input).await;
 
 		debug!(
 			target: LOG_TARGET,

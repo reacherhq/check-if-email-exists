@@ -20,10 +20,7 @@
 use check_if_email_exists::LOG_TARGET;
 use tracing::info;
 
-use reacher_backend::{
-	http::run_warp_server,
-	sentry_util::{setup_sentry, CARGO_PKG_VERSION},
-};
+use reacher_backend::{http::run_warp_server, sentry_util::setup_sentry};
 
 /// Run a HTTP server using warp with bulk endpoints.
 #[tokio::main]

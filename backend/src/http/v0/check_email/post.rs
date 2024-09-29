@@ -16,11 +16,10 @@
 
 //! This file implements the `POST /v0/check_email` endpoint.
 
-use check_if_email_exists::CheckEmailInput;
-use check_if_email_exists::LOG_TARGET;
+use check_if_email_exists::{check_email, CheckEmailInput, LOG_TARGET};
 use warp::{http, Filter};
 
-use crate::check::{check_email, check_header};
+use crate::check::check_header;
 use crate::errors;
 
 /// The main endpoint handler that implements the logic of this route.
@@ -33,7 +32,7 @@ async fn handler(body: CheckEmailInput) -> Result<impl warp::Reply, warp::Reject
 		}))
 	} else {
 		// Run the future to check an email.
-		Ok(warp::reply::json(&check_email(body).await))
+		Ok(warp::reply::json(&check_email(&body).await))
 	}
 }
 

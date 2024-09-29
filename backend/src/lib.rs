@@ -17,4 +17,5 @@
 pub mod check;
 mod errors;
 pub mod http;
-pub mod sentry_util;
+
+const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
