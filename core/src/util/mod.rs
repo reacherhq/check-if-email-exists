@@ -17,5 +17,5 @@
 pub mod constants;
 pub mod input_output;
 #[cfg(feature = "sentry")]
-pub mod sentry_util;
+pub mod sentry;
 pub mod ser_with_display;

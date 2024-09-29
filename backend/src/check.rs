@@ -36,7 +36,7 @@ pub fn check_header() -> warp::filters::BoxedFilter<()> {
 
 			let secret: &'static str = Box::leak(Box::new(secret));
 
-			warp::header::exact("x-reacher-secret", secret).boxed()
+			warp::header::exact(REACHER_SECRET_HEADER, secret).boxed()
 		}
 		Err(_) => warp::any().boxed(),
 	}

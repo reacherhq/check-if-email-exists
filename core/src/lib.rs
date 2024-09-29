@@ -80,7 +80,7 @@ use syntax::{check_syntax, get_similar_mail_provider};
 pub use util::constants::LOG_TARGET;
 pub use util::input_output::*;
 #[cfg(feature = "sentry")]
-pub use util::sentry_util::*;
+pub use util::sentry::*;
 
 use crate::rules::{has_rule, Rule};
 

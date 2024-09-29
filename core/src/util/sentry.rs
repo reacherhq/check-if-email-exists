@@ -27,7 +27,6 @@ use async_smtp::smtp::error::Error as AsyncSmtpError;
 use sentry::protocol::{Event, Exception, Level, Values};
 use tracing::{debug, info};
 
-use super::sentry_util;
 use crate::misc::MiscError;
 use crate::mx::MxError;
 use crate::LOG_TARGET;
@@ -128,11 +127,11 @@ pub fn log_unknown_errors(result: &CheckEmailOutput) {
 	match (&result.misc, &result.mx, &result.smtp) {
 		(Err(err), _, _) => {
 			// We log all misc errors.
-			sentry_util::error(SentryError::Misc(err), result);
+			error(SentryError::Misc(err), result);
 		}
 		(_, Err(err), _) => {
 			// We log all mx errors.
-			sentry_util::error(SentryError::Mx(err), result);
+			error(SentryError::Mx(err), result);
 		}
 		(_, _, Err(err)) if err.get_description().is_some() => {
 			// If the SMTP error is known, we don't track it in Sentry.
@@ -155,7 +154,7 @@ pub fn log_unknown_errors(result: &CheckEmailOutput) {
 			// Sentry, to be able to debug them better. We don't want to
 			// spam Sentry and log all instances of the error, hence the
 			// `count` check.
-			sentry_util::error(SentryError::Smtp(err), result);
+			error(SentryError::Smtp(err), result);
 		}
 		// If everything is ok, we just return the result.
 		(Ok(_), Ok(_), Ok(_)) => {}
