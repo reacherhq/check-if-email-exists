@@ -1,9 +1,9 @@
-name: deploy_backend
+name: deploy_worker
 
 on:
   push:
     tags:
-      - "backend/v*.*.*"
+      - "worker/v*.*.*"
 
 jobs:
   docker-publish:
@@ -12,14 +12,14 @@ jobs:
       - uses: actions/checkout@master
       - name: Set GITHUB_TAG arg
         id: vars
-        run: echo ::set-output name=GITHUB_TAG::${GITHUB_REF:18} # Remove /refs/head/backend/
+        run: echo ::set-output name=GITHUB_TAG::${GITHUB_REF:17} # Remove /refs/head/worker/
       - name: Print version
-        run: echo "Publishing reacherhq/backend:${{ steps.vars.outputs.GITHUB_TAG }}"
+        run: echo "Publishing reacherhq/worker:${{ steps.vars.outputs.GITHUB_TAG }}"
       - name: Publish to Registry
         uses: elgohr/Publish-Docker-Github-Action@v5
         with:
-          name: reacherhq/backend
-          dockerfile: docker/Dockerfile.backend
+          name: reacherhq/worker
+          dockerfile: docker/Dockerfile.worker
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
           tags: "${{ steps.vars.outputs.GITHUB_TAG }},beta"
