@@ -77,13 +77,6 @@ pub async fn run_worker(
 		// Reset throttle counters if needed
 		throttle.reset_if_needed();
 
-		// Check if we should throttle
-		if let Some(wait_duration) = throttle.should_throttle(&config) {
-			info!(target: LOG_TARGET, wait=?wait_duration, "Too many requests, throttling");
-			sleep(wait_duration).await;
-			continue;
-		}
-
 		let config_clone = config.clone();
 		let channel_clone = channel.clone();
 		let pg_pool_clone = pg_pool.clone();
@@ -105,8 +98,15 @@ pub async fn run_worker(
 			}
 		});
 
-		// Increment throttle counters after processing the message
+		// Increment throttle counters once we spawn the task
 		throttle.increment_counters();
+
+		// Check if we should throttle before fetching the next message
+		if let Some(wait_duration) = throttle.should_throttle(&config) {
+			info!(target: LOG_TARGET, wait=?wait_duration, "Too many requests, throttling");
+			sleep(wait_duration).await;
+			continue;
+		}
 	}
 
 	Ok(())
