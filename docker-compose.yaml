@@ -30,16 +30,23 @@ services:
             - postgres
             - rabbitmq
         environment:
-            RCH__NAME: worker1
-            RCH__RABBITMQ__HOST: amqp://guest:guest@rabbitmq:5672
-            RCH__DB__URL: postgres://postgres:postgres@postgres:5432/reacher_worker_db
-        command:
-            [
-                "./wait-for-it.sh",
-                "postgres:5432",
-                "--",
-                "./wait-for-it.sh",
-                "rabbitmq:5672",
-                "--",
-                "./reacher_worker",
-            ]
+            RCH_NAME: worker1
+            RCH_RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+            RCH_RABBITMQ_QUEUE: check.Headless.*
+            RCH_DB_URL: postgres://postgres:postgres@postgres:5432/reacher_worker_db
+        restart: always
+
+    worker2:
+        build:
+            context: .
+            dockerfile: docker/Dockerfile.worker
+        container_name: worker2
+        depends_on:
+            - postgres
+            - rabbitmq
+        environment:
+            RCH_NAME: worker2
+            RCH_RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+            RCH_RABBITMQ_QUEUE: check.*
+            RCH_DB_URL: postgres://postgres:postgres@postgres:5432/reacher_worker_db
+        restart: always

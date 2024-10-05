@@ -27,6 +27,7 @@ pub struct RabbitMQConfig {
 	///	- "check.Smtp.*": verifies any email, using SMTP.
 	/// - "check.Headless.yahoo": verifies any Yahoo email, using a headless browser.
 	/// - "check.Headless.hotmail.b2c": verifies any B2C Hotmail email (@outlook, @live, @hotmail) email, using a headless browser.
+	/// - "check.Headless.*": verifies any email, using a headless browser.
 	/// - "check.*": verifies any email, using the default method.
 	pub queue: Queue,
 	pub concurrency: u16,
@@ -51,6 +52,8 @@ pub enum Queue {
 	HeadlessYahoo,
 	/// Verifies any B2C Hotmail email (@outlook, @live, @hotmail) email, using a headless browser.
 	HeadlessHotmailB2C,
+	/// Verifies any email, using a headless browser.
+	HeadlessAll,
 	/// Verifies any email, using the default method.
 	All,
 }
@@ -66,6 +69,7 @@ impl fmt::Display for Queue {
 			Queue::SmtpAll => write!(f, "check.Smtp.*"),
 			Queue::HeadlessYahoo => write!(f, "check.Headless.yahoo"),
 			Queue::HeadlessHotmailB2C => write!(f, "check.Headless.hotmail.b2c"),
+			Queue::HeadlessAll => write!(f, "check.Headless.*"),
 			Queue::All => write!(f, "check.*"),
 		}
 	}
@@ -99,6 +103,7 @@ impl<'de> Deserialize<'de> for Queue {
 					"check.Smtp.*" => Ok(Queue::SmtpAll),
 					"check.Headless.yahoo" => Ok(Queue::HeadlessYahoo),
 					"check.Headless.hotmail.b2c" => Ok(Queue::HeadlessHotmailB2C),
+					"check.Headless.*" => Ok(Queue::HeadlessAll),
 					"check.*" => Ok(Queue::All),
 					_ => Err(de::Error::unknown_variant(
 						value,
@@ -111,6 +116,7 @@ impl<'de> Deserialize<'de> for Queue {
 							"check.Smtp.*",
 							"check.Headless.yahoo",
 							"check.Headless.hotmail.b2c",
+							"check.Headless.*",
 							"check.*",
 						],
 					)),
@@ -145,7 +151,7 @@ pub struct WebhookConfig {
 pub fn load_config() -> Result<WorkerConfig, config::ConfigError> {
 	let cfg = Config::builder()
 		.add_source(config::File::with_name("worker_config"))
-		.add_source(config::Environment::with_prefix("RCH"))
+		.add_source(config::Environment::with_prefix("RCH").separator("_"))
 		.build()?;
 
 	let cfg = cfg.try_deserialize::<WorkerConfig>()?;

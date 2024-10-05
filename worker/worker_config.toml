@@ -13,6 +13,7 @@ url = "amqp://guest:guest@localhost:5672"
 # - "check.Smtp.*": verifies any email, using SMTP.
 # - "check.Headless.yahoo": verifies any Yahoo email, using a headless browser.
 # - "check.Headless.hotmail.b2c": verifies any B2C Hotmail email (@outlook, @live, @hotmail) email, using a headless browser.
+# - "check.Headless.*": verifies any email, using a headless browser.
 # - "check.*": verifies any email, using the default method.
 queue = "check.*"
 concurrency = 20

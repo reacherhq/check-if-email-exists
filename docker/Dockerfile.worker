@@ -33,7 +33,6 @@ RUN apk add --no-cache chromium-chromedriver
 COPY --from=cargo-build /usr/src/reacher/target/x86_64-unknown-linux-musl/release/reacher_worker .
 COPY --from=cargo-build /usr/src/reacher/docker/worker.sh .
 COPY --from=cargo-build /usr/src/reacher/worker/worker_config.toml .
-COPY --from=cargo-build /usr/src/reacher/docker/wait-for-it.sh .
 
 RUN chown chrome:chrome reacher_worker
 RUN chown chrome:chrome worker.sh
