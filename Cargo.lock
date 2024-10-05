@@ -2957,6 +2957,7 @@ dependencies = [
  "async-smtp",
  "check-if-email-exists",
  "config",
+ "futures-lite 2.3.0",
  "lapin",
  "openssl",
  "reqwest 0.12.5",

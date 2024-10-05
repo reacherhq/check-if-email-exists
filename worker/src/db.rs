@@ -23,10 +23,10 @@ use crate::{check_email::WorkerPayload, config::WorkerConfig};
 pub async fn save_to_db(
 	pg_pool: PgPool,
 	config: WorkerConfig,
-	payload: WorkerPayload,
+	payload: &WorkerPayload,
 	worker_output: Result<CheckEmailOutput, Box<dyn std::error::Error + Send + Sync>>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-	let payload_json = serde_json::to_value(&payload)?;
+	let payload_json = serde_json::to_value(payload)?;
 
 	match worker_output {
 		Ok(output) => {

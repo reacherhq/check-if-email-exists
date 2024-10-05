@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 config = { version = "0.14.0", features = ["toml"] }
+futures-lite = "2.3.0"
 lapin = { version = "2.3.1" }
 tokio-executor-trait = { version = "2.1.1" }
 tokio-reactor-trait = { version = "1.1.0" }

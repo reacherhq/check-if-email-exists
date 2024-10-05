@@ -18,7 +18,7 @@ use crate::config::WorkerConfig;
 use crate::db::save_to_db;
 use check_if_email_exists::{check_email, CheckEmailInput, CheckEmailOutput};
 use check_if_email_exists::{Reachable, LOG_TARGET};
-use lapin::message::BasicGetMessage;
+use lapin::message::Delivery;
 use lapin::{options::*, BasicProperties, Channel};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
@@ -40,28 +40,25 @@ struct WebhookOutput<'a> {
 
 /// Processes the check email task asynchronously.
 pub async fn process_queue_message(
-	delivery: BasicGetMessage,
+	payload: &WorkerPayload,
+	delivery: Delivery,
 	channel: Arc<Channel>,
 	pg_pool: PgPool,
 	config: WorkerConfig,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-	let payload = serde_json::from_slice::<WorkerPayload>(&delivery.data)?;
 	let worker_output = process_check_email(&payload, delivery, channel, config.clone()).await;
 	save_to_db(pg_pool, config, payload, worker_output).await
 }
 
-pub async fn process_check_email(
+async fn process_check_email(
 	payload: &WorkerPayload,
-	delivery: BasicGetMessage,
+	delivery: Delivery,
 	channel: Arc<Channel>,
 	config: WorkerConfig,
 ) -> Result<CheckEmailOutput, Box<dyn std::error::Error + Send + Sync>> {
-	let thread_id = std::thread::current().id();
-	info!(target: LOG_TARGET, email=?payload.input.to_email, thread_id=?thread_id, "New job");
-	debug!(target: LOG_TARGET, payload=?payload, thread_id=?thread_id);
+	info!(target: LOG_TARGET, email=payload.input.to_email, "Start email verification");
 
 	let output = check_email(&payload.input).await;
-	info!(target: LOG_TARGET, email=output.input, is_reachable=?output.is_reachable, thread_id=?thread_id, "Done check");
 	let reply_payload = serde_json::to_string(&output)?;
 	let reply_payload = reply_payload.as_bytes();
 
@@ -86,7 +83,7 @@ pub async fn process_check_email(
 			.await?
 			.await?;
 
-		debug!(target: LOG_TARGET, reply_to=?reply_to, correlation_id=?correlation_id, thread_id=?thread_id, "Sent reply")
+		debug!(target: LOG_TARGET, reply_to=?reply_to, correlation_id=?correlation_id, "Sent reply")
 	}
 
 	// Check if we have a webhook to send the output to.
@@ -105,8 +102,7 @@ pub async fn process_check_email(
 			.await?
 			.text()
 			.await?;
-		debug!(target: LOG_TARGET, email=?webhook_output.output.input,res=?res, thread_id=?thread_id, "Received webhook response");
-		info!(target: LOG_TARGET, email=?webhook_output.output.input, is_reachable=?webhook_output.output.is_reachable, thread_id=?thread_id, "Finished check");
+		debug!(target: LOG_TARGET, email=?webhook_output.output.input,res=?res, "Received webhook response");
 	}
 
 	let is_reachable = output.is_reachable.to_owned();
@@ -118,9 +114,10 @@ pub async fn process_check_email(
 		delivery
 			.reject(BasicRejectOptions { requeue: true })
 			.await?;
-		info!(target: LOG_TARGET, email=?&payload.input.to_email, thread_id=?thread_id, "Requeued message");
+		info!(target: LOG_TARGET, email=?&payload.input.to_email, "Requeued message");
 	} else {
 		delivery.ack(BasicAckOptions::default()).await?;
+		info!(target: LOG_TARGET, email=output.input, is_reachable=?output.is_reachable, "Done check");
 	}
 
 	Ok(output)

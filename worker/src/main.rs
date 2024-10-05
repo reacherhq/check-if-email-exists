@@ -20,7 +20,7 @@
 use check_if_email_exists::{setup_sentry, LOG_TARGET};
 use reacher_worker::config::load_config;
 use reacher_worker::db::create_db;
-use reacher_worker::worker::{setup_rabbit_mq, Worker};
+use reacher_worker::worker::run_worker;
 use reacher_worker::CARGO_PKG_VERSION;
 use tracing::info;
 
@@ -34,10 +34,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	let _guard: sentry::ClientInitGuard = setup_sentry();
 
 	let config = load_config()?;
-	let channel = setup_rabbit_mq(&config).await?;
 	let pg_pool = create_db(&config).await?;
 
-	let mut worker = Worker::new(config, channel, pg_pool);
-
-	worker.run().await
+	run_worker(config, pg_pool).await
 }

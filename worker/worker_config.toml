@@ -16,7 +16,7 @@ url = "amqp://guest:guest@localhost:5672"
 # - "check.Headless.*": verifies any email, using a headless browser.
 # - "check.*": verifies any email, using the default method.
 queue = "check.*"
-concurrency = 20
+concurrency = 2
 
 # Throttle the maximum number of requests per second, per minute, per hour, an
 # per day for this worker.
