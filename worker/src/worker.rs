@@ -82,7 +82,7 @@ pub async fn run_worker(
 		let pg_pool_clone = pg_pool.clone();
 
 		tokio::spawn(async move {
-			match process_queue_message(
+			if let Err(e) = process_queue_message(
 				&payload,
 				delivery,
 				channel_clone,
@@ -91,10 +91,7 @@ pub async fn run_worker(
 			)
 			.await
 			{
-				Ok(_) => {}
-				Err(e) => {
-					error!(target: LOG_TARGET, email=payload.input.to_email, error=?e, "Error processing message");
-				}
+				error!(target: LOG_TARGET, email=payload.input.to_email, error=?e, "Error processing message");
 			}
 		});
 
