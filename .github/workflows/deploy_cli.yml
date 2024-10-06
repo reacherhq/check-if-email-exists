@@ -1,10 +1,10 @@
+name: deploy_cli
+
 on:
   push:
-    # Sequence of patterns matched against refs/tags
     tags:
-      - "v*" # Push events to matching v*, i.e. v1.0, v20.15.10
+      - "cli/v*"
 
-name: deploy_cli
 env:
   # TODO: Rename to your binary
   BIN: check_if_email_exists
