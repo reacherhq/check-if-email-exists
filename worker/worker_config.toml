@@ -1,0 +1,35 @@
+name = "worker1.reacher.dev"
+
+[rabbitmq]
+url = "amqp://guest:guest@localhost:5672"
+# Queue name to consume messages from.
+#
+# The queue name MUST be one of the following:
+# - "check.Smtp.gmail": verifies any Gmail email, using SMTP.
+# - "check.Smtp.yahoo": verifies any Yahoo email, using SMTP.
+# - "check.Smtp.hotmail.b2b": verifies any B2B Hotmail email, using SMTP.
+# - "check.Smtp.hotmail.b2c": verifies any B2C Hotmail email (@outlook, @live, @hotmail), using SMTP.
+# - "check.Smtp.hotmail.*": verifies any Hotmail email, using SMTP.
+# - "check.Smtp.*": verifies any email, using SMTP.
+# - "check.Headless.yahoo": verifies any Yahoo email, using a headless browser.
+# - "check.Headless.hotmail.b2c": verifies any B2C Hotmail email (@outlook, @live, @hotmail) email, using a headless browser.
+# - "check.Headless.*": verifies any email, using a headless browser.
+# - "check.*": verifies any email, using the default method.
+queue = "check.*"
+concurrency = 20
+
+# Throttle the maximum number of requests per second, per minute, per hour, an
+# per day for this worker.
+# All fields are optional, comment them out to disable the limit.
+[throttle]
+# max_requests_per_second = 20
+max_requests_per_minute = 100
+# max_requests_per_hour = 1000
+max_requests_per_day = 20000
+
+[db]
+url = "postgresql://localhost/reacher_worker_db"
+
+# The optional webhook URL to send the results to.
+[webhook]
+# url = "http://localhost:8080/webhook"

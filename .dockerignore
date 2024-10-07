@@ -3,5 +3,6 @@
 .vscode
 ci
 target/
-Dockerfile
-fly.toml
+Dockerfile.*
+docs/
+.env

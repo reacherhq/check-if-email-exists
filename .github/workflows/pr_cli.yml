@@ -63,6 +63,7 @@ jobs:
           # - x86_64-apple-ios
 
   windows:
+    if: false # Disable Windows tests for now, because Reacher Worker is not supported on Windows
     runs-on: windows-latest
     needs: install-cross
     steps:

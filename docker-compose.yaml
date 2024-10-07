@@ -1,0 +1,52 @@
+version: "3.8"
+
+services:
+    rabbitmq:
+        image: rabbitmq:4.0-management
+        container_name: rabbitmq
+        ports:
+            - "5672:5672"
+            - "15672:15672"
+        environment:
+            RABBITMQ_DEFAULT_USER: guest
+            RABBITMQ_DEFAULT_PASS: guest
+
+    postgres:
+        image: postgres:17
+        container_name: postgres
+        ports:
+            - "5432:5432"
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_DB: reacher_worker_db
+
+    worker1:
+        build:
+            context: .
+            dockerfile: docker/Dockerfile.worker
+        container_name: worker1
+        depends_on:
+            - postgres
+            - rabbitmq
+        environment:
+            RCH_NAME: worker1
+            RCH_RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+            RCH_RABBITMQ_QUEUE: check.Headless.*
+            RCH_DB_URL: postgres://postgres:postgres@postgres:5432/reacher_worker_db
+        restart: always
+
+    worker2:
+        build:
+            context: .
+            dockerfile: docker/Dockerfile.worker
+        container_name: worker2
+        depends_on:
+            - postgres
+            - rabbitmq
+        environment:
+            RCH_NAME: worker2
+            RCH_RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+            RCH_RABBITMQ_QUEUE: check.*
+            RCH_DB_URL: postgres://postgres:postgres@postgres:5432/reacher_worker_db
+        restart: always

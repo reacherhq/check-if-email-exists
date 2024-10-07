@@ -1,2 +1,2 @@
 [workspace]
-members = ["backend", "cli", "core"]
+members = ["backend", "cli", "core", "worker"]

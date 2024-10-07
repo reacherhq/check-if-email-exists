@@ -1,0 +1,30 @@
+[package]
+name = "reacher_worker"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+config = { version = "0.14.0", features = ["toml"] }
+futures-lite = "2.3.0"
+lapin = { version = "2.3.1" }
+tokio-executor-trait = { version = "2.1.1" }
+tokio-reactor-trait = { version = "1.1.0" }
+async-smtp = "0.6"
+check-if-email-exists = { path = "../core", features = ["headless", "sentry"] }
+openssl = { version = "0.10.64", features = ["vendored"] }
+reqwest = { version = "0.12.5", features = ["json", "socks"] }
+sentry = "0.23"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sqlx = { version = "0.7", features = [
+    "runtime-tokio-native-tls",
+    "postgres",
+    "uuid",
+    "chrono",
+    "json",
+    "migrate",
+] }
+sqlxmq = "0.5"
+tokio = { version = "1.35", features = ["macros"] }
+tracing = "0.1.40"
+tracing-subscriber = "0.3.18"
