@@ -14,14 +14,5 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-//! Main entry point of the `reacher_backend` binary. It has two `main`
-//! functions, depending on whether the `bulk` feature is enabled or not.
-
-use std::env;
-
-pub mod config;
-pub mod db;
-pub mod task;
-pub mod worker;
-
-pub const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
+pub mod error;
+pub mod post;

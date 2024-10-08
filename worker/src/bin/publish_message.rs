@@ -1,7 +1,7 @@
 use check_if_email_exists::CheckEmailInput;
 use lapin::{options::*, BasicProperties};
-use reacher_worker::check_email::WorkerPayload;
 use reacher_worker::config::load_config;
+use reacher_worker::task::TaskPayload;
 use reacher_worker::worker::setup_rabbit_mq;
 use std::env;
 
@@ -10,14 +10,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	let worker_config = load_config()?;
 	let channel = setup_rabbit_mq(&worker_config).await?;
 
-	let payloads: Vec<WorkerPayload> = env::args()
+	let payloads: Vec<TaskPayload> = env::args()
 		.skip(1) // Path to the binary
-		.map(|s| WorkerPayload {
+		.map(|s| TaskPayload {
 			input: CheckEmailInput {
 				to_email: s,
 				..Default::default()
 			},
-			extra: None,
+			webhook: None,
 		})
 		.collect();
 

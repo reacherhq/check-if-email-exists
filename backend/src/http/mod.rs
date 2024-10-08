@@ -15,6 +15,8 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 mod v0;
+#[cfg(feature = "worker")]
+mod v1;
 mod version;
 
 use std::env;
@@ -39,7 +41,8 @@ pub fn create_routes(
 		// The 3 following routes will 404 if o is None.
 		.or(v0::bulk::post::create_bulk_job(o.clone()))
 		.or(v0::bulk::get::get_bulk_job_status(o.clone()))
-		.or(v0::bulk::results::get_bulk_job_result(o))
+		.or(v0::bulk::results::get_bulk_job_result(o.clone()))
+		.or(v1::bulk::post::create_bulk_job(o))
 		.recover(errors::handle_rejection)
 }
 

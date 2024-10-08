@@ -14,14 +14,27 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-//! Main entry point of the `reacher_backend` binary. It has two `main`
-//! functions, depending on whether the `bulk` feature is enabled or not.
+use warp::reject;
 
-use std::env;
+/// Catch all error struct for the bulk endpoints
+#[derive(Debug)]
+pub enum BulkError {
+	EmptyInput,
+	Serde(serde_json::Error),
+	Lapin(lapin::Error),
+}
 
-pub mod config;
-pub mod db;
-pub mod task;
-pub mod worker;
+// Defaults to Internal server error
+impl reject::Reject for BulkError {}
 
-pub const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
+impl From<serde_json::Error> for BulkError {
+	fn from(e: serde_json::Error) -> Self {
+		BulkError::Serde(e)
+	}
+}
+
+impl From<lapin::Error> for BulkError {
+	fn from(e: lapin::Error) -> Self {
+		BulkError::Lapin(e)
+	}
+}

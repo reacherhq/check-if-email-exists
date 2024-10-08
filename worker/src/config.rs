@@ -10,7 +10,6 @@ pub struct WorkerConfig {
 	pub rabbitmq: RabbitMQConfig,
 	pub throttle: ThrottleConfig,
 	pub db: DBConfig,
-	pub webhook: WebhookConfig,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -18,17 +17,30 @@ pub struct RabbitMQConfig {
 	pub url: String,
 	/// Queue name to consume messages from.
 	///
+	/// Queues names are in the format "check.<verif_method>.<provider>", where:
+	/// - <verif_method> is the verification method to use. It can be "Smtp",
+	/// "Headless", or "Api". Note that not all verification methods are
+	/// available for all providers. For example, currently the Headless method
+	/// is not available for Gmail. However, the Smtp method is available for
+	/// all providers. The "*" wildcard can be used to match any verification
+	/// method.
+	/// - <provider> is the email provider to verify. It can be "gmail", "yahoo",
+	/// "hotmail", or "*". The "*" provider is a wildcard that matches any
+	/// provider.
+	///
 	/// The queue name MUST be one of the following:
-	/// - "check.Smtp.gmail": verifies any Gmail email, using SMTP.
-	/// - "check.Smtp.yahoo": verifies any Yahoo email, using SMTP.
-	/// - "check.Smtp.hotmail.b2b": verifies any B2B Hotmail email, using SMTP.
-	/// - "check.Smtp.hotmail.b2c": verifies any B2C Hotmail email (@outlook, @live, @hotmail), using SMTP.
-	/// - "check.Smtp.hotmail.*": verifies any Hotmail email, using SMTP.
-	///	- "check.Smtp.*": verifies any email, using SMTP.
-	/// - "check.Headless.yahoo": verifies any Yahoo email, using a headless browser.
-	/// - "check.Headless.hotmail.b2c": verifies any B2C Hotmail email (@outlook, @live, @hotmail) email, using a headless browser.
-	/// - "check.Headless.*": verifies any email, using a headless browser.
-	/// - "check.*": verifies any email, using the default method.
+	/// - "check.*.gmail": subcribe exclusively to Gmail emails.
+	/// - "check.*.yahoo": subcribe exclusively to Yahoo emails, both Headless and SMTP.
+	/// - "check.Smtp.yahoo": subcribe exclusively to Yahoo emails where the verification method is explicity set to SMTP.
+	/// - "check.Headless.yahoo": subcribe exclusively to Yahoo emails where the verification method is unset, or set to Headless (default method).
+	/// - "check.*.hotmail.*": subcribe exclusively to Hotmail emails, both B2B and B2C, both Headless and SMTP.
+	/// - "check.*.hotmail.b2b": subcribe exclusively to B2B Hotmail emails, both Headless and SMTP.
+	/// - "check.*.hotmail.b2c": subcribe exclusively to B2C Hotmail email (@outlook, @live, @hotmail), both Headless and SMTP.
+	/// - "check.Smtp.hotmail.b2c": subcribe exclusively to B2C Hotmail email (@outlook, @live, @hotmail) whose verification method is explicity set to SMTP.
+	/// - "check.Headless.hotmail.b2c": subcribe exclusively to B2C Hotmail email (@outlook, @live, @hotmail) whose verification method is unset, or set to Headless (default method).
+	///	- "check.Smtp.#": subcribe any to email whose default verification method is SMTP.
+	/// - "check.Headless.#": subcribe any to email whose default verification method is Headless.
+	/// - "check.#": subcribe any to email.
 	pub queue: Queue,
 	pub concurrency: u16,
 }
@@ -36,41 +48,35 @@ pub struct RabbitMQConfig {
 /// Queue names that the worker can consume from.
 #[derive(Debug, Clone)]
 pub enum Queue {
-	/// Verifies any Gmail email, using SMTP.
-	SmtpGmail,
-	/// Verifies any Yahoo email, using SMTP.
+	AllGmail,
+	AllYahoo,
 	SmtpYahoo,
-	/// Verifies any B2B Hotmail email, using SMTP.
-	SmtpHotmailB2B,
-	/// Verifies any B2C Hotmail email (@outlook, @live, @hotmail), using SMTP.
-	SmtpHotmailB2C,
-	/// Verifies any Hotmail email, using SMTP.
-	SmtpHotmailAll,
-	/// Verifies any email, using SMTP.
-	SmtpAll,
-	/// Verifies any Yahoo email, using a headless browser.
 	HeadlessYahoo,
-	/// Verifies any B2C Hotmail email (@outlook, @live, @hotmail) email, using a headless browser.
+	AllHotmail,
+	AllHotmailB2B,
+	AllHotmailB2C,
+	SmtpHotmailB2C,
 	HeadlessHotmailB2C,
-	/// Verifies any email, using a headless browser.
+	SmtpAll,
 	HeadlessAll,
-	/// Verifies any email, using the default method.
 	All,
 }
 
 impl fmt::Display for Queue {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		match self {
-			Queue::SmtpGmail => write!(f, "check.Smtp.gmail"),
+			Queue::AllGmail => write!(f, "check.*.gmail"),
+			Queue::AllYahoo => write!(f, "check.*.yahoo"),
 			Queue::SmtpYahoo => write!(f, "check.Smtp.yahoo"),
-			Queue::SmtpHotmailB2B => write!(f, "check.Smtp.hotmail.b2b"),
-			Queue::SmtpHotmailB2C => write!(f, "check.Smtp.hotmail.b2c"),
-			Queue::SmtpHotmailAll => write!(f, "check.Smtp.hotmail.*"),
-			Queue::SmtpAll => write!(f, "check.Smtp.*"),
 			Queue::HeadlessYahoo => write!(f, "check.Headless.yahoo"),
+			Queue::AllHotmail => write!(f, "check.*.hotmail.*"),
+			Queue::AllHotmailB2B => write!(f, "check.*.hotmail.b2b"),
+			Queue::AllHotmailB2C => write!(f, "check.*.hotmail.b2c"),
+			Queue::SmtpHotmailB2C => write!(f, "check.Smtp.hotmail.b2c"),
 			Queue::HeadlessHotmailB2C => write!(f, "check.Headless.hotmail.b2c"),
-			Queue::HeadlessAll => write!(f, "check.Headless.*"),
-			Queue::All => write!(f, "check.*"),
+			Queue::SmtpAll => write!(f, "check.Smtp.#"),
+			Queue::HeadlessAll => write!(f, "check.Headless.#"),
+			Queue::All => write!(f, "check.#"),
 		}
 	}
 }
@@ -95,29 +101,33 @@ impl<'de> Deserialize<'de> for Queue {
 				E: de::Error,
 			{
 				match value {
-					"check.Smtp.gmail" => Ok(Queue::SmtpGmail),
+					"check.*.gmail" => Ok(Queue::AllGmail),
+					"check.*.yahoo" => Ok(Queue::AllYahoo),
 					"check.Smtp.yahoo" => Ok(Queue::SmtpYahoo),
-					"check.Smtp.hotmail.b2b" => Ok(Queue::SmtpHotmailB2B),
-					"check.Smtp.hotmail.b2c" => Ok(Queue::SmtpHotmailB2C),
-					"check.Smtp.hotmail.*" => Ok(Queue::SmtpHotmailAll),
-					"check.Smtp.*" => Ok(Queue::SmtpAll),
 					"check.Headless.yahoo" => Ok(Queue::HeadlessYahoo),
+					"check.*.hotmail.*" => Ok(Queue::AllHotmail),
+					"check.*.hotmail.b2b" => Ok(Queue::AllHotmailB2B),
+					"check.*.hotmail.b2c" => Ok(Queue::AllHotmailB2C),
+					"check.Smtp.hotmail.b2c" => Ok(Queue::SmtpHotmailB2C),
 					"check.Headless.hotmail.b2c" => Ok(Queue::HeadlessHotmailB2C),
-					"check.Headless.*" => Ok(Queue::HeadlessAll),
-					"check.*" => Ok(Queue::All),
+					"check.Smtp.#" => Ok(Queue::SmtpAll),
+					"check.Headless.#" => Ok(Queue::HeadlessAll),
+					"check.#" => Ok(Queue::All),
 					_ => Err(de::Error::unknown_variant(
 						value,
 						&[
-							"check.Smtp.gmail",
+							"check.*.gmail",
+							"check.*.yahoo",
 							"check.Smtp.yahoo",
-							"check.Smtp.hotmail.b2b",
-							"check.Smtp.hotmail.b2c",
-							"check.Smtp.hotmail.*",
-							"check.Smtp.*",
 							"check.Headless.yahoo",
+							"check.*.hotmail.*",
+							"check.*.hotmail.b2b",
+							"check.*.hotmail.b2c",
+							"check.Smtp.hotmail.b2c",
 							"check.Headless.hotmail.b2c",
-							"check.Headless.*",
-							"check.*",
+							"check.Smtp.#",
+							"check.Headless.#",
+							"check.#",
 						],
 					)),
 				}
@@ -139,11 +149,6 @@ pub struct ThrottleConfig {
 #[derive(Debug, Deserialize, Clone)]
 pub struct DBConfig {
 	pub url: String,
-}
-
-#[derive(Debug, Deserialize, Clone)]
-pub struct WebhookConfig {
-	pub url: Option<String>,
 }
 
 /// Load the worker configuration from the worker_config.toml file and from the

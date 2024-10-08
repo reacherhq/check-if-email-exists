@@ -18,12 +18,12 @@ use check_if_email_exists::{CheckEmailOutput, LOG_TARGET};
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use tracing::{debug, info};
 
-use crate::{check_email::WorkerPayload, config::WorkerConfig};
+use crate::{config::WorkerConfig, task::TaskPayload};
 
-pub async fn save_to_db(
+pub(crate) async fn save_to_db(
 	pg_pool: PgPool,
 	config: WorkerConfig,
-	payload: &WorkerPayload,
+	payload: &TaskPayload,
 	worker_output: Result<CheckEmailOutput, Box<dyn std::error::Error + Send + Sync>>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	let payload_json = serde_json::to_value(payload)?;
