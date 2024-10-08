@@ -1,6 +1,6 @@
 [package]
 name = "reacher_backend"
-version = "0.7.0"
+version = "0.7.1"
 edition = "2018"
 license = "AGPL-3.0"
 publish = false
@@ -11,6 +11,9 @@ check-if-email-exists = { path = "../core", features = ["headless", "sentry"] }
 csv = "1.3.0"
 dotenv = "0.15.0"
 openssl = { version = "0.10.64", features = ["vendored"] }
+futures = { version = "0.3.30", optional = true }
+lapin = { version = "2.3.1", optional = true }
+reacher_worker = { path = "../worker", optional = true }
 sentry = "0.23"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
@@ -28,3 +31,6 @@ tracing = "0.1.40"
 tracing-subscriber = "0.3.18"
 uuid = "1.10"
 warp = "0.3"
+
+[features]
+worker = ["futures", "lapin", "reacher_worker"]
