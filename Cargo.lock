@@ -2922,13 +2922,16 @@ dependencies = [
 
 [[package]]
 name = "reacher_backend"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "async-smtp",
  "check-if-email-exists",
  "csv",
  "dotenv",
+ "futures",
+ "lapin",
  "openssl",
+ "reacher_worker",
  "sentry",
  "serde",
  "serde_json",
@@ -2943,7 +2946,7 @@ dependencies = [
 
 [[package]]
 name = "reacher_worker"
-version = "0.1.0"
+version = "0.7.1"
 dependencies = [
  "async-smtp",
  "check-if-email-exists",
