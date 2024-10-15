@@ -16,14 +16,14 @@
 
 mod normalize;
 
-use async_smtp::EmailAddress;
+use crate::EmailAddress;
 use levenshtein::levenshtein;
 use normalize::normalize_email;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
 /// Syntax information after parsing an email address
-#[derive(Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, PartialEq, Deserialize, Serialize)]
 pub struct SyntaxDetails {
 	/// The email address as a async_smtp `EmailAddress`. It will be `None` if
 	/// the email address is ill-formed.

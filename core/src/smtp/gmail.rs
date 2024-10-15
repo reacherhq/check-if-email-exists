@@ -15,13 +15,13 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use super::SmtpDetails;
+use crate::EmailAddress;
 use crate::{
 	smtp::http_api::create_client,
 	util::{
 		constants::LOG_TARGET, input_output::CheckEmailInput, ser_with_display::ser_with_display,
 	},
 };
-use async_smtp::EmailAddress;
 use reqwest::Error as ReqwestError;
 use serde::Serialize;
 use std::fmt;

@@ -380,17 +380,6 @@
 						"default": 2,
 						"description": "Number of retries of SMTP connections to do."
 					},
-					"smtp_security": {
-						"type": "string",
-						"example": "Opportunistic",
-						"enum": [
-							"None",
-							"Opportunistic",
-							"Required",
-							"Wrapper"
-						],
-						"description": "How to apply TLS to a SMTP client connection."
-					},
 					"smtp_timeout": {
 						"$ref": "#/components/schemas/Duration"
 					}

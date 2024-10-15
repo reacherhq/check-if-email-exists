@@ -23,7 +23,7 @@
 use std::borrow::Cow;
 use std::env;
 
-use async_smtp::smtp::error::Error as AsyncSmtpError;
+use async_smtp::error::Error as AsyncSmtpError;
 use sentry::protocol::{Event, Exception, Level, Values};
 use tracing::{debug, info};
 
@@ -63,8 +63,11 @@ fn get_backend_name<'a>() -> Option<Cow<'a, str>> {
 enum SentryError<'a> {
 	// TODO: Probably a good idea would be to `impl std:error:Error` for the
 	// three errors below.
+	#[allow(dead_code)]
 	Misc(&'a MiscError),
+	#[allow(dead_code)]
 	Mx(&'a MxError),
+	#[allow(dead_code)]
 	Smtp(&'a SmtpError),
 }
 

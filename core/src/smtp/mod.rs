@@ -27,13 +27,13 @@ mod yahoo;
 use std::default::Default;
 use std::env;
 
-use async_smtp::EmailAddress;
 use hickory_proto::rr::Name;
 use serde::{Deserialize, Serialize};
+use tokio::time::{timeout, Duration};
 
-use crate::{
-	util::input_output::CheckEmailInput, GmailVerifMethod, HotmailVerifMethod, YahooVerifMethod,
-};
+use crate::rules::{has_rule, Rule};
+use crate::util::input_output::{GmailVerifMethod, HotmailVerifMethod, YahooVerifMethod};
+use crate::{CheckEmailInput, EmailAddress, LOG_TARGET};
 use connect::check_smtp_with_retry;
 pub use error::*;
 
@@ -194,8 +194,38 @@ pub async fn check_smtp(
 		};
 	}
 
+	let smtp_timeout = input.smtp_timeout.map(|t| {
+		if has_rule(domain, &host, &Rule::SmtpTimeout45s) {
+			let duration = t.max(Duration::from_secs(45));
+			log::debug!(
+				target: LOG_TARGET,
+				"[email={}] Bumping SMTP timeout to {duration:?} because of rule",
+				input.to_email,
+			);
+			duration
+		} else {
+			t
+		}
+	});
+
+	// Apply timeout to check_smtp_with_retry, return TimeoutError if exceeded
+	let result = if let Some(timeout_duration) = smtp_timeout {
+		match timeout(
+			timeout_duration,
+			check_smtp_with_retry(to_email, &host, port, domain, input, input.retries),
+		)
+		.await
+		{
+			Ok(Ok(details)) => Ok(details),
+			Ok(Err(err)) => Err(err),
+			Err(_) => Err(SmtpError::Timeout(timeout_duration)),
+		}
+	} else {
+		check_smtp_with_retry(to_email, &host, port, domain, input, input.retries).await
+	};
+
 	(
-		check_smtp_with_retry(to_email, &host, port, domain, input, input.retries).await,
+		result,
 		SmtpDebug {
 			verif_method: VerifMethod::Smtp(SmtpConnection {
 				host,
@@ -209,7 +239,7 @@ pub async fn check_smtp(
 #[cfg(test)]
 mod tests {
 	use super::{check_smtp, CheckEmailInput, SmtpConnection, SmtpError};
-	use async_smtp::{smtp::error::Error, EmailAddress};
+	use crate::EmailAddress;
 	use hickory_proto::rr::Name;
 	use std::{str::FromStr, time::Duration};
 	use tokio::runtime::Runtime;
@@ -235,7 +265,7 @@ mod tests {
 			})
 		);
 		match res {
-			Err(SmtpError::SmtpError(Error::Io(_))) => (), // ErrorKind == Timeout
+			Err(SmtpError::Timeout(_)) => (), // ErrorKind == Timeout
 			_ => panic!("check_smtp did not time out"),
 		}
 	}

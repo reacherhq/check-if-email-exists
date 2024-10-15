@@ -84,27 +84,6 @@ pub use util::sentry::*;
 
 use crate::rules::{has_rule, Rule};
 
-/// Given an email's misc and smtp details, calculate an estimate of our
-/// confidence on how reachable the email is.
-///
-/// Maybe we can switch to a points-based system?
-/// ref: https://github.com/reacherhq/check-if-email-exists/issues/935
-fn calculate_reachable(misc: &MiscDetails, smtp: &Result<SmtpDetails, SmtpError>) -> Reachable {
-	if let Ok(smtp) = smtp {
-		if misc.is_disposable || misc.is_role_account || smtp.is_catch_all || smtp.has_full_inbox {
-			return Reachable::Risky;
-		}
-
-		if !smtp.is_deliverable || !smtp.can_connect_smtp || smtp.is_disabled {
-			return Reachable::Invalid;
-		}
-
-		Reachable::Safe
-	} else {
-		Reachable::Unknown
-	}
-}
-
 /// The main function of this library: verify a single email. Performs, in the
 /// following order, 4 types of verifications:
 /// - syntax check: verify the email is well-formed,
@@ -270,4 +249,25 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 	log_unknown_errors(&res);
 
 	res
+}
+
+/// Given an email's misc and smtp details, calculate an estimate of our
+/// confidence on how reachable the email is.
+///
+/// Maybe we can switch to a points-based system?
+/// ref: https://github.com/reacherhq/check-if-email-exists/issues/935
+fn calculate_reachable(misc: &MiscDetails, smtp: &Result<SmtpDetails, SmtpError>) -> Reachable {
+	if let Ok(smtp) = smtp {
+		if misc.is_disposable || misc.is_role_account || smtp.is_catch_all || smtp.has_full_inbox {
+			return Reachable::Risky;
+		}
+
+		if !smtp.is_deliverable || !smtp.can_connect_smtp || smtp.is_disabled {
+			return Reachable::Invalid;
+		}
+
+		Reachable::Safe
+	} else {
+		Reachable::Unknown
+	}
 }
