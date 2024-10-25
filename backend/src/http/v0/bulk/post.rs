@@ -143,7 +143,7 @@ pub fn create_bulk_job(
 		// When accepting a body, we want a JSON body (and to reject huge
 		// payloads)...
 		// TODO: Configure max size limit for a bulk job
-		.and(warp::body::content_length_limit(1024 * 1024 * 50))
+		.and(warp::body::content_length_limit(1024 * 1024 * 50)) // 50 MB limit
 		.and(warp::body::json())
 		.and_then(create_bulk_request)
 		// View access logs by setting `RUST_LOG=reacher_backend`.
