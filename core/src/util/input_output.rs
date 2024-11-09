@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::env;
 use std::str::FromStr;
 use std::time::{Duration, SystemTime};
 
@@ -83,7 +82,7 @@ pub enum YahooVerifMethod {
 	/// its endpoint, usually http://localhost:9515, into the environment
 	/// variable RCH_WEBDRIVER_ADDR. We recommend running chromedriver (and not
 	/// geckodriver) as it allows parallel requests.
-	#[cfg(feature = "headless")]
+	
 	Headless,
 	/// Use Yahoo's SMTP servers to check if an email exists.
 	Smtp,
@@ -95,7 +94,7 @@ impl FromStr for YahooVerifMethod {
 	fn from_str(s: &str) -> Result<Self, Self::Err> {
 		match s {
 			"Api" => Ok(Self::Api),
-			#[cfg(feature = "headless")]
+			
 			"Headless" => Ok(Self::Headless),
 			"Smtp" => Ok(Self::Smtp),
 			_ => Err(format!("Unknown yahoo verify method: {}", s)),
@@ -135,7 +134,7 @@ pub enum HotmailVerifMethod {
 	/// its endpoint, usually http://localhost:9515, into the environment
 	/// variable RCH_WEBDRIVER_ADDR. We recommend running chromedriver (and not
 	/// geckodriver) as it allows parallel requests.
-	#[cfg(feature = "headless")]
+	
 	Headless,
 	/// Use Hotmail's SMTP servers to check if an email exists.
 	Smtp,
@@ -147,7 +146,7 @@ impl FromStr for HotmailVerifMethod {
 	fn from_str(s: &str) -> Result<Self, Self::Err> {
 		match s {
 			"OneDriveApi" => Ok(Self::OneDriveApi),
-			#[cfg(feature = "headless")]
+			
 			"Headless" => Ok(Self::Headless),
 			"Smtp" => Ok(Self::Smtp),
 			_ => Err(format!("Unknown hotmail verify method: {}", s)),
@@ -237,25 +236,20 @@ impl Default for CheckEmailInput {
 	fn default() -> Self {
 		CheckEmailInput {
 			to_email: "".into(),
-			from_email: env::var("RCH_FROM_EMAIL")
-				.unwrap_or_else(|_| "reacher.email@gmail.com".into()), // Unused, owned by Reacher
-			hello_name: env::var("RCH_HELLO_NAME").unwrap_or_else(|_| "gmail.com".into()),
+			from_email: "reacher.email@gmail.com".into(), // Unused, owned by Reacher
+			hello_name: "gmail.com".into(),
 			proxy: None,
 			smtp_port: 25,
 			smtp_security: SmtpSecurity::default(),
-			smtp_timeout: env::var("RCH_SMTP_TIMEOUT")
-				.ok()
-				.and_then(|s| s.parse::<u64>().ok())
-				.map(Duration::from_secs)
-				.or(Some(Duration::from_secs(30))),
+			smtp_timeout: Some(Duration::from_secs(30)),
 			#[cfg(not(feature = "headless"))]
 			yahoo_verif_method: YahooVerifMethod::Api,
-			#[cfg(feature = "headless")]
+			
 			yahoo_verif_method: YahooVerifMethod::Headless,
 			gmail_verif_method: GmailVerifMethod::Smtp,
 			#[cfg(not(feature = "headless"))]
 			hotmail_verif_method: HotmailVerifMethod::OneDriveApi,
-			#[cfg(feature = "headless")]
+			
 			hotmail_verif_method: HotmailVerifMethod::Headless,
 			check_gravatar: false,
 			haveibeenpwned_api_key: None,
@@ -435,9 +429,6 @@ pub enum Reachable {
 /// Details about the email verification used for debugging.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct DebugDetails {
-	/// The name of the server that performed the email verification.
-	/// It's generally passed as an environment variable RCH_BACKEND_NAME.
-	pub server_name: String,
 	/// The time when the email verification started.
 	pub start_time: DateTime<Utc>,
 	/// The time when the email verification ended.
@@ -451,7 +442,6 @@ pub struct DebugDetails {
 impl Default for DebugDetails {
 	fn default() -> Self {
 		Self {
-			server_name: env::var("RCH_BACKEND_NAME").unwrap_or_else(|_| String::new()),
 			start_time: SystemTime::now().into(),
 			end_time: SystemTime::now().into(),
 			duration: Duration::default(),

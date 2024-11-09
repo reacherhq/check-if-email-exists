@@ -62,6 +62,7 @@
 //! }
 //! ```
 
+pub mod config;
 mod haveibeenpwned;
 pub mod misc;
 pub mod mx;
@@ -70,19 +71,25 @@ pub mod smtp;
 pub mod syntax;
 mod util;
 
+use config::ReacherConfig;
 use hickory_proto::rr::rdata::MX;
 use misc::{check_misc, MiscDetails};
 use mx::check_mx;
 use rand::Rng;
 use smtp::{check_smtp, SmtpDetails, SmtpError};
-use std::time::{Duration, SystemTime};
+use std::{
+	path::Component,
+	time::{Duration, SystemTime},
+};
 use syntax::{check_syntax, get_similar_mail_provider};
-pub use util::constants::LOG_TARGET;
 pub use util::input_output::*;
 #[cfg(feature = "sentry")]
 pub use util::sentry::*;
 
 use crate::rules::{has_rule, Rule};
+
+/// The target where to log check-if-email-exists logs.
+pub const LOG_TARGET: &str = "reacher";
 
 /// Given an email's misc and smtp details, calculate an estimate of our
 /// confidence on how reachable the email is.
@@ -115,7 +122,7 @@ fn calculate_reachable(misc: &MiscDetails, smtp: &Result<SmtpDetails, SmtpError>
 ///
 /// Returns a `CheckEmailOutput` output, whose `is_reachable` field is one of
 /// `Safe`, `Invalid`, `Risky` or `Unknown`.
-pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
+pub async fn check_email(input: &CheckEmailInput, config: &ReacherConfig) -> CheckEmailOutput {
 	let start_time = SystemTime::now();
 	let to_email = &input.to_email;
 
@@ -240,6 +247,7 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		input.smtp_port,
 		my_syntax.domain.as_ref(),
 		input,
+		&config,
 	)
 	.await;
 
@@ -262,12 +270,20 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 				.duration_since(start_time)
 				.unwrap_or(Duration::from_secs(0)),
 			smtp: smtp_debug,
-			..Default::default()
 		},
 	};
 
-	#[cfg(feature = "sentry")]
-	log_unknown_errors(&res);
+	res
+}
+
+#[cfg(feature = "sentry")]
+pub async fn check_email_with_senty(
+	input: &CheckEmailInput,
+	config: &SentryConfig,
+) -> CheckEmailOutput {
+	let res = check_email(input).await;
+
+	log_unknown_errors(&res, config);
 
 	res
 }

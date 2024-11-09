@@ -15,7 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use super::gmail::GmailError;
-#[cfg(feature = "headless")]
+
 use super::headless::HeadlessError;
 use super::outlook::microsoft365::Microsoft365Error;
 use super::parser;
@@ -40,7 +40,7 @@ pub enum SmtpError {
 	/// Error when verifying a Gmail email via a HTTP request.
 	GmailError(GmailError),
 	/// Error when verifying a Hotmail email via headless browser.
-	#[cfg(feature = "headless")]
+	
 	HeadlessError(HeadlessError),
 	/// Error when verifying a Microsoft 365 email via HTTP request.
 	Microsoft365Error(Microsoft365Error),
@@ -66,7 +66,7 @@ impl From<GmailError> for SmtpError {
 	}
 }
 
-#[cfg(feature = "headless")]
+
 impl From<HeadlessError> for SmtpError {
 	fn from(e: HeadlessError) -> Self {
 		SmtpError::HeadlessError(e)

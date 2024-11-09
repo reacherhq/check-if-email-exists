@@ -20,9 +20,6 @@
 //! `check-if-email-exists` are known errors, in which case we don't log them
 //! to Sentry.
 
-use std::borrow::Cow;
-use std::env;
-
 use async_smtp::smtp::error::Error as AsyncSmtpError;
 use sentry::protocol::{Event, Exception, Level, Values};
 use tracing::{debug, info};
@@ -34,29 +31,21 @@ use crate::{smtp::SmtpError, CheckEmailOutput};
 
 const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
 
+pub struct SentryConfig {
+	pub dsn: String,
+	pub backend_name: String,
+}
+
 /// Setup Sentry.
-pub fn setup_sentry() -> sentry::ClientInitGuard {
+pub fn setup_sentry(config: &SentryConfig) -> sentry::ClientInitGuard {
 	// Use an empty string if we don't have any env variable for sentry. Sentry
 	// will just silently ignore.
-	let sentry = sentry::init(env::var("RCH_SENTRY_DSN").unwrap_or_else(|_| "".into()));
+	let sentry = sentry::init(config.dsn.clone());
 	if sentry.is_enabled() {
 		info!(target: LOG_TARGET, "Sentry is successfully set up.")
 	}
 
 	sentry
-}
-
-/// If RCH_BACKEND_NAME environment variable is set, add it to the sentry
-/// `server_name` properties.
-/// For backwards compatibility, we also support HEROKU_APP_NAME env variable.
-fn get_backend_name<'a>() -> Option<Cow<'a, str>> {
-	if let Ok(n) = env::var("RCH_BACKEND_NAME") {
-		return Some(n.into());
-	} else if let Ok(n) = env::var("HEROKU_APP_NAME") {
-		return Some(n.into());
-	}
-
-	None
 }
 
 #[derive(Debug)]
@@ -81,7 +70,7 @@ impl<'a> SentryError<'a> {
 
 /// Helper function to send an Error event to Sentry. We redact all sensitive
 /// info before sending to Sentry, by removing all instances of `username`.
-fn error(err: SentryError, result: &CheckEmailOutput) {
+fn error(err: SentryError, result: &CheckEmailOutput, config: &SentryConfig) {
 	let exception_value = redact(format!("{err:?}").as_str(), &result.syntax.username);
 	debug!(target: LOG_TARGET, "Sending error to Sentry: {}", exception_value);
 
@@ -99,7 +88,7 @@ fn error(err: SentryError, result: &CheckEmailOutput) {
 		environment: Some("production".into()),
 		release: Some(CARGO_PKG_VERSION.into()),
 		message: Some(format!("{result:#?}")),
-		server_name: get_backend_name(),
+		server_name: Some(config.backend_name.clone().into()),
 		transaction: Some(format!("check_email:{}", result.syntax.domain)),
 		..Default::default()
 	});
@@ -123,15 +112,15 @@ fn skip_smtp_transient_errors(message: &[String]) -> bool {
 
 /// Checks if the output from `check-if-email-exists` has a known error, in
 /// which case we don't log to Sentry to avoid spamming it.
-pub fn log_unknown_errors(result: &CheckEmailOutput) {
+pub fn log_unknown_errors(result: &CheckEmailOutput, config: &SentryConfig) {
 	match (&result.misc, &result.mx, &result.smtp) {
 		(Err(err), _, _) => {
 			// We log all misc errors.
-			error(SentryError::Misc(err), result);
+			error(SentryError::Misc(err), result, config);
 		}
 		(_, Err(err), _) => {
 			// We log all mx errors.
-			error(SentryError::Mx(err), result);
+			error(SentryError::Mx(err), result, config);
 		}
 		(_, _, Err(err)) if err.get_description().is_some() => {
 			// If the SMTP error is known, we don't track it in Sentry.
@@ -154,7 +143,7 @@ pub fn log_unknown_errors(result: &CheckEmailOutput) {
 			// Sentry, to be able to debug them better. We don't want to
 			// spam Sentry and log all instances of the error, hence the
 			// `count` check.
-			error(SentryError::Smtp(err), result);
+			error(SentryError::Smtp(err), result, config);
 		}
 		// If everything is ok, we just return the result.
 		(Ok(_), Ok(_), Ok(_)) => {}

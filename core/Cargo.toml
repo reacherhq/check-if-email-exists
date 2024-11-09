@@ -17,8 +17,9 @@ async-native-tls = { version = "0.4", default-features = false }
 async-recursion = "1.0.5"
 async-smtp = { version = "0.6.0", features = ["socks5"] }
 chrono = "0.4.31"
-fantoccini = { version = "0.21.2", optional = true }
-futures = { version = "0.3.30", optional = true }
+config = "0.14"
+fantoccini = { version = "0.21.2" }
+futures = { version = "0.3.30" }
 fast-socks5 = "0.9.2"
 hickory-proto = "0.24.0"
 hickory-resolver = "0.24.0"
@@ -38,6 +39,3 @@ tracing = "0.1.40"
 
 [dev-dependencies]
 tokio = { version = "1.40.0" }
-
-[features]
-headless = ["fantoccini", "futures"]

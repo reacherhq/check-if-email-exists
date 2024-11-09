@@ -28,9 +28,10 @@ use std::time::Duration;
 
 use super::parser;
 use super::{SmtpDetails, SmtpError};
+use crate::LOG_TARGET;
 use crate::{
 	rules::{has_rule, Rule},
-	util::{constants::LOG_TARGET, input_output::CheckEmailInput},
+	util::input_output::CheckEmailInput,
 };
 
 /// Try to send an smtp command, close and return Err if fails.
@@ -374,7 +375,6 @@ pub async fn check_smtp_with_retry(
 		// Don't retry if we used Hotmail or Yahoo API. This two options should
 		// be non-callable, as this function only deals with actual SMTP
 		// connection errors.
-		#[cfg(feature = "headless")]
 		Err(SmtpError::HeadlessError(_)) => result,
 		Err(SmtpError::YahooError(_)) => result,
 		Err(SmtpError::GmailError(_)) => result,
