@@ -25,7 +25,6 @@ mod parser;
 mod yahoo;
 
 use std::default::Default;
-use std::env;
 
 use async_smtp::EmailAddress;
 use hickory_proto::rr::Name;
@@ -113,8 +112,6 @@ pub async fn check_smtp(
 		);
 	}
 
-	let webdriver_addr = config.webdriver_addr;
-
 	if is_hotmail(&host) {
 		match (&input.hotmail_verif_method, is_microsoft365(&host)) {
 			(HotmailVerifMethod::OneDriveApi, true) => {
@@ -144,9 +141,12 @@ pub async fn check_smtp(
 
 			(HotmailVerifMethod::Headless, false) => {
 				return (
-					outlook::headless::check_password_recovery(to_email.to_string().as_str(), &a)
-						.await
-						.map_err(|err| err.into()),
+					outlook::headless::check_password_recovery(
+						to_email.to_string().as_str(),
+						&config.webdriver_addr,
+					)
+					.await
+					.map_err(|err| err.into()),
 					SmtpDebug {
 						verif_method: VerifMethod::Headless,
 					},
@@ -166,8 +166,8 @@ pub async fn check_smtp(
 			);
 		};
 	} else if is_yahoo(&host) {
-		match (&input.yahoo_verif_method, webdriver_addr) {
-			(YahooVerifMethod::Api, _) => {
+		match &input.yahoo_verif_method {
+			YahooVerifMethod::Api => {
 				return (
 					yahoo::check_api(&to_email_str, input)
 						.await
@@ -178,9 +178,9 @@ pub async fn check_smtp(
 				)
 			}
 
-			(YahooVerifMethod::Headless, Ok(a)) => {
+			YahooVerifMethod::Headless => {
 				return (
-					yahoo::check_headless(&to_email_str, &a)
+					yahoo::check_headless(&to_email_str, &config.webdriver_addr)
 						.await
 						.map_err(|e| e.into()),
 					SmtpDebug {
@@ -223,9 +223,7 @@ mod tests {
 		let mut input = CheckEmailInput::default();
 		input.set_gmail_verif_method(crate::GmailVerifMethod::Smtp);
 		input.set_smtp_timeout(Some(Duration::from_millis(1)));
-		let config = ReacherConfig {
-			webdriver_addr: "unused".into(),
-		};
+		let config = ReacherConfig::default();
 
 		let (res, smtp_debug) = runtime.block_on(check_smtp(
 			&to_email,
@@ -257,6 +255,7 @@ mod tests {
 		let host = Name::from_str("mx01.mail.icloud.com.").unwrap();
 		let mut input = CheckEmailInput::default();
 		input.set_skipped_domains(vec![".mail.icloud.com.".into()]);
+		let config = ReacherConfig::default();
 
 		let (res, smtp_debug) = runtime.block_on(check_smtp(
 			&to_email,

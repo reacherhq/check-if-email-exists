@@ -82,7 +82,6 @@ pub enum YahooVerifMethod {
 	/// its endpoint, usually http://localhost:9515, into the environment
 	/// variable RCH_WEBDRIVER_ADDR. We recommend running chromedriver (and not
 	/// geckodriver) as it allows parallel requests.
-	
 	Headless,
 	/// Use Yahoo's SMTP servers to check if an email exists.
 	Smtp,
@@ -94,7 +93,7 @@ impl FromStr for YahooVerifMethod {
 	fn from_str(s: &str) -> Result<Self, Self::Err> {
 		match s {
 			"Api" => Ok(Self::Api),
-			
+
 			"Headless" => Ok(Self::Headless),
 			"Smtp" => Ok(Self::Smtp),
 			_ => Err(format!("Unknown yahoo verify method: {}", s)),
@@ -134,7 +133,6 @@ pub enum HotmailVerifMethod {
 	/// its endpoint, usually http://localhost:9515, into the environment
 	/// variable RCH_WEBDRIVER_ADDR. We recommend running chromedriver (and not
 	/// geckodriver) as it allows parallel requests.
-	
 	Headless,
 	/// Use Hotmail's SMTP servers to check if an email exists.
 	Smtp,
@@ -146,7 +144,7 @@ impl FromStr for HotmailVerifMethod {
 	fn from_str(s: &str) -> Result<Self, Self::Err> {
 		match s {
 			"OneDriveApi" => Ok(Self::OneDriveApi),
-			
+
 			"Headless" => Ok(Self::Headless),
 			"Smtp" => Ok(Self::Smtp),
 			_ => Err(format!("Unknown hotmail verify method: {}", s)),
@@ -242,14 +240,8 @@ impl Default for CheckEmailInput {
 			smtp_port: 25,
 			smtp_security: SmtpSecurity::default(),
 			smtp_timeout: Some(Duration::from_secs(30)),
-			#[cfg(not(feature = "headless"))]
-			yahoo_verif_method: YahooVerifMethod::Api,
-			
 			yahoo_verif_method: YahooVerifMethod::Headless,
 			gmail_verif_method: GmailVerifMethod::Smtp,
-			#[cfg(not(feature = "headless"))]
-			hotmail_verif_method: HotmailVerifMethod::OneDriveApi,
-			
 			hotmail_verif_method: HotmailVerifMethod::Headless,
 			check_gravatar: false,
 			haveibeenpwned_api_key: None,
@@ -429,6 +421,8 @@ pub enum Reachable {
 /// Details about the email verification used for debugging.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct DebugDetails {
+	/// Identifier for the service currently running Reacher.
+	pub backend_name: String,
 	/// The time when the email verification started.
 	pub start_time: DateTime<Utc>,
 	/// The time when the email verification ended.
@@ -446,6 +440,7 @@ impl Default for DebugDetails {
 			end_time: SystemTime::now().into(),
 			duration: Duration::default(),
 			smtp: SmtpDebug::default(),
+			backend_name: "backend-dev".into(),
 		}
 	}
 }

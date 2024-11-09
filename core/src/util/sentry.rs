@@ -31,6 +31,7 @@ use crate::{smtp::SmtpError, CheckEmailOutput};
 
 const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
 
+#[derive(Debug, Default)]
 pub struct SentryConfig {
 	pub dsn: String,
 	pub backend_name: String,

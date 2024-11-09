@@ -77,10 +77,7 @@ use misc::{check_misc, MiscDetails};
 use mx::check_mx;
 use rand::Rng;
 use smtp::{check_smtp, SmtpDetails, SmtpError};
-use std::{
-	path::Component,
-	time::{Duration, SystemTime},
-};
+use std::time::{Duration, SystemTime};
 use syntax::{check_syntax, get_similar_mail_provider};
 pub use util::input_output::*;
 #[cfg(feature = "sentry")]
@@ -270,20 +267,9 @@ pub async fn check_email(input: &CheckEmailInput, config: &ReacherConfig) -> Che
 				.duration_since(start_time)
 				.unwrap_or(Duration::from_secs(0)),
 			smtp: smtp_debug,
+			backend_name: config.backend_name.clone(),
 		},
 	};
-
-	res
-}
-
-#[cfg(feature = "sentry")]
-pub async fn check_email_with_senty(
-	input: &CheckEmailInput,
-	config: &SentryConfig,
-) -> CheckEmailOutput {
-	let res = check_email(input).await;
-
-	log_unknown_errors(&res, config);
 
 	res
 }

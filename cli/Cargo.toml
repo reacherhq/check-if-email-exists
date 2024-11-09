@@ -13,7 +13,7 @@ name = "check_if_email_exists"
 path = "src/main.rs"
 
 [dependencies]
-check-if-email-exists = { path = "../core", features = ["headless"] }
+check-if-email-exists = { path = "../core" }
 clap = { version = "3.2", features = ["derive", "env"] }
 env_logger = "0.11"
 once_cell = "1.19"
