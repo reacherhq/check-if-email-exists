@@ -18,6 +18,8 @@
 //! functions, depending on whether the `bulk` feature is enabled or not.
 
 use check_if_email_exists::{setup_sentry, LOG_TARGET};
+#[cfg(feature = "worker")]
+use reacher_backend::worker::{create_db, run_worker};
 use std::sync::Arc;
 use tracing::info;
 
@@ -40,7 +42,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 		_guard = setup_sentry(sentry_config);
 	}
 
-	let _bulk_job_runner = run_warp_server(Arc::new(config)).await?;
+	let config = Arc::new(config);
+
+	let server_future = run_warp_server(config.clone());
+
+	#[cfg(feature = "worker")]
+	let worker_future = async {
+		if config.worker.enable {
+			let pg_pool = create_db(config.clone()).await?;
+			run_worker(config, pg_pool).await?;
+		}
+		Ok::<(), Box<dyn std::error::Error + Send + Sync>>(())
+	};
+
+	#[cfg(feature = "worker")]
+	tokio::try_join!(server_future, worker_future)?;
+
+	#[cfg(not(feature = "worker"))]
+	server_future.await?;
 
 	Ok(())
 }

@@ -14,10 +14,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::config::WorkerConfig;
-use crate::db::save_to_db;
-use check_if_email_exists::config::ReacherConfig;
-use check_if_email_exists::{check_email, CheckEmailInput, CheckEmailOutput};
+use super::db::save_to_db;
+use crate::config::BackendConfig;
+use check_if_email_exists::{check_email as ciee_check_email, CheckEmailInput, CheckEmailOutput};
 use check_if_email_exists::{Reachable, LOG_TARGET};
 use lapin::message::Delivery;
 use lapin::{options::*, BasicProperties, Channel};
@@ -45,25 +44,21 @@ pub async fn process_queue_message(
 	delivery: Delivery,
 	channel: Arc<Channel>,
 	pg_pool: PgPool,
-	config: WorkerConfig,
+	config: Arc<BackendConfig>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-	let worker_output = process_check_email(payload, delivery, channel, config.clone()).await;
-	save_to_db(pg_pool, config, payload, worker_output).await
+	let worker_output = check_email(payload, delivery, channel, config.clone()).await;
+	save_to_db(&config.backend_name, pg_pool, payload, worker_output).await
 }
 
-async fn process_check_email(
+async fn check_email(
 	payload: &WorkerPayload,
 	delivery: Delivery,
 	channel: Arc<Channel>,
-	config: WorkerConfig,
+	config: Arc<BackendConfig>,
 ) -> Result<CheckEmailOutput, Box<dyn std::error::Error + Send + Sync>> {
 	info!(target: LOG_TARGET, email=payload.input.to_email, "Start email verification");
 
-	let reacher_config = ReacherConfig {
-		backend_name: config.name.clone(),
-		..Default::default()
-	};
-	let output = check_email(&payload.input, &reacher_config).await;
+	let output = ciee_check_email(&payload.input, &config.get_reacher_config()).await;
 	let reply_payload = serde_json::to_string(&output)?;
 	let reply_payload = reply_payload.as_bytes();
 
@@ -92,7 +87,7 @@ async fn process_check_email(
 	}
 
 	// Check if we have a webhook to send the output to.
-	if let Some(webhook_url) = &config.webhook.url {
+	if let Some(webhook_config) = &config.must_worker_config().webhook {
 		let webhook_output = WebhookOutput {
 			output: &output,
 			extra: &payload.extra,
@@ -100,7 +95,7 @@ async fn process_check_email(
 
 		let client = reqwest::Client::new();
 		let res = client
-			.post(webhook_url)
+			.post(webhook_config.url.clone())
 			.json(&webhook_output)
 			.header("x-reacher-secret", std::env::var("RCH_HEADER_SECRET")?)
 			.send()

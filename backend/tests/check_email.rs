@@ -16,7 +16,7 @@
 
 use std::sync::Arc;
 
-use reacher_backend::config::{BackendConfig, ThrottleConfig};
+use reacher_backend::config::BackendConfig;
 use reacher_backend::http::{create_routes, CheckEmailRequest, REACHER_SECRET_HEADER};
 use warp::http::StatusCode;
 use warp::test::request;
@@ -33,9 +33,8 @@ fn create_backend_config(header_secret: &str) -> Arc<BackendConfig> {
 		http_host: "localhost".into(),
 		http_port: 8080,
 		header_secret: Some(header_secret.to_string()),
-		throttle: ThrottleConfig::new_without_throttle(),
+		worker: Default::default(),
 		sentry: None,
-		webhook: None,
 	})
 }
 

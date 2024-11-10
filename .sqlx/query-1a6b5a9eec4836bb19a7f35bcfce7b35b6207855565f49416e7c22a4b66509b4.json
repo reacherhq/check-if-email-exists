@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n\t\t\t\tINSERT INTO reacher_results (payload, worker, error)\n\t\t\t\tVALUES ($1, $2, $3)\n\t\t\t\tRETURNING id\n\t\t\t\t",
+  "query": "\n\t\t\t\tINSERT INTO v1_worker_results (payload, backend_name, error)\n\t\t\t\tVALUES ($1, $2, $3)\n\t\t\t\tRETURNING id\n\t\t\t\t",
   "describe": {
     "columns": [
       {
@@ -20,5 +20,5 @@
       false
     ]
   },
-  "hash": "a1f7a67d3708b8cf74361c33bfdd1dcbe9938a78b6c4ff550336ee4d16eb3ff3"
+  "hash": "1a6b5a9eec4836bb19a7f35bcfce7b35b6207855565f49416e7c22a4b66509b4"
 }

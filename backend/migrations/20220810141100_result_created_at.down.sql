@@ -1,2 +1,2 @@
-ALTER TABLE v0_bulk_results
+ALTER TABLE email_results
 DROP COLUMN created_at;

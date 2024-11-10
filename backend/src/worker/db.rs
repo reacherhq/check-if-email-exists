@@ -14,15 +14,18 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use std::sync::Arc;
+
 use check_if_email_exists::{CheckEmailOutput, LOG_TARGET};
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use tracing::{debug, info};
 
-use crate::{check_email::WorkerPayload, config::WorkerConfig};
+use super::check_email::WorkerPayload;
+use crate::config::BackendConfig;
 
 pub async fn save_to_db(
+	backend_name: &str,
 	pg_pool: PgPool,
-	config: WorkerConfig,
 	payload: &WorkerPayload,
 	worker_output: Result<CheckEmailOutput, Box<dyn std::error::Error + Send + Sync>>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -34,12 +37,12 @@ pub async fn save_to_db(
 
 			sqlx::query!(
 				r#"
-				INSERT INTO reacher_results (payload, worker, result)
+				INSERT INTO v1_worker_results (payload, backend_name, result)
 				VALUES ($1, $2, $3)
 				RETURNING id
 				"#,
 				payload_json,
-				config.name,
+				backend_name,
 				output_json,
 			)
 			.fetch_one(&pg_pool)
@@ -48,12 +51,12 @@ pub async fn save_to_db(
 		Err(err) => {
 			sqlx::query!(
 				r#"
-				INSERT INTO reacher_results (payload, worker, error)
+				INSERT INTO v1_worker_results (payload, backend_name, error)
 				VALUES ($1, $2, $3)
 				RETURNING id
 				"#,
 				payload_json,
-				config.name,
+				backend_name,
 				err.to_string(),
 			)
 			.fetch_one(&pg_pool)
@@ -67,16 +70,19 @@ pub async fn save_to_db(
 }
 
 /// Create a DB pool.
-pub async fn create_db(config: &WorkerConfig) -> Result<PgPool, sqlx::Error> {
-	debug!(target: LOG_TARGET, "Connecting to DB... {db_url}", db_url=config.db.url);
+pub async fn create_db(config: Arc<BackendConfig>) -> Result<PgPool, sqlx::Error> {
+	let worker_config = config.must_worker_config();
+	debug!(target: LOG_TARGET, "Connecting to DB... {db_url}", db_url=worker_config.postgres.db_url);
 	// create connection pool with database
 	// connection pool internally the shared db connection
 	// with arc so it can safely be cloned and shared across threads
-	let pool = PgPoolOptions::new().connect(&config.db.url).await?;
+	let pool = PgPoolOptions::new()
+		.connect(&worker_config.postgres.db_url)
+		.await?;
 
 	sqlx::migrate!("./migrations").run(&pool).await?;
 
-	info!(target: LOG_TARGET, table="email_results", "Connected to DB, Reacher will write results to DB");
+	info!(target: LOG_TARGET, table="v1_worker_results", "Connected to DB, Reacher will write verification results to DB");
 
 	Ok(pool)
 }

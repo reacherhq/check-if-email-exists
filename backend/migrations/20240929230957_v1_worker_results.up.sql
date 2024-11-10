@@ -1,8 +1,8 @@
 -- Add migration script here
-CREATE TABLE reacher_results (
+CREATE TABLE v1_worker_results (
     id SERIAL NOT NULL PRIMARY KEY,
     payload jsonb NOT NULL,
-    worker TEXT NOT NULL,
+    backend_name TEXT NOT NULL,
     result jsonb,
     error TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()

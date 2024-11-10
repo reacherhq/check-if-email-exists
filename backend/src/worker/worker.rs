@@ -1,6 +1,7 @@
-use crate::check_email::process_queue_message;
-use crate::check_email::WorkerPayload;
-use crate::config::WorkerConfig;
+use super::check_email::process_queue_message;
+use super::check_email::WorkerPayload;
+use crate::config::BackendConfig;
+use crate::config::ThrottleConfig;
 use check_if_email_exists::LOG_TARGET;
 use futures_lite::stream::StreamExt;
 use lapin::{options::*, types::FieldTable, Channel, Connection, ConnectionProperties};
@@ -11,19 +12,20 @@ use std::time::Instant;
 use tokio::time::sleep;
 use tracing::{error, info};
 
-pub async fn setup_rabbit_mq(config: &WorkerConfig) -> Result<Channel, lapin::Error> {
+async fn setup_rabbit_mq(config: Arc<BackendConfig>) -> Result<Channel, lapin::Error> {
 	let options = ConnectionProperties::default()
 		// Use tokio executor and reactor.
 		.with_executor(tokio_executor_trait::Tokio::current())
 		.with_reactor(tokio_reactor_trait::Tokio)
-		.with_connection_name(config.name.clone().into());
+		.with_connection_name(config.backend_name.clone().into());
 
-	let conn = Connection::connect(&config.rabbitmq.url, options).await?;
+	let worker_config = config.must_worker_config();
+	let conn = Connection::connect(&worker_config.rabbitmq.url, options).await?;
 	let channel = conn.create_channel().await?;
 
-	info!(target: LOG_TARGET, backend=?config.name,state=?conn.status().state(), "Connected to AMQP broker");
+	info!(target: LOG_TARGET, backend=?config.backend_name,state=?conn.status().state(), "Connected to AMQP broker");
 
-	let queue_name = config.rabbitmq.queue.to_string();
+	let queue_name = worker_config.rabbitmq.queue.to_string();
 	let mut queue_args = FieldTable::default();
 	queue_args.insert("x-max-priority".into(), 5.into());
 
@@ -40,7 +42,10 @@ pub async fn setup_rabbit_mq(config: &WorkerConfig) -> Result<Channel, lapin::Er
 
 	// Set up prefetch (concurrency) limit using qos
 	channel
-		.basic_qos(config.rabbitmq.concurrency, BasicQosOptions::default())
+		.basic_qos(
+			worker_config.rabbitmq.concurrency,
+			BasicQosOptions::default(),
+		)
 		.await?;
 
 	info!(target: LOG_TARGET, queue=?queue_name, "Worker will start consuming messages");
@@ -48,16 +53,19 @@ pub async fn setup_rabbit_mq(config: &WorkerConfig) -> Result<Channel, lapin::Er
 	Ok(channel)
 }
 
+/// Start the worker to consume messages from the queue.
 pub async fn run_worker(
-	config: WorkerConfig,
+	config: Arc<BackendConfig>,
 	pg_pool: PgPool,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-	let channel = Arc::new(setup_rabbit_mq(&config).await?);
+	let config_clone = config.clone();
+	let channel = Arc::new(setup_rabbit_mq(config_clone).await?);
+	let worker_config = config.must_worker_config();
 
 	let mut consumer = channel
 		.basic_consume(
-			&config.rabbitmq.queue.to_string(),
-			&config.name,
+			&worker_config.rabbitmq.queue.to_string(),
+			&config.backend_name,
 			BasicConsumeOptions::default(),
 			FieldTable::default(),
 		)
@@ -96,7 +104,7 @@ pub async fn run_worker(
 		throttle.increment_counters();
 
 		// Check if we should throttle before fetching the next message
-		if let Some(wait_duration) = throttle.should_throttle(&config) {
+		if let Some(wait_duration) = throttle.should_throttle(&worker_config.throttle) {
 			info!(target: LOG_TARGET, wait=?wait_duration, "Too many requests, throttling");
 			sleep(wait_duration).await;
 			continue;
@@ -168,28 +176,28 @@ impl Throttle {
 		self.requests_per_day += 1;
 	}
 
-	fn should_throttle(&self, config: &WorkerConfig) -> Option<Duration> {
+	fn should_throttle(&self, config: &ThrottleConfig) -> Option<Duration> {
 		let now = Instant::now();
 
-		if let Some(max_per_second) = config.throttle.max_requests_per_second {
+		if let Some(max_per_second) = config.max_requests_per_second {
 			if self.requests_per_second >= max_per_second {
 				return Some(Duration::from_secs(1) - now.duration_since(self.last_reset_second));
 			}
 		}
 
-		if let Some(max_per_minute) = config.throttle.max_requests_per_minute {
+		if let Some(max_per_minute) = config.max_requests_per_minute {
 			if self.requests_per_minute >= max_per_minute {
 				return Some(Duration::from_secs(60) - now.duration_since(self.last_reset_minute));
 			}
 		}
 
-		if let Some(max_per_hour) = config.throttle.max_requests_per_hour {
+		if let Some(max_per_hour) = config.max_requests_per_hour {
 			if self.requests_per_hour >= max_per_hour {
 				return Some(Duration::from_secs(3600) - now.duration_since(self.last_reset_hour));
 			}
 		}
 
-		if let Some(max_per_day) = config.throttle.max_requests_per_day {
+		if let Some(max_per_day) = config.max_requests_per_day {
 			if self.requests_per_day >= max_per_day {
 				return Some(Duration::from_secs(86400) - now.duration_since(self.last_reset_day));
 			}
