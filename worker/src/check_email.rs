@@ -47,7 +47,7 @@ pub async fn process_queue_message(
 	pg_pool: PgPool,
 	config: WorkerConfig,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-	let worker_output = process_check_email(&payload, delivery, channel, config.clone()).await;
+	let worker_output = process_check_email(payload, delivery, channel, config.clone()).await;
 	save_to_db(pg_pool, config, payload, worker_output).await
 }
 

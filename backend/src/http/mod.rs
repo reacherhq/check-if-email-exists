@@ -59,14 +59,14 @@ pub async fn run_warp_server(
 	let host = config
 		.http_host
 		.parse::<IpAddr>()
-		.expect(format!("Invalid host: {}", config.http_host).as_str());
+		.unwrap_or_else(|_| panic!("Invalid host: {}", config.http_host));
 	// For backwards compatibility, we allow the port to be set via the
 	// environment variable PORT, instead of the new configuration file. The
 	// PORT environment variable takes precedence.
 	let port = env::var("PORT")
 		.map(|port: String| {
 			port.parse::<u16>()
-				.expect(format!("Invalid port: {}", port).as_str())
+				.unwrap_or_else(|_| panic!("Invalid port: {}", port))
 		})
 		.unwrap_or(config.http_port);
 
@@ -110,7 +110,7 @@ pub const REACHER_SECRET_HEADER: &str = "x-reacher-secret";
 /// set in the config.
 pub fn check_header(config: Arc<BackendConfig>) -> warp::filters::BoxedFilter<()> {
 	if let Some(secret) = config.header_secret.clone() {
-		if secret.len() == 0 {
+		if secret.is_empty() {
 			return warp::any().boxed();
 		}
 

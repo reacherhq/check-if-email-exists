@@ -40,7 +40,6 @@ pub enum SmtpError {
 	/// Error when verifying a Gmail email via a HTTP request.
 	GmailError(GmailError),
 	/// Error when verifying a Hotmail email via headless browser.
-	
 	HeadlessError(HeadlessError),
 	/// Error when verifying a Microsoft 365 email via HTTP request.
 	Microsoft365Error(Microsoft365Error),
@@ -65,7 +64,6 @@ impl From<GmailError> for SmtpError {
 		SmtpError::GmailError(e)
 	}
 }
-
 
 impl From<HeadlessError> for SmtpError {
 	fn from(e: HeadlessError) -> Self {

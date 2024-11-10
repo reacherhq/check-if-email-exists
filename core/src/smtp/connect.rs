@@ -414,6 +414,6 @@ mod tests {
 
 		assert!(!smtp_transport.is_connected()); // We shouldn't connect to google servers.
 		assert!(r.is_ok());
-		assert_eq!(false, r.unwrap())
+		assert!(!r.unwrap())
 	}
 }

@@ -244,7 +244,7 @@ pub async fn check_email(input: &CheckEmailInput, config: &ReacherConfig) -> Che
 		input.smtp_port,
 		my_syntax.domain.as_ref(),
 		input,
-		&config,
+		config,
 	)
 	.await;
 
@@ -253,7 +253,9 @@ pub async fn check_email(input: &CheckEmailInput, config: &ReacherConfig) -> Che
 	}
 
 	let end_time = SystemTime::now();
-	let res = CheckEmailOutput {
+	
+
+	CheckEmailOutput {
 		input: to_email.to_string(),
 		is_reachable: calculate_reachable(&my_misc, &my_smtp),
 		misc: Ok(my_misc),
@@ -269,7 +271,5 @@ pub async fn check_email(input: &CheckEmailInput, config: &ReacherConfig) -> Che
 			smtp: smtp_debug,
 			backend_name: config.backend_name.clone(),
 		},
-	};
-
-	res
+	}
 }
