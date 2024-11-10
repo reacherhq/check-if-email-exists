@@ -40,7 +40,7 @@
 //! async fn check() {
 //!     // Let's say we want to test the deliverability of someone@gmail.com.
 //!     let input = CheckEmailInputBuilder::default()
-//!         .to_email("someone@gmail.com".into());
+//!         .to_email("someone@gmail.com".into())
 //!         // Optionally, we can also tweak the configuration parameters used in the
 //!         // verification.
 //!         .from_email("me@example.org".into()) // Used in the `MAIL FROM:` command
@@ -51,7 +51,7 @@
 //!             port: 1080,
 //!             username: None,                  // You can also set it non-empty
 //!             password: None
-//!         }));
+//!         }))
 //!         .build()
 //!         .unwrap();
 //!
