@@ -8,12 +8,12 @@ pub struct BackendConfig {
 	/// Name of the backend.
 	pub backend_name: String,
 
-	// Reacher config
+	/** Reacher config*/
 	pub from_email: String,
 	pub hello_name: String,
 	pub webdriver_addr: String,
 
-	// Backend-specific config
+	/** Backend-specific config*/
 	/// Backend host
 	pub http_host: String,
 	/// Backend port

@@ -16,29 +16,54 @@
 
 //! This file implements the `POST /v0/check_email` endpoint.
 
-use check_if_email_exists::{check_email, CheckEmailInput, LOG_TARGET};
+use check_if_email_exists::{check_email, CheckEmailInput, CheckEmailInputProxy, LOG_TARGET};
+use serde::Deserialize;
 use std::sync::Arc;
 use warp::{http, Filter};
 
 use crate::config::BackendConfig;
-use crate::errors;
-use crate::http::{check_header, with_config};
+use crate::http::{check_header, handle_rejection, with_config, ReacherResponseError};
+
+/// The request body for the `POST /v0/check_email` endpoint.
+#[derive(Debug, Deserialize)]
+pub struct CheckEmailRequest {
+	pub to_email: String,
+	pub from_email: Option<String>,
+	pub hello_name: Option<String>,
+	pub proxy: Option<CheckEmailInputProxy>,
+}
+
+impl CheckEmailRequest {
+	pub fn to_check_email_input(&self, config: Arc<BackendConfig>) -> CheckEmailInput {
+		CheckEmailInput {
+			to_email: self.to_email.clone(),
+			from_email: self.from_email.clone().unwrap_or(config.from_email.clone()),
+			hello_name: self.hello_name.clone().unwrap_or(config.hello_name.clone()),
+			proxy: self.proxy.clone(),
+			..Default::default()
+		}
+	}
+}
 
 /// The main endpoint handler that implements the logic of this route.
 async fn handler(
 	config: Arc<BackendConfig>,
-	body: CheckEmailInput,
+	body: CheckEmailRequest,
 ) -> Result<impl warp::Reply, warp::Rejection> {
 	// The to_email field must be present
 	if body.to_email.is_empty() {
-		Err(warp::reject::custom(errors::ReacherResponseError {
+		Err(warp::reject::custom(ReacherResponseError {
 			code: http::StatusCode::BAD_REQUEST,
 			message: "to_email field is required.".to_string(),
 		}))
 	} else {
 		// Run the future to check an email.
 		Ok(warp::reply::json(
-			&check_email(&body, &config.get_reacher_config()).await,
+			&check_email(
+				&body.to_check_email_input(config.clone()),
+				&config.get_reacher_config(),
+			)
+			.await,
 		))
 	}
 }
@@ -58,5 +83,5 @@ pub fn post_check_email<'a>(
 		.and_then(handler)
 		// View access logs by setting `RUST_LOG=reacher`.
 		.with(warp::log(LOG_TARGET))
-		.recover(errors::handle_rejection)
+		.recover(handle_rejection)
 }

@@ -155,7 +155,6 @@ impl FromStr for HotmailVerifMethod {
 /// Builder pattern for the input argument into the main `email_exists`
 /// function.
 #[derive(Debug, Clone, Deserialize, Serialize)]
-#[serde(default)]
 pub struct CheckEmailInput {
 	/// The email to validate.
 	pub to_email: String,
@@ -193,12 +192,13 @@ pub struct CheckEmailInput {
 	///
 	/// Defaults to Headless.
 	pub hotmail_verif_method: HotmailVerifMethod,
-	// Whether to check if a gravatar image is existing for the given email.
-	//
-	// Defaults to false.
+	/// Whether to check if a gravatar image is existing for the given email.
+	/// Adds a bit of latency to the verification process.
+	///
+	/// Defaults to false.
 	pub check_gravatar: bool,
 	/// Check if a the email address is present in HaveIBeenPwned API.
-	// If the api_key is filled, HaveIBeenPwned API is checked
+	/// If the api_key is filled, HaveIBeenPwned API is checked
 	pub haveibeenpwned_api_key: Option<String>,
 	/// Number of retries of SMTP connections to do. Setting to 2 might bypass
 	/// greylisting on some servers, but takes more time.
