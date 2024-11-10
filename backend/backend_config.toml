@@ -13,11 +13,13 @@ http_port = 8080
 # in the `x-reacher-secret` header of all incoming requests.
 # header_secret = "my-secret"
 
-# The email to use during the MAIL FROM command in the SMTP conversation.
-from_email = "reacher@gmail.com"
-
 # The name to use during the EHLO/HELO command in the SMTP conversation.
+# Ideally, this should match the reverse DNS of the IP address of the server.
 hello_name = "reacher"
+
+# The email to use during the MAIL FROM command in the SMTP conversation.
+# Ideally, the domain of this email should match the "hello_name" above.
+from_email = "reacher@gmail.com"
 
 # The address of the Chrome WebDriver server to use for making headless email
 # verifications.
@@ -28,6 +30,6 @@ webdriver_addr = "http://localhost:9515"
 # All fields are optional, comment them out to disable the limit.
 [throttle]
 # max_requests_per_second = 20
-max_requests_per_minute = 100
+# max_requests_per_minute = 100
 # max_requests_per_hour = 1000
 max_requests_per_day = 20000
