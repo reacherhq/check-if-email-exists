@@ -101,17 +101,6 @@ pub async fn check_smtp(
 	let host = host.to_string();
 	let to_email_str = to_email.to_string();
 
-	if input.skipped_domains.iter().any(|d| host.contains(d)) {
-		return (
-			Err(SmtpError::SkippedDomain(format!(
-				"Reacher currently cannot verify emails from @{domain}"
-			))),
-			SmtpDebug {
-				verif_method: VerifMethod::Skipped,
-			},
-		);
-	}
-
 	if is_hotmail(&host) {
 		match (&input.hotmail_verif_method, is_microsoft365(&host)) {
 			(HotmailVerifMethod::OneDriveApi, true) => {
@@ -206,9 +195,8 @@ pub async fn check_smtp(
 
 #[cfg(test)]
 mod tests {
-	use crate::config::ReacherConfig;
-
-	use super::{check_smtp, CheckEmailInput, SmtpConnection, SmtpError};
+	use super::{check_smtp, SmtpConnection, SmtpError};
+	use crate::{config::ReacherConfig, CheckEmailInputBuilder};
 	use async_smtp::{smtp::error::Error, EmailAddress};
 	use hickory_proto::rr::Name;
 	use std::{str::FromStr, time::Duration};
@@ -220,9 +208,12 @@ mod tests {
 
 		let to_email = EmailAddress::from_str("foo@gmail.com").unwrap();
 		let host = Name::from_str("alt4.aspmx.l.google.com.").unwrap();
-		let mut input = CheckEmailInput::default();
-		input.set_gmail_verif_method(crate::GmailVerifMethod::Smtp);
-		input.set_smtp_timeout(Some(Duration::from_millis(1)));
+		let input = CheckEmailInputBuilder::default()
+			.to_email("foo@gmail.com".into())
+			.gmail_verif_method(crate::GmailVerifMethod::Smtp)
+			.smtp_timeout(Some(Duration::from_millis(1)))
+			.build()
+			.unwrap();
 		let config = ReacherConfig::default();
 
 		let (res, smtp_debug) = runtime.block_on(check_smtp(
@@ -244,31 +235,6 @@ mod tests {
 		match res {
 			Err(SmtpError::SmtpError(Error::Io(_))) => (), // ErrorKind == Timeout
 			_ => panic!("check_smtp did not time out"),
-		}
-	}
-
-	#[test]
-	fn should_skip_domains() {
-		let runtime = Runtime::new().unwrap();
-
-		let to_email = EmailAddress::from_str("foo@icloud.com").unwrap();
-		let host = Name::from_str("mx01.mail.icloud.com.").unwrap();
-		let mut input = CheckEmailInput::default();
-		input.set_skipped_domains(vec![".mail.icloud.com.".into()]);
-		let config = ReacherConfig::default();
-
-		let (res, smtp_debug) = runtime.block_on(check_smtp(
-			&to_email,
-			&host,
-			25,
-			"icloud.com",
-			&input,
-			&config,
-		));
-		assert_eq!(smtp_debug.verif_method, super::VerifMethod::Skipped);
-		match res {
-			Err(SmtpError::SkippedDomain(_)) => (),
-			r => panic!("{:?}", r),
 		}
 	}
 }

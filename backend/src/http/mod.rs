@@ -18,6 +18,7 @@ mod v0;
 mod version;
 
 use check_if_email_exists::LOG_TARGET;
+use serde::Serialize;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres};
 use sqlxmq::JobRunnerHandle;
@@ -26,10 +27,11 @@ use std::net::IpAddr;
 use std::sync::Arc;
 use tracing::info;
 use warp::Filter;
+use warp::{http, reject};
 
 use crate::config::BackendConfig;
 
-use super::errors;
+pub use v0::check_email::post::CheckEmailRequest;
 
 /// Creates the routes for the HTTP server.
 /// Making it public so that it can be used in tests/check_email.rs.
@@ -43,7 +45,7 @@ pub fn create_routes(
 		.or(v0::bulk::post::create_bulk_job(config, o.clone()))
 		.or(v0::bulk::get::get_bulk_job_status(o.clone()))
 		.or(v0::bulk::results::get_bulk_job_result(o))
-		.recover(errors::handle_rejection)
+		.recover(handle_rejection)
 }
 
 /// Runs the Warp server.
@@ -127,4 +129,24 @@ pub fn with_config(
 	config: Arc<BackendConfig>,
 ) -> impl Filter<Extract = (Arc<BackendConfig>,), Error = std::convert::Infallible> + Clone {
 	warp::any().map(move || config.clone())
+}
+
+/// Struct describing an error response.
+#[derive(Serialize, Debug)]
+pub struct ReacherResponseError {
+	#[serde(skip)]
+	pub code: http::StatusCode,
+	pub message: String,
+}
+
+impl reject::Reject for ReacherResponseError {}
+
+/// This function receives a `Rejection` and tries to return a custom value,
+/// otherwise simply passes the rejection along.
+pub async fn handle_rejection(err: warp::Rejection) -> Result<impl warp::Reply, warp::Rejection> {
+	if let Some(err) = err.find::<ReacherResponseError>() {
+		Ok((warp::reply::with_status(warp::reply::json(err), err.code),))
+	} else {
+		Err(err)
+	}
 }

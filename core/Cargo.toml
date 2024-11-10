@@ -16,8 +16,9 @@ repository = "https://github.com/reacherhq/check-if-email-exists"
 async-native-tls = { version = "0.4", default-features = false }
 async-recursion = "1.0.5"
 async-smtp = { version = "0.6.0", features = ["socks5"] }
-chrono = "0.4.31"
+chrono = { version = "0.4.31", features = ["serde"] }
 config = "0.14"
+derive_builder = "0.20"
 fantoccini = { version = "0.21.2" }
 futures = { version = "0.3.30" }
 fast-socks5 = "0.9.2"
