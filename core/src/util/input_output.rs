@@ -29,7 +29,7 @@ use crate::syntax::SyntaxDetails;
 
 /// Perform the email verification via a specified proxy. The usage of a proxy
 /// is optional.
-#[derive(Builder, Debug, Default, Clone, Deserialize, Serialize)]
+#[derive(Debug, Default, Clone, Deserialize, Serialize)]
 pub struct CheckEmailInputProxy {
 	/// Use the specified SOCKS5 proxy host to perform email verification.
 	pub host: String,
@@ -156,6 +156,7 @@ impl FromStr for HotmailVerifMethod {
 /// Builder pattern for the input argument into the main `email_exists`
 /// function.
 #[derive(Builder, Debug, Clone, Deserialize, Serialize)]
+#[builder(default)]
 pub struct CheckEmailInput {
 	/// The email to validate.
 	pub to_email: String,

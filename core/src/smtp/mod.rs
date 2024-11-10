@@ -195,9 +195,8 @@ pub async fn check_smtp(
 
 #[cfg(test)]
 mod tests {
+	use super::{check_smtp, SmtpConnection, SmtpError};
 	use crate::{config::ReacherConfig, CheckEmailInputBuilder};
-
-	use super::{check_smtp, CheckEmailInput, SmtpConnection, SmtpError};
 	use async_smtp::{smtp::error::Error, EmailAddress};
 	use hickory_proto::rr::Name;
 	use std::{str::FromStr, time::Duration};
@@ -209,7 +208,8 @@ mod tests {
 
 		let to_email = EmailAddress::from_str("foo@gmail.com").unwrap();
 		let host = Name::from_str("alt4.aspmx.l.google.com.").unwrap();
-		let mut input = CheckEmailInputBuilder::default()
+		let input = CheckEmailInputBuilder::default()
+			.to_email("foo@gmail.com".into())
 			.gmail_verif_method(crate::GmailVerifMethod::Smtp)
 			.smtp_timeout(Some(Duration::from_millis(1)))
 			.build()
