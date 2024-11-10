@@ -17,6 +17,7 @@
 //! This file implements the `POST /v0/check_email` endpoint.
 
 use check_if_email_exists::{check_email, CheckEmailInput, LOG_TARGET};
+use std::sync::Arc;
 use warp::{http, Filter};
 
 use crate::config::BackendConfig;
@@ -25,7 +26,7 @@ use crate::http::{check_header, with_config};
 
 /// The main endpoint handler that implements the logic of this route.
 async fn handler(
-	config: &BackendConfig,
+	config: Arc<BackendConfig>,
 	body: CheckEmailInput,
 ) -> Result<impl warp::Reply, warp::Rejection> {
 	// The to_email field must be present
@@ -44,11 +45,11 @@ async fn handler(
 
 /// Create the `POST /check_email` endpoint.
 pub fn post_check_email<'a>(
-	config: &'a BackendConfig,
+	config: Arc<BackendConfig>,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone + 'a {
 	warp::path!("v0" / "check_email")
 		.and(warp::post())
-		.and(check_header(config))
+		.and(check_header(config.clone()))
 		.and(with_config(config))
 		// When accepting a body, we want a JSON body (and to reject huge
 		// payloads)...

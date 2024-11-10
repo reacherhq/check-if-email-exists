@@ -20,6 +20,7 @@ use check_if_email_exists::CheckEmailInputProxy;
 use check_if_email_exists::LOG_TARGET;
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres};
+use std::sync::Arc;
 use tracing::{debug, error};
 use warp::Filter;
 
@@ -133,7 +134,7 @@ async fn create_bulk_request(
 /// The endpoint accepts list of email address and creates
 /// a new job to check them.
 pub fn create_bulk_job(
-	config: &BackendConfig,
+	config: Arc<BackendConfig>,
 	o: Option<Pool<Postgres>>,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v0" / "bulk")

@@ -166,16 +166,15 @@ pub async fn email_verification_task(
 		// This is a temporary solution until the /v0/bulk endpoints are
 		// removed.
 		let backend_name = env::var("RCH_BACKEND_NAME").unwrap_or_else(|_| "reacher".into());
-		let sentry_dsn = env::var("RCH_SENTRY_DSN").unwrap_or_else(|_| "".into());
+		let sentry_dsn = env::var("RCH_SENTRY_DSN");
 		let webdriver_addr =
 			env::var("RCH_WEBDRIVER_ADDR").unwrap_or_else(|_| "localhost:9515".into());
 		let config = ReacherConfig {
 			backend_name: backend_name.clone(),
 			webdriver_addr,
-			sentry: SentryConfig {
-				backend_name,
-				dsn: sentry_dsn,
-			},
+			sentry: sentry_dsn
+				.ok()
+				.map(|dsn| SentryConfig { dsn, backend_name }),
 		};
 
 		let to_email = check_email_input.to_email.clone();

@@ -17,13 +17,13 @@
 mod v0;
 mod version;
 
-use std::env;
-use std::net::IpAddr;
-
 use check_if_email_exists::LOG_TARGET;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres};
 use sqlxmq::JobRunnerHandle;
+use std::env;
+use std::net::IpAddr;
+use std::sync::Arc;
 use tracing::info;
 use warp::Filter;
 
@@ -33,12 +33,12 @@ use super::errors;
 
 /// Creates the routes for the HTTP server.
 /// Making it public so that it can be used in tests/check_email.rs.
-pub fn create_routes<'a>(
-	config: &'a BackendConfig,
+pub fn create_routes(
+	config: Arc<BackendConfig>,
 	o: Option<Pool<Postgres>>,
-) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone + 'a {
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	version::get::get_version()
-		.or(v0::check_email::post::post_check_email(config))
+		.or(v0::check_email::post::post_check_email(config.clone()))
 		// The 3 following routes will 404 if o is None.
 		.or(v0::bulk::post::create_bulk_job(config, o.clone()))
 		.or(v0::bulk::get::get_bulk_job_status(o.clone()))
@@ -54,7 +54,7 @@ pub fn create_routes<'a>(
 /// job listener is enabled. The handle can be used to stop the listener or to
 /// keep it alive.
 pub async fn run_warp_server(
-	config: &BackendConfig,
+	config: Arc<BackendConfig>,
 ) -> Result<Option<JobRunnerHandle>, Box<dyn std::error::Error + Send + Sync>> {
 	let host = config
 		.http_host
@@ -80,7 +80,7 @@ pub async fn run_warp_server(
 		(None, None)
 	};
 
-	let routes = create_routes(config, db);
+	let routes = create_routes(config.clone(), db);
 
 	info!(target: LOG_TARGET, host=?host,port=?port, "Server is listening");
 	warp::serve(routes).run((host, port)).await;
@@ -106,9 +106,9 @@ async fn create_db() -> Result<Pool<Postgres>, sqlx::Error> {
 /// The header which holds the Reacher backend secret.
 pub const REACHER_SECRET_HEADER: &str = "x-reacher-secret";
 
-/// Warp filter to check that the header secret is correct, if the environment
-/// variable `RCH_HEADER_SECRET`  is set
-pub fn check_header(config: &BackendConfig) -> warp::filters::BoxedFilter<()> {
+/// Warp filter to check that the header secret is correct, if the header is
+/// set in the config.
+pub fn check_header(config: Arc<BackendConfig>) -> warp::filters::BoxedFilter<()> {
 	if let Some(secret) = config.header_secret.clone() {
 		if secret.len() == 0 {
 			return warp::any().boxed();
@@ -124,7 +124,7 @@ pub fn check_header(config: &BackendConfig) -> warp::filters::BoxedFilter<()> {
 
 /// Warp filter that adds the BackendConfig to the handler.
 pub fn with_config(
-	config: &BackendConfig,
-) -> impl Filter<Extract = (&BackendConfig,), Error = std::convert::Infallible> + Clone {
-	warp::any().map(move || config)
+	config: Arc<BackendConfig>,
+) -> impl Filter<Extract = (Arc<BackendConfig>,), Error = std::convert::Infallible> + Clone {
+	warp::any().map(move || config.clone())
 }

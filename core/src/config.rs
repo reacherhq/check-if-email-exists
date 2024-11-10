@@ -24,7 +24,7 @@ pub struct ReacherConfig {
 	/// The address of the WebDriver server.
 	pub webdriver_addr: String,
 	#[cfg(feature = "sentry")]
-	pub sentry: SentryConfig,
+	pub sentry: Option<SentryConfig>,
 }
 
 impl Default for ReacherConfig {

@@ -21,9 +21,8 @@ pub struct BackendConfig {
 	/// Shared secret between a trusted client and the backend.
 	pub header_secret: Option<String>,
 	pub throttle: ThrottleConfig,
-	pub db: DBConfig,
-	pub webhook: WebhookConfig,
-	pub sentry: SentryConfig,
+	pub webhook: Option<WebhookConfig>,
+	pub sentry: Option<SentryConfig>,
 }
 
 impl BackendConfig {
@@ -44,14 +43,21 @@ pub struct ThrottleConfig {
 	pub max_requests_per_day: Option<u32>,
 }
 
-#[derive(Debug, Deserialize, Clone)]
-pub struct DBConfig {
-	pub url: String,
+impl ThrottleConfig {
+	/// Create a new ThrottleConfig with no throttling.
+	pub fn new_without_throttle() -> Self {
+		Self {
+			max_requests_per_second: None,
+			max_requests_per_minute: None,
+			max_requests_per_hour: None,
+			max_requests_per_day: None,
+		}
+	}
 }
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct WebhookConfig {
-	pub url: Option<String>,
+	pub url: String,
 }
 
 /// Load the worker configuration from the worker_config.toml file and from the
