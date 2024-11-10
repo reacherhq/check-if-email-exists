@@ -35,6 +35,7 @@
 //!
 //! ```rust
 //! use check_if_email_exists::{check_email, CheckEmailInput, CheckEmailInputProxy};
+//! use check_if_email_exists::config::ReacherConfig;
 //!
 //! async fn check() {
 //!     // Let's say we want to test the deliverability of someone@gmail.com.
@@ -53,8 +54,14 @@
 //!             password: None
 //!     });
 //!
+//!     // We also need to set some configuration parameters.
+//!     let config = ReacherConfig {
+//!     	backend_name: "my-backend".into(),
+//! 		..Default::default()
+//!     };
+//!
 //!     // Verify this input, using async/await syntax.
-//!     let result = check_email(&input).await;
+//!     let result = check_email(&input, &config).await;
 //!
 //!     // `result` is a `Vec<CheckEmailOutput>`, where the CheckEmailOutput
 //!     // struct contains all information about one email.
