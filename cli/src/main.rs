@@ -15,8 +15,8 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use check_if_email_exists::{
-	check_email, config::ReacherConfig, CheckEmailInput, CheckEmailInputProxy, GmailVerifMethod,
-	HotmailVerifMethod, YahooVerifMethod,
+	check_email, config::ReacherConfig, CheckEmailInputBuilder, CheckEmailInputProxy,
+	GmailVerifMethod, HotmailVerifMethod, YahooVerifMethod,
 };
 use clap::Parser;
 use once_cell::sync::Lazy;
@@ -89,25 +89,28 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
 	let to_email = &CONF.to_email;
 
-	let mut input = CheckEmailInput::new(to_email.clone());
-	input
-		.set_from_email(CONF.from_email.clone())
-		.set_hello_name(CONF.hello_name.clone())
-		.set_smtp_port(CONF.smtp_port)
-		.set_yahoo_verif_method(CONF.yahoo_verif_method)
-		.set_gmail_verif_method(CONF.gmail_verif_method)
-		.set_hotmail_verif_method(CONF.hotmail_verif_method)
-		.set_check_gravatar(CONF.check_gravatar)
-		.set_haveibeenpwned_api_key(CONF.haveibeenpwned_api_key.clone());
+	let mut input = CheckEmailInputBuilder::default();
+	let mut input = input
+		.to_email(to_email.clone())
+		.from_email(CONF.from_email.clone())
+		.hello_name(CONF.hello_name.clone())
+		.smtp_port(CONF.smtp_port)
+		.yahoo_verif_method(CONF.yahoo_verif_method)
+		.gmail_verif_method(CONF.gmail_verif_method)
+		.hotmail_verif_method(CONF.hotmail_verif_method)
+		.check_gravatar(CONF.check_gravatar)
+		.haveibeenpwned_api_key(CONF.haveibeenpwned_api_key.clone());
 
 	if let Some(proxy_host) = &CONF.proxy_host {
-		input.set_proxy(CheckEmailInputProxy {
+		input = input.proxy(Some(CheckEmailInputProxy {
 			host: proxy_host.clone(),
 			port: CONF.proxy_port,
 			username: CONF.proxy_username.clone(),
 			password: CONF.proxy_password.clone(),
-		});
+		}));
 	}
+	let input = input.build()?;
+
 	let config = ReacherConfig {
 		backend_name: "reacher-cli".to_string(),
 		..Default::default()

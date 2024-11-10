@@ -19,6 +19,7 @@ use std::time::{Duration, SystemTime};
 
 use async_smtp::{ClientSecurity, ClientTlsParameters};
 use chrono::{DateTime, Utc};
+use derive_builder::Builder;
 use serde::{ser::SerializeMap, Deserialize, Serialize, Serializer};
 
 use crate::misc::{MiscDetails, MiscError};
@@ -28,7 +29,7 @@ use crate::syntax::SyntaxDetails;
 
 /// Perform the email verification via a specified proxy. The usage of a proxy
 /// is optional.
-#[derive(Debug, Default, Clone, Deserialize, Serialize)]
+#[derive(Builder, Debug, Default, Clone, Deserialize, Serialize)]
 pub struct CheckEmailInputProxy {
 	/// Use the specified SOCKS5 proxy host to perform email verification.
 	pub host: String,
@@ -154,7 +155,7 @@ impl FromStr for HotmailVerifMethod {
 
 /// Builder pattern for the input argument into the main `email_exists`
 /// function.
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Builder, Debug, Clone, Deserialize, Serialize)]
 pub struct CheckEmailInput {
 	/// The email to validate.
 	pub to_email: String,
@@ -209,25 +210,6 @@ pub struct CheckEmailInput {
 	///
 	/// Defaults to Opportunistic.
 	pub smtp_security: SmtpSecurity,
-	/// **IMPORTANT:** This is a beta feature, and might be completely removed,
-	/// or moved somewhere else, before the next release.
-	///
-	/// List of domains to skip when doing an SMTP connection, because we know
-	/// they return "unknown". For each string in this list, we check if the MX
-	/// record **contains** the string; if yes, we return an error saying the
-	/// SMTP verification is skipped.
-	///
-	/// Related issue: https://github.com/reacherhq/check-if-email-exists/issues/937
-	///
-	/// ## Example
-	///
-	/// If you want to skip Zoho emails, it's good enough to ".zoho.com." to
-	/// the list. This way it will skip all Zoho emails as their MX records
-	/// show "mx{N}.zoho.com.". Simply putting "zoho" might give false
-	/// positives if you have an email provider like "mycustomzoho.com".
-	///
-	/// Defaults to: [""]
-	pub skipped_domains: Vec<String>,
 }
 
 impl Default for CheckEmailInput {
@@ -246,153 +228,7 @@ impl Default for CheckEmailInput {
 			check_gravatar: false,
 			haveibeenpwned_api_key: None,
 			retries: 1,
-			skipped_domains: vec![],
 		}
-	}
-}
-
-impl CheckEmailInput {
-	/// Create a new CheckEmailInput.
-	pub fn new(to_email: String) -> CheckEmailInput {
-		CheckEmailInput {
-			to_email,
-			..Default::default()
-		}
-	}
-
-	/// Set the email to use in the `MAIL FROM:` SMTP command. Defaults to
-	/// `user@example.org` if not explicitly set.
-	#[deprecated(since = "0.8.24", note = "Please use set_from_email instead")]
-	pub fn from_email(&mut self, email: String) -> &mut CheckEmailInput {
-		self.from_email = email;
-		self
-	}
-
-	/// Set the email to use in the `MAIL FROM:` SMTP command. Defaults to
-	/// `user@example.org` if not explicitly set.
-	pub fn set_from_email(&mut self, email: String) -> &mut CheckEmailInput {
-		self.from_email = email;
-		self
-	}
-
-	/// Set the name to use in the `EHLO:` SMTP command. Defaults to `localhost`
-	/// if not explicitly set.
-	#[deprecated(since = "0.8.24", note = "Please use set_hello_name instead")]
-	pub fn hello_name(&mut self, name: String) -> &mut CheckEmailInput {
-		self.hello_name = name;
-		self
-	}
-
-	/// Set the name to use in the `EHLO:` SMTP command. Defaults to `localhost`
-	/// if not explicitly set.
-	pub fn set_hello_name(&mut self, name: String) -> &mut CheckEmailInput {
-		self.hello_name = name;
-		self
-	}
-
-	/// Use the specified SOCK5 proxy to perform email verification.
-	#[deprecated(since = "0.8.24", note = "Please use set_proxy instead")]
-	pub fn proxy(&mut self, proxy_host: String, proxy_port: u16) -> &mut CheckEmailInput {
-		self.proxy = Some(CheckEmailInputProxy {
-			host: proxy_host,
-			port: proxy_port,
-			..Default::default()
-		});
-		self
-	}
-
-	/// Use the specified SOCK5 proxy to perform email verification.
-	pub fn set_proxy(&mut self, proxy: CheckEmailInputProxy) -> &mut CheckEmailInput {
-		self.proxy = Some(proxy);
-		self
-	}
-
-	/// Set the number of SMTP retries to do.
-	pub fn set_retries(&mut self, retries: usize) -> &mut CheckEmailInput {
-		self.retries = retries;
-		self
-	}
-
-	/// Add optional timeout for the SMTP verification step.
-	#[deprecated(since = "0.8.24", note = "Please use set_smtp_timeout instead")]
-	pub fn smtp_timeout(&mut self, duration: Duration) -> &mut CheckEmailInput {
-		self.smtp_timeout = Some(duration);
-		self
-	}
-
-	/// Change the SMTP port.
-	pub fn set_smtp_port(&mut self, port: u16) -> &mut CheckEmailInput {
-		self.smtp_port = port;
-		self
-	}
-
-	/// Set the SMTP client security to use for TLS.
-	pub fn set_smtp_security(&mut self, smtp_security: SmtpSecurity) -> &mut CheckEmailInput {
-		self.smtp_security = smtp_security;
-		self
-	}
-
-	/// Add optional timeout for the SMTP verification step. This is the
-	/// timeout for _each_ SMTP connection attempt, not for the whole email
-	/// verification process.
-	pub fn set_smtp_timeout(&mut self, duration: Option<Duration>) -> &mut CheckEmailInput {
-		self.smtp_timeout = duration;
-		self
-	}
-
-	/// Set whether to use Yahoo's API, headless navigator, or connecting
-	/// directly to their SMTP servers. Defaults to Headless.
-	pub fn set_yahoo_verif_method(
-		&mut self,
-		verif_method: YahooVerifMethod,
-	) -> &mut CheckEmailInput {
-		self.yahoo_verif_method = verif_method;
-		self
-	}
-
-	/// Set whether to use Gmail's API or connecting directly to their SMTP
-	/// servers. Defaults to false.
-	pub fn set_gmail_verif_method(
-		&mut self,
-		verif_method: GmailVerifMethod,
-	) -> &mut CheckEmailInput {
-		self.gmail_verif_method = verif_method;
-		self
-	}
-
-	/// Set whether to use Microsoft 365's OneDrive API, a headless navigator,
-	/// or connecting directly to their SMTP servers for hotmail addresse.
-	/// Defaults to Headless.
-	pub fn set_hotmail_verif_method(
-		&mut self,
-		verif_method: HotmailVerifMethod,
-	) -> &mut CheckEmailInput {
-		self.hotmail_verif_method = verif_method;
-		self
-	}
-
-	/// Whether to check if a gravatar image is existing for the given email.
-	/// Defaults to false.
-	pub fn set_check_gravatar(&mut self, check_gravatar: bool) -> &mut CheckEmailInput {
-		self.check_gravatar = check_gravatar;
-		self
-	}
-
-	/// Whether to haveibeenpwned' API for the given email
-	/// check only if the api_key is set.
-	pub fn set_haveibeenpwned_api_key(&mut self, api_key: Option<String>) -> &mut CheckEmailInput {
-		self.haveibeenpwned_api_key = api_key;
-		self
-	}
-
-	/// **IMPORTANT:** This is a beta feature, and might be completely removed,
-	/// or moved somewhere else, before the next release.
-	///
-	/// List of domains to skip when doing an SMTP connection, because we know
-	/// they return "unknown".
-	pub fn set_skipped_domains(&mut self, domains: Vec<String>) -> &mut CheckEmailInput {
-		self.skipped_domains = domains;
-		self
 	}
 }
 

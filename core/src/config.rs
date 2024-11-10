@@ -14,7 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::SentryConfig;
+#[cfg(feature = "sentry")]
+use crate::util::sentry::SentryConfig;
 
 /// Configuration needed to run Reacher.
 #[derive(Debug)]
@@ -33,7 +34,7 @@ impl Default for ReacherConfig {
 			backend_name: "backend-dev".into(),
 			webdriver_addr: "http://localhost:9515".into(),
 			#[cfg(feature = "sentry")]
-			sentry: Default::default(),
+			sentry: None,
 		}
 	}
 }

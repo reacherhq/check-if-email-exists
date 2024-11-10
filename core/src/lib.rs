@@ -34,30 +34,31 @@
 //! - Catch-all address. Is this email address a catch-all address?
 //!
 //! ```rust
-//! use check_if_email_exists::{check_email, CheckEmailInput, CheckEmailInputProxy};
+//! use check_if_email_exists::{check_email, CheckEmailInputBuilder, CheckEmailInputProxy};
 //! use check_if_email_exists::config::ReacherConfig;
 //!
 //! async fn check() {
 //!     // Let's say we want to test the deliverability of someone@gmail.com.
-//!     let mut input = CheckEmailInput::new("someone@gmail.com".into());
-//!
-//!     // Optionally, we can also tweak the configuration parameters used in the
-//!     // verification.
-//!     input
-//!         .set_from_email("me@example.org".into()) // Used in the `MAIL FROM:` command
-//!         .set_hello_name("example.org".into())    // Used in the `EHLO` command
-//!         .set_smtp_port(587)                      // Use port 587 instead of 25
-//!         .set_proxy(CheckEmailInputProxy {        // Use a SOCKS5 proxy to verify the email
+//!     let input = CheckEmailInputBuilder::default()
+//!         .to_email("someone@gmail.com".into());
+//!         // Optionally, we can also tweak the configuration parameters used in the
+//!         // verification.
+//!         .from_email("me@example.org".into()) // Used in the `MAIL FROM:` command
+//!         .hello_name("example.org".into())    // Used in the `EHLO` command
+//!         .smtp_port(587)                      // Use port 587 instead of 25
+//!         .proxy(Some(CheckEmailInputProxy {   // Use a SOCKS5 proxy to verify the email
 //!             host: "my-proxy.io".into(),
 //!             port: 1080,
-//!             username: None,                      // You can also set it non-empty
+//!             username: None,                  // You can also set it non-empty
 //!             password: None
-//!     });
+//!         }));
+//!         .build()
+//!         .unwrap();
 //!
 //!     // We also need to set some configuration parameters.
 //!     let config = ReacherConfig {
-//!     	backend_name: "my-backend".into(),
-//! 		..Default::default()
+//!         backend_name: "my-backend".into(),
+//!         ..Default::default()
 //!     };
 //!
 //!     // Verify this input, using async/await syntax.

@@ -85,13 +85,18 @@ pub fn is_gmail(host: &str) -> bool {
 mod tests {
 	use std::str::FromStr;
 
+	use crate::CheckEmailInputBuilder;
+
 	use super::*;
 
 	#[tokio::test]
 	#[ignore] // ref: https://github.com/reacherhq/check-if-email-exists/issues/1431
 	async fn should_return_is_deliverable_true() {
 		let to_email = EmailAddress::from_str("someone@gmail.com").unwrap();
-		let input = CheckEmailInput::new("someone@gmail.com".to_owned());
+		let input = CheckEmailInputBuilder::default()
+			.to_email("someone@gmail.com".to_owned())
+			.build()
+			.unwrap();
 
 		let smtp_details = check_gmail(&to_email, &input).await;
 

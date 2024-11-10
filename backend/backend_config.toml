@@ -28,6 +28,10 @@ webdriver_addr = "http://localhost:9515"
 # Throttle the maximum number of requests per second, per minute, per hour, an
 # per day for this worker.
 # All fields are optional, comment them out to disable the limit.
+#
+# Important: these throttle configurations only apply to bulk verification, and
+# not to the single /v0/check_email endpoint. The latter endpoint always
+# executes the verification immediately, regardless of the throttle settings.
 [throttle]
 # max_requests_per_second = 20
 # max_requests_per_minute = 100

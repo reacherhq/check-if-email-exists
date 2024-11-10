@@ -17,8 +17,8 @@
 //! This file implements the `POST /bulk` endpoint.
 
 use check_if_email_exists::{
-	check_email, config::ReacherConfig, CheckEmailInput, CheckEmailInputProxy, CheckEmailOutput,
-	Reachable, SentryConfig, LOG_TARGET,
+	check_email, config::ReacherConfig, CheckEmailInput, CheckEmailInputBuilder,
+	CheckEmailInputProxy, CheckEmailOutput, Reachable, SentryConfig, LOG_TARGET,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres};
@@ -63,24 +63,25 @@ impl Iterator for TaskInputIterator {
 
 	fn next(&mut self) -> Option<Self::Item> {
 		if self.index < self.body.smtp_ports.len() {
-			let mut item = CheckEmailInput::new(self.body.to_email.clone());
+			let mut item = CheckEmailInputBuilder::default();
+			let mut item = item.to_email(self.body.to_email.clone());
 
 			if let Some(name) = &self.body.hello_name {
-				item.set_hello_name(name.clone());
+				item = item.hello_name(name.clone());
 			}
 
 			if let Some(email) = &self.body.from_email {
-				item.set_from_email(email.clone());
+				item = item.from_email(email.clone());
 			}
 
-			item.set_smtp_port(self.body.smtp_ports[self.index]);
+			item = item.smtp_port(self.body.smtp_ports[self.index]);
 
 			if let Some(proxy) = &self.body.proxy {
-				item.set_proxy(proxy.clone());
+				item = item.proxy(Some(proxy.clone()));
 			}
 
 			self.index += 1;
-			Some(item)
+			Some(item.build().unwrap())
 		} else {
 			None
 		}
