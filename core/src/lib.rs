@@ -253,7 +253,6 @@ pub async fn check_email(input: &CheckEmailInput, config: &ReacherConfig) -> Che
 	}
 
 	let end_time = SystemTime::now();
-	
 
 	CheckEmailOutput {
 		input: to_email.to_string(),

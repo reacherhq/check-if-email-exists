@@ -40,10 +40,7 @@ pub async fn setup_rabbit_mq(config: &WorkerConfig) -> Result<Channel, lapin::Er
 
 	// Set up prefetch (concurrency) limit using qos
 	channel
-		.basic_qos(
-			config.rabbitmq.concurrency,
-			BasicQosOptions::default(),
-		)
+		.basic_qos(config.rabbitmq.concurrency, BasicQosOptions::default())
 		.await?;
 
 	info!(target: LOG_TARGET, queue=?queue_name, "Worker will start consuming messages");
