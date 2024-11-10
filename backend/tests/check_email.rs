@@ -16,9 +16,8 @@
 
 use std::sync::Arc;
 
-use check_if_email_exists::CheckEmailInput;
 use reacher_backend::config::{BackendConfig, ThrottleConfig};
-use reacher_backend::http::{create_routes, REACHER_SECRET_HEADER};
+use reacher_backend::http::{create_routes, CheckEmailRequest, REACHER_SECRET_HEADER};
 use warp::http::StatusCode;
 use warp::test::request;
 
@@ -46,7 +45,7 @@ async fn test_input_foo_bar() {
 		.path("/v0/check_email")
 		.method("POST")
 		.header(REACHER_SECRET_HEADER, "foobar")
-		.json(&serde_json::from_str::<CheckEmailInput>(r#"{"to_email": "foo@bar"}"#).unwrap())
+		.json(&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar"}"#).unwrap())
 		.reply(&create_routes(create_backend_config("foobar"), None))
 		.await;
 
@@ -60,7 +59,7 @@ async fn test_input_foo_bar_baz() {
 		.path("/v0/check_email")
 		.method("POST")
 		.header(REACHER_SECRET_HEADER, "foobar")
-		.json(&serde_json::from_str::<CheckEmailInput>(r#"{"to_email": "foo@bar.baz"}"#).unwrap())
+		.json(&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar.baz"}"#).unwrap())
 		.reply(&create_routes(create_backend_config("foobar"), None))
 		.await;
 
@@ -73,7 +72,7 @@ async fn test_reacher_secret_missing_header() {
 	let resp = request()
 		.path("/v0/check_email")
 		.method("POST")
-		.json(&serde_json::from_str::<CheckEmailInput>(r#"{"to_email": "foo@bar.baz"}"#).unwrap())
+		.json(&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar.baz"}"#).unwrap())
 		.reply(&create_routes(create_backend_config("foobar"), None))
 		.await;
 
@@ -87,7 +86,7 @@ async fn test_reacher_secret_wrong_secret() {
 		.path("/v0/check_email")
 		.method("POST")
 		.header(REACHER_SECRET_HEADER, "barbaz")
-		.json(&serde_json::from_str::<CheckEmailInput>(r#"{"to_email": "foo@bar.baz"}"#).unwrap())
+		.json(&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar.baz"}"#).unwrap())
 		.reply(&create_routes(create_backend_config("foobar"), None))
 		.await;
 
@@ -101,7 +100,7 @@ async fn test_reacher_secret_correct_secret() {
 		.path("/v0/check_email")
 		.method("POST")
 		.header(REACHER_SECRET_HEADER, "foobar")
-		.json(&serde_json::from_str::<CheckEmailInput>(r#"{"to_email": "foo@bar"}"#).unwrap())
+		.json(&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar"}"#).unwrap())
 		.reply(&create_routes(create_backend_config("foobar"), None))
 		.await;
 
@@ -115,7 +114,7 @@ async fn test_reacher_to_mail_empty() {
 		.path("/v0/check_email")
 		.method("POST")
 		.header(REACHER_SECRET_HEADER, "foobar")
-		.json(&serde_json::from_str::<CheckEmailInput>(r#"{"to_email": ""}"#).unwrap())
+		.json(&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": ""}"#).unwrap())
 		.reply(&create_routes(create_backend_config("foobar"), None))
 		.await;
 
@@ -129,7 +128,7 @@ async fn test_reacher_to_mail_missing() {
 		.path("/v0/check_email")
 		.method("POST")
 		.header(REACHER_SECRET_HEADER, "foobar")
-		.json(&serde_json::from_str::<CheckEmailInput>(r#"{}"#).unwrap())
+		.json(&serde_json::from_str::<CheckEmailRequest>(r#"{}"#).unwrap())
 		.reply(&create_routes(create_backend_config("foobar"), None))
 		.await;
 

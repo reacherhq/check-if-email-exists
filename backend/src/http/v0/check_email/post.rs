@@ -17,7 +17,7 @@
 //! This file implements the `POST /v0/check_email` endpoint.
 
 use check_if_email_exists::{check_email, CheckEmailInput, CheckEmailInputProxy, LOG_TARGET};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use warp::{http, Filter};
 
@@ -25,7 +25,7 @@ use crate::config::BackendConfig;
 use crate::http::{check_header, handle_rejection, with_config, ReacherResponseError};
 
 /// The request body for the `POST /v0/check_email` endpoint.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct CheckEmailRequest {
 	pub to_email: String,
 	pub from_email: Option<String>,

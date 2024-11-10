@@ -31,6 +31,8 @@ use warp::{http, reject};
 
 use crate::config::BackendConfig;
 
+pub use v0::check_email::post::CheckEmailRequest;
+
 /// Creates the routes for the HTTP server.
 /// Making it public so that it can be used in tests/check_email.rs.
 pub fn create_routes(
