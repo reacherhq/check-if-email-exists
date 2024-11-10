@@ -17,11 +17,10 @@
 //! This file contains shared logic for checking one email.
 
 use check_if_email_exists::{check_email as ciee_check_email, CheckEmailInput, CheckEmailOutput};
-use warp::Filter;
 
 use crate::config::BackendConfig;
 
-pub fn check_email(mut input: CheckEmailInput, config: &BackendConfig) -> CheckEmailOutput {
+pub async fn check_email(mut input: CheckEmailInput, config: &BackendConfig) -> CheckEmailOutput {
 	input.from_email = config.from_email.clone();
-	ciee_check_email()
+	ciee_check_email(&input, &config.get_reacher_config()).await
 }

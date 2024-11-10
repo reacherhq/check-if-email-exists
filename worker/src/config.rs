@@ -1,3 +1,4 @@
+use check_if_email_exists::SentryConfig;
 use config::Config;
 use serde::de::{self, Deserializer, Visitor};
 use serde::Deserialize;
@@ -11,6 +12,7 @@ pub struct WorkerConfig {
 	pub throttle: ThrottleConfig,
 	pub db: DBConfig,
 	pub webhook: WebhookConfig,
+	pub sentry: SentryConfig,
 }
 
 #[derive(Debug, Deserialize, Clone)]
