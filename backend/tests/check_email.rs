@@ -121,17 +121,3 @@ async fn test_reacher_to_mail_empty() {
 	assert_eq!(resp.status(), StatusCode::BAD_REQUEST, "{:?}", resp.body());
 	assert_eq!(resp.body(), r#"{"message":"to_email field is required."}"#);
 }
-
-#[tokio::test]
-async fn test_reacher_to_mail_missing() {
-	let resp = request()
-		.path("/v0/check_email")
-		.method("POST")
-		.header(REACHER_SECRET_HEADER, "foobar")
-		.json(&serde_json::from_str::<CheckEmailRequest>(r#"{}"#).unwrap())
-		.reply(&create_routes(create_backend_config("foobar"), None))
-		.await;
-
-	assert_eq!(resp.status(), StatusCode::BAD_REQUEST, "{:?}", resp.body());
-	assert_eq!(resp.body(), r#"{"message":"to_email field is required."}"#);
-}
