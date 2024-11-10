@@ -64,8 +64,8 @@ pub struct WebhookConfig {
 /// environment.
 pub fn load_config() -> Result<BackendConfig, config::ConfigError> {
 	let cfg = Config::builder()
-		.add_source(config::File::with_name("worker_config"))
-		.add_source(config::Environment::with_prefix("RCH").separator("_"))
+		.add_source(config::File::with_name("backend_config"))
+		.add_source(config::Environment::with_prefix("RCH"))
 		.build()?;
 
 	let cfg = cfg.try_deserialize::<BackendConfig>()?;
