@@ -19,10 +19,9 @@
 use check_if_email_exists::{check_email, CheckEmailInput, LOG_TARGET};
 use warp::{http, Filter};
 
-use crate::check::check_header;
 use crate::config::BackendConfig;
 use crate::errors;
-use crate::http::with_config;
+use crate::http::{check_header, with_config};
 
 /// The main endpoint handler that implements the logic of this route.
 async fn handler(

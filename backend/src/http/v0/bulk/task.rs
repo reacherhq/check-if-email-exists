@@ -17,11 +17,13 @@
 //! This file implements the `POST /bulk` endpoint.
 
 use check_if_email_exists::{
-	check_email, CheckEmailInput, CheckEmailInputProxy, CheckEmailOutput, Reachable, LOG_TARGET,
+	check_email, config::ReacherConfig, CheckEmailInput, CheckEmailInputProxy, CheckEmailOutput,
+	Reachable, SentryConfig, LOG_TARGET,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres};
 use sqlxmq::{job, CurrentJob};
+use std::env;
 use std::error::Error;
 use tracing::{debug, error};
 use uuid::Uuid;
@@ -158,8 +160,26 @@ pub async fn email_verification_task(
 			current_job.id(),
 		);
 
+		// Currently, for the legacy and deprecated /v0/bulk endpoints, we
+		// don't pass in a BackendConfig to the job. Therefore, we must create
+		// an ad-hoc ReacherConfig here, using the legacy env::var() method.
+		// This is a temporary solution until the /v0/bulk endpoints are
+		// removed.
+		let backend_name = env::var("RCH_BACKEND_NAME").unwrap_or_else(|_| "reacher".into());
+		let sentry_dsn = env::var("RCH_SENTRY_DSN").unwrap_or_else(|_| "".into());
+		let webdriver_addr =
+			env::var("RCH_WEBDRIVER_ADDR").unwrap_or_else(|_| "localhost:9515".into());
+		let config = ReacherConfig {
+			backend_name: backend_name.clone(),
+			webdriver_addr,
+			sentry: SentryConfig {
+				backend_name,
+				dsn: sentry_dsn,
+			},
+		};
+
 		let to_email = check_email_input.to_email.clone();
-		let response = check_email(&check_email_input).await;
+		let response = check_email(&check_email_input, &config).await;
 
 		debug!(
 			target: LOG_TARGET,

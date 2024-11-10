@@ -23,12 +23,11 @@ use sqlx::{Pool, Postgres};
 use tracing::{debug, error};
 use warp::Filter;
 
-use super::{
-	db::with_db,
-	error::BulkError,
-	task::{submit_job, TaskInput},
-};
-use crate::check::check_header;
+use super::db::with_db;
+use super::error::BulkError;
+use super::task::{submit_job, TaskInput};
+use crate::config::BackendConfig;
+use crate::http::check_header;
 
 /// Endpoint request body.
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -134,11 +133,12 @@ async fn create_bulk_request(
 /// The endpoint accepts list of email address and creates
 /// a new job to check them.
 pub fn create_bulk_job(
+	config: &BackendConfig,
 	o: Option<Pool<Postgres>>,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v0" / "bulk")
 		.and(warp::post())
-		.and(check_header())
+		.and(check_header(config))
 		.and(with_db(o))
 		// When accepting a body, we want a JSON body (and to reject huge
 		// payloads)...

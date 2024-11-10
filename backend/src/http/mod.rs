@@ -33,14 +33,14 @@ use super::errors;
 
 /// Creates the routes for the HTTP server.
 /// Making it public so that it can be used in tests/check_email.rs.
-pub fn create_routes(
-	config: &BackendConfig,
+pub fn create_routes<'a>(
+	config: &'a BackendConfig,
 	o: Option<Pool<Postgres>>,
-) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone + 'a {
 	version::get::get_version()
 		.or(v0::check_email::post::post_check_email(config))
 		// The 3 following routes will 404 if o is None.
-		.or(v0::bulk::post::create_bulk_job(o.clone()))
+		.or(v0::bulk::post::create_bulk_job(config, o.clone()))
 		.or(v0::bulk::get::get_bulk_job_status(o.clone()))
 		.or(v0::bulk::results::get_bulk_job_result(o))
 		.recover(errors::handle_rejection)
@@ -89,7 +89,7 @@ pub async fn run_warp_server(
 	Ok(runner)
 }
 
-/// Create a DB pool.
+/// Create a DB pool for the deprecated /v0/bulk endpoints.
 async fn create_db() -> Result<Pool<Postgres>, sqlx::Error> {
 	let pg_conn = env::var("DATABASE_URL").expect("Environment variable DATABASE_URL must be set");
 
@@ -101,6 +101,25 @@ async fn create_db() -> Result<Pool<Postgres>, sqlx::Error> {
 	sqlx::migrate!("./migrations").run(&pool).await?;
 
 	Ok(pool)
+}
+
+/// The header which holds the Reacher backend secret.
+pub const REACHER_SECRET_HEADER: &str = "x-reacher-secret";
+
+/// Warp filter to check that the header secret is correct, if the environment
+/// variable `RCH_HEADER_SECRET`  is set
+pub fn check_header(config: &BackendConfig) -> warp::filters::BoxedFilter<()> {
+	if let Some(secret) = config.header_secret.clone() {
+		if secret.len() == 0 {
+			return warp::any().boxed();
+		}
+
+		let secret: &'static str = Box::leak(Box::new(secret));
+
+		warp::header::exact(REACHER_SECRET_HEADER, secret).boxed()
+	} else {
+		warp::any().boxed()
+	}
 }
 
 /// Warp filter that adds the BackendConfig to the handler.

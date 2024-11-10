@@ -21,25 +21,6 @@ use warp::Filter;
 
 use crate::config::BackendConfig;
 
-/// The header which holds the Reacher backend secret.
-pub const REACHER_SECRET_HEADER: &str = "x-reacher-secret";
-
-/// Warp filter to check that the header secret is correct, if the environment
-/// variable `RCH_HEADER_SECRET`  is set
-pub fn check_header(config: &BackendConfig) -> warp::filters::BoxedFilter<()> {
-	if let Some(secret) = config.header_secret.clone() {
-		if secret.len() == 0 {
-			return warp::any().boxed();
-		}
-
-		let secret: &'static str = Box::leak(Box::new(secret));
-
-		warp::header::exact(REACHER_SECRET_HEADER, secret).boxed()
-	} else {
-		warp::any().boxed()
-	}
-}
-
 pub fn check_email(mut input: CheckEmailInput, config: &BackendConfig) -> CheckEmailOutput {
 	input.from_email = config.from_email.clone();
 	ciee_check_email()
