@@ -2997,7 +2997,7 @@ dependencies = [
  "config",
  "csv",
  "dotenv",
- "futures-lite 2.5.0",
+ "futures",
  "lapin",
  "openssl",
  "reqwest 0.12.5",

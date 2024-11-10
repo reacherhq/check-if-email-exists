@@ -39,7 +39,11 @@ impl CheckEmailRequest {
 			to_email: self.to_email.clone(),
 			from_email: self.from_email.clone().unwrap_or(config.from_email.clone()),
 			hello_name: self.hello_name.clone().unwrap_or(config.hello_name.clone()),
-			proxy: self.proxy.clone(),
+			proxy: self
+				.proxy
+				.as_ref()
+				.or_else(|| config.proxy.as_ref())
+				.cloned(),
 			..Default::default()
 		}
 	}

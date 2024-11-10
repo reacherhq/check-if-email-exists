@@ -1,9 +1,9 @@
-use super::check_email::process_queue_message;
-use super::check_email::WorkerPayload;
+use super::task::process_queue_message;
+use super::task::TaskPayload;
 use crate::config::BackendConfig;
 use crate::config::ThrottleConfig;
 use check_if_email_exists::LOG_TARGET;
-use futures_lite::stream::StreamExt;
+use futures::stream::StreamExt;
 use lapin::{options::*, types::FieldTable, Channel, Connection, ConnectionProperties};
 use sqlx::PgPool;
 use std::sync::Arc;
@@ -12,7 +12,7 @@ use std::time::Instant;
 use tokio::time::sleep;
 use tracing::{error, info};
 
-async fn setup_rabbit_mq(config: Arc<BackendConfig>) -> Result<Channel, lapin::Error> {
+pub async fn setup_rabbit_mq(config: Arc<BackendConfig>) -> Result<Channel, lapin::Error> {
 	let options = ConnectionProperties::default()
 		// Use tokio executor and reactor.
 		.with_executor(tokio_executor_trait::Tokio::current())
@@ -57,9 +57,9 @@ async fn setup_rabbit_mq(config: Arc<BackendConfig>) -> Result<Channel, lapin::E
 pub async fn run_worker(
 	config: Arc<BackendConfig>,
 	pg_pool: PgPool,
+	channel: Arc<Channel>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	let config_clone = config.clone();
-	let channel = Arc::new(setup_rabbit_mq(config_clone).await?);
 	let worker_config = config.must_worker_config();
 
 	let mut consumer = channel
@@ -76,7 +76,7 @@ pub async fn run_worker(
 	// Loop over the incoming messages
 	while let Some(delivery) = consumer.next().await {
 		let delivery = delivery?;
-		let payload = serde_json::from_slice::<WorkerPayload>(&delivery.data)?;
+		let payload = serde_json::from_slice::<TaskPayload>(&delivery.data)?;
 		info!(target: LOG_TARGET, email=payload.input.to_email, "New job");
 
 		// Reset throttle counters if needed

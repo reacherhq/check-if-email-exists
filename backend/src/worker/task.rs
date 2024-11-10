@@ -14,9 +14,10 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use super::db::save_to_db;
 use crate::config::BackendConfig;
-use check_if_email_exists::{check_email as ciee_check_email, CheckEmailInput, CheckEmailOutput};
+
+use super::db::save_to_db;
+use check_if_email_exists::{check_email, CheckEmailInput, CheckEmailOutput};
 use check_if_email_exists::{Reachable, LOG_TARGET};
 use lapin::message::Delivery;
 use lapin::{options::*, BasicProperties, Channel};
@@ -27,38 +28,45 @@ use std::sync::Arc;
 use tracing::{debug, info};
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct WorkerPayload {
+pub struct TaskPayload {
 	pub input: CheckEmailInput,
+	pub webhook: Option<TaskWebhook>,
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct TaskWebhook {
+	pub url: String,
 	pub extra: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Serialize)]
 struct WebhookOutput<'a> {
-	output: &'a CheckEmailOutput,
+	result: &'a CheckEmailOutput,
 	extra: &'a Option<serde_json::Value>,
 }
 
 /// Processes the check email task asynchronously.
-pub async fn process_queue_message(
-	payload: &WorkerPayload,
+pub(crate) async fn process_queue_message(
+	payload: &TaskPayload,
 	delivery: Delivery,
 	channel: Arc<Channel>,
 	pg_pool: PgPool,
 	config: Arc<BackendConfig>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-	let worker_output = check_email(payload, delivery, channel, config.clone()).await;
+	let worker_output =
+		process_queue_message_inner(&payload, delivery, channel, config.clone()).await;
 	save_to_db(&config.backend_name, pg_pool, payload, worker_output).await
 }
 
-async fn check_email(
-	payload: &WorkerPayload,
+async fn process_queue_message_inner(
+	payload: &TaskPayload,
 	delivery: Delivery,
 	channel: Arc<Channel>,
 	config: Arc<BackendConfig>,
 ) -> Result<CheckEmailOutput, Box<dyn std::error::Error + Send + Sync>> {
 	info!(target: LOG_TARGET, email=payload.input.to_email, "Start email verification");
 
-	let output = ciee_check_email(&payload.input, &config.get_reacher_config()).await;
+	let output = check_email(&payload.input, &config.get_reacher_config()).await;
 	let reply_payload = serde_json::to_string(&output)?;
 	let reply_payload = reply_payload.as_bytes();
 
@@ -87,22 +95,22 @@ async fn check_email(
 	}
 
 	// Check if we have a webhook to send the output to.
-	if let Some(webhook_config) = &config.must_worker_config().webhook {
+	if let Some(webhook) = &payload.webhook {
 		let webhook_output = WebhookOutput {
-			output: &output,
-			extra: &payload.extra,
+			result: &output,
+			extra: &webhook.extra,
 		};
 
 		let client = reqwest::Client::new();
 		let res = client
-			.post(webhook_config.url.clone())
+			.post(&webhook.url)
 			.json(&webhook_output)
 			.header("x-reacher-secret", std::env::var("RCH_HEADER_SECRET")?)
 			.send()
 			.await?
 			.text()
 			.await?;
-		debug!(target: LOG_TARGET, email=?webhook_output.output.input,res=?res, "Received webhook response");
+		debug!(target: LOG_TARGET, email=?webhook_output.result.input,res=?res, "Received webhook response");
 	}
 
 	let is_reachable = output.is_reachable.to_owned();

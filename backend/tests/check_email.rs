@@ -33,12 +33,14 @@ fn create_backend_config(header_secret: &str) -> Arc<BackendConfig> {
 		http_host: "localhost".into(),
 		http_port: 8080,
 		header_secret: Some(header_secret.to_string()),
+		proxy: None,
 		worker: Default::default(),
 		sentry: None,
 	})
 }
 
 #[tokio::test]
+#[cfg(not(feature = "worker"))]
 async fn test_input_foo_bar() {
 	let resp = request()
 		.path("/v0/check_email")
@@ -53,6 +55,7 @@ async fn test_input_foo_bar() {
 }
 
 #[tokio::test]
+#[cfg(not(feature = "worker"))]
 async fn test_input_foo_bar_baz() {
 	let resp = request()
 		.path("/v0/check_email")
@@ -67,6 +70,7 @@ async fn test_input_foo_bar_baz() {
 }
 
 #[tokio::test]
+#[cfg(not(feature = "worker"))]
 async fn test_reacher_secret_missing_header() {
 	let resp = request()
 		.path("/v0/check_email")
@@ -80,6 +84,7 @@ async fn test_reacher_secret_missing_header() {
 }
 
 #[tokio::test]
+#[cfg(not(feature = "worker"))]
 async fn test_reacher_secret_wrong_secret() {
 	let resp = request()
 		.path("/v0/check_email")
@@ -94,6 +99,7 @@ async fn test_reacher_secret_wrong_secret() {
 }
 
 #[tokio::test]
+#[cfg(not(feature = "worker"))]
 async fn test_reacher_secret_correct_secret() {
 	let resp = request()
 		.path("/v0/check_email")
@@ -108,6 +114,7 @@ async fn test_reacher_secret_correct_secret() {
 }
 
 #[tokio::test]
+#[cfg(not(feature = "worker"))]
 async fn test_reacher_to_mail_empty() {
 	let resp = request()
 		.path("/v0/check_email")

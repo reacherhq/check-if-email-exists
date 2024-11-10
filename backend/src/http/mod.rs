@@ -15,9 +15,12 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 mod v0;
+mod v1;
 mod version;
 
 use check_if_email_exists::LOG_TARGET;
+#[cfg(feature = "worker")]
+use lapin::Channel;
 use serde::Serialize;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres};
@@ -33,19 +36,28 @@ use crate::config::BackendConfig;
 
 pub use v0::check_email::post::CheckEmailRequest;
 
-/// Creates the routes for the HTTP server.
-/// Making it public so that it can be used in tests/check_email.rs.
 pub fn create_routes(
 	config: Arc<BackendConfig>,
 	o: Option<Pool<Postgres>>,
+	#[cfg(feature = "worker")] channel: Arc<Channel>,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-	version::get::get_version()
+	let t = version::get::get_version()
 		.or(v0::check_email::post::post_check_email(config.clone()))
 		// The 3 following routes will 404 if o is None.
-		.or(v0::bulk::post::create_bulk_job(config, o.clone()))
+		.or(v0::bulk::post::create_bulk_job(config.clone(), o.clone()))
 		.or(v0::bulk::get::get_bulk_job_status(o.clone()))
-		.or(v0::bulk::results::get_bulk_job_result(o))
-		.recover(handle_rejection)
+		.or(v0::bulk::results::get_bulk_job_result(o.clone()));
+
+	#[cfg(feature = "worker")]
+	{
+		t.or(v1::bulk::post::create_bulk_job(config, channel))
+			.recover(handle_rejection)
+	}
+
+	#[cfg(not(feature = "worker"))]
+	{
+		t.recover(handle_rejection)
+	}
 }
 
 /// Runs the Warp server.
@@ -57,6 +69,7 @@ pub fn create_routes(
 /// keep it alive.
 pub async fn run_warp_server(
 	config: Arc<BackendConfig>,
+	#[cfg(feature = "worker")] channel: Arc<Channel>,
 ) -> Result<Option<JobRunnerHandle>, Box<dyn std::error::Error + Send + Sync>> {
 	let host = config
 		.http_host
@@ -82,6 +95,9 @@ pub async fn run_warp_server(
 		(None, None)
 	};
 
+	#[cfg(feature = "worker")]
+	let routes = create_routes(config.clone(), db, channel);
+	#[cfg(not(feature = "worker"))]
 	let routes = create_routes(config.clone(), db);
 
 	info!(target: LOG_TARGET, host=?host,port=?port, "Server is listening");
