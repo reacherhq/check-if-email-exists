@@ -27,15 +27,18 @@ use sqlxmq::JobRunnerHandle;
 use tracing::info;
 use warp::Filter;
 
+use crate::config::BackendConfig;
+
 use super::errors;
 
 /// Creates the routes for the HTTP server.
 /// Making it public so that it can be used in tests/check_email.rs.
 pub fn create_routes(
+	config: &BackendConfig,
 	o: Option<Pool<Postgres>>,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	version::get::get_version()
-		.or(v0::check_email::post::post_check_email())
+		.or(v0::check_email::post::post_check_email(config))
 		// The 3 following routes will 404 if o is None.
 		.or(v0::bulk::post::create_bulk_job(o.clone()))
 		.or(v0::bulk::get::get_bulk_job_status(o.clone()))
@@ -51,17 +54,21 @@ pub fn create_routes(
 /// job listener is enabled. The handle can be used to stop the listener or to
 /// keep it alive.
 pub async fn run_warp_server(
+	config: &BackendConfig,
 ) -> Result<Option<JobRunnerHandle>, Box<dyn std::error::Error + Send + Sync>> {
-	let host = env::var("RCH_HTTP_HOST")
-		.unwrap_or_else(|_| "127.0.0.1".into())
+	let host = config
+		.http_host
 		.parse::<IpAddr>()
-		.expect("Environment variable RCH_HTTP_HOST is malformed.");
+		.expect(format!("Invalid host: {}", config.http_host).as_str());
+	// For backwards compatibility, we allow the port to be set via the
+	// environment variable PORT, instead of the new configuration file. The
+	// PORT environment variable takes precedence.
 	let port = env::var("PORT")
 		.map(|port: String| {
 			port.parse::<u16>()
-				.expect("Environment variable PORT is malformed.")
+				.expect(format!("Invalid port: {}", port).as_str())
 		})
-		.unwrap_or(8080);
+		.unwrap_or(config.http_port);
 
 	// Run bulk job listener.
 	let is_bulk_enabled = env::var("RCH_ENABLE_BULK").unwrap_or_else(|_| "0".into()) == "1";
@@ -73,7 +80,7 @@ pub async fn run_warp_server(
 		(None, None)
 	};
 
-	let routes = create_routes(db);
+	let routes = create_routes(config, db);
 
 	info!(target: LOG_TARGET, host=?host,port=?port, "Server is listening");
 	warp::serve(routes).run((host, port)).await;
@@ -84,22 +91,21 @@ pub async fn run_warp_server(
 
 /// Create a DB pool.
 async fn create_db() -> Result<Pool<Postgres>, sqlx::Error> {
-	let pg_conn =
-		env::var("DATABASE_URL").expect("Environment variable DATABASE_URL should be set");
-	let pg_max_conn = env::var("RCH_DATABASE_MAX_CONNECTIONS").map_or(5, |var| {
-		var.parse::<u32>()
-			.expect("Environment variable RCH_DATABASE_MAX_CONNECTIONS should parse to u32")
-	});
+	let pg_conn = env::var("DATABASE_URL").expect("Environment variable DATABASE_URL must be set");
 
 	// create connection pool with database
 	// connection pool internally the shared db connection
 	// with arc so it can safely be cloned and shared across threads
-	let pool = PgPoolOptions::new()
-		.max_connections(pg_max_conn)
-		.connect(pg_conn.as_str())
-		.await?;
+	let pool = PgPoolOptions::new().connect(pg_conn.as_str()).await?;
 
 	sqlx::migrate!("./migrations").run(&pool).await?;
 
 	Ok(pool)
+}
+
+/// Warp filter that adds the BackendConfig to the handler.
+pub fn with_config(
+	config: &BackendConfig,
+) -> impl Filter<Extract = (&BackendConfig,), Error = std::convert::Infallible> + Clone {
+	warp::any().map(move || config)
 }

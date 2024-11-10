@@ -20,6 +20,7 @@
 use check_if_email_exists::{setup_sentry, LOG_TARGET};
 use tracing::info;
 
+use reacher_backend::config::load_config;
 use reacher_backend::http::run_warp_server;
 
 const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -30,11 +31,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	// Initialize logging.
 	tracing_subscriber::fmt::init();
 	info!(target: LOG_TARGET, version=?CARGO_PKG_VERSION, "Running Reacher");
+	let config = load_config()?;
 
 	// Setup sentry bug tracking.
-	let _guard: sentry::ClientInitGuard = setup_sentry();
+	let _guard: sentry::ClientInitGuard = setup_sentry(&config.sentry);
 
-	let _bulk_job_runner = run_warp_server().await?;
+	let _bulk_job_runner = run_warp_server(&config).await?;
 
 	Ok(())
 }

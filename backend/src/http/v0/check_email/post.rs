@@ -20,10 +20,15 @@ use check_if_email_exists::{check_email, CheckEmailInput, LOG_TARGET};
 use warp::{http, Filter};
 
 use crate::check::check_header;
+use crate::config::BackendConfig;
 use crate::errors;
+use crate::http::with_config;
 
 /// The main endpoint handler that implements the logic of this route.
-async fn handler(body: CheckEmailInput) -> Result<impl warp::Reply, warp::Rejection> {
+async fn handler(
+	config: &BackendConfig,
+	body: CheckEmailInput,
+) -> Result<impl warp::Reply, warp::Rejection> {
 	// The to_email field must be present
 	if body.to_email.is_empty() {
 		Err(warp::reject::custom(errors::ReacherResponseError {
@@ -32,16 +37,20 @@ async fn handler(body: CheckEmailInput) -> Result<impl warp::Reply, warp::Reject
 		}))
 	} else {
 		// Run the future to check an email.
-		Ok(warp::reply::json(&check_email(&body).await))
+		Ok(warp::reply::json(
+			&check_email(&body, &config.get_reacher_config()).await,
+		))
 	}
 }
 
 /// Create the `POST /check_email` endpoint.
-pub fn post_check_email(
-) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+pub fn post_check_email<'a>(
+	config: &'a BackendConfig,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone + 'a {
 	warp::path!("v0" / "check_email")
 		.and(warp::post())
-		.and(check_header())
+		.and(check_header(config))
+		.and(with_config(config))
 		// When accepting a body, we want a JSON body (and to reject huge
 		// payloads)...
 		.and(warp::body::content_length_limit(1024 * 16))

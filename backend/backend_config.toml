@@ -1,0 +1,24 @@
+# Backend configuration
+
+# Backend name to identify the backend
+name = "backend-dev"
+# Backend host
+http_host = "localhost"
+# Backend port
+http_port = 8080
+# Shared secret between a trusted client and the backend, that must be present
+# in the `x-reacher-secret` header of all incoming requests.
+# header_secret = "my-secret"
+# The email to use during the MAIL FROM command in the SMTP conversation.
+from_email = "reacher@gmail.com"
+# The name to use during the EHLO/HELO command in the SMTP conversation.
+hello_name = "reacher"
+
+# Throttle the maximum number of requests per second, per minute, per hour, an
+# per day for this worker.
+# All fields are optional, comment them out to disable the limit.
+[throttle]
+# max_requests_per_second = 20
+max_requests_per_minute = 100
+# max_requests_per_hour = 1000
+max_requests_per_day = 20000

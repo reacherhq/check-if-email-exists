@@ -22,6 +22,7 @@
 
 use async_smtp::smtp::error::Error as AsyncSmtpError;
 use sentry::protocol::{Event, Exception, Level, Values};
+use serde::Deserialize;
 use tracing::{debug, info};
 
 use crate::misc::MiscError;
@@ -31,7 +32,7 @@ use crate::{smtp::SmtpError, CheckEmailOutput};
 
 const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default, Deserialize)]
 pub struct SentryConfig {
 	pub dsn: String,
 	pub backend_name: String,
