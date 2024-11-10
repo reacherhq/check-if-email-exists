@@ -131,7 +131,7 @@ mod tests {
 		// It should not error.
 		for _ in 0..10 {
 			// This email does not exist.
-			let res = check_password_recovery(&"test42134@hotmail.com", "http://localhost:9515")
+			let res = check_password_recovery("test42134@hotmail.com", "http://localhost:9515")
 				.await
 				.unwrap();
 			assert!(!res.is_deliverable);

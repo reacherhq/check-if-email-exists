@@ -15,6 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 pub mod check;
+pub mod config;
 mod errors;
 pub mod http;
 

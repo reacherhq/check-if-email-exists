@@ -14,5 +14,26 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-/// The target where to log check-if-email-exists logs.
-pub const LOG_TARGET: &str = "reacher";
+use crate::SentryConfig;
+
+/// Configuration needed to run Reacher.
+#[derive(Debug)]
+pub struct ReacherConfig {
+	/// Identifier for the service currently running Reacher.
+	pub backend_name: String,
+	/// The address of the WebDriver server.
+	pub webdriver_addr: String,
+	#[cfg(feature = "sentry")]
+	pub sentry: Option<SentryConfig>,
+}
+
+impl Default for ReacherConfig {
+	fn default() -> Self {
+		ReacherConfig {
+			backend_name: "backend-dev".into(),
+			webdriver_addr: "http://localhost:9515".into(),
+			#[cfg(feature = "sentry")]
+			sentry: Default::default(),
+		}
+	}
+}

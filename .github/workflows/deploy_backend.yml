@@ -19,7 +19,7 @@ jobs:
         uses: elgohr/Publish-Docker-Github-Action@v5
         with:
           name: reacherhq/backend
-          dockerfile: docker/Dockerfile.backend
+          dockerfile: backend/Dockerfile
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
           tags: "${{ steps.vars.outputs.GITHUB_TAG }},beta"

@@ -17,7 +17,7 @@
 mod connect;
 mod error;
 mod gmail;
-#[cfg(feature = "headless")]
+
 mod headless;
 mod http_api;
 mod outlook;
@@ -25,14 +25,14 @@ mod parser;
 mod yahoo;
 
 use std::default::Default;
-use std::env;
 
 use async_smtp::EmailAddress;
 use hickory_proto::rr::Name;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-	util::input_output::CheckEmailInput, GmailVerifMethod, HotmailVerifMethod, YahooVerifMethod,
+	config::ReacherConfig, util::input_output::CheckEmailInput, GmailVerifMethod,
+	HotmailVerifMethod, YahooVerifMethod,
 };
 use connect::check_smtp_with_retry;
 pub use error::*;
@@ -96,6 +96,7 @@ pub async fn check_smtp(
 	port: u16,
 	domain: &str,
 	input: &CheckEmailInput,
+	config: &ReacherConfig,
 ) -> (Result<SmtpDetails, SmtpError>, SmtpDebug) {
 	let host = host.to_string();
 	let to_email_str = to_email.to_string();
@@ -111,15 +112,9 @@ pub async fn check_smtp(
 		);
 	}
 
-	let webdriver_addr = env::var("RCH_WEBDRIVER_ADDR");
-
 	if is_hotmail(&host) {
-		match (
-			&input.hotmail_verif_method,
-			webdriver_addr,
-			is_microsoft365(&host),
-		) {
-			(HotmailVerifMethod::OneDriveApi, _, true) => {
+		match (&input.hotmail_verif_method, is_microsoft365(&host)) {
+			(HotmailVerifMethod::OneDriveApi, true) => {
 				match outlook::microsoft365::check_microsoft365_api(to_email, input).await {
 					Ok(Some(smtp_details)) => {
 						return {
@@ -143,12 +138,15 @@ pub async fn check_smtp(
 					_ => {}
 				}
 			}
-			#[cfg(feature = "headless")]
-			(HotmailVerifMethod::Headless, Ok(a), false) => {
+
+			(HotmailVerifMethod::Headless, false) => {
 				return (
-					outlook::headless::check_password_recovery(to_email.to_string().as_str(), &a)
-						.await
-						.map_err(|err| err.into()),
+					outlook::headless::check_password_recovery(
+						to_email.to_string().as_str(),
+						&config.webdriver_addr,
+					)
+					.await
+					.map_err(|err| err.into()),
 					SmtpDebug {
 						verif_method: VerifMethod::Headless,
 					},
@@ -168,8 +166,8 @@ pub async fn check_smtp(
 			);
 		};
 	} else if is_yahoo(&host) {
-		match (&input.yahoo_verif_method, webdriver_addr) {
-			(YahooVerifMethod::Api, _) => {
+		match &input.yahoo_verif_method {
+			YahooVerifMethod::Api => {
 				return (
 					yahoo::check_api(&to_email_str, input)
 						.await
@@ -179,10 +177,10 @@ pub async fn check_smtp(
 					},
 				)
 			}
-			#[cfg(feature = "headless")]
-			(YahooVerifMethod::Headless, Ok(a)) => {
+
+			YahooVerifMethod::Headless => {
 				return (
-					yahoo::check_headless(&to_email_str, &a)
+					yahoo::check_headless(&to_email_str, &config.webdriver_addr)
 						.await
 						.map_err(|e| e.into()),
 					SmtpDebug {
@@ -208,6 +206,8 @@ pub async fn check_smtp(
 
 #[cfg(test)]
 mod tests {
+	use crate::config::ReacherConfig;
+
 	use super::{check_smtp, CheckEmailInput, SmtpConnection, SmtpError};
 	use async_smtp::{smtp::error::Error, EmailAddress};
 	use hickory_proto::rr::Name;
@@ -223,9 +223,16 @@ mod tests {
 		let mut input = CheckEmailInput::default();
 		input.set_gmail_verif_method(crate::GmailVerifMethod::Smtp);
 		input.set_smtp_timeout(Some(Duration::from_millis(1)));
+		let config = ReacherConfig::default();
 
-		let (res, smtp_debug) =
-			runtime.block_on(check_smtp(&to_email, &host, 25, "gmail.com", &input));
+		let (res, smtp_debug) = runtime.block_on(check_smtp(
+			&to_email,
+			&host,
+			25,
+			"gmail.com",
+			&input,
+			&config,
+		));
 		assert_eq!(
 			smtp_debug.verif_method,
 			super::VerifMethod::Smtp(SmtpConnection {
@@ -248,9 +255,16 @@ mod tests {
 		let host = Name::from_str("mx01.mail.icloud.com.").unwrap();
 		let mut input = CheckEmailInput::default();
 		input.set_skipped_domains(vec![".mail.icloud.com.".into()]);
+		let config = ReacherConfig::default();
 
-		let (res, smtp_debug) =
-			runtime.block_on(check_smtp(&to_email, &host, 25, "icloud.com", &input));
+		let (res, smtp_debug) = runtime.block_on(check_smtp(
+			&to_email,
+			&host,
+			25,
+			"icloud.com",
+			&input,
+			&config,
+		));
 		assert_eq!(smtp_debug.verif_method, super::VerifMethod::Skipped);
 		match res {
 			Err(SmtpError::SkippedDomain(_)) => (),

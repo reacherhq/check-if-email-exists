@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::util::constants::LOG_TARGET;
+use crate::LOG_TARGET;
 use pwned::api::PwnedBuilder;
 
 /// Check if the email has been found in any breach or paste using the

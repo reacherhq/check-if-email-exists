@@ -14,8 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::util::constants::LOG_TARGET;
-use md5;
+use crate::LOG_TARGET;
 use md5::Digest;
 
 const API_BASE_URL: &str = "https://www.gravatar.com/avatar/";

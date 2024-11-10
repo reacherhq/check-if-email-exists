@@ -1,4 +1,3 @@
-#[cfg(feature = "headless")]
 pub mod headless;
 pub mod microsoft365;
 

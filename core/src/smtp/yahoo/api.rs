@@ -15,9 +15,10 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use super::YahooError;
+use crate::LOG_TARGET;
 use crate::{
 	smtp::{http_api::create_client, SmtpDetails},
-	util::{constants::LOG_TARGET, input_output::CheckEmailInput},
+	util::input_output::CheckEmailInput,
 };
 use regex::Regex;
 use serde::{Deserialize, Serialize};

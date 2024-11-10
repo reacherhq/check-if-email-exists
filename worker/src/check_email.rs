@@ -16,6 +16,7 @@
 
 use crate::config::WorkerConfig;
 use crate::db::save_to_db;
+use check_if_email_exists::config::ReacherConfig;
 use check_if_email_exists::{check_email, CheckEmailInput, CheckEmailOutput};
 use check_if_email_exists::{Reachable, LOG_TARGET};
 use lapin::message::Delivery;
@@ -46,7 +47,7 @@ pub async fn process_queue_message(
 	pg_pool: PgPool,
 	config: WorkerConfig,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-	let worker_output = process_check_email(&payload, delivery, channel, config.clone()).await;
+	let worker_output = process_check_email(payload, delivery, channel, config.clone()).await;
 	save_to_db(pg_pool, config, payload, worker_output).await
 }
 
@@ -58,7 +59,11 @@ async fn process_check_email(
 ) -> Result<CheckEmailOutput, Box<dyn std::error::Error + Send + Sync>> {
 	info!(target: LOG_TARGET, email=payload.input.to_email, "Start email verification");
 
-	let output = check_email(&payload.input).await;
+	let reacher_config = ReacherConfig {
+		backend_name: config.name.clone(),
+		..Default::default()
+	};
+	let output = check_email(&payload.input, &reacher_config).await;
 	let reply_payload = serde_json::to_string(&output)?;
 	let reply_payload = reply_payload.as_bytes();
 

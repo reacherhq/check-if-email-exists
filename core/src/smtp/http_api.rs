@@ -14,7 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::util::{constants::LOG_TARGET, input_output::CheckEmailInput};
+use crate::util::input_output::CheckEmailInput;
+use crate::LOG_TARGET;
 use reqwest::Error as ReqwestError;
 
 /// Helper function to create a reqwest client, with optional proxy.

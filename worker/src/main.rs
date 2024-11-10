@@ -30,10 +30,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	tracing_subscriber::fmt::init();
 	info!(target: LOG_TARGET, version=?CARGO_PKG_VERSION, "Running Reacher Worker");
 
-	// Setup sentry bug tracking.
-	let _guard: sentry::ClientInitGuard = setup_sentry();
-
 	let config = load_config()?;
+
+	// Setup sentry bug tracking.
+	let _guard: sentry::ClientInitGuard = setup_sentry(&config.sentry);
+
 	let pg_pool = create_db(&config).await?;
 
 	run_worker(config, pg_pool).await

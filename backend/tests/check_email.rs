@@ -14,27 +14,40 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::env;
+use std::sync::Arc;
 
 use check_if_email_exists::CheckEmailInput;
-use reacher_backend::check::REACHER_SECRET_HEADER;
-use reacher_backend::http::create_routes;
+use reacher_backend::config::{BackendConfig, ThrottleConfig};
+use reacher_backend::http::{create_routes, REACHER_SECRET_HEADER};
 use warp::http::StatusCode;
 use warp::test::request;
 
 const FOO_BAR_RESPONSE: &str = r#"{"input":"foo@bar","is_reachable":"invalid","misc":{"is_disposable":false,"is_role_account":false,"gravatar_url":null,"haveibeenpwned":null},"mx":{"accepts_mail":false,"records":[]},"smtp":{"can_connect_smtp":false,"has_full_inbox":false,"is_catch_all":false,"is_deliverable":false,"is_disabled":false},"syntax":{"address":null,"domain":"","is_valid_syntax":false,"username":"","normalized_email":null,"suggestion":null}"#;
 const FOO_BAR_BAZ_RESPONSE: &str = r#"{"input":"foo@bar.baz","is_reachable":"invalid","misc":{"is_disposable":false,"is_role_account":false,"gravatar_url":null,"haveibeenpwned":null},"mx":{"accepts_mail":false,"records":[]},"smtp":{"can_connect_smtp":false,"has_full_inbox":false,"is_catch_all":false,"is_deliverable":false,"is_disabled":false},"syntax":{"address":"foo@bar.baz","domain":"bar.baz","is_valid_syntax":true,"username":"foo","normalized_email":"foo@bar.baz","suggestion":null}"#;
 
+fn create_backend_config(header_secret: &str) -> Arc<BackendConfig> {
+	Arc::new(BackendConfig {
+		backend_name: "reacher-test".into(),
+		from_email: "test".into(),
+		hello_name: "test".into(),
+		webdriver_addr: "localhost:9515".into(),
+		http_host: "localhost".into(),
+		http_port: 8080,
+		header_secret: Some(header_secret.to_string()),
+		throttle: ThrottleConfig::new_without_throttle(),
+		sentry: None,
+		webhook: None,
+	})
+}
+
 #[tokio::test]
 async fn test_input_foo_bar() {
-	env::set_var("RCH_HEADER_SECRET", "foobar");
-
 	let resp = request()
 		.path("/v0/check_email")
 		.method("POST")
 		.header(REACHER_SECRET_HEADER, "foobar")
 		.json(&serde_json::from_str::<CheckEmailInput>(r#"{"to_email": "foo@bar"}"#).unwrap())
-		.reply(&create_routes(None))
+		.reply(&create_routes(create_backend_config("foobar"), None))
 		.await;
 
 	assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
@@ -43,14 +56,12 @@ async fn test_input_foo_bar() {
 
 #[tokio::test]
 async fn test_input_foo_bar_baz() {
-	env::set_var("RCH_HEADER_SECRET", "foobar");
-
 	let resp = request()
 		.path("/v0/check_email")
 		.method("POST")
 		.header(REACHER_SECRET_HEADER, "foobar")
 		.json(&serde_json::from_str::<CheckEmailInput>(r#"{"to_email": "foo@bar.baz"}"#).unwrap())
-		.reply(&create_routes(None))
+		.reply(&create_routes(create_backend_config("foobar"), None))
 		.await;
 
 	assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
@@ -59,13 +70,11 @@ async fn test_input_foo_bar_baz() {
 
 #[tokio::test]
 async fn test_reacher_secret_missing_header() {
-	env::set_var("RCH_HEADER_SECRET", "foobar");
-
 	let resp = request()
 		.path("/v0/check_email")
 		.method("POST")
 		.json(&serde_json::from_str::<CheckEmailInput>(r#"{"to_email": "foo@bar.baz"}"#).unwrap())
-		.reply(&create_routes(None))
+		.reply(&create_routes(create_backend_config("foobar"), None))
 		.await;
 
 	assert_eq!(resp.status(), StatusCode::BAD_REQUEST, "{:?}", resp.body());
@@ -74,14 +83,12 @@ async fn test_reacher_secret_missing_header() {
 
 #[tokio::test]
 async fn test_reacher_secret_wrong_secret() {
-	env::set_var("RCH_HEADER_SECRET", "foobar");
-
 	let resp = request()
 		.path("/v0/check_email")
 		.method("POST")
 		.header(REACHER_SECRET_HEADER, "barbaz")
 		.json(&serde_json::from_str::<CheckEmailInput>(r#"{"to_email": "foo@bar.baz"}"#).unwrap())
-		.reply(&create_routes(None))
+		.reply(&create_routes(create_backend_config("foobar"), None))
 		.await;
 
 	assert_eq!(resp.status(), StatusCode::BAD_REQUEST, "{:?}", resp.body());
@@ -90,14 +97,12 @@ async fn test_reacher_secret_wrong_secret() {
 
 #[tokio::test]
 async fn test_reacher_secret_correct_secret() {
-	env::set_var("RCH_HEADER_SECRET", "foobar");
-
 	let resp = request()
 		.path("/v0/check_email")
 		.method("POST")
 		.header(REACHER_SECRET_HEADER, "foobar")
 		.json(&serde_json::from_str::<CheckEmailInput>(r#"{"to_email": "foo@bar"}"#).unwrap())
-		.reply(&create_routes(None))
+		.reply(&create_routes(create_backend_config("foobar"), None))
 		.await;
 
 	assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
@@ -106,14 +111,12 @@ async fn test_reacher_secret_correct_secret() {
 
 #[tokio::test]
 async fn test_reacher_to_mail_empty() {
-	env::set_var("RCH_HEADER_SECRET", "foobar");
-
 	let resp = request()
 		.path("/v0/check_email")
 		.method("POST")
 		.header(REACHER_SECRET_HEADER, "foobar")
 		.json(&serde_json::from_str::<CheckEmailInput>(r#"{"to_email": ""}"#).unwrap())
-		.reply(&create_routes(None))
+		.reply(&create_routes(create_backend_config("foobar"), None))
 		.await;
 
 	assert_eq!(resp.status(), StatusCode::BAD_REQUEST, "{:?}", resp.body());
@@ -122,14 +125,12 @@ async fn test_reacher_to_mail_empty() {
 
 #[tokio::test]
 async fn test_reacher_to_mail_missing() {
-	env::set_var("RCH_HEADER_SECRET", "foobar");
-
 	let resp = request()
 		.path("/v0/check_email")
 		.method("POST")
 		.header(REACHER_SECRET_HEADER, "foobar")
 		.json(&serde_json::from_str::<CheckEmailInput>(r#"{}"#).unwrap())
-		.reply(&create_routes(None))
+		.reply(&create_routes(create_backend_config("foobar"), None))
 		.await;
 
 	assert_eq!(resp.status(), StatusCode::BAD_REQUEST, "{:?}", resp.body());

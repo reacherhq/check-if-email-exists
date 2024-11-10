@@ -246,7 +246,7 @@ dependencies = [
  "async-task",
  "concurrent-queue",
  "fastrand 2.1.0",
- "futures-lite 2.3.0",
+ "futures-lite 2.5.0",
  "slab",
 ]
 
@@ -261,15 +261,15 @@ dependencies = [
  "async-io 2.3.3",
  "async-lock 3.4.0",
  "blocking",
- "futures-lite 2.3.0",
+ "futures-lite 2.5.0",
  "once_cell",
 ]
 
 [[package]]
 name = "async-global-executor-trait"
-version = "2.1.0"
+version = "2.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "33dd14c5a15affd2abcff50d84efd4009ada28a860f01c14f9d654f3e81b3f75"
+checksum = "80f19936c1a84fb48ceb8899b642d2a72572587d1021cc561bfb24de9f33ee89"
 dependencies = [
  "async-global-executor",
  "async-trait",
@@ -306,7 +306,7 @@ dependencies = [
  "cfg-if",
  "concurrent-queue",
  "futures-io",
- "futures-lite 2.3.0",
+ "futures-lite 2.5.0",
  "parking",
  "polling 3.7.2",
  "rustix 0.38.34",
@@ -524,7 +524,7 @@ dependencies = [
  "async-channel",
  "async-task",
  "futures-io",
- "futures-lite 2.3.0",
+ "futures-lite 2.5.0",
  "piper",
 ]
 
@@ -581,6 +581,7 @@ dependencies = [
  "async-recursion",
  "async-smtp",
  "chrono",
+ "config",
  "fantoccini",
  "fast-socks5 0.9.6",
  "futures",
@@ -1172,9 +1173,9 @@ dependencies = [
 
 [[package]]
 name = "executor-trait"
-version = "2.1.0"
+version = "2.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a1052dd43212a7777ec6a69b117da52f5e52f07aec47d00c1a2b33b85d06b08"
+checksum = "13c39dff9342e4e0e16ce96be751eb21a94e94a87bb2f6e63ad1961c2ce109bf"
 dependencies = [
  "async-trait",
 ]
@@ -1378,9 +1379,9 @@ dependencies = [
 
 [[package]]
 name = "futures-lite"
-version = "2.3.0"
+version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "52527eb5074e35e9339c6b4e8d12600c7128b68fb25dcb9fa9dec18f7c25f3a5"
+checksum = "cef40d21ae2c515b51041df9ed313ed21e572df340ea58a922a0aefe7e8891a1"
 dependencies = [
  "fastrand 2.1.0",
  "futures-core",
@@ -2926,6 +2927,7 @@ version = "0.7.0"
 dependencies = [
  "async-smtp",
  "check-if-email-exists",
+ "config",
  "csv",
  "dotenv",
  "openssl",
@@ -2948,7 +2950,7 @@ dependencies = [
  "async-smtp",
  "check-if-email-exists",
  "config",
- "futures-lite 2.3.0",
+ "futures-lite 2.5.0",
  "lapin",
  "openssl",
  "reqwest 0.12.5",
@@ -4132,9 +4134,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-executor-trait"
-version = "2.1.1"
+version = "2.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "802ccf58e108fe16561f35348fabe15ff38218968f033d587e399a84937533cc"
+checksum = "96a1593beae7759f592e1100c5997fe9e9ebf4b5968062f1fbcd807989cd1b79"
 dependencies = [
  "async-trait",
  "executor-trait",

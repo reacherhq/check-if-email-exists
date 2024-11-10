@@ -35,6 +35,7 @@
 //!
 //! ```rust
 //! use check_if_email_exists::{check_email, CheckEmailInput, CheckEmailInputProxy};
+//! use check_if_email_exists::config::ReacherConfig;
 //!
 //! async fn check() {
 //!     // Let's say we want to test the deliverability of someone@gmail.com.
@@ -53,8 +54,14 @@
 //!             password: None
 //!     });
 //!
+//!     // We also need to set some configuration parameters.
+//!     let config = ReacherConfig {
+//!     	backend_name: "my-backend".into(),
+//! 		..Default::default()
+//!     };
+//!
 //!     // Verify this input, using async/await syntax.
-//!     let result = check_email(&input).await;
+//!     let result = check_email(&input, &config).await;
 //!
 //!     // `result` is a `Vec<CheckEmailOutput>`, where the CheckEmailOutput
 //!     // struct contains all information about one email.
@@ -62,6 +69,7 @@
 //! }
 //! ```
 
+pub mod config;
 mod haveibeenpwned;
 pub mod misc;
 pub mod mx;
@@ -70,6 +78,7 @@ pub mod smtp;
 pub mod syntax;
 mod util;
 
+use config::ReacherConfig;
 use hickory_proto::rr::rdata::MX;
 use misc::{check_misc, MiscDetails};
 use mx::check_mx;
@@ -77,12 +86,14 @@ use rand::Rng;
 use smtp::{check_smtp, SmtpDetails, SmtpError};
 use std::time::{Duration, SystemTime};
 use syntax::{check_syntax, get_similar_mail_provider};
-pub use util::constants::LOG_TARGET;
 pub use util::input_output::*;
 #[cfg(feature = "sentry")]
 pub use util::sentry::*;
 
 use crate::rules::{has_rule, Rule};
+
+/// The target where to log check-if-email-exists logs.
+pub const LOG_TARGET: &str = "reacher";
 
 /// Given an email's misc and smtp details, calculate an estimate of our
 /// confidence on how reachable the email is.
@@ -115,7 +126,7 @@ fn calculate_reachable(misc: &MiscDetails, smtp: &Result<SmtpDetails, SmtpError>
 ///
 /// Returns a `CheckEmailOutput` output, whose `is_reachable` field is one of
 /// `Safe`, `Invalid`, `Risky` or `Unknown`.
-pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
+pub async fn check_email(input: &CheckEmailInput, config: &ReacherConfig) -> CheckEmailOutput {
 	let start_time = SystemTime::now();
 	let to_email = &input.to_email;
 
@@ -240,6 +251,7 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		input.smtp_port,
 		my_syntax.domain.as_ref(),
 		input,
+		config,
 	)
 	.await;
 
@@ -248,7 +260,8 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 	}
 
 	let end_time = SystemTime::now();
-	let res = CheckEmailOutput {
+
+	CheckEmailOutput {
 		input: to_email.to_string(),
 		is_reachable: calculate_reachable(&my_misc, &my_smtp),
 		misc: Ok(my_misc),
@@ -262,12 +275,7 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 				.duration_since(start_time)
 				.unwrap_or(Duration::from_secs(0)),
 			smtp: smtp_debug,
-			..Default::default()
+			backend_name: config.backend_name.clone(),
 		},
-	};
-
-	#[cfg(feature = "sentry")]
-	log_unknown_errors(&res);
-
-	res
+	}
 }

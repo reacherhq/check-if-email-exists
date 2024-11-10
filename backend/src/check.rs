@@ -16,28 +16,11 @@
 
 //! This file contains shared logic for checking one email.
 
-use std::env;
+use check_if_email_exists::{check_email as ciee_check_email, CheckEmailInput, CheckEmailOutput};
 
-use warp::Filter;
+use crate::config::BackendConfig;
 
-/// The header which holds the Reacher backend secret.
-pub const REACHER_SECRET_HEADER: &str = "x-reacher-secret";
-
-/// Warp filter to check that the header secret is correct, if the environment
-/// variable `RCH_HEADER_SECRET`  is set
-pub fn check_header() -> warp::filters::BoxedFilter<()> {
-	let env_var = env::var("RCH_HEADER_SECRET");
-
-	match env_var {
-		Ok(secret) => {
-			if secret.len() == 0 {
-				return warp::any().boxed();
-			}
-
-			let secret: &'static str = Box::leak(Box::new(secret));
-
-			warp::header::exact(REACHER_SECRET_HEADER, secret).boxed()
-		}
-		Err(_) => warp::any().boxed(),
-	}
+pub async fn check_email(mut input: CheckEmailInput, config: &BackendConfig) -> CheckEmailOutput {
+	input.from_email = config.from_email.clone();
+	ciee_check_email(&input, &config.get_reacher_config()).await
 }

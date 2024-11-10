@@ -31,19 +31,17 @@ USER root
 RUN apk add --no-cache chromium-chromedriver
 
 COPY --from=cargo-build /usr/src/reacher/target/x86_64-unknown-linux-musl/release/reacher_backend .
-COPY --from=cargo-build /usr/src/reacher/docker/backend.sh .
-COPY --from=cargo-build /usr/src/reacher/docker/wait-for-it.sh .
+COPY --from=cargo-build /usr/src/reacher/backend/docker.sh .
+COPY --from=cargo-build /usr/src/reacher/backend/backend_config.toml .
 
 RUN chown chrome:chrome reacher_backend
-RUN chown chrome:chrome backend.sh
+RUN chown chrome:chrome docker.sh
 
 # User chrome was created in zenika/alpine-chrome
 USER chrome
 
 ENV RUST_LOG=reacher=info
 ENV RCH_HTTP_HOST=0.0.0.0
-ENV PORT=8080
-ENV RCH_WEBDRIVER_ADDR=http://localhost:9515
 
 EXPOSE 8080
 
@@ -51,4 +49,4 @@ EXPOSE 8080
 # https://stackoverflow.com/questions/40122152/how-to-remove-entrypoint-from-parent-image-on-dockerfile
 ENTRYPOINT []
 
-CMD ["./backend.sh"]
+CMD ["./docker.sh"]

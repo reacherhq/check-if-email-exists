@@ -10,7 +10,7 @@ lapin = { version = "2.3.1" }
 tokio-executor-trait = { version = "2.1.1" }
 tokio-reactor-trait = { version = "1.1.0" }
 async-smtp = "0.6"
-check-if-email-exists = { path = "../core", features = ["headless", "sentry"] }
+check-if-email-exists = { path = "../core", features = ["sentry"] }
 openssl = { version = "0.10.64", features = ["vendored"] }
 reqwest = { version = "0.12.5", features = ["json", "socks"] }
 sentry = "0.23"

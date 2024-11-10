@@ -18,8 +18,10 @@
 //! functions, depending on whether the `bulk` feature is enabled or not.
 
 use check_if_email_exists::{setup_sentry, LOG_TARGET};
+use std::sync::Arc;
 use tracing::info;
 
+use reacher_backend::config::load_config;
 use reacher_backend::http::run_warp_server;
 
 const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -30,11 +32,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	// Initialize logging.
 	tracing_subscriber::fmt::init();
 	info!(target: LOG_TARGET, version=?CARGO_PKG_VERSION, "Running Reacher");
+	let config = load_config()?;
 
 	// Setup sentry bug tracking.
-	let _guard: sentry::ClientInitGuard = setup_sentry();
+	let _guard: sentry::ClientInitGuard;
+	if let Some(sentry_config) = &config.sentry {
+		_guard = setup_sentry(sentry_config);
+	}
 
-	let _bulk_job_runner = run_warp_server().await?;
+	let _bulk_job_runner = run_warp_server(Arc::new(config)).await?;
 
 	Ok(())
 }

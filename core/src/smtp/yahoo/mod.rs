@@ -15,7 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 mod api;
-#[cfg(feature = "headless")]
+
 mod headless;
 
 use crate::util::ser_with_display::ser_with_display;
@@ -25,7 +25,7 @@ use serde_json::error::Error as SerdeError;
 use std::fmt;
 
 pub use api::check_api;
-#[cfg(feature = "headless")]
+
 pub use headless::check_headless;
 
 /// Possible errors when checking Yahoo email addresses.

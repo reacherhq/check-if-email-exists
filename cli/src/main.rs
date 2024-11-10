@@ -15,8 +15,8 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use check_if_email_exists::{
-	check_email, CheckEmailInput, CheckEmailInputProxy, GmailVerifMethod, HotmailVerifMethod,
-	YahooVerifMethod,
+	check_email, config::ReacherConfig, CheckEmailInput, CheckEmailInputProxy, GmailVerifMethod,
+	HotmailVerifMethod, YahooVerifMethod,
 };
 use clap::Parser;
 use once_cell::sync::Lazy;
@@ -108,8 +108,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 			password: CONF.proxy_password.clone(),
 		});
 	}
+	let config = ReacherConfig {
+		backend_name: "reacher-cli".to_string(),
+		..Default::default()
+	};
 
-	let result = check_email(&input).await;
+	let result = check_email(&input, &config).await;
 
 	match serde_json::to_string_pretty(&result) {
 		Ok(output) => {
