@@ -36,6 +36,8 @@ use crate::http::with_config;
 use crate::http::with_db;
 use crate::worker::task::{TaskPayload, TaskWebhook};
 
+const PREPROCESS_QUEUE: &str = "preprocess";
+
 /// POST v1/bulk endpoint request body.
 #[derive(Debug, Deserialize)]
 struct Request {
@@ -83,7 +85,7 @@ async fn http_handler(
 
 		Ok(TaskPayload {
 			input,
-			job_id: rec.id,
+			job_id: Some(rec.id),
 			webhook: body.webhook.clone(),
 		})
 	});
@@ -92,47 +94,56 @@ async fn http_handler(
 	let n = payloads.len();
 	let stream = futures::stream::iter(payloads);
 
+	let properties = BasicProperties::default()
+		.with_content_type("application/json".into())
+		.with_priority(1);
+
 	stream
 		.map::<Result<_, BulkError>, _>(Ok)
-		.try_for_each_concurrent(10, |payload| {
-			let channel = Arc::clone(&channel);
-			let properties = BasicProperties::default()
-				.with_content_type("application/json".into())
-				.with_priority(1);
-
-			async move {
-				let payload_u8 = serde_json::to_vec(&payload)?;
-				let queue_name = "preprocess";
-				channel
-					.basic_publish(
-						"",
-						queue_name,
-						BasicPublishOptions::default(),
-						&payload_u8,
-						properties,
-					)
-					.await?
-					.await?;
-
-				debug!(target: LOG_TARGET, email=?payload.input.to_email, queue=?queue_name, "Enqueued");
-
-				Ok(())
-			}
+		.try_for_each_concurrent(10, |payload| async {
+			publish_task(Arc::clone(&channel), payload, properties.clone()).await
 		})
 		.await?;
 
 	info!(
 		target: LOG_TARGET,
-		queue = "preprocess",
+		queue = PREPROCESS_QUEUE,
 		"Added {n} emails to the queue",
 	);
 	Ok(warp::reply::json(&Response { job_id: rec.id }))
 }
 
+/// Publish a task to the "preprocess" queue.
+pub async fn publish_task(
+	channel: Arc<Channel>,
+	payload: TaskPayload,
+	properties: BasicProperties,
+) -> Result<(), BulkError> {
+	let channel = Arc::clone(&channel);
+
+	let payload_u8 = serde_json::to_vec(&payload)?;
+	channel
+		.basic_publish(
+			"",
+			PREPROCESS_QUEUE,
+			BasicPublishOptions::default(),
+			&payload_u8,
+			properties,
+		)
+		.await
+		.map_err(BulkError::from)?
+		.await
+		.map_err(BulkError::from)?;
+
+	debug!(target: LOG_TARGET, email=?payload.input.to_email, queue=?PREPROCESS_QUEUE, "Enqueued");
+
+	Ok(())
+}
+
 /// Create the `POST /bulk` endpoint.
 /// The endpoint accepts list of email address and creates
 /// a new job to check them.
-pub fn create_bulk_job(
+pub fn v1_create_bulk_job(
 	config: Arc<BackendConfig>,
 	channel: Arc<Channel>,
 	pg_pool: PgPool,
@@ -155,7 +166,7 @@ pub fn create_bulk_job(
 }
 
 /// Warp filter that extracts lapin Channel.
-fn with_channel(
+pub fn with_channel(
 	channel: Arc<Channel>,
 ) -> impl Filter<Extract = (Arc<Channel>,), Error = std::convert::Infallible> + Clone {
 	warp::any().map(move || Arc::clone(&channel))

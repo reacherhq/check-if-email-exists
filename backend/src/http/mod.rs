@@ -54,13 +54,19 @@ pub fn create_routes(
 
 	#[cfg(feature = "worker")]
 	{
-		t.or(v1::bulk::post::create_bulk_job(
+		t.or(v1::check_email::post::v1_check_email(
+			Arc::clone(&config),
+			channel.clone(),
+		))
+		.or(v1::bulk::post::v1_create_bulk_job(
 			config,
 			channel,
 			pg_pool.clone(),
 		))
-		.or(v1::bulk::get_summary::get_bulk_job_status(pg_pool.clone()))
-		.or(v1::bulk::get_results::get_bulk_job_results(pg_pool))
+		.or(v1::bulk::get_summary::v1_get_bulk_job_summary(
+			pg_pool.clone(),
+		))
+		.or(v1::bulk::get_results::v1_get_bulk_job_results(pg_pool))
 		.recover(handle_rejection)
 	}
 

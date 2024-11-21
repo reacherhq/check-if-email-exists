@@ -29,6 +29,13 @@ pub async fn save_to_db(
 	payload: &TaskPayload,
 	worker_output: Result<CheckEmailOutput, Box<dyn std::error::Error + Send + Sync>>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+	// Only add to DB if job_id is present, i.e. if the task is a part of a
+	// bulk verification job.
+	if payload.job_id.is_none() {
+		return Ok(());
+	}
+	let job_id = payload.job_id.unwrap();
+
 	let payload_json = serde_json::to_value(payload)?;
 
 	match worker_output {
@@ -42,7 +49,7 @@ pub async fn save_to_db(
 				RETURNING id
 				"#,
 				payload_json,
-				payload.job_id,
+				job_id,
 				backend_name,
 				output_json,
 			)
@@ -57,7 +64,7 @@ pub async fn save_to_db(
 				RETURNING id
 				"#,
 				payload_json,
-				payload.job_id,
+				job_id,
 				backend_name,
 				err.to_string(),
 			)

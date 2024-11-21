@@ -33,7 +33,8 @@ use tracing::{debug, info};
 #[derive(Debug, Deserialize, Serialize)]
 pub struct TaskPayload {
 	pub input: CheckEmailInput,
-	pub job_id: i32,
+	// If the task is a part of a job, then this field will be set.
+	pub job_id: Option<i32>,
 	pub webhook: Option<TaskWebhook>,
 }
 
@@ -83,6 +84,7 @@ async fn inner_process_queue_message(
 		delivery.properties.reply_to(),
 		delivery.properties.correlation_id(),
 	) {
+		println!("CCCC");
 		let properties = BasicProperties::default()
 			.with_correlation_id(correlation_id.to_owned())
 			.with_content_type("application/json".into());
@@ -183,7 +185,7 @@ pub async fn preprocess(
 			format!("{}", queue).as_str(),
 			BasicPublishOptions::default(),
 			&delivery.data,
-			BasicProperties::default(),
+			delivery.properties.clone(),
 		)
 		.await?
 		.await?;

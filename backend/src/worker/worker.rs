@@ -1,3 +1,19 @@
+// Reacher - Email Verification
+// Copyright (C) 2018-2023 Reacher
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published
+// by the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 use super::task::{process_queue_message, TaskPayload};
 use crate::config::{BackendConfig, Queue, ThrottleConfig};
 use crate::worker::task::preprocess;
@@ -10,6 +26,8 @@ use std::time::Duration;
 use std::time::Instant;
 use tokio::time::sleep;
 use tracing::{debug, error, info};
+
+pub const MAX_QUEUE_PRIORITY: u8 = 5;
 
 pub async fn setup_rabbit_mq(config: Arc<BackendConfig>) -> Result<Channel, lapin::Error> {
 	let options = ConnectionProperties::default()
@@ -25,7 +43,7 @@ pub async fn setup_rabbit_mq(config: Arc<BackendConfig>) -> Result<Channel, lapi
 	info!(target: LOG_TARGET, backend=?config.backend_name,state=?conn.status().state(), "Connected to AMQP broker");
 
 	let mut queue_args = FieldTable::default();
-	queue_args.insert("x-max-priority".into(), 5.into());
+	queue_args.insert("x-max-priority".into(), MAX_QUEUE_PRIORITY.into());
 
 	// Assert all queues are declared.
 	let queues = vec![

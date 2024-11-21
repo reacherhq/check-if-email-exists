@@ -153,7 +153,7 @@ async fn http_handler(
 	}))
 }
 
-pub fn get_bulk_job_status(
+pub fn v1_get_bulk_job_summary(
 	pg_pool: PgPool,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v1" / "bulk" / i32)
