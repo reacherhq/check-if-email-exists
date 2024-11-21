@@ -84,6 +84,12 @@ impl From<sqlx::Error> for BulkError {
 	}
 }
 
+impl From<CsvError> for BulkError {
+	fn from(e: CsvError) -> Self {
+		BulkError::Csv(e)
+	}
+}
+
 /// Handle warp rejections for /v1/bulk endpoints
 pub async fn v1_bulk_handle_rejection(
 	err: warp::Rejection,

@@ -22,7 +22,6 @@ use serde::{Deserialize, Serialize};
 use sqlx::{Executor, PgPool, Pool, Postgres, Row};
 use std::convert::TryInto;
 use std::iter::Iterator;
-use tracing::error;
 use warp::Filter;
 
 use super::error::{v1_bulk_handle_rejection, BulkError, CsvError};
@@ -66,14 +65,7 @@ async fn http_handler(
 	)
 	.fetch_one(&pg_pool)
 	.await
-	.map_err(|e| {
-		error!(
-			target: LOG_TARGET,
-			"Failed to fetch total_records for [job={}] with [error={}]",
-			job_id, e
-		);
-		BulkError::from(e)
-	})?
+	.map_err(BulkError::from)?
 	.total_records;
 	let total_processed = sqlx::query!(
 		r#"SELECT COUNT(*) FROM email_results WHERE job_id = $1;"#,
@@ -94,15 +86,7 @@ async fn http_handler(
 		ResponseFormat::Json => {
 			let data = job_result_json(job_id, req.limit, req.offset.unwrap_or(0), pg_pool).await?;
 
-			let reply = serde_json::to_vec(&Response { results: data }).map_err(|e| {
-				error!(
-					target: LOG_TARGET,
-					"Failed to convert json results to string for [job={}] with [error={}]",
-					job_id, e
-				);
-
-				BulkError::Serde(e)
-			})?;
+			let reply = serde_json::to_vec(&Response { results: data }).map_err(BulkError::from)?;
 
 			Ok(warp::reply::with_header(
 				reply,
@@ -136,18 +120,7 @@ async fn job_result_as_iter(
 		offset as i64
 	);
 
-	let rows = pg_pool.fetch_all(query).await.map_err(|e| {
-		error!(
-			target: LOG_TARGET,
-			"Failed to get results for [job={}] [limit={}] [offset={}] with [error={}]",
-			job_id,
-			limit.map(|s| s.to_string()).unwrap_or_else(|| "n/a".into()),
-			offset,
-			e
-		);
-
-		BulkError::from(e)
-	})?;
+	let rows = pg_pool.fetch_all(query).await.map_err(BulkError::from)?;
 
 	Ok(Box::new(
 		rows.into_iter()
@@ -181,44 +154,16 @@ async fn job_result_csv(
 	let mut wtr = WriterBuilder::new().has_headers(true).from_writer(vec![]);
 
 	for json_value in rows {
-		let result_csv: CsvResponse = CsvWrapper(json_value).try_into().map_err(|e: &'static str| {
-			error!(
-				target: LOG_TARGET,
-				"Failed to convert json to csv output struct for [job={}] [limit={}] [offset={}] to csv with [error={}]",
-				job_id,
-				limit.map(|s| s.to_string()).unwrap_or_else(|| "n/a".into()),
-				offset,
-				e
-			);
-
-			BulkError::Csv(CsvError::Parse(e))
-		})?;
-		wtr.serialize(result_csv).map_err(|e| {
-			error!(
-				target: LOG_TARGET,
-				"Failed to serialize result for [job={}] [limit={}] [offset={}] to csv with [error={}]",
-				job_id,
-				limit.map(|s| s.to_string()).unwrap_or_else(|| "n/a".into()),
-				offset,
-				e
-			);
-
-			BulkError::Csv(CsvError::CsvLib(e))
-		})?;
+		let result_csv: CsvResponse = CsvWrapper(json_value)
+			.try_into()
+			.map_err(|e: &'static str| BulkError::Csv(CsvError::Parse(e)))?;
+		wtr.serialize(result_csv)
+			.map_err(|e| BulkError::Csv(CsvError::CsvLib(e)))?;
 	}
 
-	let data = wtr.into_inner().map_err(|e| {
-		error!(
-			target: LOG_TARGET,
-			"Failed to convert results for [job={}] [limit={}] [offset={}] to csv with [error={}]",
-			job_id,
-			limit.map(|s| s.to_string()).unwrap_or_else(|| "n/a".into()),
-			offset,
-			e
-		);
-
-		BulkError::Csv(CsvError::CsvLibWriter(Box::new(e)))
-	})?;
+	let data = wtr
+		.into_inner()
+		.map_err(|e| BulkError::Csv(CsvError::CsvLibWriter(Box::new(e))))?;
 
 	Ok(data)
 }
