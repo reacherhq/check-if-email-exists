@@ -101,3 +101,13 @@ pub enum CsvError {
 	CsvLibWriter(Box<csv::IntoInnerError<csv::Writer<Vec<u8>>>>),
 	Parse(&'static str),
 }
+
+impl ToString for CsvError {
+	fn to_string(&self) -> String {
+		match self {
+			CsvError::CsvLib(e) => format!("CSV library error: {}", e),
+			CsvError::CsvLibWriter(e) => format!("CSV library writer error: {}", e),
+			CsvError::Parse(e) => format!("CSV parse error: {}", e),
+		}
+	}
+}
