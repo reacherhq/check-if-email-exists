@@ -78,8 +78,8 @@ queues = [
     "check.everything_else.smtp",
 ]
 
-# Number of concurrent emails to verify for this worker.
-concurrency = 20
+# Number of concurrent emails to verify for this worker, across all queues.
+concurrency = 1
 
 # Postgres configuration. Currently, we require a Postgres database to store
 # the results of the verifications. This might change in the future, where the

@@ -38,6 +38,11 @@ pub struct TaskPayload {
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct TaskWebhook {
+	pub on_each_email: Option<TaskWebhookOnEachEmail>,
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct TaskWebhookOnEachEmail {
 	pub url: String,
 	pub extra: Option<serde_json::Value>,
 }
@@ -96,7 +101,10 @@ async fn inner_process_queue_message(
 	}
 
 	// Check if we have a webhook to send the output to.
-	if let Some(webhook) = &payload.webhook {
+	if let Some(TaskWebhook {
+		on_each_email: Some(webhook),
+	}) = &payload.webhook
+	{
 		let webhook_output = WebhookOutput {
 			result: &output,
 			extra: &webhook.extra,
