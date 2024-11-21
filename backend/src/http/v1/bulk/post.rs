@@ -26,6 +26,7 @@ use lapin::Channel;
 use lapin::{options::*, BasicProperties};
 use serde::{Deserialize, Serialize};
 use tracing::debug;
+use tracing::info;
 use warp::Filter;
 
 use super::error::BulkError;
@@ -104,6 +105,11 @@ async fn create_bulk_request(
 		})
 		.await?;
 
+	info!(
+		target: LOG_TARGET,
+		queue = "preprocess",
+		"Added {n} emails to the queue",
+	);
 	Ok(warp::reply::json(&CreateBulkResponse {
 		message: format!("Successfully added {n} emails to the queue"),
 	}))

@@ -57,11 +57,11 @@ pub(crate) async fn process_queue_message(
 	config: Arc<BackendConfig>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	let worker_output =
-		process_queue_message_inner(&payload, delivery, channel, config.clone()).await;
+		inner_process_queue_message(&payload, delivery, channel, config.clone()).await;
 	save_to_db(&config.backend_name, pg_pool, payload, worker_output).await
 }
 
-async fn process_queue_message_inner(
+async fn inner_process_queue_message(
 	payload: &TaskPayload,
 	delivery: Delivery,
 	channel: Arc<Channel>,
@@ -172,8 +172,7 @@ pub async fn preprocess(
 
 	channel
 		.basic_publish(
-			// Use amq.topic exchange so that we can use routing keys.
-			"amq.topic",
+			"",
 			format!("{}", queue).as_str(),
 			BasicPublishOptions::default(),
 			&delivery.data,
@@ -183,7 +182,7 @@ pub async fn preprocess(
 		.await?;
 
 	delivery.ack(BasicAckOptions::default()).await?;
-	info!(target: LOG_TARGET, email=?payload.input.to_email, queue=?queue, "Message preprocessed");
+	debug!(target: LOG_TARGET, email=?payload.input.to_email, queue=?queue, "Message preprocessed");
 
 	Ok(())
 }

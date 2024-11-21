@@ -8,8 +8,7 @@ use sqlx::PgPool;
 use std::sync::Arc;
 use std::time::Duration;
 use std::time::Instant;
-use tokio::time::sleep;
-use tracing::{error, info};
+use tracing::{debug, error, info};
 
 pub async fn setup_rabbit_mq(config: Arc<BackendConfig>) -> Result<Channel, lapin::Error> {
 	let options = ConnectionProperties::default()
@@ -106,7 +105,7 @@ async fn consume_preprocess(
 	while let Some(delivery) = consumer.next().await {
 		let delivery = delivery?;
 		let payload = serde_json::from_slice::<TaskPayload>(&delivery.data)?;
-		info!(target: LOG_TARGET, email=payload.input.to_email, "New Preprocess job");
+		debug!(target: LOG_TARGET, email=payload.input.to_email, "New Preprocess job");
 
 		let channel_clone = channel.clone();
 
