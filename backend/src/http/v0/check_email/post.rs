@@ -64,7 +64,7 @@ async fn handler(
 		// Run the future to check an email.
 		Ok(warp::reply::json(
 			&check_email(
-				&body.to_check_email_input(config.clone()),
+				&body.to_check_email_input(Arc::clone(&config)),
 				&config.get_reacher_config(),
 			)
 			.await,
@@ -78,7 +78,7 @@ pub fn post_check_email<'a>(
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone + 'a {
 	warp::path!("v0" / "check_email")
 		.and(warp::post())
-		.and(check_header(config.clone()))
+		.and(check_header(Arc::clone(&config)))
 		.and(with_config(config))
 		// When accepting a body, we want a JSON body (and to reject huge
 		// payloads)...

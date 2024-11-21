@@ -23,7 +23,7 @@ use check_if_email_exists::LOG_TARGET;
 use lapin::Channel;
 use serde::Serialize;
 use sqlx::postgres::PgPoolOptions;
-use sqlx::{Pool, Postgres};
+use sqlx::PgPool;
 use sqlxmq::JobRunnerHandle;
 use std::env;
 use std::net::IpAddr;
@@ -38,13 +38,16 @@ pub use v0::check_email::post::CheckEmailRequest;
 
 pub fn create_routes(
 	config: Arc<BackendConfig>,
-	o: Option<Pool<Postgres>>,
+	o: Option<PgPool>,
 	#[cfg(feature = "worker")] channel: Arc<Channel>,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	let t = version::get::get_version()
-		.or(v0::check_email::post::post_check_email(config.clone()))
+		.or(v0::check_email::post::post_check_email(Arc::clone(&config)))
 		// The 3 following routes will 404 if o is None.
-		.or(v0::bulk::post::create_bulk_job(config.clone(), o.clone()))
+		.or(v0::bulk::post::create_bulk_job(
+			Arc::clone(&config),
+			o.clone(),
+		))
 		.or(v0::bulk::get::get_bulk_job_status(o.clone()))
 		.or(v0::bulk::results::get_bulk_job_result(o.clone()));
 
@@ -96,9 +99,9 @@ pub async fn run_warp_server(
 	};
 
 	#[cfg(feature = "worker")]
-	let routes = create_routes(config.clone(), db, channel);
+	let routes = create_routes(Arc::clone(&config), db, channel);
 	#[cfg(not(feature = "worker"))]
-	let routes = create_routes(config.clone(), db);
+	let routes = create_routes(Arc::clone(&config), db);
 
 	info!(target: LOG_TARGET, host=?host,port=?port, "Server is listening");
 	warp::serve(routes).run((host, port)).await;
@@ -108,7 +111,7 @@ pub async fn run_warp_server(
 }
 
 /// Create a DB pool for the deprecated /v0/bulk endpoints.
-async fn create_db() -> Result<Pool<Postgres>, sqlx::Error> {
+async fn create_db() -> Result<PgPool, sqlx::Error> {
 	let pg_conn = env::var("DATABASE_URL").expect("Environment variable DATABASE_URL must be set");
 
 	// create connection pool with database
@@ -144,7 +147,7 @@ pub fn check_header(config: Arc<BackendConfig>) -> warp::filters::BoxedFilter<()
 pub fn with_config(
 	config: Arc<BackendConfig>,
 ) -> impl Filter<Extract = (Arc<BackendConfig>,), Error = std::convert::Infallible> + Clone {
-	warp::any().map(move || config.clone())
+	warp::any().map(move || Arc::clone(&config))
 }
 
 /// Struct describing an error response.

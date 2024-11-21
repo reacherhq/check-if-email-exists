@@ -68,7 +68,7 @@ pub async fn setup_rabbit_mq(config: Arc<BackendConfig>) -> Result<Channel, lapi
 		)
 		.await?;
 
-	info!(target: LOG_TARGET, queues=?worker_config.rabbitmq.queues, "Worker will start consuming messages");
+	info!(target: LOG_TARGET, queues=?worker_config.rabbitmq.queues, concurrency=?worker_config.rabbitmq.concurrency, "Worker will start consuming messages");
 
 	Ok(channel)
 }
@@ -80,8 +80,8 @@ pub async fn run_worker(
 	channel: Arc<Channel>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	tokio::try_join!(
-		consume_preprocess(config.clone(), channel.clone()),
-		consume_check_email(config.clone(), pg_pool, channel.clone())
+		consume_preprocess(Arc::clone(&config), Arc::clone(&channel)),
+		consume_check_email(Arc::clone(&config), pg_pool, Arc::clone(&channel))
 	)?;
 
 	Ok(())
@@ -108,7 +108,7 @@ async fn consume_preprocess(
 		let payload = serde_json::from_slice::<TaskPayload>(&delivery.data)?;
 		debug!(target: LOG_TARGET, email=payload.input.to_email, "New Preprocess job");
 
-		let channel_clone = channel.clone();
+		let channel_clone = Arc::clone(&channel);
 
 		tokio::spawn(async move {
 			if let Err(e) = preprocess(&payload, delivery, channel_clone).await {
@@ -125,22 +125,25 @@ async fn consume_check_email(
 	channel: Arc<Channel>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	let worker_config = config.must_worker_config();
-	let channel_clone = channel.clone();
-	let config_clone = config.clone();
 
-	for queue in worker_config.rabbitmq.queues {
-		let channel_clone2 = channel_clone.clone();
-		let config_clone2 = config_clone.clone();
+	for queue in &worker_config.rabbitmq.queues {
+		let channel = Arc::clone(&channel);
+		let config = Arc::clone(&config);
+		let pg_pool = pg_pool.clone();
+		let queue = queue.clone();
 
 		tokio::spawn(async move {
-			let mut consumer = channel_clone2
+			let worker_config = config.must_worker_config();
+
+			let mut consumer = channel
 				.basic_consume(
 					queue.to_string().as_str(),
-					format!("{}-{}", &config_clone2.backend_name, &queue).as_str(),
+					format!("{}-{}", &config.backend_name, &queue).as_str(),
 					BasicConsumeOptions::default(),
 					FieldTable::default(),
 				)
 				.await?;
+			debug!(target: LOG_TARGET, queue=?queue, "Consuming messages");
 
 			let mut throttle = Throttle::new();
 
@@ -153,19 +156,13 @@ async fn consume_check_email(
 				// Reset throttle counters if needed
 				throttle.reset_if_needed();
 
-				let config_clone = config.clone();
-				let channel_clone = channel.clone();
-				let pg_pool_clone = pg_pool.clone();
+				let config = Arc::clone(&config);
+				let channel = Arc::clone(&channel);
+				let pg_pool = pg_pool.clone();
 
 				tokio::spawn(async move {
-					if let Err(e) = process_queue_message(
-						&payload,
-						delivery,
-						channel_clone,
-						pg_pool_clone,
-						config_clone,
-					)
-					.await
+					if let Err(e) =
+						process_queue_message(&payload, delivery, channel, pg_pool, config).await
 					{
 						error!(target: LOG_TARGET, email=payload.input.to_email, error=?e, "Error processing message");
 					}

@@ -79,7 +79,7 @@ async fn create_bulk_request(
 	stream
 		.map::<Result<_, BulkError>, _>(Ok)
 		.try_for_each_concurrent(10, |payload| {
-			let channel = channel.clone();
+			let channel = Arc::clone(&channel);
 			let properties = BasicProperties::default()
 				.with_content_type("application/json".into())
 				.with_priority(1);
@@ -124,7 +124,7 @@ pub fn create_bulk_job(
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v1" / "bulk")
 		.and(warp::post())
-		.and(check_header(config.clone()))
+		.and(check_header(Arc::clone(&config)))
 		.and(with_config(config))
 		.and(with_channel(o))
 		// When accepting a body, we want a JSON body (and to reject huge
@@ -141,5 +141,5 @@ pub fn create_bulk_job(
 fn with_channel(
 	channel: Arc<Channel>,
 ) -> impl Filter<Extract = (Arc<Channel>,), Error = std::convert::Infallible> + Clone {
-	warp::any().map(move || channel.clone())
+	warp::any().map(move || Arc::clone(&channel))
 }

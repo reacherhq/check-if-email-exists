@@ -57,7 +57,7 @@ pub(crate) async fn process_queue_message(
 	config: Arc<BackendConfig>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	let worker_output =
-		inner_process_queue_message(&payload, delivery, channel, config.clone()).await;
+		inner_process_queue_message(&payload, delivery, channel, Arc::clone(&config)).await;
 	save_to_db(&config.backend_name, pg_pool, payload, worker_output).await
 }
 
@@ -67,8 +67,6 @@ async fn inner_process_queue_message(
 	channel: Arc<Channel>,
 	config: Arc<BackendConfig>,
 ) -> Result<CheckEmailOutput, Box<dyn std::error::Error + Send + Sync>> {
-	info!(target: LOG_TARGET, email=payload.input.to_email, "Start email verification");
-
 	let output = check_email(&payload.input, &config.get_reacher_config()).await;
 	let reply_payload = serde_json::to_string(&output)?;
 	let reply_payload = reply_payload.as_bytes();
