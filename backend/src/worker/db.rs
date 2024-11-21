@@ -16,6 +16,7 @@
 
 use check_if_email_exists::{CheckEmailOutput, LOG_TARGET};
 use sqlx::{postgres::PgPoolOptions, PgPool};
+use std::env;
 use std::sync::Arc;
 use tracing::{debug, info};
 
@@ -73,7 +74,10 @@ pub async fn save_to_db(
 /// Create a DB pool.
 pub async fn create_db(config: Arc<BackendConfig>) -> Result<PgPool, sqlx::Error> {
 	let worker_config = config.must_worker_config();
-	debug!(target: LOG_TARGET, "Connecting to DB {db_url}...", db_url=worker_config.postgres.db_url);
+	// For legacy reasons, we also support the DATABASE_URL environment variable:
+	let db_url = env::var("DATABASE_URL").unwrap_or_else(|_| worker_config.postgres.db_url.clone());
+
+	debug!(target: LOG_TARGET, "Connecting to DB: {}", db_url);
 	// create connection pool with database
 	// connection pool internally the shared db connection
 	// with arc so it can safely be cloned and shared across threads

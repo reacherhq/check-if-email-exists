@@ -24,6 +24,7 @@ pub enum BulkError {
 	InputError(CheckEmailInputBuilderError),
 	Serde(serde_json::Error),
 	Lapin(lapin::Error),
+	Sqlx(sqlx::Error),
 }
 
 // Defaults to Internal server error
@@ -44,5 +45,11 @@ impl From<serde_json::Error> for BulkError {
 impl From<lapin::Error> for BulkError {
 	fn from(e: lapin::Error) -> Self {
 		BulkError::Lapin(e)
+	}
+}
+
+impl From<sqlx::Error> for BulkError {
+	fn from(e: sqlx::Error) -> Self {
+		BulkError::Sqlx(e)
 	}
 }

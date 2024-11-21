@@ -25,14 +25,15 @@ use futures::stream::TryStreamExt;
 use lapin::Channel;
 use lapin::{options::*, BasicProperties};
 use serde::{Deserialize, Serialize};
-use tracing::debug;
-use tracing::info;
+use sqlx::PgPool;
+use tracing::{debug, error, info};
 use warp::Filter;
 
 use super::error::BulkError;
 use crate::config::BackendConfig;
 use crate::http::check_header;
 use crate::http::with_config;
+use crate::http::with_db;
 use crate::worker::task::{TaskPayload, TaskWebhook};
 
 /// Endpoint request body.
@@ -51,11 +52,28 @@ struct CreateBulkResponse {
 async fn create_bulk_request(
 	config: Arc<BackendConfig>,
 	channel: Arc<Channel>,
+	pg_pool: PgPool,
 	body: CreateBulkRequest,
 ) -> Result<impl warp::Reply, warp::Rejection> {
 	if body.input.is_empty() {
 		return Err(BulkError::EmptyInput.into());
 	}
+
+	// create job entry
+	let rec = sqlx::query!(
+		r#"
+		INSERT INTO v1_bulk_job (total_emails)
+		VALUES ($1)
+		RETURNING id
+		"#,
+		body.input.len() as i32
+	)
+	.fetch_one(&pg_pool)
+	.await
+	.map_err(|e| {
+		error!(target: LOG_TARGET, error=e.to_string(), "Failed to create job record");
+		BulkError::from(e)
+	})?;
 
 	let payloads = body.input.iter().map(|email| {
 		let input = CheckEmailInputBuilder::default()
@@ -68,6 +86,7 @@ async fn create_bulk_request(
 
 		Ok(TaskPayload {
 			input,
+			job_id: rec.id,
 			webhook: body.webhook.clone(),
 		})
 	});
@@ -120,17 +139,19 @@ async fn create_bulk_request(
 /// a new job to check them.
 pub fn create_bulk_job(
 	config: Arc<BackendConfig>,
-	o: Arc<Channel>,
+	channel: Arc<Channel>,
+	pg_pool: PgPool,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v1" / "bulk")
 		.and(warp::post())
 		.and(check_header(Arc::clone(&config)))
 		.and(with_config(config))
-		.and(with_channel(o))
+		.and(with_channel(channel))
+		.and(with_db(pg_pool))
 		// When accepting a body, we want a JSON body (and to reject huge
 		// payloads)...
 		// TODO: Configure max size limit for a bulk job
-		.and(warp::body::content_length_limit(1024 * 16))
+		.and(warp::body::content_length_limit(1024 * 1024 * 50))
 		.and(warp::body::json())
 		.and_then(create_bulk_request)
 		// View access logs by setting `RUST_LOG=reacher_backend`.

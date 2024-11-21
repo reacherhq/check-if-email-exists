@@ -18,7 +18,6 @@
 //! functions, depending on whether the `bulk` feature is enabled or not.
 
 use check_if_email_exists::{setup_sentry, LOG_TARGET};
-use lapin::options::BasicCancelOptions;
 #[cfg(feature = "worker")]
 use reacher_backend::worker::{create_db, run_worker, setup_rabbit_mq};
 use std::sync::Arc;
@@ -48,10 +47,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	#[cfg(feature = "worker")]
 	{
 		let channel = Arc::new(setup_rabbit_mq(Arc::clone(&config)).await?);
-		let server_future = run_warp_server(Arc::clone(&config), Arc::clone(&channel));
+		let pg_pool = create_db(Arc::clone(&config)).await?;
+		let server_future =
+			run_warp_server(Arc::clone(&config), Arc::clone(&channel), pg_pool.clone());
 		let worker_future = async {
 			if config.worker.enable {
-				let pg_pool = create_db(Arc::clone(&config)).await?;
 				run_worker(Arc::clone(&config), pg_pool, Arc::clone(&channel)).await?;
 			}
 			Ok::<(), Box<dyn std::error::Error + Send + Sync>>(())
@@ -63,7 +63,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	}
 
 	#[cfg(not(feature = "worker"))]
-	run_warp_server(config).await?;
+	run_warp_server(config, None).await?;
 
 	Ok(())
 }

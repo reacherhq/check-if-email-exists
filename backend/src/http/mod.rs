@@ -22,7 +22,6 @@ use check_if_email_exists::LOG_TARGET;
 #[cfg(feature = "worker")]
 use lapin::Channel;
 use serde::Serialize;
-use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use sqlxmq::JobRunnerHandle;
 use std::env;
@@ -38,7 +37,7 @@ pub use v0::check_email::post::CheckEmailRequest;
 
 pub fn create_routes(
 	config: Arc<BackendConfig>,
-	o: Option<PgPool>,
+	pg_pool: PgPool,
 	#[cfg(feature = "worker")] channel: Arc<Channel>,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	let t = version::get::get_version()
@@ -46,14 +45,16 @@ pub fn create_routes(
 		// The 3 following routes will 404 if o is None.
 		.or(v0::bulk::post::create_bulk_job(
 			Arc::clone(&config),
-			o.clone(),
+			Some(pg_pool.clone()),
 		))
-		.or(v0::bulk::get::get_bulk_job_status(o.clone()))
-		.or(v0::bulk::results::get_bulk_job_result(o.clone()));
+		.or(v0::bulk::get::get_bulk_job_status(Some(pg_pool.clone())))
+		.or(v0::bulk::results::get_bulk_job_result(Some(
+			pg_pool.clone(),
+		)));
 
 	#[cfg(feature = "worker")]
 	{
-		t.or(v1::bulk::post::create_bulk_job(config, channel))
+		t.or(v1::bulk::post::create_bulk_job(config, channel, pg_pool))
 			.recover(handle_rejection)
 	}
 
@@ -73,6 +74,7 @@ pub fn create_routes(
 pub async fn run_warp_server(
 	config: Arc<BackendConfig>,
 	#[cfg(feature = "worker")] channel: Arc<Channel>,
+	pg_pool: PgPool,
 ) -> Result<Option<JobRunnerHandle>, Box<dyn std::error::Error + Send + Sync>> {
 	let host = config
 		.http_host
@@ -88,20 +90,16 @@ pub async fn run_warp_server(
 		})
 		.unwrap_or(config.http_port);
 
-	// Run bulk job listener.
-	let is_bulk_enabled = env::var("RCH_ENABLE_BULK").unwrap_or_else(|_| "0".into()) == "1";
-	let (db, runner) = if is_bulk_enabled {
-		let pool = create_db().await?;
-		let runner = v0::bulk::create_job_registry(&pool).await?;
-		(Some(pool), Some(runner))
-	} else {
-		(None, None)
-	};
+	let routes = create_routes(Arc::clone(&config), pg_pool.clone(), channel);
 
-	#[cfg(feature = "worker")]
-	let routes = create_routes(Arc::clone(&config), db, channel);
-	#[cfg(not(feature = "worker"))]
-	let routes = create_routes(Arc::clone(&config), db);
+	// Run v0 bulk job listener.
+	let is_bulk_enabled = env::var("RCH_ENABLE_BULK").unwrap_or_else(|_| "0".into()) == "1";
+	let runner = if is_bulk_enabled {
+		let runner = v0::bulk::create_job_registry(&pg_pool).await?;
+		Some(runner)
+	} else {
+		None
+	};
 
 	info!(target: LOG_TARGET, host=?host,port=?port, "Server is listening");
 	warp::serve(routes).run((host, port)).await;
@@ -110,18 +108,11 @@ pub async fn run_warp_server(
 	Ok(runner)
 }
 
-/// Create a DB pool for the deprecated /v0/bulk endpoints.
-async fn create_db() -> Result<PgPool, sqlx::Error> {
-	let pg_conn = env::var("DATABASE_URL").expect("Environment variable DATABASE_URL must be set");
-
-	// create connection pool with database
-	// connection pool internally the shared db connection
-	// with arc so it can safely be cloned and shared across threads
-	let pool = PgPoolOptions::new().connect(pg_conn.as_str()).await?;
-
-	sqlx::migrate!("./migrations").run(&pool).await?;
-
-	Ok(pool)
+/// Warp filter to add the database pool to the handler.
+pub fn with_db(
+	o: PgPool,
+) -> impl Filter<Extract = (PgPool,), Error = std::convert::Infallible> + Clone {
+	warp::any().map(move || o.clone())
 }
 
 /// The header which holds the Reacher backend secret.
