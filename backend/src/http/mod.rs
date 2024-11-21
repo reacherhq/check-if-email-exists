@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+mod error;
 mod v0;
 mod v1;
 mod version;
@@ -21,7 +22,6 @@ mod version;
 use check_if_email_exists::LOG_TARGET;
 #[cfg(feature = "worker")]
 use lapin::Channel;
-use serde::Serialize;
 use sqlx::PgPool;
 use sqlxmq::JobRunnerHandle;
 use std::env;
@@ -29,10 +29,10 @@ use std::net::IpAddr;
 use std::sync::Arc;
 use tracing::info;
 use warp::Filter;
-use warp::{http, reject};
 
 use crate::config::BackendConfig;
-
+use error::handle_rejection;
+pub use error::ReacherResponseError;
 pub use v0::check_email::post::CheckEmailRequest;
 
 pub fn create_routes(
@@ -54,8 +54,13 @@ pub fn create_routes(
 
 	#[cfg(feature = "worker")]
 	{
-		t.or(v1::bulk::post::create_bulk_job(config, channel, pg_pool))
-			.recover(handle_rejection)
+		t.or(v1::bulk::post::create_bulk_job(
+			config,
+			channel,
+			pg_pool.clone(),
+		))
+		.or(v1::bulk::get_summary::get_bulk_job_status(pg_pool))
+		.recover(handle_rejection)
 	}
 
 	#[cfg(not(feature = "worker"))]
@@ -139,24 +144,4 @@ pub fn with_config(
 	config: Arc<BackendConfig>,
 ) -> impl Filter<Extract = (Arc<BackendConfig>,), Error = std::convert::Infallible> + Clone {
 	warp::any().map(move || Arc::clone(&config))
-}
-
-/// Struct describing an error response.
-#[derive(Serialize, Debug)]
-pub struct ReacherResponseError {
-	#[serde(skip)]
-	pub code: http::StatusCode,
-	pub message: String,
-}
-
-impl reject::Reject for ReacherResponseError {}
-
-/// This function receives a `Rejection` and tries to return a custom value,
-/// otherwise simply passes the rejection along.
-pub async fn handle_rejection(err: warp::Rejection) -> Result<impl warp::Reply, warp::Rejection> {
-	if let Some(err) = err.find::<ReacherResponseError>() {
-		Ok((warp::reply::with_status(warp::reply::json(err), err.code),))
-	} else {
-		Err(err)
-	}
 }

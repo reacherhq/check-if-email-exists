@@ -14,8 +14,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use crate::http::error::ReacherResponseError;
 use check_if_email_exists::CheckEmailInputBuilderError;
-use warp::reject;
+use warp::http::StatusCode;
 
 /// Catch all error struct for the bulk endpoints
 #[derive(Debug)]
@@ -27,8 +28,29 @@ pub enum BulkError {
 	Sqlx(sqlx::Error),
 }
 
-// Defaults to Internal server error
-impl reject::Reject for BulkError {}
+impl From<&BulkError> for ReacherResponseError {
+	fn from(value: &BulkError) -> Self {
+		match value {
+			BulkError::EmptyInput => {
+				ReacherResponseError::new(StatusCode::BAD_REQUEST, "Empty input".to_string())
+			}
+			BulkError::InputError(e) => {
+				ReacherResponseError::new(StatusCode::BAD_REQUEST, e.to_string())
+			}
+			BulkError::Serde(e) => {
+				ReacherResponseError::new(StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+			}
+			BulkError::Lapin(e) => {
+				ReacherResponseError::new(StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+			}
+			BulkError::Sqlx(e) => {
+				ReacherResponseError::new(StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+			}
+		}
+	}
+}
+
+impl warp::reject::Reject for BulkError {}
 
 impl From<CheckEmailInputBuilderError> for BulkError {
 	fn from(e: CheckEmailInputBuilderError) -> Self {
@@ -51,5 +73,15 @@ impl From<lapin::Error> for BulkError {
 impl From<sqlx::Error> for BulkError {
 	fn from(e: sqlx::Error) -> Self {
 		BulkError::Sqlx(e)
+	}
+}
+
+pub async fn handle_rejection(
+	err: warp::Rejection,
+) -> Result<warp::reply::WithStatus<warp::reply::Json>, warp::Rejection> {
+	if let Some(err) = err.find::<BulkError>() {
+		Err(warp::reject::custom(ReacherResponseError::from(err)))
+	} else {
+		Err(err)
 	}
 }

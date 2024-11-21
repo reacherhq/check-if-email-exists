@@ -26,34 +26,34 @@ use lapin::Channel;
 use lapin::{options::*, BasicProperties};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
-use tracing::{debug, error, info};
+use tracing::{debug, info};
 use warp::Filter;
 
-use super::error::BulkError;
+use super::error::{handle_rejection, BulkError};
 use crate::config::BackendConfig;
 use crate::http::check_header;
 use crate::http::with_config;
 use crate::http::with_db;
 use crate::worker::task::{TaskPayload, TaskWebhook};
 
-/// Endpoint request body.
+/// POST v1/bulk endpoint request body.
 #[derive(Debug, Deserialize)]
-struct CreateBulkRequest {
+struct Request {
 	input: Vec<String>,
 	webhook: Option<TaskWebhook>,
 }
 
-/// Endpoint response body.
+/// POST v1/bulk endpoint response body.
 #[derive(Clone, Debug, Deserialize, Serialize)]
-struct CreateBulkResponse {
-	message: String,
+struct Response {
+	job_id: i32,
 }
 
-async fn create_bulk_request(
+async fn http_handler(
 	config: Arc<BackendConfig>,
 	channel: Arc<Channel>,
 	pg_pool: PgPool,
-	body: CreateBulkRequest,
+	body: Request,
 ) -> Result<impl warp::Reply, warp::Rejection> {
 	if body.input.is_empty() {
 		return Err(BulkError::EmptyInput.into());
@@ -62,7 +62,7 @@ async fn create_bulk_request(
 	// create job entry
 	let rec = sqlx::query!(
 		r#"
-		INSERT INTO v1_bulk_job (total_emails)
+		INSERT INTO v1_bulk_job (total_records)
 		VALUES ($1)
 		RETURNING id
 		"#,
@@ -70,10 +70,7 @@ async fn create_bulk_request(
 	)
 	.fetch_one(&pg_pool)
 	.await
-	.map_err(|e| {
-		error!(target: LOG_TARGET, error=e.to_string(), "Failed to create job record");
-		BulkError::from(e)
-	})?;
+	.map_err(|e| BulkError::from(e))?;
 
 	let payloads = body.input.iter().map(|email| {
 		let input = CheckEmailInputBuilder::default()
@@ -129,9 +126,7 @@ async fn create_bulk_request(
 		queue = "preprocess",
 		"Added {n} emails to the queue",
 	);
-	Ok(warp::reply::json(&CreateBulkResponse {
-		message: format!("Successfully added {n} emails to the queue"),
-	}))
+	Ok(warp::reply::json(&Response { job_id: rec.id }))
 }
 
 /// Create the `POST /bulk` endpoint.
@@ -153,7 +148,8 @@ pub fn create_bulk_job(
 		// TODO: Configure max size limit for a bulk job
 		.and(warp::body::content_length_limit(1024 * 1024 * 50))
 		.and(warp::body::json())
-		.and_then(create_bulk_request)
+		.and_then(http_handler)
+		.recover(handle_rejection)
 		// View access logs by setting `RUST_LOG=reacher_backend`.
 		.with(warp::log(LOG_TARGET))
 }

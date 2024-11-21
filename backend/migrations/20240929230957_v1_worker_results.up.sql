@@ -1,6 +1,6 @@
 CREATE TABLE v1_bulk_job (
     id SERIAL PRIMARY KEY,
-    total_emails INTEGER NOT NULL,
+    total_records INTEGER NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 

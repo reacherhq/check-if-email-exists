@@ -50,16 +50,17 @@ impl CheckEmailRequest {
 }
 
 /// The main endpoint handler that implements the logic of this route.
-async fn handler(
+async fn http_handler(
 	config: Arc<BackendConfig>,
 	body: CheckEmailRequest,
 ) -> Result<impl warp::Reply, warp::Rejection> {
 	// The to_email field must be present
 	if body.to_email.is_empty() {
-		Err(warp::reject::custom(ReacherResponseError {
+		Err(ReacherResponseError {
 			code: http::StatusCode::BAD_REQUEST,
 			message: "to_email field is required.".to_string(),
-		}))
+		}
+		.into())
 	} else {
 		// Run the future to check an email.
 		Ok(warp::reply::json(
@@ -84,8 +85,7 @@ pub fn post_check_email<'a>(
 		// payloads)...
 		.and(warp::body::content_length_limit(1024 * 16))
 		.and(warp::body::json())
-		.and_then(handler)
+		.and_then(http_handler)
 		// View access logs by setting `RUST_LOG=reacher`.
 		.with(warp::log(LOG_TARGET))
-		.recover(handle_rejection)
 }
