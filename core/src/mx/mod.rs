@@ -80,6 +80,17 @@ pub enum MxError {
 	ResolveError(Box<ResolveError>),
 }
 
+impl std::fmt::Display for MxError {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		match self {
+			MxError::IoError(e) => write!(f, "IO error: {}", e),
+			MxError::ResolveError(e) => write!(f, "Resolve error: {}", e),
+		}
+	}
+}
+
+impl std::error::Error for MxError {}
+
 impl From<io::Error> for MxError {
 	fn from(e: io::Error) -> Self {
 		MxError::IoError(e)

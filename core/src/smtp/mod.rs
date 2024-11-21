@@ -37,9 +37,9 @@ use crate::{
 use connect::check_smtp_with_retry;
 pub use error::*;
 
-use self::{
+pub use self::{
 	gmail::is_gmail,
-	outlook::{is_hotmail, is_microsoft365},
+	outlook::{is_hotmail, is_hotmail_b2b, is_hotmail_b2c},
 	yahoo::is_yahoo,
 };
 
@@ -102,7 +102,7 @@ pub async fn check_smtp(
 	let to_email_str = to_email.to_string();
 
 	if is_hotmail(&host) {
-		match (&input.hotmail_verif_method, is_microsoft365(&host)) {
+		match (&input.hotmail_verif_method, is_hotmail_b2b(&host)) {
 			(HotmailVerifMethod::OneDriveApi, true) => {
 				match outlook::microsoft365::check_microsoft365_api(to_email, input).await {
 					Ok(Some(smtp_details)) => {

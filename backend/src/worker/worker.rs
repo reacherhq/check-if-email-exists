@@ -1,7 +1,6 @@
-use super::task::process_queue_message;
-use super::task::TaskPayload;
-use crate::config::BackendConfig;
-use crate::config::ThrottleConfig;
+use super::task::{process_queue_message, TaskPayload};
+use crate::config::{BackendConfig, Queue, ThrottleConfig};
+use crate::worker::task::preprocess;
 use check_if_email_exists::LOG_TARGET;
 use futures::stream::StreamExt;
 use lapin::{options::*, types::FieldTable, Channel, Connection, ConnectionProperties};
@@ -25,13 +24,34 @@ pub async fn setup_rabbit_mq(config: Arc<BackendConfig>) -> Result<Channel, lapi
 
 	info!(target: LOG_TARGET, backend=?config.backend_name,state=?conn.status().state(), "Connected to AMQP broker");
 
-	let queue_name = worker_config.rabbitmq.queue.to_string();
 	let mut queue_args = FieldTable::default();
 	queue_args.insert("x-max-priority".into(), 5.into());
 
+	// Assert all queues are declared.
+	let queues = vec![
+		Queue::GmailSmtp,
+		Queue::HotmailB2BSmtp,
+		Queue::HotmailB2CSmtp,
+		Queue::HotmailB2CHeadless,
+		Queue::YahooSmtp,
+		Queue::YahooHeadless,
+		Queue::EverythingElseSmtp,
+	];
+	for queue in queues.iter() {
+		channel
+			.queue_declare(
+				format!("{}", queue).as_str(),
+				QueueDeclareOptions {
+					durable: true,
+					..Default::default()
+				},
+				queue_args.clone(),
+			)
+			.await?;
+	}
 	channel
 		.queue_declare(
-			&queue_name,
+			"preprocess",
 			QueueDeclareOptions {
 				durable: true,
 				..Default::default()
@@ -48,7 +68,7 @@ pub async fn setup_rabbit_mq(config: Arc<BackendConfig>) -> Result<Channel, lapi
 		)
 		.await?;
 
-	info!(target: LOG_TARGET, queue=?queue_name, "Worker will start consuming messages");
+	info!(target: LOG_TARGET, queues=?worker_config.rabbitmq.queues, "Worker will start consuming messages");
 
 	Ok(channel)
 }
@@ -59,57 +79,101 @@ pub async fn run_worker(
 	pg_pool: PgPool,
 	channel: Arc<Channel>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-	let config_clone = config.clone();
-	let worker_config = config.must_worker_config();
+	tokio::try_join!(
+		consume_preprocess(config.clone(), channel.clone()),
+		consume_check_email(config.clone(), pg_pool, channel.clone())
+	)?;
 
+	Ok(())
+}
+
+/// Consume "Preprocess" queue, by figuring out the email provider and routing
+/// (i.e. re-publishing) to the correct queue.
+async fn consume_preprocess(
+	config: Arc<BackendConfig>,
+	channel: Arc<Channel>,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	let mut consumer = channel
 		.basic_consume(
-			&worker_config.rabbitmq.queue.to_string(),
-			&config.backend_name,
+			"preprocess",
+			format!("{}-preprocess", &config.backend_name).as_str(),
 			BasicConsumeOptions::default(),
 			FieldTable::default(),
 		)
 		.await?;
 
-	let mut throttle = Throttle::new();
-
 	// Loop over the incoming messages
 	while let Some(delivery) = consumer.next().await {
 		let delivery = delivery?;
 		let payload = serde_json::from_slice::<TaskPayload>(&delivery.data)?;
-		info!(target: LOG_TARGET, email=payload.input.to_email, "New job");
+		info!(target: LOG_TARGET, email=payload.input.to_email, "New Preprocess job");
 
-		// Reset throttle counters if needed
-		throttle.reset_if_needed();
-
-		let config_clone = config.clone();
 		let channel_clone = channel.clone();
-		let pg_pool_clone = pg_pool.clone();
 
 		tokio::spawn(async move {
-			if let Err(e) = process_queue_message(
-				&payload,
-				delivery,
-				channel_clone,
-				pg_pool_clone,
-				config_clone,
-			)
-			.await
-			{
-				error!(target: LOG_TARGET, email=payload.input.to_email, error=?e, "Error processing message");
+			if let Err(e) = preprocess(&payload, delivery, channel_clone).await {
+				error!(target: LOG_TARGET, email=payload.input.to_email, error=?e, "Error preprocessing message");
 			}
 		});
-
-		// Increment throttle counters once we spawn the task
-		throttle.increment_counters();
-
-		// Check if we should throttle before fetching the next message
-		if let Some(wait_duration) = throttle.should_throttle(&worker_config.throttle) {
-			info!(target: LOG_TARGET, wait=?wait_duration, "Too many requests, throttling");
-			sleep(wait_duration).await;
-			continue;
-		}
 	}
+	Ok(())
+}
+
+async fn consume_check_email(
+	config: Arc<BackendConfig>,
+	pg_pool: PgPool,
+	channel: Arc<Channel>,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+	// let worker_config = config.must_worker_config();
+
+	// let mut consumer = channel
+	// 	.basic_consume(
+	// 		&worker_config.rabbitmq.queue.to_string(),
+	// 		format!("{}-{}", &config.backend_name, &worker_config.rabbitmq.queue).as_str(),
+	// 		BasicConsumeOptions::default(),
+	// 		FieldTable::default(),
+	// 	)
+	// 	.await?;
+
+	// let mut throttle = Throttle::new();
+
+	// // Loop over the incoming messages
+	// while let Some(delivery) = consumer.next().await {
+	// 	let delivery = delivery?;
+	// 	let payload = serde_json::from_slice::<TaskPayload>(&delivery.data)?;
+	// 	info!(target: LOG_TARGET, email=payload.input.to_email, "New Check job");
+
+	// 	// Reset throttle counters if needed
+	// 	throttle.reset_if_needed();
+
+	// 	let config_clone = config.clone();
+	// 	let channel_clone = channel.clone();
+	// 	let pg_pool_clone = pg_pool.clone();
+
+	// 	tokio::spawn(async move {
+	// 		if let Err(e) = process_queue_message(
+	// 			&payload,
+	// 			delivery,
+	// 			channel_clone,
+	// 			pg_pool_clone,
+	// 			config_clone,
+	// 		)
+	// 		.await
+	// 		{
+	// 			error!(target: LOG_TARGET, email=payload.input.to_email, error=?e, "Error processing message");
+	// 		}
+	// 	});
+
+	// 	// Increment throttle counters once we spawn the task
+	// 	throttle.increment_counters();
+
+	// 	// Check if we should throttle before fetching the next message
+	// 	if let Some(wait_duration) = throttle.should_throttle(&worker_config.throttle) {
+	// 		info!(target: LOG_TARGET, wait=?wait_duration, "Too many requests, throttling");
+	// 		sleep(wait_duration).await;
+	// 		continue;
+	// 	}
+	// }
 
 	Ok(())
 }

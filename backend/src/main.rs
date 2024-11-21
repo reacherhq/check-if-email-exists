@@ -18,6 +18,7 @@
 //! functions, depending on whether the `bulk` feature is enabled or not.
 
 use check_if_email_exists::{setup_sentry, LOG_TARGET};
+use lapin::options::BasicCancelOptions;
 #[cfg(feature = "worker")]
 use reacher_backend::worker::{create_db, run_worker, setup_rabbit_mq};
 use std::sync::Arc;
@@ -51,12 +52,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 		let worker_future = async {
 			if config.worker.enable {
 				let pg_pool = create_db(config.clone()).await?;
-				run_worker(config, pg_pool, channel).await?;
+				run_worker(config.clone(), pg_pool, channel.clone()).await?;
 			}
 			Ok::<(), Box<dyn std::error::Error + Send + Sync>>(())
 		};
 
 		tokio::try_join!(server_future, worker_future)?;
+
+		println!("Shutting down...");
 	}
 
 	#[cfg(not(feature = "worker"))]

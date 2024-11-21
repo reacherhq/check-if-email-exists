@@ -46,34 +46,38 @@ max_requests_per_day = 20000
 # RabbitMQ configuration.
 [worker.rabbitmq]
 url = "amqp://guest:guest@localhost:5672"
-# Queue name to consume messages from.
 
-# # Queues names are in the format:
-# "check.<verif_method>.<provider>", where:
-# - <verif_method> is the verification method to use. It can be "Smtp",
-# "Headless", or "Api". Note that not all verification methods are
+# Queues to consume emails from.
+# 
+# Queue names are in the format "check.<provider>.<verif_method>", where:
+# - <verif_method> is the verification method to use. It can be "smtp",
+# "headless", or "api". Note that _not_ all verification methods are
 # available for all providers. For example, currently the Headless method
 # is not available for Gmail. However, the Smtp method is available for
-# all providers. The "*" wildcard can be used to match any verification
-# method.
+# all providers.
 # - <provider> is the email provider to verify. It can be "gmail", "yahoo",
-# "hotmail", or "*". The "*" provider is a wildcard that matches any
-# provider.
+# "hotmail", or "everything_else".
 # 
-# The queue name MUST be one of the following:
-# - "check.*.gmail": subcribe exclusively to Gmail emails.
-# - "check.*.yahoo": subcribe exclusively to Yahoo emails, both Headless and SMTP.
-# - "check.Smtp.yahoo": subcribe exclusively to Yahoo emails where the verification method is explicity set to SMTP.
-# - "check.Headless.yahoo": subcribe exclusively to Yahoo emails where the verification method is unset, or set to Headless (default method).
-# - "check.*.hotmail.*": subcribe exclusively to Hotmail emails, both B2B and B2C, both Headless and SMTP.
-# - "check.*.hotmail.b2b": subcribe exclusively to B2B Hotmail emails, both Headless and SMTP.
-# - "check.*.hotmail.b2c": subcribe exclusively to B2C Hotmail email (@outlook, @live, @hotmail), both Headless and SMTP.
-# - "check.Smtp.hotmail.b2c": subcribe exclusively to B2C Hotmail email (@outlook, @live, @hotmail) whose verification method is explicity set to SMTP.
-# - "check.Headless.hotmail.b2c": subcribe exclusively to B2C Hotmail email (@outlook, @live, @hotmail) whose verification method is unset, or set to Headless (default method).
-# 	- "check.Smtp.#": subcribe any to email whose default verification method is SMTP.
-# - "check.Headless.#": subcribe any to email whose default verification method is Headless.
-# - "check.#": subcribe any to email.
-queue = "check.#"
+# Below is the exhaustive list of queue names that the worker can consume from:
+# - "check.gmail.smtp": subcribe exclusively to Gmail emails.
+# - "check.hotmail.b2b.smtp": subcribe exclusively to Hotmail B2B emails.
+# - "check.hotmail.b2c.smtp": subcribe exclusively to Hotmail B2C emails where the verification method is explicity set to SMTP (default method is Headless).
+# - "check.hotmail.b2c.headless": subcribe exclusively to Hotmail B2C emails where the verification method is explicity set to Headless (default method is Headless).
+# - "check.yahoo.smtp": subcribe exclusively to Yahoo emails where the verification method is explicity set to SMTP (default method is Headless).
+# - "check.yahoo.headless": subcribe exclusively to Yahoo emails where the verification method is explicity set to Headless (default method is Headless).
+# - "check.everything_else.smtp": subcribe to all emails that are not Gmail, Yahoo, or Hotmail, the method used will be SMTP.
+#
+# Comment out the queues that you don't want to consume from.
+queues = [
+    "check.gmail.smtp",
+    "check.hotmail.b2b.smtp",
+    "check.hotmail.b2c.smtp",
+    "check.hotmail.b2c.headless",
+    "check.yahoo.smtp",
+    "check.yahoo.headless",
+    "check.everything_else.smtp",
+]
+
 # Number of concurrent emails to verify for this worker.
 concurrency = 20
 

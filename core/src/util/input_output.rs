@@ -73,7 +73,7 @@ impl SmtpSecurity {
 }
 
 /// Select how to verify Yahoo emails.
-#[derive(Debug, Clone, Copy, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Deserialize, Serialize)]
 pub enum YahooVerifMethod {
 	/// Use Yahoo's API to check if an email exists.
 	Api,
@@ -124,7 +124,7 @@ impl FromStr for GmailVerifMethod {
 }
 
 /// Select how to verify Hotmail emails.
-#[derive(Debug, Clone, Copy, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Deserialize, Serialize)]
 pub enum HotmailVerifMethod {
 	/// Use OneDrive API to check if an email exists.
 	OneDriveApi,

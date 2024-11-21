@@ -85,7 +85,7 @@ async fn create_bulk_request(
 
 			async move {
 				let payload_u8 = serde_json::to_vec(&payload)?;
-				let queue_name = "check.#"; // TODO We might want to make this configurable.
+				let queue_name = "preprocess";
 				channel
 					.basic_publish(
 						"",

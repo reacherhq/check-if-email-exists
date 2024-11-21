@@ -108,68 +108,55 @@ pub struct MustWorkerConfig {
 #[derive(Debug, Deserialize, Clone)]
 pub struct RabbitMQConfig {
 	pub url: String,
-	/// Queue name to consume messages from.
+	/// Queues to consume emails from.
 	///
-	/// Queues names are in the format "check.<verif_method>.<provider>", where:
-	/// - <verif_method> is the verification method to use. It can be "Smtp",
-	/// "Headless", or "Api". Note that not all verification methods are
+	/// Queue names are in the format "check.<provider>.<verif_method>", where:
+	/// - <verif_method> is the verification method to use. It can be "smtp",
+	/// "headless", or "api". Note that _not_ all verification methods are
 	/// available for all providers. For example, currently the Headless method
 	/// is not available for Gmail. However, the Smtp method is available for
-	/// all providers. The "*" wildcard can be used to match any verification
-	/// method.
+	/// all providers.
 	/// - <provider> is the email provider to verify. It can be "gmail", "yahoo",
-	/// "hotmail", or "*". The "*" provider is a wildcard that matches any
-	/// provider.
+	/// "hotmail", or "everything_else".
 	///
-	/// The queue name MUST be one of the following:
-	/// - "check.*.gmail": subcribe exclusively to Gmail emails.
-	/// - "check.*.yahoo": subcribe exclusively to Yahoo emails, both Headless and SMTP.
-	/// - "check.Smtp.yahoo": subcribe exclusively to Yahoo emails where the verification method is explicity set to SMTP.
-	/// - "check.Headless.yahoo": subcribe exclusively to Yahoo emails where the verification method is unset, or set to Headless (default method).
-	/// - "check.*.hotmail.*": subcribe exclusively to Hotmail emails, both B2B and B2C, both Headless and SMTP.
-	/// - "check.*.hotmail.b2b": subcribe exclusively to B2B Hotmail emails, both Headless and SMTP.
-	/// - "check.*.hotmail.b2c": subcribe exclusively to B2C Hotmail email (@outlook, @live, @hotmail), both Headless and SMTP.
-	/// - "check.Smtp.hotmail.b2c": subcribe exclusively to B2C Hotmail email (@outlook, @live, @hotmail) whose verification method is explicity set to SMTP.
-	/// - "check.Headless.hotmail.b2c": subcribe exclusively to B2C Hotmail email (@outlook, @live, @hotmail) whose verification method is unset, or set to Headless (default method).
-	///	- "check.Smtp.#": subcribe any to email whose default verification method is SMTP.
-	/// - "check.Headless.#": subcribe any to email whose default verification method is Headless.
-	/// - "check.#": subcribe any to email.
-	pub queue: Queue,
+	/// Below is the exhaustive list of queue names that the worker can consume from:
+	/// - "check.gmail.smtp": subcribe exclusively to Gmail emails.
+	/// - "check.hotmail.b2b.smtp": subcribe exclusively to Hotmail B2B emails.
+	/// - "check.hotmail.b2c.smtp": subcribe exclusively to Hotmail B2C emails where the verification method is explicity set to SMTP (default method is Headless).
+	/// - "check.hotmail.b2c.headless": subcribe exclusively to Hotmail B2C emails where the verification method is explicity set to Headless (default method is Headless).
+	/// - "check.yahoo.smtp": subcribe exclusively to Yahoo emails where the verification method is explicity set to SMTP (default method is Headless).
+	/// - "check.yahoo.headless": subcribe exclusively to Yahoo emails where the verification method is explicity set to Headless (default method is Headless).
+	/// - "check.everything_else.smtp": subcribe to all emails that are not Gmail, Yahoo, or Hotmail, the method used will be SMTP.
+	pub queues: Vec<Queue>,
+	/// Total number of concurrent messages that the worker can process, across
+	/// all queues.
 	pub concurrency: u16,
 }
 
-/// Queue names that the worker can consume from.
+/// Queue names that the worker can consume from. Each email is routed to a
+/// one and only one queue, based on the email provider and the verification
+/// method. The worker can consume from multiple queues.
 #[derive(Debug, Clone)]
 pub enum Queue {
-	AllGmail,
-	AllYahoo,
-	SmtpYahoo,
-	HeadlessYahoo,
-	AllHotmail,
-	AllHotmailB2B,
-	AllHotmailB2C,
-	SmtpHotmailB2C,
-	HeadlessHotmailB2C,
-	SmtpAll,
-	HeadlessAll,
-	All,
+	GmailSmtp,
+	HotmailB2BSmtp,
+	HotmailB2CSmtp,
+	HotmailB2CHeadless,
+	YahooSmtp,
+	YahooHeadless,
+	EverythingElseSmtp,
 }
 
 impl fmt::Display for Queue {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		match self {
-			Queue::AllGmail => write!(f, "check.*.gmail"),
-			Queue::AllYahoo => write!(f, "check.*.yahoo"),
-			Queue::SmtpYahoo => write!(f, "check.Smtp.yahoo"),
-			Queue::HeadlessYahoo => write!(f, "check.Headless.yahoo"),
-			Queue::AllHotmail => write!(f, "check.*.hotmail.*"),
-			Queue::AllHotmailB2B => write!(f, "check.*.hotmail.b2b"),
-			Queue::AllHotmailB2C => write!(f, "check.*.hotmail.b2c"),
-			Queue::SmtpHotmailB2C => write!(f, "check.Smtp.hotmail.b2c"),
-			Queue::HeadlessHotmailB2C => write!(f, "check.Headless.hotmail.b2c"),
-			Queue::SmtpAll => write!(f, "check.Smtp.#"),
-			Queue::HeadlessAll => write!(f, "check.Headless.#"),
-			Queue::All => write!(f, "check.#"),
+			Queue::GmailSmtp => write!(f, "check.gmail.smtp"),
+			Queue::HotmailB2BSmtp => write!(f, "check.hotmail.b2b.smtp"),
+			Queue::HotmailB2CSmtp => write!(f, "check.hotmail.b2c.smtp"),
+			Queue::HotmailB2CHeadless => write!(f, "check.hotmail.b2c.headless"),
+			Queue::YahooSmtp => write!(f, "check.yahoo.smtp"),
+			Queue::YahooHeadless => write!(f, "check.yahoo.headless"),
+			Queue::EverythingElseSmtp => write!(f, "check.everything_else.smtp"),
 		}
 	}
 }
@@ -194,33 +181,23 @@ impl<'de> Deserialize<'de> for Queue {
 				E: de::Error,
 			{
 				match value {
-					"check.*.gmail" => Ok(Queue::AllGmail),
-					"check.*.yahoo" => Ok(Queue::AllYahoo),
-					"check.Smtp.yahoo" => Ok(Queue::SmtpYahoo),
-					"check.Headless.yahoo" => Ok(Queue::HeadlessYahoo),
-					"check.*.hotmail.*" => Ok(Queue::AllHotmail),
-					"check.*.hotmail.b2b" => Ok(Queue::AllHotmailB2B),
-					"check.*.hotmail.b2c" => Ok(Queue::AllHotmailB2C),
-					"check.Smtp.hotmail.b2c" => Ok(Queue::SmtpHotmailB2C),
-					"check.Headless.hotmail.b2c" => Ok(Queue::HeadlessHotmailB2C),
-					"check.Smtp.#" => Ok(Queue::SmtpAll),
-					"check.Headless.#" => Ok(Queue::HeadlessAll),
-					"check.#" => Ok(Queue::All),
+					"check.gmail.smtp" => Ok(Queue::GmailSmtp),
+					"check.hotmail.b2b.smtp" => Ok(Queue::HotmailB2BSmtp),
+					"check.hotmail.b2c.smtp" => Ok(Queue::HotmailB2CSmtp),
+					"check.hotmail.b2c.headless" => Ok(Queue::HotmailB2CHeadless),
+					"check.yahoo.smtp" => Ok(Queue::YahooSmtp),
+					"check.yahoo.headless" => Ok(Queue::YahooHeadless),
+					"check.everything_else.smtp" => Ok(Queue::EverythingElseSmtp),
 					_ => Err(de::Error::unknown_variant(
 						value,
 						&[
-							"check.*.gmail",
-							"check.*.yahoo",
-							"check.Smtp.yahoo",
-							"check.Headless.yahoo",
-							"check.*.hotmail.*",
-							"check.*.hotmail.b2b",
-							"check.*.hotmail.b2c",
-							"check.Smtp.hotmail.b2c",
-							"check.Headless.hotmail.b2c",
-							"check.Smtp.#",
-							"check.Headless.#",
-							"check.#",
+							"check.gmail.smtp",
+							"check.hotmail.b2b.smtp",
+							"check.hotmail.b2c.smtp",
+							"check.hotmail.b2c.headless",
+							"check.yahoo.smtp",
+							"check.yahoo.headless",
+							"check.everything_else.smtp",
 						],
 					)),
 				}

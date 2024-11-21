@@ -14,11 +14,14 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::config::BackendConfig;
-
 use super::db::save_to_db;
-use check_if_email_exists::{check_email, CheckEmailInput, CheckEmailOutput};
-use check_if_email_exists::{Reachable, LOG_TARGET};
+use crate::config::{BackendConfig, Queue};
+use check_if_email_exists::mx::check_mx;
+use check_if_email_exists::syntax::check_syntax;
+use check_if_email_exists::{
+	check_email, is_gmail, is_hotmail_b2b, is_hotmail_b2c, is_yahoo, CheckEmailInput,
+	CheckEmailOutput, HotmailVerifMethod, Reachable, YahooVerifMethod, LOG_TARGET,
+};
 use lapin::message::Delivery;
 use lapin::{options::*, BasicProperties, Channel};
 use serde::{Deserialize, Serialize};
@@ -129,4 +132,58 @@ async fn process_queue_message_inner(
 	}
 
 	Ok(output)
+}
+
+pub async fn preprocess(
+	payload: &TaskPayload,
+	delivery: Delivery,
+	channel: Arc<Channel>,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+	let syntax = check_syntax(&payload.input.to_email);
+	let mx = check_mx(&syntax).await?;
+	// Get first hostname from MX records.
+	let mx_hostname = mx
+		.lookup?
+		.iter()
+		.next()
+		.ok_or_else(|| "No MX records found")?
+		.exchange()
+		.to_string();
+
+	let queue = if is_gmail(&mx_hostname) {
+		Queue::GmailSmtp
+	} else if is_hotmail_b2b(&mx_hostname) {
+		Queue::HotmailB2BSmtp
+	} else if is_hotmail_b2c(&mx_hostname) {
+		if payload.input.hotmail_verif_method == HotmailVerifMethod::Smtp {
+			Queue::HotmailB2CSmtp
+		} else {
+			Queue::HotmailB2CHeadless
+		}
+	} else if is_yahoo(&mx_hostname) {
+		if payload.input.yahoo_verif_method == YahooVerifMethod::Smtp {
+			Queue::YahooSmtp
+		} else {
+			Queue::YahooHeadless
+		}
+	} else {
+		Queue::EverythingElseSmtp
+	};
+
+	channel
+		.basic_publish(
+			// Use amq.topic exchange so that we can use routing keys.
+			"amq.topic",
+			format!("{}", queue).as_str(),
+			BasicPublishOptions::default(),
+			&delivery.data,
+			BasicProperties::default(),
+		)
+		.await?
+		.await?;
+
+	delivery.ack(BasicAckOptions::default()).await?;
+	info!(target: LOG_TARGET, email=?payload.input.to_email, queue=?queue, "Message preprocessed");
+
+	Ok(())
 }
