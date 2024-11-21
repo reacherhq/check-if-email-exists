@@ -64,7 +64,9 @@ pub async fn setup_rabbit_mq(config: Arc<BackendConfig>) -> Result<Channel, lapi
 	channel
 		.basic_qos(
 			worker_config.rabbitmq.concurrency,
-			BasicQosOptions::default(),
+			// Set global to true to apply to all consumers.
+			// ref: https://www.rabbitmq.com/docs/consumer-prefetch#independent-consumers
+			BasicQosOptions { global: true },
 		)
 		.await?;
 
