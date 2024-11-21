@@ -59,7 +59,8 @@ pub fn create_routes(
 			channel,
 			pg_pool.clone(),
 		))
-		.or(v1::bulk::get_summary::get_bulk_job_status(pg_pool))
+		.or(v1::bulk::get_summary::get_bulk_job_status(pg_pool.clone()))
+		.or(v1::bulk::get_results::get_bulk_job_results(pg_pool))
 		.recover(handle_rejection)
 	}
 

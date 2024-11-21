@@ -23,7 +23,7 @@ use sqlx::{PgPool, Pool, Postgres};
 use tracing::error;
 use warp::Filter;
 
-use super::error::{handle_rejection, BulkError};
+use super::error::{v1_bulk_handle_rejection, BulkError};
 use crate::http::with_db;
 
 /// NOTE: Type conversions from postgres to rust types
@@ -160,7 +160,7 @@ pub fn get_bulk_job_status(
 		.and(warp::get())
 		.and(with_db(pg_pool))
 		.and_then(http_handler)
-		.recover(handle_rejection)
+		.recover(v1_bulk_handle_rejection)
 		// View access logs by setting `RUST_LOG=reacher`.
 		.with(warp::log(LOG_TARGET))
 }

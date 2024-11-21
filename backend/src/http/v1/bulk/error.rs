@@ -22,10 +22,12 @@ use warp::http::StatusCode;
 #[derive(Debug)]
 pub enum BulkError {
 	EmptyInput,
+	JobInProgress,
 	InputError(CheckEmailInputBuilderError),
 	Serde(serde_json::Error),
 	Lapin(lapin::Error),
 	Sqlx(sqlx::Error),
+	Csv(CsvError),
 }
 
 impl From<&BulkError> for ReacherResponseError {
@@ -33,6 +35,9 @@ impl From<&BulkError> for ReacherResponseError {
 		match value {
 			BulkError::EmptyInput => {
 				ReacherResponseError::new(StatusCode::BAD_REQUEST, "Empty input".to_string())
+			}
+			BulkError::JobInProgress => {
+				ReacherResponseError::new(StatusCode::BAD_REQUEST, "Job in progress".to_string())
 			}
 			BulkError::InputError(e) => {
 				ReacherResponseError::new(StatusCode::BAD_REQUEST, e.to_string())
@@ -44,6 +49,9 @@ impl From<&BulkError> for ReacherResponseError {
 				ReacherResponseError::new(StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
 			}
 			BulkError::Sqlx(e) => {
+				ReacherResponseError::new(StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+			}
+			BulkError::Csv(e) => {
 				ReacherResponseError::new(StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
 			}
 		}
@@ -76,7 +84,8 @@ impl From<sqlx::Error> for BulkError {
 	}
 }
 
-pub async fn handle_rejection(
+/// Handle warp rejections for /v1/bulk endpoints
+pub async fn v1_bulk_handle_rejection(
 	err: warp::Rejection,
 ) -> Result<warp::reply::WithStatus<warp::reply::Json>, warp::Rejection> {
 	if let Some(err) = err.find::<BulkError>() {
@@ -84,4 +93,11 @@ pub async fn handle_rejection(
 	} else {
 		Err(err)
 	}
+}
+
+#[derive(Debug)]
+pub enum CsvError {
+	CsvLib(csv::Error),
+	CsvLibWriter(Box<csv::IntoInnerError<csv::Writer<Vec<u8>>>>),
+	Parse(&'static str),
 }

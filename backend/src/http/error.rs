@@ -14,7 +14,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use check_if_email_exists::LOG_TARGET;
 use serde::Serialize;
+use tracing::error;
 use warp::{http, reject};
 
 /// Struct describing an error response.
@@ -40,6 +42,7 @@ impl reject::Reject for ReacherResponseError {}
 /// otherwise simply passes the rejection along.
 pub async fn handle_rejection(err: warp::Rejection) -> Result<impl warp::Reply, warp::Rejection> {
 	if let Some(err) = err.find::<ReacherResponseError>() {
+		error!(target: LOG_TARGET, code=?err.code, message=?err.message, "Request rejected");
 		Ok((warp::reply::with_status(warp::reply::json(err), err.code),))
 	} else {
 		Err(err)

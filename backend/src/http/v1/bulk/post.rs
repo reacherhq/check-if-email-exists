@@ -29,7 +29,7 @@ use sqlx::PgPool;
 use tracing::{debug, info};
 use warp::Filter;
 
-use super::error::{handle_rejection, BulkError};
+use super::error::{v1_bulk_handle_rejection, BulkError};
 use crate::config::BackendConfig;
 use crate::http::check_header;
 use crate::http::with_config;
@@ -149,7 +149,7 @@ pub fn create_bulk_job(
 		.and(warp::body::content_length_limit(1024 * 1024 * 50))
 		.and(warp::body::json())
 		.and_then(http_handler)
-		.recover(handle_rejection)
+		.recover(v1_bulk_handle_rejection)
 		// View access logs by setting `RUST_LOG=reacher_backend`.
 		.with(warp::log(LOG_TARGET))
 }
