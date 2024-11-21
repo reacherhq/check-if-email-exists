@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n\t\t\t\tINSERT INTO v1_worker_results (payload, backend_name, result)\n\t\t\t\tVALUES ($1, $2, $3)\n\t\t\t\tRETURNING id\n\t\t\t\t",
+  "query": "\n\t\t\t\tINSERT INTO v1_task_result (payload, job_id, backend_name, result)\n\t\t\t\tVALUES ($1, $2, $3, $4)\n\t\t\t\tRETURNING id\n\t\t\t\t",
   "describe": {
     "columns": [
       {
@@ -12,6 +12,7 @@
     "parameters": {
       "Left": [
         "Jsonb",
+        "Int4",
         "Text",
         "Jsonb"
       ]
@@ -20,5 +21,5 @@
       false
     ]
   },
-  "hash": "8fd88dc18c8ed6c7d417d8d7bf9497f8657a9d9aa16461ff7fbf6f9bc3e7462d"
+  "hash": "aaa1cf5961de24b1fb68f856205afe4d3bfaf55e3371f46a472ea3d5705d35b2"
 }

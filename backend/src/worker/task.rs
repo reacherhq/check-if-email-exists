@@ -33,6 +33,7 @@ use tracing::{debug, info};
 #[derive(Debug, Deserialize, Serialize)]
 pub struct TaskPayload {
 	pub input: CheckEmailInput,
+	pub job_id: i32,
 	pub webhook: Option<TaskWebhook>,
 }
 

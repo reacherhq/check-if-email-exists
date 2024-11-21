@@ -14,10 +14,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::sync::Arc;
-
 use check_if_email_exists::{CheckEmailOutput, LOG_TARGET};
 use sqlx::{postgres::PgPoolOptions, PgPool};
+use std::sync::Arc;
 use tracing::{debug, info};
 
 use super::task::TaskPayload;
@@ -37,11 +36,12 @@ pub async fn save_to_db(
 
 			sqlx::query!(
 				r#"
-				INSERT INTO v1_worker_results (payload, backend_name, result)
-				VALUES ($1, $2, $3)
+				INSERT INTO v1_task_result (payload, job_id, backend_name, result)
+				VALUES ($1, $2, $3, $4)
 				RETURNING id
 				"#,
 				payload_json,
+				payload.job_id,
 				backend_name,
 				output_json,
 			)
@@ -51,11 +51,12 @@ pub async fn save_to_db(
 		Err(err) => {
 			sqlx::query!(
 				r#"
-				INSERT INTO v1_worker_results (payload, backend_name, error)
-				VALUES ($1, $2, $3)
+				INSERT INTO v1_task_result (payload, job_id, backend_name, error)
+				VALUES ($1, $2, $3, $4)
 				RETURNING id
 				"#,
 				payload_json,
+				payload.job_id,
 				backend_name,
 				err.to_string(),
 			)
@@ -82,7 +83,7 @@ pub async fn create_db(config: Arc<BackendConfig>) -> Result<PgPool, sqlx::Error
 
 	sqlx::migrate!("./migrations").run(&pool).await?;
 
-	info!(target: LOG_TARGET, table="v1_worker_results", "Connected to DB, Reacher will write verification results to DB");
+	info!(target: LOG_TARGET, table="v1_task_result", "Connected to DB, Reacher will write verification results to DB");
 
 	Ok(pool)
 }
