@@ -24,6 +24,7 @@ use sqlx::PgPool;
 use std::sync::Arc;
 use std::time::Duration;
 use std::time::Instant;
+use tokio::sync::Mutex;
 use tokio::time::sleep;
 use tracing::{debug, error, info};
 
@@ -146,26 +147,27 @@ async fn consume_check_email(
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	let worker_config = config.must_worker_config();
 
+	let throttle = Arc::new(Mutex::new(Throttle::new()));
+
 	for queue in &worker_config.rabbitmq.queues {
-		let channel = Arc::clone(&channel);
-		let config = Arc::clone(&config);
-		let pg_pool = pg_pool.clone();
+		let channel_clone = Arc::clone(&channel);
+		let config_clone = Arc::clone(&config);
+		let pg_pool_clone = pg_pool.clone();
+		let throttle_clone = Arc::clone(&throttle);
 		let queue = queue.clone();
 
 		tokio::spawn(async move {
-			let worker_config = config.must_worker_config();
+			let worker_config = config_clone.must_worker_config();
 
-			let mut consumer = channel
+			let mut consumer = channel_clone
 				.basic_consume(
 					queue.to_string().as_str(),
-					format!("{}-{}", &config.backend_name, &queue).as_str(),
+					format!("{}-{}", &config_clone.backend_name, &queue).as_str(),
 					BasicConsumeOptions::default(),
 					FieldTable::default(),
 				)
 				.await?;
 			debug!(target: LOG_TARGET, queue=?queue, "Consuming messages");
-
-			let mut throttle = Throttle::new();
 
 			// Loop over the incoming messages
 			while let Some(delivery) = consumer.next().await {
@@ -174,25 +176,35 @@ async fn consume_check_email(
 				info!(target: LOG_TARGET, email=payload.input.to_email, job_id=?payload.job_id, queue=?queue, "Starting task");
 
 				// Reset throttle counters if needed
-				throttle.reset_if_needed();
+				throttle_clone.lock().await.reset_if_needed();
 
-				let config = Arc::clone(&config);
-				let channel = Arc::clone(&channel);
-				let pg_pool = pg_pool.clone();
+				let config_clone2 = Arc::clone(&config_clone);
+				let channel_clone2 = Arc::clone(&channel_clone);
+				let pg_pool_clone2 = pg_pool_clone.clone();
 
 				tokio::spawn(async move {
-					if let Err(e) =
-						process_queue_message(&payload, delivery, channel, pg_pool, config).await
+					if let Err(e) = process_queue_message(
+						&payload,
+						delivery,
+						channel_clone2,
+						pg_pool_clone2,
+						config_clone2,
+					)
+					.await
 					{
 						error!(target: LOG_TARGET, email=payload.input.to_email, error=?e, "Error processing message");
 					}
 				});
 
 				// Increment throttle counters once we spawn the task
-				throttle.increment_counters();
+				throttle_clone.lock().await.increment_counters();
 
 				// Check if we should throttle before fetching the next message
-				if let Some(wait_duration) = throttle.should_throttle(&worker_config.throttle) {
+				if let Some(wait_duration) = throttle_clone
+					.lock()
+					.await
+					.should_throttle(&worker_config.throttle)
+				{
 					info!(target: LOG_TARGET, wait=?wait_duration, "Too many requests, throttling");
 					sleep(wait_duration).await;
 					continue;
