@@ -25,7 +25,6 @@ use std::sync::Arc;
 use std::time::Duration;
 use std::time::Instant;
 use tokio::sync::Mutex;
-use tokio::time::sleep;
 use tracing::{debug, error, info};
 
 pub const MAX_QUEUE_PRIORITY: u8 = 5;

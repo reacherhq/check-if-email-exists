@@ -10,6 +10,7 @@ services:
         environment:
             RABBITMQ_DEFAULT_USER: guest
             RABBITMQ_DEFAULT_PASS: guest
+        restart: always
 
     postgres:
         image: postgres:17
@@ -20,33 +21,44 @@ services:
             POSTGRES_USER: postgres
             POSTGRES_PASSWORD: postgres
             POSTGRES_DB: reacher_worker_db
+        entrypoint:
+            'psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname="$POSTGRES_DB"<<-EOSQL
+            CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+            EOSQL'
+        restart: always
 
     worker1:
         build:
             context: .
-            dockerfile: docker/Dockerfile.worker
+            dockerfile: backend/Dockerfile
         container_name: worker1
+        ports:
+            - "8080:8080"
         depends_on:
             - postgres
             - rabbitmq
         environment:
-            RCH_NAME: worker1
-            RCH_RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
-            RCH_RABBITMQ_QUEUE: check.Headless.*
-            RCH_DB_URL: postgres://postgres:postgres@postgres:5432/reacher_worker_db
+            RCH__BACKEND_NAME: worker1
+            RUST_LOG: reacher=info
+            RCH__HTTP_HOST: 0.0.0.0
+            RCH__WORKER__RABBITMQ__URL: amqp://guest:guest@rabbitmq:5672
+            RCH__WORKER__POSTGRES__DB_URL: postgres://postgres:postgres@postgres:5432/reacher_worker_db
         restart: always
 
     worker2:
         build:
             context: .
-            dockerfile: docker/Dockerfile.worker
+            dockerfile: backend/Dockerfile
         container_name: worker2
+        ports:
+            - "8081:8080"
         depends_on:
             - postgres
             - rabbitmq
         environment:
-            RCH_NAME: worker2
-            RCH_RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
-            RCH_RABBITMQ_QUEUE: check.*
-            RCH_DB_URL: postgres://postgres:postgres@postgres:5432/reacher_worker_db
+            RCH__BACKEND_NAME: worker2
+            RUST_LOG: reacher=info
+            RCH__HTTP_HOST: 0.0.0.0
+            RCH__WORKER__RABBITMQ__URL: amqp://guest:guest@rabbitmq:5672
+            RCH__WORKER__POSTGRES__DB_URL: postgres://postgres:postgres@postgres:5432/reacher_worker_db
         restart: always
