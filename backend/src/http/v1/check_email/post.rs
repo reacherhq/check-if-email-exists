@@ -18,10 +18,13 @@
 
 use check_if_email_exists::LOG_TARGET;
 use futures::StreamExt;
-use lapin::options::{BasicConsumeOptions, QueueDeclareOptions};
+use lapin::options::{
+	BasicAckOptions, BasicConsumeOptions, BasicRejectOptions, QueueDeclareOptions,
+};
 use lapin::types::FieldTable;
 use lapin::{BasicProperties, Channel};
 use std::sync::Arc;
+use warp::http::StatusCode;
 use warp::{http, Filter};
 
 use crate::config::BackendConfig;
@@ -29,7 +32,7 @@ use crate::http::v0::check_email::post::CheckEmailRequest;
 use crate::http::v1::bulk::post::publish_task;
 use crate::http::v1::bulk::post::with_channel;
 use crate::http::{check_header, with_config, ReacherResponseError};
-use crate::worker::task::TaskPayload;
+use crate::worker::task::{SingleShotResponse, TaskPayload};
 use crate::worker::worker::MAX_QUEUE_PRIORITY;
 
 /// The main endpoint handler that implements the logic of this route.
@@ -92,6 +95,7 @@ async fn http_handler(
 		)
 		.await
 		.map_err(ReacherResponseError::from)?;
+
 	while let Some(delivery) = consumer.next().await {
 		let delivery = delivery.map_err(ReacherResponseError::from)?;
 
@@ -102,17 +106,39 @@ async fn http_handler(
 			.map(|s| s.as_str())
 			== Some(correlation_id.to_string().as_str())
 		{
-			let result = delivery.data;
-			channel
-				.basic_ack(delivery.delivery_tag, Default::default())
+			delivery
+				.ack(BasicAckOptions::default())
 				.await
 				.map_err(ReacherResponseError::from)?;
 
-			return Ok(warp::reply::with_header(
-				result,
-				"Content-Type",
-				"application/json",
+			let single_shot_response = serde_json::from_slice::<SingleShotResponse>(&delivery.data)
+				.map_err(ReacherResponseError::from)?;
+			let status_code = StatusCode::from_u16(single_shot_response.code)
+				.map_err(ReacherResponseError::from)?;
+
+			if !status_code.is_success() {
+				return Err(ReacherResponseError::new(
+					status_code,
+					String::from_utf8_lossy(&single_shot_response.body).to_string(),
+				)
+				.into());
+			}
+
+			return Ok(warp::reply::with_status(
+				single_shot_response.body,
+				StatusCode::from_u16(single_shot_response.code)
+					.map_err(ReacherResponseError::from)?,
 			));
+		} else {
+			delivery
+				.reject(BasicRejectOptions { requeue: false })
+				.await
+				.map_err(ReacherResponseError::from)?;
+			return Err(ReacherResponseError::new(
+				http::StatusCode::INTERNAL_SERVER_ERROR,
+				"Failed to get a reply from the worker.",
+			)
+			.into());
 		}
 	}
 

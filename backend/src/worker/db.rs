@@ -20,7 +20,7 @@ use std::env;
 use std::sync::Arc;
 use tracing::{debug, info};
 
-use super::task::TaskPayload;
+use super::task::{TaskError, TaskPayload};
 use crate::config::BackendConfig;
 
 /// Save the task result to the database. This only happens if the task is a
@@ -33,7 +33,7 @@ pub async fn save_to_db(
 	backend_name: &str,
 	pg_pool: PgPool,
 	payload: &TaskPayload,
-	worker_output: Result<CheckEmailOutput, Box<dyn std::error::Error + Send + Sync>>,
+	worker_output: Result<CheckEmailOutput, TaskError>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	let job_id = payload.job_id.unwrap();
 

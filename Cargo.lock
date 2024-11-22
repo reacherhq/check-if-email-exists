@@ -3006,6 +3006,7 @@ dependencies = [
  "serde_json",
  "sqlx",
  "sqlxmq",
+ "thiserror",
  "tokio",
  "tokio-executor-trait",
  "tokio-reactor-trait",

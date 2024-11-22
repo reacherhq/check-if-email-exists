@@ -22,13 +22,17 @@ use check_if_email_exists::{
 	check_email, is_gmail, is_hotmail_b2b, is_hotmail_b2c, is_yahoo, CheckEmailInput,
 	CheckEmailOutput, HotmailVerifMethod, Reachable, YahooVerifMethod, LOG_TARGET,
 };
+use core::time;
 use lapin::message::Delivery;
 use lapin::{options::*, BasicProperties, Channel};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
+use std::convert::TryFrom;
 use std::fmt::Debug;
 use std::sync::Arc;
+use thiserror::Error;
 use tracing::{debug, info};
+use warp::http::StatusCode;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct TaskPayload {
@@ -46,6 +50,65 @@ impl TaskPayload {
 	}
 }
 
+/// The errors that can occur when processing a task.
+#[derive(Debug, Error)]
+pub enum TaskError {
+	/// The worker is at full capacity and cannot accept more tasks. Note that
+	/// this error only occurs for single-shot tasks, and not for bulk
+	/// verification, as for bulk verification tasks the task will simply stay
+	/// in the queue until one worker is ready to process it.
+	#[error("Worker at full capacity, wait {0:?}")]
+	Throttle(time::Duration),
+	#[error("Lapin error: {0}")]
+	Lapin(lapin::Error),
+	#[error("Reqwest error during webhook: {0}")]
+	Reqwest(reqwest::Error),
+}
+
+impl TaskError {
+	/// Returns the status code that should be returned to the client.
+	pub fn status_code(&self) -> StatusCode {
+		match self {
+			Self::Throttle(_) => StatusCode::TOO_MANY_REQUESTS,
+			Self::Lapin(_) => StatusCode::INTERNAL_SERVER_ERROR,
+			Self::Reqwest(_) => StatusCode::INTERNAL_SERVER_ERROR,
+		}
+	}
+}
+
+impl From<lapin::Error> for TaskError {
+	fn from(err: lapin::Error) -> Self {
+		Self::Lapin(err)
+	}
+}
+
+impl From<reqwest::Error> for TaskError {
+	fn from(err: reqwest::Error) -> Self {
+		Self::Reqwest(err)
+	}
+}
+
+impl Serialize for TaskError {
+	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+	where
+		S: serde::Serializer,
+	{
+		serializer.serialize_str(&self.to_string())
+	}
+}
+
+/// For single-shot email verifications, the worker will send a reply to the
+/// client with the result of the verification.
+#[derive(Debug, Deserialize, Serialize)]
+pub struct SingleShotResponse {
+	/// The HTTP status code to send to the client.
+	pub code: u16, // Unfortunately we can't use warp::http::StatusCode here.
+	/// The JSON-encoded result to send to the client. It can be either a
+	/// CheckEmailOutput or a TaskError, serialized to JSON. Because a lot of
+	/// error types don't implement Deserialize, we use Vec<u8> here.
+	pub body: Vec<u8>,
+}
+
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct TaskWebhook {
 	pub on_each_email: Option<TaskWebhookOnEachEmail>,
@@ -55,6 +118,23 @@ pub struct TaskWebhook {
 pub struct TaskWebhookOnEachEmail {
 	pub url: String,
 	pub extra: Option<serde_json::Value>,
+}
+
+impl TryFrom<Result<CheckEmailOutput, TaskError>> for SingleShotResponse {
+	type Error = serde_json::Error;
+
+	fn try_from(result: Result<CheckEmailOutput, TaskError>) -> Result<Self, Self::Error> {
+		match result {
+			Ok(output) => Ok(Self {
+				code: StatusCode::OK.as_u16(),
+				body: serde_json::to_vec(&output)?,
+			}),
+			Err(err) => Ok(Self {
+				code: err.status_code().as_u16(),
+				body: serde_json::to_vec(&err)?,
+			}),
+		}
+	}
 }
 
 #[derive(Debug, Serialize)]
@@ -87,15 +167,15 @@ pub(crate) async fn process_queue_message(
 				.with_correlation_id(correlation_id.to_owned())
 				.with_content_type("application/json".into());
 
-			let reply_payload = serde_json::to_string(&worker_output?)?;
-			let reply_payload = reply_payload.as_bytes();
+			let single_shot_response = SingleShotResponse::try_from(worker_output)?;
+			let reply_payload = serde_json::to_vec(&single_shot_response)?;
 
 			channel
 				.basic_publish(
 					"",
 					reply_to.as_str(),
 					BasicPublishOptions::default(),
-					reply_payload,
+					&reply_payload,
 					properties,
 				)
 				.await?
@@ -115,9 +195,8 @@ pub(crate) async fn process_queue_message(
 async fn inner_process_queue_message(
 	payload: &TaskPayload,
 	delivery: &Delivery,
-
 	config: Arc<BackendConfig>,
-) -> Result<CheckEmailOutput, Box<dyn std::error::Error + Send + Sync>> {
+) -> Result<CheckEmailOutput, TaskError> {
 	let output = check_email(&payload.input, &config.get_reacher_config()).await;
 
 	// Check if we have a webhook to send the output to.
@@ -134,7 +213,10 @@ async fn inner_process_queue_message(
 		let res = client
 			.post(&webhook.url)
 			.json(&webhook_output)
-			.header("x-reacher-secret", std::env::var("RCH_HEADER_SECRET")?)
+			.header(
+				"x-reacher-secret",
+				std::env::var("RCH_HEADER_SECRET").unwrap_or("".into()),
+			)
 			.send()
 			.await?
 			.text()
