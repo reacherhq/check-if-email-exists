@@ -52,8 +52,10 @@ async fn http_handler(
 	let correlation_id = uuid::Uuid::new_v4();
 	let reply_queue = channel
 		.queue_declare(
-			"",
+			"", // Let RabbitMQ generate a unique name
 			QueueDeclareOptions {
+				auto_delete: true,
+				durable: false,
 				exclusive: true,
 				..Default::default()
 			},

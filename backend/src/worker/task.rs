@@ -84,7 +84,6 @@ async fn inner_process_queue_message(
 		delivery.properties.reply_to(),
 		delivery.properties.correlation_id(),
 	) {
-		println!("CCCC");
 		let properties = BasicProperties::default()
 			.with_correlation_id(correlation_id.to_owned())
 			.with_content_type("application/json".into());
@@ -137,7 +136,7 @@ async fn inner_process_queue_message(
 		info!(target: LOG_TARGET, email=?&payload.input.to_email, "Requeued message");
 	} else {
 		delivery.ack(BasicAckOptions::default()).await?;
-		info!(target: LOG_TARGET, email=output.input, is_reachable=?output.is_reachable, "Done check");
+		info!(target: LOG_TARGET, email=output.input, is_reachable=?output.is_reachable, job_id=?payload.job_id, "Done check");
 	}
 
 	Ok(output)
