@@ -30,7 +30,18 @@ use tracing::{debug, error, info};
 
 pub const MAX_QUEUE_PRIORITY: u8 = 5;
 
-pub async fn setup_rabbit_mq(config: Arc<BackendConfig>) -> Result<Channel, lapin::Error> {
+/// Set up the RabbitMQ connection and declare all queues. This creates two
+/// channels, one for checking emails and one for preprocessing. The
+/// preprocessing channel is used to figure out the email provider and route
+/// the message to the correct queue.
+///
+/// The check channel is used to consume messages from the queues. It has a
+/// global prefetch limit set to the concurrency limit.
+///
+/// Returns a tuple of (check_channel, preprocess_channel).
+pub async fn setup_rabbit_mq(
+	config: Arc<BackendConfig>,
+) -> Result<(Channel, Channel), lapin::Error> {
 	let options = ConnectionProperties::default()
 		// Use tokio executor and reactor.
 		.with_executor(tokio_executor_trait::Tokio::current())
@@ -39,7 +50,8 @@ pub async fn setup_rabbit_mq(config: Arc<BackendConfig>) -> Result<Channel, lapi
 
 	let worker_config = config.must_worker_config();
 	let conn = Connection::connect(&worker_config.rabbitmq.url, options).await?;
-	let channel = conn.create_channel().await?;
+	let check_channel = conn.create_channel().await?;
+	let preprocess_channel = conn.create_channel().await?;
 
 	info!(target: LOG_TARGET, backend=?config.backend_name,state=?conn.status().state(), "Connected to AMQP broker");
 
@@ -57,7 +69,7 @@ pub async fn setup_rabbit_mq(config: Arc<BackendConfig>) -> Result<Channel, lapi
 		Queue::EverythingElseSmtp,
 	];
 	for queue in queues.iter() {
-		channel
+		check_channel
 			.queue_declare(
 				format!("{}", queue).as_str(),
 				QueueDeclareOptions {
@@ -68,7 +80,18 @@ pub async fn setup_rabbit_mq(config: Arc<BackendConfig>) -> Result<Channel, lapi
 			)
 			.await?;
 	}
-	channel
+
+	// Set up prefetch (concurrency) limit using qos
+	check_channel
+		.basic_qos(
+			worker_config.rabbitmq.concurrency,
+			// Set global to true to apply to all consumers.
+			// ref: https://www.rabbitmq.com/docs/consumer-prefetch#independent-consumers
+			BasicQosOptions { global: true },
+		)
+		.await?;
+
+	preprocess_channel
 		.queue_declare(
 			"preprocess",
 			QueueDeclareOptions {
@@ -79,30 +102,25 @@ pub async fn setup_rabbit_mq(config: Arc<BackendConfig>) -> Result<Channel, lapi
 		)
 		.await?;
 
-	// Set up prefetch (concurrency) limit using qos
-	channel
-		.basic_qos(
-			worker_config.rabbitmq.concurrency,
-			// Set global to true to apply to all consumers.
-			// ref: https://www.rabbitmq.com/docs/consumer-prefetch#independent-consumers
-			BasicQosOptions { global: true },
-		)
-		.await?;
-
 	info!(target: LOG_TARGET, queues=?worker_config.rabbitmq.queues, concurrency=?worker_config.rabbitmq.concurrency, "Worker will start consuming messages");
 
-	Ok(channel)
+	Ok((check_channel, preprocess_channel))
 }
 
 /// Start the worker to consume messages from the queue.
 pub async fn run_worker(
 	config: Arc<BackendConfig>,
 	pg_pool: PgPool,
-	channel: Arc<Channel>,
+	check_channel: Arc<Channel>,
+	preprocess_channel: Arc<Channel>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	tokio::try_join!(
-		consume_preprocess(Arc::clone(&config), Arc::clone(&channel)),
-		consume_check_email(Arc::clone(&config), pg_pool, Arc::clone(&channel))
+		consume_preprocess(
+			Arc::clone(&config),
+			Arc::clone(&check_channel),
+			preprocess_channel
+		),
+		consume_check_email(Arc::clone(&config), pg_pool, check_channel)
 	)?;
 
 	Ok(())
@@ -112,9 +130,10 @@ pub async fn run_worker(
 /// (i.e. re-publishing) to the correct queue.
 async fn consume_preprocess(
 	config: Arc<BackendConfig>,
-	channel: Arc<Channel>,
+	check_channel: Arc<Channel>,
+	preprocess_channel: Arc<Channel>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-	let mut consumer = channel
+	let mut consumer = preprocess_channel
 		.basic_consume(
 			"preprocess",
 			format!("{}-preprocess", &config.backend_name).as_str(),
@@ -129,7 +148,7 @@ async fn consume_preprocess(
 		let payload = serde_json::from_slice::<TaskPayload>(&delivery.data)?;
 		debug!(target: LOG_TARGET, email=payload.input.to_email, "New Preprocess job");
 
-		let channel_clone = Arc::clone(&channel);
+		let channel_clone = Arc::clone(&check_channel);
 
 		tokio::spawn(async move {
 			if let Err(e) = preprocess(&payload, delivery, channel_clone).await {

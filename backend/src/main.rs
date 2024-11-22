@@ -46,13 +46,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
 	#[cfg(feature = "worker")]
 	{
-		let channel = Arc::new(setup_rabbit_mq(Arc::clone(&config)).await?);
+		let (check_channel, preprocess_channel) = setup_rabbit_mq(Arc::clone(&config)).await?;
+		let (check_channel, preprocess_channel) =
+			(Arc::new(check_channel), Arc::new(preprocess_channel));
 		let pg_pool = create_db(Arc::clone(&config)).await?;
-		let server_future =
-			run_warp_server(Arc::clone(&config), Arc::clone(&channel), pg_pool.clone());
+		let server_future = run_warp_server(
+			Arc::clone(&config),
+			Arc::clone(&preprocess_channel),
+			pg_pool.clone(),
+		);
 		let worker_future = async {
 			if config.worker.enable {
-				run_worker(Arc::clone(&config), pg_pool, Arc::clone(&channel)).await?;
+				run_worker(config, pg_pool, check_channel, preprocess_channel).await?;
 			}
 			Ok::<(), Box<dyn std::error::Error + Send + Sync>>(())
 		};
