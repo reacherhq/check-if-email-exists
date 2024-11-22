@@ -16,6 +16,7 @@
 
 use super::db::save_to_db;
 use crate::config::{BackendConfig, Queue};
+use anyhow::{anyhow, bail};
 use check_if_email_exists::mx::check_mx;
 use check_if_email_exists::syntax::check_syntax;
 use check_if_email_exists::{
@@ -121,7 +122,7 @@ pub(crate) async fn process_queue_message(
 	channel: Arc<Channel>,
 	pg_pool: PgPool,
 	config: Arc<BackendConfig>,
-) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+) -> Result<(), anyhow::Error> {
 	let worker_output = do_verification_work(payload, Arc::clone(&config)).await;
 
 	match (&worker_output, delivery.redelivered) {
@@ -203,7 +204,7 @@ pub async fn preprocess(
 	payload: &TaskPayload,
 	delivery: Delivery,
 	channel: Arc<Channel>,
-) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+) -> Result<(), anyhow::Error> {
 	let syntax = check_syntax(&payload.input.to_email);
 	let mx = check_mx(&syntax).await?;
 	// Get first hostname from MX records.
@@ -211,7 +212,7 @@ pub async fn preprocess(
 		.lookup?
 		.iter()
 		.next()
-		.ok_or_else(|| "No MX records found")?
+		.ok_or_else(|| anyhow!("No MX records found"))?
 		.exchange()
 		.to_string();
 
@@ -294,7 +295,7 @@ pub async fn send_single_shot_reply(
 	channel: Arc<Channel>,
 	delivery: &Delivery,
 	worker_output: &Result<CheckEmailOutput, TaskError>,
-) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+) -> Result<(), anyhow::Error> {
 	if let (Some(reply_to), Some(correlation_id)) = (
 		delivery.properties.reply_to(),
 		delivery.properties.correlation_id(),
@@ -319,7 +320,7 @@ pub async fn send_single_shot_reply(
 
 		debug!(target: LOG_TARGET, reply_to=?reply_to.to_string(), correlation_id=?correlation_id.to_string(), "Sent reply")
 	} else {
-		return Err("Missing reply_to or correlation_id".into());
+		bail!("Missing reply_to or correlation_id");
 	}
 
 	Ok(())

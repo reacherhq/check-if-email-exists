@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use anyhow::Context;
 use check_if_email_exists::{CheckEmailOutput, LOG_TARGET};
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::env;
@@ -34,7 +35,7 @@ pub async fn save_to_db(
 	pg_pool: PgPool,
 	payload: &TaskPayload,
 	worker_output: &Result<CheckEmailOutput, TaskError>,
-) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+) -> Result<(), anyhow::Error> {
 	let job_id = payload.job_id.unwrap();
 
 	let payload_json = serde_json::to_value(payload)?;
@@ -80,7 +81,7 @@ pub async fn save_to_db(
 }
 
 /// Create a DB pool.
-pub async fn create_db(config: Arc<BackendConfig>) -> Result<PgPool, sqlx::Error> {
+pub async fn create_db(config: Arc<BackendConfig>) -> Result<PgPool, anyhow::Error> {
 	let worker_config = config.must_worker_config();
 	// For legacy reasons, we also support the DATABASE_URL environment variable:
 	let db_url = env::var("DATABASE_URL").unwrap_or_else(|_| worker_config.postgres.db_url.clone());
@@ -91,7 +92,8 @@ pub async fn create_db(config: Arc<BackendConfig>) -> Result<PgPool, sqlx::Error
 	// with arc so it can safely be cloned and shared across threads
 	let pool = PgPoolOptions::new()
 		.connect(&worker_config.postgres.db_url)
-		.await?;
+		.await
+		.with_context(|| "Connecting to postgres")?;
 
 	sqlx::migrate!("./migrations").run(&pool).await?;
 

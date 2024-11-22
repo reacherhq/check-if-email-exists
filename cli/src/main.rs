@@ -84,7 +84,7 @@ pub struct Cli {
 pub(crate) static CONF: Lazy<Cli> = Lazy::new(Cli::parse);
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+async fn main() -> Result<(), anyhow::Error> {
 	env_logger::init();
 
 	let to_email = &CONF.to_email;

@@ -87,7 +87,7 @@ pub async fn run_warp_server(
 	config: Arc<BackendConfig>,
 	#[cfg(feature = "worker")] channel: Arc<Channel>,
 	pg_pool: PgPool,
-) -> Result<Option<JobRunnerHandle>, Box<dyn std::error::Error + Send + Sync>> {
+) -> Result<Option<JobRunnerHandle>, anyhow::Error> {
 	let host = config
 		.http_host
 		.parse::<IpAddr>()

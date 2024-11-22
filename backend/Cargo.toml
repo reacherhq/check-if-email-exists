@@ -6,6 +6,7 @@ license = "AGPL-3.0"
 publish = false
 
 [dependencies]
+anyhow = "1.0"
 async-smtp = "0.6"
 check-if-email-exists = { path = "../core", features = ["sentry"] }
 config = "0.14"

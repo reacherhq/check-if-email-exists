@@ -2992,6 +2992,7 @@ dependencies = [
 name = "reacher_backend"
 version = "0.7.0"
 dependencies = [
+ "anyhow",
  "async-smtp",
  "check-if-email-exists",
  "config",

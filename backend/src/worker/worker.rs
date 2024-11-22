@@ -17,6 +17,7 @@
 use super::task::{process_queue_message, TaskPayload};
 use crate::config::{BackendConfig, Queue, ThrottleConfig};
 use crate::worker::task::{preprocess, send_single_shot_reply, TaskError};
+use anyhow::Context;
 use check_if_email_exists::LOG_TARGET;
 use futures::stream::StreamExt;
 use lapin::{options::*, types::FieldTable, Channel, Connection, ConnectionProperties};
@@ -40,7 +41,7 @@ pub const MAX_QUEUE_PRIORITY: u8 = 5;
 /// Returns a tuple of (check_channel, preprocess_channel).
 pub async fn setup_rabbit_mq(
 	config: Arc<BackendConfig>,
-) -> Result<(Channel, Channel), lapin::Error> {
+) -> Result<(Channel, Channel), anyhow::Error> {
 	let options = ConnectionProperties::default()
 		// Use tokio executor and reactor.
 		.with_executor(tokio_executor_trait::Tokio::current())
@@ -48,7 +49,9 @@ pub async fn setup_rabbit_mq(
 		.with_connection_name(config.backend_name.clone().into());
 
 	let worker_config = config.must_worker_config();
-	let conn = Connection::connect(&worker_config.rabbitmq.url, options).await?;
+	let conn = Connection::connect(&worker_config.rabbitmq.url, options)
+		.await
+		.with_context(|| "Connecting to rabbitmq")?;
 	let check_channel = conn.create_channel().await?;
 	let preprocess_channel = conn.create_channel().await?;
 
@@ -112,7 +115,7 @@ pub async fn run_worker(
 	pg_pool: PgPool,
 	check_channel: Arc<Channel>,
 	preprocess_channel: Arc<Channel>,
-) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+) -> Result<(), anyhow::Error> {
 	tokio::try_join!(
 		consume_preprocess(
 			Arc::clone(&config),
@@ -131,7 +134,7 @@ async fn consume_preprocess(
 	config: Arc<BackendConfig>,
 	check_channel: Arc<Channel>,
 	preprocess_channel: Arc<Channel>,
-) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+) -> Result<(), anyhow::Error> {
 	let mut consumer = preprocess_channel
 		.basic_consume(
 			"preprocess",
@@ -162,7 +165,7 @@ async fn consume_check_email(
 	config: Arc<BackendConfig>,
 	pg_pool: PgPool,
 	channel: Arc<Channel>,
-) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+) -> Result<(), anyhow::Error> {
 	let worker_config = config.must_worker_config();
 
 	let throttle = Arc::new(Mutex::new(Throttle::new()));
@@ -251,7 +254,7 @@ async fn consume_check_email(
 				throttle_clone.lock().await.increment_counters();
 			}
 
-			Ok::<(), Box<dyn std::error::Error + Send + Sync>>(())
+			Ok::<(), anyhow::Error>(())
 		});
 	}
 

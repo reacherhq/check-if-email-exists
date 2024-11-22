@@ -30,7 +30,7 @@ const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Run a HTTP server using warp with bulk endpoints.
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+async fn main() -> Result<(), anyhow::Error> {
 	// Initialize logging.
 	tracing_subscriber::fmt::init();
 	info!(target: LOG_TARGET, version=?CARGO_PKG_VERSION, "Running Reacher");
