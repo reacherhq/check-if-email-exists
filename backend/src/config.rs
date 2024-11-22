@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use crate::worker::task::TaskWebhook;
 use check_if_email_exists::config::ReacherConfig;
 use check_if_email_exists::{CheckEmailInputProxy, SentryConfig};
 use config::Config;
@@ -91,7 +92,7 @@ pub struct WorkerConfig {
 	pub throttle: Option<ThrottleConfig>,
 	pub rabbitmq: Option<RabbitMQConfig>,
 	/// Optional webhook configuration to send email verification results.
-	pub webhook: Option<WebhookConfig>,
+	pub webhook: Option<TaskWebhook>,
 	/// Postgres database configuration to store email verification
 	/// results.
 	pub postgres: Option<PostgresConfig>,
@@ -102,7 +103,7 @@ pub struct WorkerConfig {
 pub struct MustWorkerConfig {
 	pub throttle: ThrottleConfig,
 	pub rabbitmq: RabbitMQConfig,
-	pub webhook: Option<WebhookConfig>,
+	pub webhook: Option<TaskWebhook>,
 	pub postgres: PostgresConfig,
 }
 #[derive(Debug, Deserialize, Clone)]
@@ -231,11 +232,6 @@ impl ThrottleConfig {
 			max_requests_per_day: None,
 		}
 	}
-}
-
-#[derive(Debug, Deserialize, Clone)]
-pub struct WebhookConfig {
-	pub url: String,
 }
 
 /// Load the worker configuration from the worker_config.toml file and from the

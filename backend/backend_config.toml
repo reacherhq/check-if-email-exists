@@ -79,7 +79,7 @@ queues = [
 ]
 
 # Number of concurrent emails to verify for this worker, across all queues.
-concurrency = 1
+concurrency = 20
 
 # Postgres configuration. Currently, we require a Postgres database to store
 # the results of the verifications. This might change in the future, where the
@@ -89,5 +89,5 @@ db_url = "postgresql://localhost/reacherdb"
 
 # The optional webhook URL to send the results to. This will one POST request
 # per email verification, with the result in the body.
-# [worker.webhook]
+# [worker.webhook.on_each_email]
 # url = "http://localhost:8080/webhook"

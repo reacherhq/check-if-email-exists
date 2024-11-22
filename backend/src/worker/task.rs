@@ -80,6 +80,9 @@ async fn inner_process_queue_message(
 
 	// Send reply by following this guide:
 	// https://www.rabbitmq.com/tutorials/tutorial-six-javascript.html
+	//
+	// This only applies for single-shot email verifications on the
+	// /v1/check_email endpoint, and not to bulk verifications.
 	if let (Some(reply_to), Some(correlation_id)) = (
 		delivery.properties.reply_to(),
 		delivery.properties.correlation_id(),
