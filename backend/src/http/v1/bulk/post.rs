@@ -26,7 +26,7 @@ use lapin::Channel;
 use lapin::{options::*, BasicProperties};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
-use tracing::{debug, info};
+use tracing::info;
 use warp::http::StatusCode;
 use warp::Filter;
 
@@ -136,7 +136,7 @@ pub async fn publish_task(
 		.await
 		.map_err(ReacherResponseError::from)?;
 
-	debug!(target: LOG_TARGET, email=?payload.input.to_email, queue=?PREPROCESS_QUEUE, "Enqueued");
+	info!(target: LOG_TARGET, email=?payload.input.to_email, queue=?PREPROCESS_QUEUE, "Published task");
 
 	Ok(())
 }
