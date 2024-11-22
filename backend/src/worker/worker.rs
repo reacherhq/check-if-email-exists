@@ -16,13 +16,11 @@
 
 use super::task::{process_queue_message, TaskPayload};
 use crate::config::{BackendConfig, Queue, ThrottleConfig};
-use crate::worker::task::{preprocess, SingleShotResponse, TaskError};
+use crate::worker::task::{preprocess, send_single_shot_reply, TaskError};
 use check_if_email_exists::LOG_TARGET;
 use futures::stream::StreamExt;
-use lapin::BasicProperties;
 use lapin::{options::*, types::FieldTable, Channel, Connection, ConnectionProperties};
 use sqlx::PgPool;
-use std::convert::TryFrom;
 use std::sync::Arc;
 use std::time::Duration;
 use std::time::Instant;
@@ -189,40 +187,17 @@ async fn consume_check_email(
 
 					// For single-shot tasks, we return an error early, so that the user knows they need to retry.
 					if payload.is_single_shot() {
-						// Send reply by following this guide:
-						// https://www.rabbitmq.com/tutorials/tutorial-six-javascript.html
-						//
-						// This only applies for single-shot email verifications on the
-						// /v1/check_email endpoint, and not to bulk verifications.
-						if let (Some(reply_to), Some(correlation_id)) = (
-							delivery.properties.reply_to(),
-							delivery.properties.correlation_id(),
-						) {
-							debug!(target: LOG_TARGET, email=payload.input.to_email, job_id=?payload.job_id, queue=?queue_clone.to_string(), "Rejecting single-shot email because of throttling");
-							delivery
-								.reject(BasicRejectOptions { requeue: false })
-								.await?;
+						debug!(target: LOG_TARGET, email=payload.input.to_email, job_id=?payload.job_id, queue=?queue_clone.to_string(), "Rejecting single-shot email because of throttling");
+						delivery
+							.reject(BasicRejectOptions { requeue: false })
+							.await?;
 
-							let single_shot_response = SingleShotResponse::try_from(Err(
-								TaskError::Throttle(wait_duration),
-							))?;
-							let reply_payload = serde_json::to_vec(&single_shot_response)?;
-							let properties = BasicProperties::default()
-								.with_correlation_id(correlation_id.to_owned())
-								.with_content_type("application/json".into());
-
-							channel_clone
-								.basic_publish(
-									"",
-									reply_to.as_str(),
-									BasicPublishOptions::default(),
-									&reply_payload,
-									properties,
-								)
-								.await?;
-						} else {
-							return Err("Missing reply_to or correlation_id".into());
-						}
+						send_single_shot_reply(
+							Arc::clone(&channel_clone),
+							&delivery,
+							&Err(TaskError::Throttle(wait_duration)),
+						)
+						.await?;
 					} else {
 						// Put back the message into the same queue, so that other
 						// workers can pick it up.

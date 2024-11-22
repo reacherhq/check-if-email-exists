@@ -33,7 +33,7 @@ pub async fn save_to_db(
 	backend_name: &str,
 	pg_pool: PgPool,
 	payload: &TaskPayload,
-	worker_output: Result<CheckEmailOutput, TaskError>,
+	worker_output: &Result<CheckEmailOutput, TaskError>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	let job_id = payload.job_id.unwrap();
 

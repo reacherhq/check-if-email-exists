@@ -97,18 +97,6 @@ impl Serialize for TaskError {
 	}
 }
 
-/// For single-shot email verifications, the worker will send a reply to the
-/// client with the result of the verification.
-#[derive(Debug, Deserialize, Serialize)]
-pub struct SingleShotResponse {
-	/// The HTTP status code to send to the client.
-	pub code: u16, // Unfortunately we can't use warp::http::StatusCode here.
-	/// The JSON-encoded result to send to the client. It can be either a
-	/// CheckEmailOutput or a TaskError, serialized to JSON. Because a lot of
-	/// error types don't implement Deserialize, we use Vec<u8> here.
-	pub body: Vec<u8>,
-}
-
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct TaskWebhook {
 	pub on_each_email: Option<TaskWebhookOnEachEmail>,
@@ -120,18 +108,18 @@ pub struct TaskWebhookOnEachEmail {
 	pub extra: Option<serde_json::Value>,
 }
 
-impl TryFrom<Result<CheckEmailOutput, TaskError>> for SingleShotResponse {
+impl TryFrom<&Result<CheckEmailOutput, TaskError>> for SingleShotReply {
 	type Error = serde_json::Error;
 
-	fn try_from(result: Result<CheckEmailOutput, TaskError>) -> Result<Self, Self::Error> {
+	fn try_from(result: &Result<CheckEmailOutput, TaskError>) -> Result<Self, Self::Error> {
 		match result {
 			Ok(output) => Ok(Self {
 				code: StatusCode::OK.as_u16(),
-				body: serde_json::to_vec(&output)?,
+				body: serde_json::to_vec(output)?,
 			}),
 			Err(err) => Ok(Self {
 				code: err.status_code().as_u16(),
-				body: serde_json::to_vec(&err)?,
+				body: serde_json::to_vec(err)?,
 			}),
 		}
 	}
@@ -151,50 +139,51 @@ pub(crate) async fn process_queue_message(
 	pg_pool: PgPool,
 	config: Arc<BackendConfig>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-	let worker_output = inner_process_queue_message(payload, &delivery, Arc::clone(&config)).await;
+	let worker_output = do_verification_work(payload, Arc::clone(&config)).await;
 
-	if payload.is_single_shot() {
-		// Send reply by following this guide:
-		// https://www.rabbitmq.com/tutorials/tutorial-six-javascript.html
-		//
-		// This only applies for single-shot email verifications on the
-		// /v1/check_email endpoint, and not to bulk verifications.
-		if let (Some(reply_to), Some(correlation_id)) = (
-			delivery.properties.reply_to(),
-			delivery.properties.correlation_id(),
-		) {
-			let properties = BasicProperties::default()
-				.with_correlation_id(correlation_id.to_owned())
-				.with_content_type("application/json".into());
-
-			let single_shot_response = SingleShotResponse::try_from(worker_output)?;
-			let reply_payload = serde_json::to_vec(&single_shot_response)?;
-
-			channel
-				.basic_publish(
-					"",
-					reply_to.as_str(),
-					BasicPublishOptions::default(),
-					&reply_payload,
-					properties,
-				)
-				.await?
+	match (&worker_output, delivery.redelivered) {
+		(Ok(output), false) if output.is_reachable == Reachable::Unknown => {
+			// If is_reachable is unknown, then we requeue the message, but only once.
+			// We might want to add a requeue counter in the future, see:
+			// https://stackoverflow.com/questions/25226080/rabbitmq-how-to-requeue-message-with-counter
+			delivery
+				.reject(BasicRejectOptions { requeue: true })
 				.await?;
-
-			debug!(target: LOG_TARGET, reply_to=?reply_to.to_string(), correlation_id=?correlation_id.to_string(), "Sent reply")
-		} else {
-			return Err("Missing reply_to or correlation_id".into());
+			info!(target: LOG_TARGET, email=?&payload.input.to_email, is_reachable=?Reachable::Unknown, "Requeued message");
 		}
-	} else {
-		save_to_db(&config.backend_name, pg_pool, payload, worker_output).await?;
+		(Err(e), false) => {
+			// Same as above, if processing the message failed, we requeue it.
+			delivery
+				.reject(BasicRejectOptions { requeue: true })
+				.await?;
+			info!(target: LOG_TARGET, email=?&payload.input.to_email, err=?e, "Requeued message");
+		}
+		_ => {
+			// This is the happy path. We acknowledge the message and:
+			// - If it's a single-shot email verification, we send a reply to the client.
+			// - If it's a bulk verification, we save the result to the database.
+			delivery.ack(BasicAckOptions::default()).await?;
+
+			if payload.is_single_shot() {
+				send_single_shot_reply(channel, &delivery, &worker_output).await?;
+			} else {
+				save_to_db(&config.backend_name, pg_pool, payload, &worker_output).await?;
+			}
+
+			info!(target: LOG_TARGET,
+				email=payload.input.to_email,
+				worker_output=?worker_output.map(|o| o.is_reachable),
+				job_id=?payload.job_id,
+				"Done check",
+			);
+		}
 	}
 
 	Ok(())
 }
 
-async fn inner_process_queue_message(
+async fn do_verification_work(
 	payload: &TaskPayload,
-	delivery: &Delivery,
 	config: Arc<BackendConfig>,
 ) -> Result<CheckEmailOutput, TaskError> {
 	let output = check_email(&payload.input, &config.get_reacher_config()).await;
@@ -222,22 +211,6 @@ async fn inner_process_queue_message(
 			.text()
 			.await?;
 		debug!(target: LOG_TARGET, email=?webhook_output.result.input,res=?res, "Received webhook response");
-	}
-
-	let is_reachable = output.is_reachable.to_owned();
-
-	// If is_reachable is unknown, then we requeue the message, but only once.
-	// We might want to add a requeue counter in the future, see:
-	// https://stackoverflow.com/questions/25226080/rabbitmq-how-to-requeue-message-with-counter
-	if is_reachable == Reachable::Unknown && !delivery.redelivered {
-		delivery
-			.reject(BasicRejectOptions { requeue: true })
-			.await?;
-		info!(target: LOG_TARGET, email=?&payload.input.to_email, "Requeued message");
-	} else {
-		delivery.ack(BasicAckOptions::default()).await?;
-
-		info!(target: LOG_TARGET, email=output.input, is_reachable=?output.is_reachable, job_id=?payload.job_id, "Done check");
 	}
 
 	Ok(output)
@@ -292,6 +265,59 @@ pub async fn preprocess(
 
 	delivery.ack(BasicAckOptions::default()).await?;
 	debug!(target: LOG_TARGET, email=?payload.input.to_email, queue=?queue.to_string(), "Message preprocessed");
+
+	Ok(())
+}
+
+/// For single-shot email verifications, the worker will send a reply to the
+/// client with the result of the verification.
+#[derive(Debug, Deserialize, Serialize)]
+pub struct SingleShotReply {
+	/// The HTTP status code to send to the client.
+	pub code: u16, // Unfortunately we can't use warp::http::StatusCode here.
+	/// The JSON-encoded result to send to the client. It can be either a
+	/// CheckEmailOutput or a TaskError, serialized to JSON. Because a lot of
+	/// error types don't implement Deserialize, we use Vec<u8> here.
+	pub body: Vec<u8>,
+}
+
+/// Send reply, in an "RPC mode", to the queue that initiated the request. We
+/// follow this guide:
+/// https://www.rabbitmq.com/tutorials/tutorial-six-javascript.html
+///
+/// This only applies for single-shot email verifications on the
+/// /v1/check_email endpoint, and not to bulk verifications.
+pub async fn send_single_shot_reply(
+	channel: Arc<Channel>,
+	delivery: &Delivery,
+	worker_output: &Result<CheckEmailOutput, TaskError>,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+	if let (Some(reply_to), Some(correlation_id)) = (
+		delivery.properties.reply_to(),
+		delivery.properties.correlation_id(),
+	) {
+		let properties = BasicProperties::default()
+			.with_correlation_id(correlation_id.to_owned())
+			.with_content_type("application/json".into());
+
+		let single_shot_response = SingleShotReply::try_from(worker_output)?;
+		let reply_payload = serde_json::to_vec(&single_shot_response)?;
+
+		channel
+			.basic_publish(
+				"",
+				reply_to.as_str(),
+				BasicPublishOptions::default(),
+				&reply_payload,
+				properties,
+			)
+			.await?
+			.await?;
+
+		debug!(target: LOG_TARGET, reply_to=?reply_to.to_string(), correlation_id=?correlation_id.to_string(), "Sent reply")
+	} else {
+		return Err("Missing reply_to or correlation_id".into());
+	}
 
 	Ok(())
 }

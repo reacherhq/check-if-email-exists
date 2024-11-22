@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-//! This file implements the `POST /v0/check_email` endpoint.
+//! This file implements the `POST /v1/check_email` endpoint.
 
 use check_if_email_exists::LOG_TARGET;
 use futures::StreamExt;
@@ -32,7 +32,7 @@ use crate::http::v0::check_email::post::CheckEmailRequest;
 use crate::http::v1::bulk::post::publish_task;
 use crate::http::v1::bulk::post::with_channel;
 use crate::http::{check_header, with_config, ReacherResponseError};
-use crate::worker::task::{SingleShotResponse, TaskPayload};
+use crate::worker::task::{SingleShotReply, TaskPayload};
 use crate::worker::worker::MAX_QUEUE_PRIORITY;
 
 /// The main endpoint handler that implements the logic of this route.
@@ -111,7 +111,7 @@ async fn http_handler(
 				.await
 				.map_err(ReacherResponseError::from)?;
 
-			let single_shot_response = serde_json::from_slice::<SingleShotResponse>(&delivery.data)
+			let single_shot_response = serde_json::from_slice::<SingleShotReply>(&delivery.data)
 				.map_err(ReacherResponseError::from)?;
 			let status_code = StatusCode::from_u16(single_shot_response.code)
 				.map_err(ReacherResponseError::from)?;
@@ -124,10 +124,10 @@ async fn http_handler(
 				.into());
 			}
 
-			return Ok(warp::reply::with_status(
+			return Ok(warp::reply::with_header(
 				single_shot_response.body,
-				StatusCode::from_u16(single_shot_response.code)
-					.map_err(ReacherResponseError::from)?,
+				"Content-Type",
+				"application/json",
 			));
 		} else {
 			delivery
