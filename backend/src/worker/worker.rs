@@ -154,34 +154,60 @@ async fn consume_check_email(
 		let config_clone = Arc::clone(&config);
 		let pg_pool_clone = pg_pool.clone();
 		let throttle_clone = Arc::clone(&throttle);
-		let queue = queue.clone();
+		let queue_clone = queue.clone();
 
 		tokio::spawn(async move {
 			let worker_config = config_clone.must_worker_config();
 
 			let mut consumer = channel_clone
 				.basic_consume(
-					queue.to_string().as_str(),
-					format!("{}-{}", &config_clone.backend_name, &queue).as_str(),
+					queue_clone.to_string().as_str(),
+					format!("{}-{}", &config_clone.backend_name, &queue_clone).as_str(),
 					BasicConsumeOptions::default(),
 					FieldTable::default(),
 				)
 				.await?;
-			debug!(target: LOG_TARGET, queue=?queue, "Consuming messages");
 
 			// Loop over the incoming messages
 			while let Some(delivery) = consumer.next().await {
 				let delivery = delivery?;
 				let payload = serde_json::from_slice::<TaskPayload>(&delivery.data)?;
-				info!(target: LOG_TARGET, email=payload.input.to_email, job_id=?payload.job_id, queue=?queue, "Starting task");
+				debug!(target: LOG_TARGET, queue=?queue_clone.to_string(), email=?payload.input.to_email, "Consuming message");
 
 				// Reset throttle counters if needed
 				throttle_clone.lock().await.reset_if_needed();
+
+				// Check if we should throttle before fetching the next message
+				if let Some(wait_duration) = throttle_clone
+					.lock()
+					.await
+					.should_throttle(&worker_config.throttle)
+				{
+					info!(target: LOG_TARGET, wait=?wait_duration, email=?payload.input.to_email, "Too many requests, throttling");
+
+					// Put back the message into the same queue, so that other
+					// workers can pick it up.
+					channel_clone
+						.basic_publish(
+							"",
+							queue_clone.to_string().as_str(),
+							BasicPublishOptions::default(),
+							&delivery.data,
+							delivery.properties,
+						)
+						.await?;
+					debug!(target: LOG_TARGET, email=payload.input.to_email, job_id=?payload.job_id, queue=?queue_clone.to_string(), "Requeued message because of throttling");
+
+					// Wait before fetching new messages
+					sleep(wait_duration).await;
+					continue;
+				}
 
 				let config_clone2 = Arc::clone(&config_clone);
 				let channel_clone2 = Arc::clone(&channel_clone);
 				let pg_pool_clone2 = pg_pool_clone.clone();
 
+				info!(target: LOG_TARGET, email=payload.input.to_email, job_id=?payload.job_id, queue=?queue_clone.to_string(), "Starting task");
 				tokio::spawn(async move {
 					if let Err(e) = process_queue_message(
 						&payload,
@@ -198,17 +224,6 @@ async fn consume_check_email(
 
 				// Increment throttle counters once we spawn the task
 				throttle_clone.lock().await.increment_counters();
-
-				// Check if we should throttle before fetching the next message
-				if let Some(wait_duration) = throttle_clone
-					.lock()
-					.await
-					.should_throttle(&worker_config.throttle)
-				{
-					info!(target: LOG_TARGET, wait=?wait_duration, "Too many requests, throttling");
-					sleep(wait_duration).await;
-					continue;
-				}
 			}
 
 			Ok::<(), Box<dyn std::error::Error + Send + Sync>>(())

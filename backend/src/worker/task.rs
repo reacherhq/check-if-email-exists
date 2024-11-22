@@ -38,6 +38,14 @@ pub struct TaskPayload {
 	pub webhook: Option<TaskWebhook>,
 }
 
+impl TaskPayload {
+	/// Returns true if the task is a single-shot email verification via the
+	/// /v1/check_email, endpoint, i.e. not a part of a bulk verification job.
+	pub fn is_single_shot(&self) -> bool {
+		self.job_id.is_none()
+	}
+}
+
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct TaskWebhook {
 	pub on_each_email: Option<TaskWebhookOnEachEmail>,
@@ -63,47 +71,54 @@ pub(crate) async fn process_queue_message(
 	pg_pool: PgPool,
 	config: Arc<BackendConfig>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-	let worker_output =
-		inner_process_queue_message(&payload, delivery, channel, Arc::clone(&config)).await;
-	save_to_db(&config.backend_name, pg_pool, payload, worker_output).await
+	let worker_output = inner_process_queue_message(payload, &delivery, Arc::clone(&config)).await;
+
+	if payload.is_single_shot() {
+		// Send reply by following this guide:
+		// https://www.rabbitmq.com/tutorials/tutorial-six-javascript.html
+		//
+		// This only applies for single-shot email verifications on the
+		// /v1/check_email endpoint, and not to bulk verifications.
+		if let (Some(reply_to), Some(correlation_id)) = (
+			delivery.properties.reply_to(),
+			delivery.properties.correlation_id(),
+		) {
+			let properties = BasicProperties::default()
+				.with_correlation_id(correlation_id.to_owned())
+				.with_content_type("application/json".into());
+
+			let reply_payload = serde_json::to_string(&worker_output?)?;
+			let reply_payload = reply_payload.as_bytes();
+
+			channel
+				.basic_publish(
+					"",
+					reply_to.as_str(),
+					BasicPublishOptions::default(),
+					reply_payload,
+					properties,
+				)
+				.await?
+				.await?;
+
+			debug!(target: LOG_TARGET, reply_to=?reply_to.to_string(), correlation_id=?correlation_id.to_string(), "Sent reply")
+		} else {
+			return Err("Missing reply_to or correlation_id".into());
+		}
+	} else {
+		save_to_db(&config.backend_name, pg_pool, payload, worker_output).await?;
+	}
+
+	Ok(())
 }
 
 async fn inner_process_queue_message(
 	payload: &TaskPayload,
-	delivery: Delivery,
-	channel: Arc<Channel>,
+	delivery: &Delivery,
+
 	config: Arc<BackendConfig>,
 ) -> Result<CheckEmailOutput, Box<dyn std::error::Error + Send + Sync>> {
 	let output = check_email(&payload.input, &config.get_reacher_config()).await;
-	let reply_payload = serde_json::to_string(&output)?;
-	let reply_payload = reply_payload.as_bytes();
-
-	// Send reply by following this guide:
-	// https://www.rabbitmq.com/tutorials/tutorial-six-javascript.html
-	//
-	// This only applies for single-shot email verifications on the
-	// /v1/check_email endpoint, and not to bulk verifications.
-	if let (Some(reply_to), Some(correlation_id)) = (
-		delivery.properties.reply_to(),
-		delivery.properties.correlation_id(),
-	) {
-		let properties = BasicProperties::default()
-			.with_correlation_id(correlation_id.to_owned())
-			.with_content_type("application/json".into());
-
-		channel
-			.basic_publish(
-				"",
-				reply_to.as_str(),
-				BasicPublishOptions::default(),
-				reply_payload,
-				properties,
-			)
-			.await?
-			.await?;
-
-		debug!(target: LOG_TARGET, reply_to=?reply_to, correlation_id=?correlation_id, "Sent reply")
-	}
 
 	// Check if we have a webhook to send the output to.
 	if let Some(TaskWebhook {
@@ -139,6 +154,7 @@ async fn inner_process_queue_message(
 		info!(target: LOG_TARGET, email=?&payload.input.to_email, "Requeued message");
 	} else {
 		delivery.ack(BasicAckOptions::default()).await?;
+
 		info!(target: LOG_TARGET, email=output.input, is_reachable=?output.is_reachable, job_id=?payload.job_id, "Done check");
 	}
 
@@ -193,7 +209,7 @@ pub async fn preprocess(
 		.await?;
 
 	delivery.ack(BasicAckOptions::default()).await?;
-	debug!(target: LOG_TARGET, email=?payload.input.to_email, queue=?queue, "Message preprocessed");
+	debug!(target: LOG_TARGET, email=?payload.input.to_email, queue=?queue.to_string(), "Message preprocessed");
 
 	Ok(())
 }

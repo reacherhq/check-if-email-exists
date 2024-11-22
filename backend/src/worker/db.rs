@@ -23,17 +23,18 @@ use tracing::{debug, info};
 use super::task::TaskPayload;
 use crate::config::BackendConfig;
 
+/// Save the task result to the database. This only happens if the task is a
+/// part of a bulk verification job.
+///
+/// # Panics
+///
+/// Panics if the task is a single-shot task, i.e. if `payload.job_id` is `None`.
 pub async fn save_to_db(
 	backend_name: &str,
 	pg_pool: PgPool,
 	payload: &TaskPayload,
 	worker_output: Result<CheckEmailOutput, Box<dyn std::error::Error + Send + Sync>>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-	// Only add to DB if job_id is present, i.e. if the task is a part of a
-	// bulk verification job.
-	if payload.job_id.is_none() {
-		return Ok(());
-	}
 	let job_id = payload.job_id.unwrap();
 
 	let payload_json = serde_json::to_value(payload)?;
