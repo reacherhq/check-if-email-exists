@@ -22,10 +22,10 @@ use serde::{Deserialize, Serialize};
 use sqlx::{Executor, PgPool, Pool, Postgres, Row};
 use std::convert::TryInto;
 use std::iter::Iterator;
+use warp::http::StatusCode;
 use warp::Filter;
 
-use super::error::{v1_bulk_handle_rejection, BulkError, CsvError};
-use crate::http::with_db;
+use crate::http::{with_db, ReacherResponseError};
 use csv_helper::{CsvResponse, CsvWrapper};
 
 mod csv_helper;
@@ -65,7 +65,7 @@ async fn http_handler(
 	)
 	.fetch_one(&pg_pool)
 	.await
-	.map_err(BulkError::from)?
+	.map_err(ReacherResponseError::from)?
 	.total_records;
 	let total_processed = sqlx::query!(
 		r#"SELECT COUNT(*) FROM email_results WHERE job_id = $1;"#,
@@ -73,12 +73,16 @@ async fn http_handler(
 	)
 	.fetch_one(&pg_pool)
 	.await
-	.map_err(BulkError::from)?
+	.map_err(ReacherResponseError::from)?
 	.count
 	.unwrap_or(0);
 
 	if total_processed < total_records as i64 {
-		return Err(BulkError::JobInProgress.into());
+		return Err(ReacherResponseError::new(
+			StatusCode::BAD_REQUEST,
+			format!("Job {} is still running, please try again later", job_id),
+		)
+		.into());
 	}
 
 	let format = req.format.unwrap_or(ResponseFormat::Json);
@@ -86,7 +90,8 @@ async fn http_handler(
 		ResponseFormat::Json => {
 			let data = job_result_json(job_id, req.limit, req.offset.unwrap_or(0), pg_pool).await?;
 
-			let reply = serde_json::to_vec(&Response { results: data }).map_err(BulkError::from)?;
+			let reply = serde_json::to_vec(&Response { results: data })
+				.map_err(ReacherResponseError::from)?;
 
 			Ok(warp::reply::with_header(
 				reply,
@@ -107,7 +112,7 @@ async fn job_result_as_iter(
 	limit: Option<u64>,
 	offset: u64,
 	pg_pool: Pool<Postgres>,
-) -> Result<Box<dyn Iterator<Item = serde_json::Value>>, BulkError> {
+) -> Result<Box<dyn Iterator<Item = serde_json::Value>>, ReacherResponseError> {
 	let query = sqlx::query!(
 		r#"
 		SELECT result FROM email_results
@@ -120,7 +125,10 @@ async fn job_result_as_iter(
 		offset as i64
 	);
 
-	let rows = pg_pool.fetch_all(query).await.map_err(BulkError::from)?;
+	let rows = pg_pool
+		.fetch_all(query)
+		.await
+		.map_err(ReacherResponseError::from)?;
 
 	Ok(Box::new(
 		rows.into_iter()
@@ -156,14 +164,12 @@ async fn job_result_csv(
 	for json_value in rows {
 		let result_csv: CsvResponse = CsvWrapper(json_value)
 			.try_into()
-			.map_err(|e: &'static str| BulkError::Csv(CsvError::Parse(e)))?;
+			.map_err(|e| ReacherResponseError::new(StatusCode::INTERNAL_SERVER_ERROR, e))?;
 		wtr.serialize(result_csv)
-			.map_err(|e| BulkError::Csv(CsvError::CsvLib(e)))?;
+			.map_err(|e| ReacherResponseError::new(StatusCode::INTERNAL_SERVER_ERROR, e))?;
 	}
 
-	let data = wtr
-		.into_inner()
-		.map_err(|e| BulkError::Csv(CsvError::CsvLibWriter(Box::new(e))))?;
+	let data = wtr.into_inner().map_err(ReacherResponseError::from)?;
 
 	Ok(data)
 }
@@ -176,7 +182,6 @@ pub fn v1_get_bulk_job_results(
 		.and(with_db(pg_pool))
 		.and(warp::query::<Request>())
 		.and_then(http_handler)
-		.recover(v1_bulk_handle_rejection)
 		// View access logs by setting `RUST_LOG=reacher_backend`.
 		.with(warp::log(LOG_TARGET))
 }

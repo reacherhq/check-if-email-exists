@@ -14,35 +14,97 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use check_if_email_exists::LOG_TARGET;
+use check_if_email_exists::{CheckEmailInputBuilderError, LOG_TARGET};
+use serde::ser::SerializeStruct;
 use serde::Serialize;
+use std::fmt::Debug;
 use tracing::error;
-use warp::{http, reject};
+use warp::{http::StatusCode, reject};
+
+/// Trait combining ToString and Debug.
+pub trait ToStringDebug: ToString + Debug + Sync + Send {}
+
+impl<T: ToString + Debug + Sync + Send> ToStringDebug for T {}
 
 /// Struct describing an error response.
-#[derive(Serialize, Debug)]
+#[derive(Debug)]
 pub struct ReacherResponseError {
-	#[serde(skip)]
-	pub code: http::StatusCode,
-	pub message: String,
+	pub code: StatusCode,
+	pub error: Box<dyn ToStringDebug>,
+}
+
+impl reject::Reject for ReacherResponseError {}
+
+impl Serialize for ReacherResponseError {
+	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+	where
+		S: serde::Serializer,
+	{
+		let mut state = serializer.serialize_struct("ReacherResponseError", 1)?;
+		state.serialize_field("error", &self.error.to_string())?;
+		state.end()
+	}
+}
+
+impl ToString for ReacherResponseError {
+	fn to_string(&self) -> String {
+		self.error.to_string()
+	}
 }
 
 impl ReacherResponseError {
-	pub fn new(code: http::StatusCode, message: String) -> Self {
+	pub fn new<T: ToStringDebug + 'static>(code: StatusCode, error: T) -> Self {
 		Self {
 			code,
-			message: message,
+			error: Box::new(error),
 		}
 	}
 }
 
-impl reject::Reject for ReacherResponseError {}
+impl From<CheckEmailInputBuilderError> for ReacherResponseError {
+	fn from(e: CheckEmailInputBuilderError) -> Self {
+		Self {
+			code: StatusCode::BAD_REQUEST,
+			error: Box::new(e),
+		}
+	}
+}
+
+impl From<serde_json::Error> for ReacherResponseError {
+	fn from(e: serde_json::Error) -> Self {
+		ReacherResponseError::new(StatusCode::INTERNAL_SERVER_ERROR, e)
+	}
+}
+
+impl From<lapin::Error> for ReacherResponseError {
+	fn from(e: lapin::Error) -> Self {
+		ReacherResponseError::new(StatusCode::INTERNAL_SERVER_ERROR, e)
+	}
+}
+
+impl From<sqlx::Error> for ReacherResponseError {
+	fn from(e: sqlx::Error) -> Self {
+		ReacherResponseError::new(StatusCode::INTERNAL_SERVER_ERROR, e)
+	}
+}
+
+impl From<csv::Error> for ReacherResponseError {
+	fn from(e: csv::Error) -> Self {
+		ReacherResponseError::new(StatusCode::INTERNAL_SERVER_ERROR, e)
+	}
+}
+
+impl From<csv::IntoInnerError<csv::Writer<Vec<u8>>>> for ReacherResponseError {
+	fn from(e: csv::IntoInnerError<csv::Writer<Vec<u8>>>) -> Self {
+		ReacherResponseError::new(StatusCode::INTERNAL_SERVER_ERROR, e)
+	}
+}
 
 /// This function receives a `Rejection` and tries to return a custom value,
 /// otherwise simply passes the rejection along.
 pub async fn handle_rejection(err: warp::Rejection) -> Result<impl warp::Reply, warp::Rejection> {
 	if let Some(err) = err.find::<ReacherResponseError>() {
-		error!(target: LOG_TARGET, code=?err.code, message=?err.message, "Request rejected");
+		error!(target: LOG_TARGET, code=?err.code, message=?err.to_string(), "Request rejected");
 		Ok((warp::reply::with_status(warp::reply::json(err), err.code),))
 	} else {
 		Err(err)

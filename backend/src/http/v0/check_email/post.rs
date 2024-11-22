@@ -56,11 +56,10 @@ async fn http_handler(
 ) -> Result<impl warp::Reply, warp::Rejection> {
 	// The to_email field must be present
 	if body.to_email.is_empty() {
-		Err(ReacherResponseError {
-			code: http::StatusCode::BAD_REQUEST,
-			message: "to_email field is required.".to_string(),
-		}
-		.into())
+		Err(
+			ReacherResponseError::new(http::StatusCode::BAD_REQUEST, "to_email field is required.")
+				.into(),
+		)
 	} else {
 		// Run the future to check an email.
 		Ok(warp::reply::json(

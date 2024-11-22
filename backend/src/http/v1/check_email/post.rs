@@ -40,10 +40,10 @@ async fn http_handler(
 ) -> Result<impl warp::Reply, warp::Rejection> {
 	// The to_email field must be present
 	if body.to_email.is_empty() {
-		return Err(ReacherResponseError {
-			code: http::StatusCode::BAD_REQUEST,
-			message: "to_email field is required.".to_string(),
-		}
+		return Err(ReacherResponseError::new(
+			http::StatusCode::BAD_REQUEST,
+			"to_email field is required.",
+		)
 		.into());
 	}
 
@@ -60,10 +60,7 @@ async fn http_handler(
 			FieldTable::default(),
 		)
 		.await
-		.map_err(|e| ReacherResponseError {
-			code: http::StatusCode::INTERNAL_SERVER_ERROR,
-			message: format!("Failed to declare a queue: {}", e),
-		})?;
+		.map_err(ReacherResponseError::from)?;
 
 	let check_email_input = body.to_check_email_input(Arc::clone(&config));
 	let properties = BasicProperties::default()
@@ -92,15 +89,9 @@ async fn http_handler(
 			FieldTable::default(),
 		)
 		.await
-		.map_err(|e| ReacherResponseError {
-			code: http::StatusCode::INTERNAL_SERVER_ERROR,
-			message: format!("Failed to consume a message: {}", e),
-		})?;
+		.map_err(ReacherResponseError::from)?;
 	while let Some(delivery) = consumer.next().await {
-		let delivery = delivery.map_err(|e| ReacherResponseError {
-			code: http::StatusCode::INTERNAL_SERVER_ERROR,
-			message: format!("Failed to get a delivery: {}", e),
-		})?;
+		let delivery = delivery.map_err(ReacherResponseError::from)?;
 
 		if delivery
 			.properties
@@ -113,10 +104,7 @@ async fn http_handler(
 			channel
 				.basic_ack(delivery.delivery_tag, Default::default())
 				.await
-				.map_err(|e| ReacherResponseError {
-					code: http::StatusCode::INTERNAL_SERVER_ERROR,
-					message: format!("Failed to ack a message: {}", e),
-				})?;
+				.map_err(ReacherResponseError::from)?;
 
 			return Ok(warp::reply::with_header(
 				result,
@@ -127,10 +115,10 @@ async fn http_handler(
 	}
 
 	// Run the future to check an email.
-	Err(ReacherResponseError {
-		code: http::StatusCode::INTERNAL_SERVER_ERROR,
-		message: "Failed to get a reply from the worker.".to_string(),
-	}
+	Err(ReacherResponseError::new(
+		http::StatusCode::INTERNAL_SERVER_ERROR,
+		"Failed to get a reply from the worker.",
+	)
 	.into())
 }
 

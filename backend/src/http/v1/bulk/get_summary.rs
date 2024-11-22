@@ -20,11 +20,10 @@ use check_if_email_exists::LOG_TARGET;
 use serde::Serialize;
 use sqlx::types::chrono::{DateTime, Utc};
 use sqlx::{PgPool, Pool, Postgres};
-use tracing::error;
+use warp::http::StatusCode;
 use warp::Filter;
 
-use super::error::{v1_bulk_handle_rejection, BulkError};
-use crate::http::with_db;
+use crate::http::{with_db, ReacherResponseError};
 
 /// NOTE: Type conversions from postgres to rust types
 /// are according to the table given by
@@ -84,7 +83,7 @@ async fn http_handler(
 	)
 	.fetch_one(&conn_pool)
 	.await
-	.map_err(|e| BulkError::from(e))?;
+	.map_err(|e| ReacherResponseError::new(StatusCode::BAD_REQUEST, e))?;
 
 	let agg_info = sqlx::query!(
 		r#"
@@ -102,15 +101,7 @@ async fn http_handler(
 	)
 	.fetch_one(&conn_pool)
 	.await
-	.map_err(|e| {
-		error!(
-			target: LOG_TARGET,
-			"Failed to get aggregate info for [job={}] with [error={}]",
-			job_id,
-			e
-		);
-		BulkError::from(e)
-	})?;
+	.map_err(ReacherResponseError::from)?;
 
 	let (job_status, finished_at) = if (agg_info
 		.total_processed
@@ -160,7 +151,6 @@ pub fn v1_get_bulk_job_summary(
 		.and(warp::get())
 		.and(with_db(pg_pool))
 		.and_then(http_handler)
-		.recover(v1_bulk_handle_rejection)
 		// View access logs by setting `RUST_LOG=reacher`.
 		.with(warp::log(LOG_TARGET))
 }

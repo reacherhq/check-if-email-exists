@@ -27,13 +27,14 @@ use lapin::{options::*, BasicProperties};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use tracing::{debug, info};
+use warp::http::StatusCode;
 use warp::Filter;
 
-use super::error::{v1_bulk_handle_rejection, BulkError};
 use crate::config::BackendConfig;
 use crate::http::check_header;
 use crate::http::with_config;
 use crate::http::with_db;
+use crate::http::ReacherResponseError;
 use crate::worker::task::{TaskPayload, TaskWebhook};
 
 const PREPROCESS_QUEUE: &str = "preprocess";
@@ -58,7 +59,7 @@ async fn http_handler(
 	body: Request,
 ) -> Result<impl warp::Reply, warp::Rejection> {
 	if body.input.is_empty() {
-		return Err(BulkError::EmptyInput.into());
+		return Err(ReacherResponseError::new(StatusCode::BAD_REQUEST, "Empty input").into());
 	}
 
 	// create job entry
@@ -72,7 +73,7 @@ async fn http_handler(
 	)
 	.fetch_one(&pg_pool)
 	.await
-	.map_err(|e| BulkError::from(e))?;
+	.map_err(|e| ReacherResponseError::from(e))?;
 
 	let payloads = body.input.iter().map(|email| {
 		let input = CheckEmailInputBuilder::default()
@@ -81,7 +82,7 @@ async fn http_handler(
 			.hello_name(config.hello_name.clone())
 			.proxy(config.proxy.clone())
 			.build()
-			.map_err(BulkError::from)?;
+			.map_err(ReacherResponseError::from)?;
 
 		Ok(TaskPayload {
 			input,
@@ -89,7 +90,7 @@ async fn http_handler(
 			webhook: body.webhook.clone(),
 		})
 	});
-	let payloads = payloads.collect::<Result<Vec<_>, BulkError>>()?;
+	let payloads = payloads.collect::<Result<Vec<_>, ReacherResponseError>>()?;
 
 	let n = payloads.len();
 	let stream = futures::stream::iter(payloads);
@@ -99,7 +100,7 @@ async fn http_handler(
 		.with_priority(1);
 
 	stream
-		.map::<Result<_, BulkError>, _>(Ok)
+		.map::<Result<_, ReacherResponseError>, _>(Ok)
 		.try_for_each_concurrent(10, |payload| async {
 			publish_task(Arc::clone(&channel), payload, properties.clone()).await
 		})
@@ -118,7 +119,7 @@ pub async fn publish_task(
 	channel: Arc<Channel>,
 	payload: TaskPayload,
 	properties: BasicProperties,
-) -> Result<(), BulkError> {
+) -> Result<(), ReacherResponseError> {
 	let channel = Arc::clone(&channel);
 
 	let payload_u8 = serde_json::to_vec(&payload)?;
@@ -131,9 +132,9 @@ pub async fn publish_task(
 			properties,
 		)
 		.await
-		.map_err(BulkError::from)?
+		.map_err(ReacherResponseError::from)?
 		.await
-		.map_err(BulkError::from)?;
+		.map_err(ReacherResponseError::from)?;
 
 	debug!(target: LOG_TARGET, email=?payload.input.to_email, queue=?PREPROCESS_QUEUE, "Enqueued");
 
@@ -160,7 +161,6 @@ pub fn v1_create_bulk_job(
 		.and(warp::body::content_length_limit(1024 * 1024 * 50))
 		.and(warp::body::json())
 		.and_then(http_handler)
-		.recover(v1_bulk_handle_rejection)
 		// View access logs by setting `RUST_LOG=reacher_backend`.
 		.with(warp::log(LOG_TARGET))
 }
