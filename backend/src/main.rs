@@ -59,7 +59,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 			if config.worker.enable {
 				run_worker(config, pg_pool, check_channel, preprocess_channel).await?;
 			}
-			Ok::<(), Box<dyn std::error::Error + Send + Sync>>(())
+			Ok(())
 		};
 
 		tokio::try_join!(server_future, worker_future)?;
