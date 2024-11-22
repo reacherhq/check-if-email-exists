@@ -113,22 +113,21 @@ async fn http_handler(
 
 			let single_shot_response = serde_json::from_slice::<SingleShotReply>(&delivery.data)
 				.map_err(ReacherResponseError::from)?;
-			let status_code = StatusCode::from_u16(single_shot_response.code)
-				.map_err(ReacherResponseError::from)?;
 
-			if !status_code.is_success() {
-				return Err(ReacherResponseError::new(
-					status_code,
-					String::from_utf8_lossy(&single_shot_response.body).to_string(),
-				)
-				.into());
+			match single_shot_response {
+				SingleShotReply::Ok(body) => {
+					return Ok(warp::reply::with_header(
+						body,
+						"Content-Type",
+						"application/json",
+					));
+				}
+				SingleShotReply::Err((e, code)) => {
+					let status_code =
+						StatusCode::from_u16(code).map_err(ReacherResponseError::from)?;
+					return Err(ReacherResponseError::new(status_code, e).into());
+				}
 			}
-
-			return Ok(warp::reply::with_header(
-				single_shot_response.body,
-				"Content-Type",
-				"application/json",
-			));
 		} else {
 			delivery
 				.reject(BasicRejectOptions { requeue: false })

@@ -226,8 +226,6 @@ async fn consume_check_email(
 						debug!(target: LOG_TARGET, email=payload.input.to_email, job_id=?payload.job_id, queue=?queue_clone.to_string(), "Requeued message because of throttling");
 					}
 
-					// Wait before fetching new messages
-					sleep(wait_duration).await;
 					continue;
 				}
 

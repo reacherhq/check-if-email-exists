@@ -108,23 +108,6 @@ pub struct TaskWebhookOnEachEmail {
 	pub extra: Option<serde_json::Value>,
 }
 
-impl TryFrom<&Result<CheckEmailOutput, TaskError>> for SingleShotReply {
-	type Error = serde_json::Error;
-
-	fn try_from(result: &Result<CheckEmailOutput, TaskError>) -> Result<Self, Self::Error> {
-		match result {
-			Ok(output) => Ok(Self {
-				code: StatusCode::OK.as_u16(),
-				body: serde_json::to_vec(output)?,
-			}),
-			Err(err) => Ok(Self {
-				code: err.status_code().as_u16(),
-				body: serde_json::to_vec(err)?,
-			}),
-		}
-	}
-}
-
 #[derive(Debug, Serialize)]
 struct WebhookOutput<'a> {
 	result: &'a CheckEmailOutput,
@@ -270,15 +253,35 @@ pub async fn preprocess(
 }
 
 /// For single-shot email verifications, the worker will send a reply to the
-/// client with the result of the verification.
+/// client with the result of the verification. Since both CheckEmailOutput and
+/// TaskError are not Deserialize, we need to create a new struct that can be
+/// serialized and deserialized.
 #[derive(Debug, Deserialize, Serialize)]
-pub struct SingleShotReply {
-	/// The HTTP status code to send to the client.
-	pub code: u16, // Unfortunately we can't use warp::http::StatusCode here.
-	/// The JSON-encoded result to send to the client. It can be either a
-	/// CheckEmailOutput or a TaskError, serialized to JSON. Because a lot of
-	/// error types don't implement Deserialize, we use Vec<u8> here.
-	pub body: Vec<u8>,
+pub enum SingleShotReply {
+	/// JSON serialization of CheckEmailOutput
+	Ok(Vec<u8>),
+	/// String representation of TaskError with its status code.
+	/// Unfortunately, we cannot use StatusCode directly, as it is not
+	/// Serialize.
+	Err((String, u16)),
+}
+
+impl TryFrom<&Result<CheckEmailOutput, TaskError>> for SingleShotReply {
+	type Error = serde_json::Error;
+
+	fn try_from(result: &Result<CheckEmailOutput, TaskError>) -> Result<Self, Self::Error> {
+		match result {
+			Ok(output) => Ok(Self::Ok(serde_json::to_vec(output)?)),
+			Err(TaskError::Throttle(e)) => Ok(Self::Err((
+				TaskError::Throttle(*e).to_string(),
+				StatusCode::TOO_MANY_REQUESTS.as_u16(),
+			))),
+			Err(e) => Ok(Self::Err((
+				e.to_string(),
+				StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+			))),
+		}
+	}
 }
 
 /// Send reply, in an "RPC mode", to the queue that initiated the request. We
