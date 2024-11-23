@@ -60,7 +60,7 @@ async fn http_handler(
 	// Throw an error if the job is still running.
 	// Is there a way to combine these 2 requests in one?
 	let total_records = sqlx::query!(
-		r#"SELECT total_records FROM bulk_jobs WHERE id = $1;"#,
+		r#"SELECT total_records FROM v1_bulk_job WHERE id = $1;"#,
 		job_id
 	)
 	.fetch_one(&pg_pool)
@@ -68,7 +68,7 @@ async fn http_handler(
 	.map_err(ReacherResponseError::from)?
 	.total_records;
 	let total_processed = sqlx::query!(
-		r#"SELECT COUNT(*) FROM email_results WHERE job_id = $1;"#,
+		r#"SELECT COUNT(*) FROM v1_task_result WHERE job_id = $1;"#,
 		job_id
 	)
 	.fetch_one(&pg_pool)
@@ -115,7 +115,7 @@ async fn job_result_as_iter(
 ) -> Result<Box<dyn Iterator<Item = serde_json::Value>>, ReacherResponseError> {
 	let query = sqlx::query!(
 		r#"
-		SELECT result FROM email_results
+		SELECT result FROM v1_task_result
 		WHERE job_id = $1
 		ORDER BY id
 		LIMIT $2 OFFSET $3

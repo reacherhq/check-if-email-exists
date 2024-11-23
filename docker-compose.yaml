@@ -21,10 +21,6 @@ services:
             POSTGRES_USER: postgres
             POSTGRES_PASSWORD: postgres
             POSTGRES_DB: reacher_worker_db
-        entrypoint:
-            'psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname="$POSTGRES_DB"<<-EOSQL
-            CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-            EOSQL'
         restart: always
 
     worker1:
@@ -43,6 +39,7 @@ services:
             RCH__HTTP_HOST: 0.0.0.0
             RCH__WORKER__RABBITMQ__URL: amqp://guest:guest@rabbitmq:5672
             RCH__WORKER__POSTGRES__DB_URL: postgres://postgres:postgres@postgres:5432/reacher_worker_db
+            RCH__WORKER__RABBITMQ__CONCURRENCY: 2
         restart: always
 
     worker2:
@@ -61,4 +58,5 @@ services:
             RCH__HTTP_HOST: 0.0.0.0
             RCH__WORKER__RABBITMQ__URL: amqp://guest:guest@rabbitmq:5672
             RCH__WORKER__POSTGRES__DB_URL: postgres://postgres:postgres@postgres:5432/reacher_worker_db
+            RCH__WORKER__RABBITMQ__CONCURRENCY: 2
         restart: always

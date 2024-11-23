@@ -93,7 +93,7 @@ pub async fn create_db(config: Arc<BackendConfig>) -> Result<PgPool, anyhow::Err
 	let pool = PgPoolOptions::new()
 		.connect(&worker_config.postgres.db_url)
 		.await
-		.with_context(|| "Connecting to postgres")?;
+		.with_context(|| format!("Connecting to postgres DB {db_url}"))?;
 
 	sqlx::migrate!("./migrations").run(&pool).await?;
 

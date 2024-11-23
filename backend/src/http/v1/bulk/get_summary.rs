@@ -93,8 +93,8 @@ async fn http_handler(
 			COUNT(CASE WHEN result ->> 'is_reachable' LIKE 'risky' THEN 1 END) as risky_count,
 			COUNT(CASE WHEN result ->> 'is_reachable' LIKE 'invalid' THEN 1 END) as invalid_count,
 			COUNT(CASE WHEN result ->> 'is_reachable' LIKE 'unknown' THEN 1 END) as unknown_count,
-			(SELECT created_at FROM email_results WHERE job_id = $1 ORDER BY created_at DESC LIMIT 1) as finished_at
-		FROM email_results
+			(SELECT created_at FROM v1_task_result WHERE job_id = $1 ORDER BY created_at DESC LIMIT 1) as finished_at
+		FROM v1_task_result
 		WHERE job_id = $1
 		"#,
 		job_id

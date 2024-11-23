@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n\t\tSELECT result FROM v1_task_result\n\t\tWHERE job_id = $1\n\t\tORDER BY id\n\t\tLIMIT $2 OFFSET $3\n\t\t",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "result",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "323970c6cb4f5d4b7c0cb3293d1e6fd146c7d682e28e6cb72de6bbe14a3e04b7"
+}

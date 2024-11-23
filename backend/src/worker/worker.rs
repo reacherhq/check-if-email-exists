@@ -51,7 +51,7 @@ pub async fn setup_rabbit_mq(
 	let worker_config = config.must_worker_config();
 	let conn = Connection::connect(&worker_config.rabbitmq.url, options)
 		.await
-		.with_context(|| "Connecting to rabbitmq")?;
+		.with_context(|| format!("Connecting to rabbitmq {}", &worker_config.rabbitmq.url))?;
 	let check_channel = conn.create_channel().await?;
 	let preprocess_channel = conn.create_channel().await?;
 
