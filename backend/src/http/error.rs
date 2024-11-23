@@ -17,20 +17,21 @@
 use check_if_email_exists::{CheckEmailInputBuilderError, LOG_TARGET};
 use serde::ser::SerializeStruct;
 use serde::Serialize;
+use std::fmt;
 use std::fmt::Debug;
 use tracing::error;
 use warp::{http::StatusCode, reject};
 
-/// Trait combining ToString and Debug.
-pub trait ToStringDebug: ToString + Debug + Sync + Send {}
+/// Trait combining Display and Debug.
+pub trait DisplayDebug: fmt::Display + Debug + Sync + Send {}
 
-impl<T: ToString + Debug + Sync + Send> ToStringDebug for T {}
+impl<T: fmt::Display + Debug + Sync + Send> DisplayDebug for T {}
 
 /// Struct describing an error response.
 #[derive(Debug)]
 pub struct ReacherResponseError {
 	pub code: StatusCode,
-	pub error: Box<dyn ToStringDebug>,
+	pub error: Box<dyn DisplayDebug>,
 }
 
 impl reject::Reject for ReacherResponseError {}
@@ -46,14 +47,14 @@ impl Serialize for ReacherResponseError {
 	}
 }
 
-impl ToString for ReacherResponseError {
-	fn to_string(&self) -> String {
-		self.error.to_string()
+impl fmt::Display for ReacherResponseError {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		write!(f, "{}", self.error)
 	}
 }
 
 impl ReacherResponseError {
-	pub fn new<T: ToStringDebug + 'static>(code: StatusCode, error: T) -> Self {
+	pub fn new<T: DisplayDebug + 'static>(code: StatusCode, error: T) -> Self {
 		Self {
 			code,
 			error: Box::new(error),
