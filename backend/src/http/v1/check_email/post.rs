@@ -32,7 +32,8 @@ use crate::http::v0::check_email::post::CheckEmailRequest;
 use crate::http::v1::bulk::post::publish_task;
 use crate::http::v1::with_channel;
 use crate::http::{check_header, with_config, ReacherResponseError};
-use crate::worker::task::{SingleShotReply, TaskPayload};
+use crate::worker::response::SingleShotReply;
+use crate::worker::task::TaskPayload;
 use crate::worker::worker::MAX_QUEUE_PRIORITY;
 
 /// The main endpoint handler that implements the logic of this route.

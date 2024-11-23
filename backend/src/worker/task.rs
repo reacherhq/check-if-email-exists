@@ -14,9 +14,10 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use super::db::save_to_db;
+use super::response::save_to_db;
 use crate::config::{BackendConfig, Queue};
-use anyhow::{anyhow, bail};
+use crate::worker::response::send_single_shot_reply;
+use anyhow::anyhow;
 use check_if_email_exists::mx::check_mx;
 use check_if_email_exists::syntax::check_syntax;
 use check_if_email_exists::{
@@ -25,10 +26,9 @@ use check_if_email_exists::{
 };
 use core::time;
 use lapin::message::Delivery;
-use lapin::{options::*, BasicProperties, Channel};
+use lapin::{options::*, Channel};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
-use std::convert::TryFrom;
 use std::fmt::Debug;
 use std::sync::Arc;
 use thiserror::Error;
@@ -120,7 +120,7 @@ pub(crate) async fn process_queue_message(
 	payload: &TaskPayload,
 	delivery: Delivery,
 	channel: Arc<Channel>,
-	pg_pool: PgPool,
+	pg_pool: Option<PgPool>,
 	config: Arc<BackendConfig>,
 ) -> Result<(), anyhow::Error> {
 	let worker_output = do_verification_work(payload, Arc::clone(&config)).await;
@@ -249,79 +249,6 @@ pub async fn preprocess(
 
 	delivery.ack(BasicAckOptions::default()).await?;
 	debug!(target: LOG_TARGET, email=?payload.input.to_email, queue=?queue.to_string(), "Message preprocessed");
-
-	Ok(())
-}
-
-/// For single-shot email verifications, the worker will send a reply to the
-/// client with the result of the verification. Since both CheckEmailOutput and
-/// TaskError are not Deserialize, we need to create a new struct that can be
-/// serialized and deserialized.
-#[derive(Debug, Deserialize, Serialize)]
-pub enum SingleShotReply {
-	/// JSON serialization of CheckEmailOutput
-	Ok(Vec<u8>),
-	/// String representation of TaskError with its status code.
-	/// Unfortunately, we cannot use StatusCode directly, as it is not
-	/// Serialize.
-	Err((String, u16)),
-}
-
-impl TryFrom<&Result<CheckEmailOutput, TaskError>> for SingleShotReply {
-	type Error = serde_json::Error;
-
-	fn try_from(result: &Result<CheckEmailOutput, TaskError>) -> Result<Self, Self::Error> {
-		match result {
-			Ok(output) => Ok(Self::Ok(serde_json::to_vec(output)?)),
-			Err(TaskError::Throttle(e)) => Ok(Self::Err((
-				TaskError::Throttle(*e).to_string(),
-				StatusCode::TOO_MANY_REQUESTS.as_u16(),
-			))),
-			Err(e) => Ok(Self::Err((
-				e.to_string(),
-				StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
-			))),
-		}
-	}
-}
-
-/// Send reply, in an "RPC mode", to the queue that initiated the request. We
-/// follow this guide:
-/// https://www.rabbitmq.com/tutorials/tutorial-six-javascript.html
-///
-/// This only applies for single-shot email verifications on the
-/// /v1/check_email endpoint, and not to bulk verifications.
-pub async fn send_single_shot_reply(
-	channel: Arc<Channel>,
-	delivery: &Delivery,
-	worker_output: &Result<CheckEmailOutput, TaskError>,
-) -> Result<(), anyhow::Error> {
-	if let (Some(reply_to), Some(correlation_id)) = (
-		delivery.properties.reply_to(),
-		delivery.properties.correlation_id(),
-	) {
-		let properties = BasicProperties::default()
-			.with_correlation_id(correlation_id.to_owned())
-			.with_content_type("application/json".into());
-
-		let single_shot_response = SingleShotReply::try_from(worker_output)?;
-		let reply_payload = serde_json::to_vec(&single_shot_response)?;
-
-		channel
-			.basic_publish(
-				"",
-				reply_to.as_str(),
-				BasicPublishOptions::default(),
-				&reply_payload,
-				properties,
-			)
-			.await?
-			.await?;
-
-		debug!(target: LOG_TARGET, reply_to=?reply_to.to_string(), correlation_id=?correlation_id.to_string(), "Sent reply")
-	} else {
-		bail!("Missing reply_to or correlation_id");
-	}
 
 	Ok(())
 }

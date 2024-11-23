@@ -16,7 +16,8 @@
 
 use super::task::{process_queue_message, TaskPayload};
 use crate::config::{BackendConfig, Queue, ThrottleConfig};
-use crate::worker::task::{preprocess, send_single_shot_reply, TaskError};
+use crate::worker::response::send_single_shot_reply;
+use crate::worker::task::{preprocess, TaskError};
 use anyhow::Context;
 use check_if_email_exists::LOG_TARGET;
 use futures::stream::StreamExt;
@@ -111,7 +112,7 @@ pub async fn setup_rabbit_mq(
 /// Start the worker to consume messages from the queue.
 pub async fn run_worker(
 	config: Arc<BackendConfig>,
-	pg_pool: PgPool,
+	pg_pool: Option<PgPool>,
 	check_channel: Arc<Channel>,
 	preprocess_channel: Arc<Channel>,
 ) -> Result<(), anyhow::Error> {
@@ -162,7 +163,7 @@ async fn consume_preprocess(
 
 async fn consume_check_email(
 	config: Arc<BackendConfig>,
-	pg_pool: PgPool,
+	pg_pool: Option<PgPool>,
 	channel: Arc<Channel>,
 ) -> Result<(), anyhow::Error> {
 	let worker_config = config.must_worker_config();
