@@ -14,10 +14,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use super::task::{process_queue_message, TaskPayload};
+use super::do_work::{do_check_email_work, do_preprocess_work, TaskError, TaskPayload};
+use super::response::send_single_shot_reply;
 use crate::config::{BackendConfig, Queue, ThrottleConfig};
-use crate::worker::response::send_single_shot_reply;
-use crate::worker::task::{preprocess, TaskError};
 use anyhow::Context;
 use check_if_email_exists::LOG_TARGET;
 use futures::stream::StreamExt;
@@ -61,7 +60,7 @@ pub async fn setup_rabbit_mq(
 	queue_args.insert("x-max-priority".into(), MAX_QUEUE_PRIORITY.into());
 
 	// Assert all queues are declared.
-	let queues = vec![
+	let queues = [
 		Queue::GmailSmtp,
 		Queue::HotmailB2BSmtp,
 		Queue::HotmailB2CSmtp,
@@ -153,7 +152,7 @@ async fn consume_preprocess(
 		let channel_clone = Arc::clone(&check_channel);
 
 		tokio::spawn(async move {
-			if let Err(e) = preprocess(&payload, delivery, channel_clone).await {
+			if let Err(e) = do_preprocess_work(&payload, delivery, channel_clone).await {
 				error!(target: LOG_TARGET, email=payload.input.to_email, error=?e, "Error preprocessing message");
 			}
 		});
@@ -237,7 +236,7 @@ async fn consume_check_email(
 
 				info!(target: LOG_TARGET, email=payload.input.to_email, job_id=?payload.job_id, queue=?queue_clone.to_string(), "Starting task");
 				tokio::spawn(async move {
-					if let Err(e) = process_queue_message(
+					if let Err(e) = do_check_email_work(
 						&payload,
 						delivery,
 						channel_clone2,

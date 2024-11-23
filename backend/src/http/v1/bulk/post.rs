@@ -36,7 +36,7 @@ use crate::http::v1::with_channel;
 use crate::http::with_config;
 use crate::http::with_db;
 use crate::http::ReacherResponseError;
-use crate::worker::task::{TaskPayload, TaskWebhook};
+use crate::worker::do_work::{TaskPayload, TaskWebhook};
 
 const PREPROCESS_QUEUE: &str = "preprocess";
 
@@ -82,7 +82,7 @@ async fn http_handler(
 	)
 	.fetch_one(&pg_pool)
 	.await
-	.map_err(|e| ReacherResponseError::from(e))?;
+	.map_err(ReacherResponseError::from)?;
 
 	let payloads = body.input.iter().map(|email| {
 		let input = CheckEmailInputBuilder::default()

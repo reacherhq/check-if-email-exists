@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+pub mod consume;
+pub mod do_work;
 pub mod response;
-pub mod task;
-pub mod worker;
 
-pub use worker::{run_worker, setup_rabbit_mq};
+pub use consume::{run_worker, setup_rabbit_mq};

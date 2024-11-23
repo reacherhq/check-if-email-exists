@@ -116,14 +116,14 @@ struct WebhookOutput<'a> {
 }
 
 /// Processes the check email task asynchronously.
-pub(crate) async fn process_queue_message(
+pub(crate) async fn do_check_email_work(
 	payload: &TaskPayload,
 	delivery: Delivery,
 	channel: Arc<Channel>,
 	pg_pool: PgPool,
 	config: Arc<BackendConfig>,
 ) -> Result<(), anyhow::Error> {
-	let worker_output = do_verification_work(payload, Arc::clone(&config)).await;
+	let worker_output = inner_check_email(payload, Arc::clone(&config)).await;
 
 	match (&worker_output, delivery.redelivered) {
 		(Ok(output), false) if output.is_reachable == Reachable::Unknown => {
@@ -166,7 +166,7 @@ pub(crate) async fn process_queue_message(
 	Ok(())
 }
 
-async fn do_verification_work(
+async fn inner_check_email(
 	payload: &TaskPayload,
 	config: Arc<BackendConfig>,
 ) -> Result<CheckEmailOutput, TaskError> {
@@ -200,7 +200,7 @@ async fn do_verification_work(
 	Ok(output)
 }
 
-pub async fn preprocess(
+pub async fn do_preprocess_work(
 	payload: &TaskPayload,
 	delivery: Delivery,
 	channel: Arc<Channel>,
@@ -248,7 +248,7 @@ pub async fn preprocess(
 		.await?;
 
 	delivery.ack(BasicAckOptions::default()).await?;
-	debug!(target: LOG_TARGET, email=?payload.input.to_email, queue=?queue.to_string(), "Message preprocessed");
+	debug!(target: LOG_TARGET, email=?payload.input.to_email, queue=?queue.to_string(), "Message do_preprocess_worked");
 
 	Ok(())
 }

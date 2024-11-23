@@ -32,9 +32,9 @@ use crate::http::v0::check_email::post::CheckEmailRequest;
 use crate::http::v1::bulk::post::publish_task;
 use crate::http::v1::with_channel;
 use crate::http::{check_header, with_config, ReacherResponseError};
+use crate::worker::consume::MAX_QUEUE_PRIORITY;
+use crate::worker::do_work::TaskPayload;
 use crate::worker::response::SingleShotReply;
-use crate::worker::task::TaskPayload;
-use crate::worker::worker::MAX_QUEUE_PRIORITY;
 
 /// The main endpoint handler that implements the logic of this route.
 async fn http_handler(
@@ -105,7 +105,8 @@ async fn http_handler(
 		.await
 		.map_err(ReacherResponseError::from)?;
 
-	while let Some(delivery) = consumer.next().await {
+	// We don't need to loop here, because we only expect one reply.
+	if let Some(delivery) = consumer.next().await {
 		let delivery = delivery.map_err(ReacherResponseError::from)?;
 
 		if delivery

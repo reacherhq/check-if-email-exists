@@ -15,7 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #[cfg(feature = "worker")]
-use crate::worker::task::TaskWebhook;
+use crate::worker::do_work::TaskWebhook;
 use check_if_email_exists::config::ReacherConfig;
 use check_if_email_exists::{CheckEmailInputProxy, SentryConfig};
 use config::Config;
