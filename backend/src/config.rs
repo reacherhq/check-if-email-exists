@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+#[cfg(feature = "worker")]
 use crate::worker::task::TaskWebhook;
 use check_if_email_exists::config::ReacherConfig;
 use check_if_email_exists::{CheckEmailInputProxy, SentryConfig};
@@ -74,6 +75,7 @@ impl BackendConfig {
 				.rabbitmq
 				.clone()
 				.expect("worker.rabbitmq is missing"),
+			#[cfg(feature = "worker")]
 			webhook: self.worker.webhook.clone(),
 			postgres: self
 				.worker
@@ -92,6 +94,7 @@ pub struct WorkerConfig {
 	pub throttle: Option<ThrottleConfig>,
 	pub rabbitmq: Option<RabbitMQConfig>,
 	/// Optional webhook configuration to send email verification results.
+	#[cfg(feature = "worker")]
 	pub webhook: Option<TaskWebhook>,
 	/// Postgres database configuration to store email verification
 	/// results.
@@ -103,9 +106,11 @@ pub struct WorkerConfig {
 pub struct MustWorkerConfig {
 	pub throttle: ThrottleConfig,
 	pub rabbitmq: RabbitMQConfig,
+	#[cfg(feature = "worker")]
 	pub webhook: Option<TaskWebhook>,
 	pub postgres: PostgresConfig,
 }
+
 #[derive(Debug, Deserialize, Clone)]
 pub struct RabbitMQConfig {
 	pub url: String,

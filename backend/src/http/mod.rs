@@ -16,6 +16,7 @@
 
 mod error;
 mod v0;
+#[cfg(feature = "worker")]
 mod v1;
 mod version;
 
@@ -37,7 +38,8 @@ pub use v0::check_email::post::CheckEmailRequest;
 
 pub fn create_routes(
 	config: Arc<BackendConfig>,
-	pg_pool: PgPool,
+	// Using Option to allow for None in tests.
+	pg_pool: Option<PgPool>,
 	#[cfg(feature = "worker")] channel: Arc<Channel>,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	let t = version::get::get_version()
@@ -45,15 +47,15 @@ pub fn create_routes(
 		// The 3 following routes will 404 if o is None.
 		.or(v0::bulk::post::create_bulk_job(
 			Arc::clone(&config),
-			Some(pg_pool.clone()),
-		))
-		.or(v0::bulk::get::get_bulk_job_status(Some(pg_pool.clone())))
-		.or(v0::bulk::results::get_bulk_job_result(Some(
 			pg_pool.clone(),
-		)));
+		))
+		.or(v0::bulk::get::get_bulk_job_status(pg_pool.clone()))
+		.or(v0::bulk::results::get_bulk_job_result(pg_pool.clone()));
 
 	#[cfg(feature = "worker")]
 	{
+		let pg_pool = pg_pool.expect("pg_pool is required for worker routes");
+
 		t.or(v1::check_email::post::v1_check_email(
 			Arc::clone(&config),
 			channel.clone(),
@@ -102,7 +104,10 @@ pub async fn run_warp_server(
 		})
 		.unwrap_or(config.http_port);
 
-	let routes = create_routes(Arc::clone(&config), pg_pool.clone(), channel);
+	#[cfg(feature = "worker")]
+	let routes = create_routes(Arc::clone(&config), Some(pg_pool.clone()), channel);
+	#[cfg(not(feature = "worker"))]
+	let routes = create_routes(Arc::clone(&config), Some(pg_pool.clone()));
 
 	// Run v0 bulk job listener.
 	let is_bulk_enabled = env::var("RCH_ENABLE_BULK").unwrap_or_else(|_| "0".into()) == "1";
@@ -122,9 +127,9 @@ pub async fn run_warp_server(
 
 /// Warp filter to add the database pool to the handler.
 pub fn with_db(
-	o: PgPool,
+	pg_pool: PgPool,
 ) -> impl Filter<Extract = (PgPool,), Error = std::convert::Infallible> + Clone {
-	warp::any().map(move || o.clone())
+	warp::any().map(move || pg_pool.clone())
 }
 
 /// The header which holds the Reacher backend secret.

@@ -15,8 +15,11 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 pub mod config;
+mod db;
 pub mod http;
 #[cfg(feature = "worker")]
 pub mod worker;
+
+pub use db::create_db;
 
 const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");

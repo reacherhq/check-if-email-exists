@@ -18,8 +18,9 @@
 //! functions, depending on whether the `bulk` feature is enabled or not.
 
 use check_if_email_exists::{setup_sentry, LOG_TARGET};
+use reacher_backend::create_db;
 #[cfg(feature = "worker")]
-use reacher_backend::worker::{create_db, run_worker, setup_rabbit_mq};
+use reacher_backend::worker::{run_worker, setup_rabbit_mq};
 use std::sync::Arc;
 use tracing::info;
 
@@ -68,7 +69,10 @@ async fn main() -> Result<(), anyhow::Error> {
 	}
 
 	#[cfg(not(feature = "worker"))]
-	run_warp_server(config, None).await?;
+	{
+		let pg_pool = create_db(Arc::clone(&config)).await?;
+		run_warp_server(config, pg_pool).await?;
+	}
 
 	Ok(())
 }

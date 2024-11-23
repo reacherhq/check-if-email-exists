@@ -112,7 +112,7 @@ pub async fn setup_rabbit_mq(
 /// Start the worker to consume messages from the queue.
 pub async fn run_worker(
 	config: Arc<BackendConfig>,
-	pg_pool: Option<PgPool>,
+	pg_pool: PgPool,
 	check_channel: Arc<Channel>,
 	preprocess_channel: Arc<Channel>,
 ) -> Result<(), anyhow::Error> {
@@ -163,7 +163,7 @@ async fn consume_preprocess(
 
 async fn consume_check_email(
 	config: Arc<BackendConfig>,
-	pg_pool: Option<PgPool>,
+	pg_pool: PgPool,
 	channel: Arc<Channel>,
 ) -> Result<(), anyhow::Error> {
 	let worker_config = config.must_worker_config();

@@ -120,7 +120,7 @@ pub(crate) async fn process_queue_message(
 	payload: &TaskPayload,
 	delivery: Delivery,
 	channel: Arc<Channel>,
-	pg_pool: Option<PgPool>,
+	pg_pool: PgPool,
 	config: Arc<BackendConfig>,
 ) -> Result<(), anyhow::Error> {
 	let worker_output = do_verification_work(payload, Arc::clone(&config)).await;
