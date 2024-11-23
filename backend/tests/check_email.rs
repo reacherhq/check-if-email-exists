@@ -130,6 +130,6 @@ mod tests {
 			.await;
 
 		assert_eq!(resp.status(), StatusCode::BAD_REQUEST, "{:?}", resp.body());
-		assert_eq!(resp.body(), r#"{"message":"to_email field is required."}"#);
+		assert_eq!(resp.body(), r#"{"error":"to_email field is required."}"#);
 	}
 }
