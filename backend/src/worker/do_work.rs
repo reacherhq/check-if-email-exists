@@ -188,7 +188,7 @@ async fn inner_check_email(
 			.json(&webhook_output)
 			.header(
 				"x-reacher-secret",
-				std::env::var("RCH_HEADER_SECRET").unwrap_or("".into()),
+				std::env::var("RCH_HEADER_SECRET").unwrap_or_default(),
 			)
 			.send()
 			.await?
