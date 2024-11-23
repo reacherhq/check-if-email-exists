@@ -20,7 +20,9 @@ services:
         environment:
             POSTGRES_USER: postgres
             POSTGRES_PASSWORD: postgres
-            POSTGRES_DB: reacher_worker_db
+            POSTGRES_DB: reacher_db
+        volumes:
+            - ./backend/postgres_data:/var/lib/postgresql/data
         restart: always
 
     worker1:
@@ -35,10 +37,10 @@ services:
             - rabbitmq
         environment:
             RCH__BACKEND_NAME: worker1
-            RUST_LOG: reacher=info
+            RUST_LOG: debug
             RCH__HTTP_HOST: 0.0.0.0
             RCH__WORKER__RABBITMQ__URL: amqp://guest:guest@rabbitmq:5672
-            RCH__WORKER__POSTGRES__DB_URL: postgres://postgres:postgres@postgres:5432/reacher_worker_db
+            RCH__WORKER__POSTGRES__DB_URL: postgres://postgres:postgres@postgres:5432/reacher_db
             RCH__WORKER__RABBITMQ__CONCURRENCY: 2
         restart: always
 
@@ -57,6 +59,6 @@ services:
             RUST_LOG: reacher=info
             RCH__HTTP_HOST: 0.0.0.0
             RCH__WORKER__RABBITMQ__URL: amqp://guest:guest@rabbitmq:5672
-            RCH__WORKER__POSTGRES__DB_URL: postgres://postgres:postgres@postgres:5432/reacher_worker_db
+            RCH__WORKER__POSTGRES__DB_URL: postgres://postgres:postgres@postgres:5432/reacher_db
             RCH__WORKER__RABBITMQ__CONCURRENCY: 2
         restart: always
