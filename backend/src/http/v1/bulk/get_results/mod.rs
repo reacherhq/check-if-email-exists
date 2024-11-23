@@ -177,7 +177,7 @@ async fn job_result_csv(
 pub fn v1_get_bulk_job_results(
 	pg_pool: PgPool,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-	warp::path!("v0" / "bulk" / i32 / "results")
+	warp::path!("v1" / "bulk" / i32 / "results")
 		.and(warp::get())
 		.and(with_db(pg_pool))
 		.and(warp::query::<Request>())
