@@ -30,7 +30,7 @@ use warp::{http, Filter};
 use crate::config::BackendConfig;
 use crate::http::v0::check_email::post::CheckEmailRequest;
 use crate::http::v1::bulk::post::publish_task;
-use crate::http::v1::bulk::post::with_channel;
+use crate::http::v1::with_channel;
 use crate::http::{check_header, with_config, ReacherResponseError};
 use crate::worker::task::{SingleShotReply, TaskPayload};
 use crate::worker::worker::MAX_QUEUE_PRIORITY;
@@ -41,6 +41,14 @@ async fn http_handler(
 	channel: Arc<Channel>,
 	body: CheckEmailRequest,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+	if !config.worker.enable {
+		return Err(ReacherResponseError::new(
+			StatusCode::SERVICE_UNAVAILABLE,
+			"Worker is disabled.",
+		)
+		.into());
+	}
+
 	// The to_email field must be present
 	if body.to_email.is_empty() {
 		return Err(ReacherResponseError::new(
@@ -150,10 +158,10 @@ async fn http_handler(
 }
 
 /// Create the `POST /v1/check_email` endpoint.
-pub fn v1_check_email<'a>(
+pub fn v1_check_email(
 	config: Arc<BackendConfig>,
 	channel: Arc<Channel>,
-) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone + 'a {
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v1" / "check_email")
 		.and(warp::post())
 		.and(check_header(Arc::clone(&config)))

@@ -19,7 +19,7 @@
 use check_if_email_exists::LOG_TARGET;
 use csv::WriterBuilder;
 use serde::{Deserialize, Serialize};
-use sqlx::{Executor, PgPool, Pool, Postgres, Row};
+use sqlx::{Executor, PgPool, Row};
 use std::convert::TryInto;
 use std::iter::Iterator;
 use warp::http::StatusCode;
@@ -54,7 +54,7 @@ struct Response {
 
 async fn http_handler(
 	job_id: i32,
-	pg_pool: Pool<Postgres>,
+	pg_pool: PgPool,
 	req: Request,
 ) -> Result<impl warp::Reply, warp::Rejection> {
 	// Throw an error if the job is still running.
@@ -111,7 +111,7 @@ async fn job_result_as_iter(
 	job_id: i32,
 	limit: Option<u64>,
 	offset: u64,
-	pg_pool: Pool<Postgres>,
+	pg_pool: PgPool,
 ) -> Result<Box<dyn Iterator<Item = serde_json::Value>>, ReacherResponseError> {
 	let query = sqlx::query!(
 		r#"
@@ -140,7 +140,7 @@ async fn job_result_json(
 	job_id: i32,
 	limit: Option<u64>,
 	offset: u64,
-	pg_pool: Pool<Postgres>,
+	pg_pool: PgPool,
 ) -> Result<Vec<serde_json::Value>, warp::Rejection> {
 	// For JSON responses, we don't want ot return more than 50 results at a
 	// time, to avoid having a too big payload (unless client specifies a limit)
@@ -156,7 +156,7 @@ async fn job_result_csv(
 	job_id: i32,
 	limit: Option<u64>,
 	offset: u64,
-	pg_pool: Pool<Postgres>,
+	pg_pool: PgPool,
 ) -> Result<Vec<u8>, warp::Rejection> {
 	let rows = job_result_as_iter(job_id, limit, offset, pg_pool).await?;
 	let mut wtr = WriterBuilder::new().has_headers(true).from_writer(vec![]);

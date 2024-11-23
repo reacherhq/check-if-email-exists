@@ -32,6 +32,7 @@ use warp::Filter;
 
 use crate::config::BackendConfig;
 use crate::http::check_header;
+use crate::http::v1::with_channel;
 use crate::http::with_config;
 use crate::http::with_db;
 use crate::http::ReacherResponseError;
@@ -58,6 +59,14 @@ async fn http_handler(
 	pg_pool: PgPool,
 	body: Request,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+	if !config.worker.enable {
+		return Err(ReacherResponseError::new(
+			StatusCode::SERVICE_UNAVAILABLE,
+			"Worker is disabled.",
+		)
+		.into());
+	}
+
 	if body.input.is_empty() {
 		return Err(ReacherResponseError::new(StatusCode::BAD_REQUEST, "Empty input").into());
 	}
@@ -163,11 +172,4 @@ pub fn v1_create_bulk_job(
 		.and_then(http_handler)
 		// View access logs by setting `RUST_LOG=reacher_backend`.
 		.with(warp::log(LOG_TARGET))
-}
-
-/// Warp filter that extracts lapin Channel.
-pub fn with_channel(
-	channel: Arc<Channel>,
-) -> impl Filter<Extract = (Arc<Channel>,), Error = std::convert::Infallible> + Clone {
-	warp::any().map(move || Arc::clone(&channel))
 }

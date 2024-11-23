@@ -19,7 +19,7 @@
 use check_if_email_exists::LOG_TARGET;
 use serde::Serialize;
 use sqlx::types::chrono::{DateTime, Utc};
-use sqlx::{PgPool, Pool, Postgres};
+use sqlx::PgPool;
 use warp::http::StatusCode;
 use warp::Filter;
 
@@ -68,10 +68,7 @@ struct Response {
 	job_status: ValidStatus,
 }
 
-async fn http_handler(
-	job_id: i32,
-	conn_pool: Pool<Postgres>,
-) -> Result<impl warp::Reply, warp::Rejection> {
+async fn http_handler(job_id: i32, conn_pool: PgPool) -> Result<impl warp::Reply, warp::Rejection> {
 	let job_rec = sqlx::query_as!(
 		JobRecord,
 		r#"

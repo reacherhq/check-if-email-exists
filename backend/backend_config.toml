@@ -26,7 +26,7 @@ from_email = "reacher@gmail.com"
 webdriver_addr = "http://localhost:9515"
 
 [worker]
-enable = true
+enable = false
 
 # Fields below are only used if the worker is enabled.
 
