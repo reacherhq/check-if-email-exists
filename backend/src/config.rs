@@ -118,12 +118,12 @@ pub struct RabbitMQConfig {
 	///
 	/// Queue names are in the format "check.<provider>.<verif_method>", where:
 	/// - <verif_method> is the verification method to use. It can be "smtp",
-	/// "headless", or "api". Note that _not_ all verification methods are
-	/// available for all providers. For example, currently the Headless method
-	/// is not available for Gmail. However, the Smtp method is available for
-	/// all providers.
+	///   "headless", or "api". Note that _not_ all verification methods are
+	///   available for all providers. For example, currently the Headless method
+	///   is not available for Gmail. However, the Smtp method is available for
+	///   all providers.
 	/// - <provider> is the email provider to verify. It can be "gmail", "yahoo",
-	/// "hotmail", or "everything_else".
+	///   "hotmail", or "everything_else".
 	///
 	/// Below is the exhaustive list of queue names that the worker can consume from:
 	/// - "check.gmail.smtp": subcribe exclusively to Gmail emails.
