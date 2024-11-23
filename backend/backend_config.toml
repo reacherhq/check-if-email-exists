@@ -26,7 +26,7 @@ from_email = "reacher@gmail.com"
 webdriver_addr = "http://localhost:9515"
 
 [worker]
-enable = false
+enable = true
 
 # Fields below are only used if the worker is enabled.
 
@@ -41,7 +41,7 @@ enable = false
 # max_requests_per_second = 20
 # max_requests_per_minute = 100
 # max_requests_per_hour = 1000
-max_requests_per_day = 20000
+# max_requests_per_day = 20000
 
 # RabbitMQ configuration.
 [worker.rabbitmq]
