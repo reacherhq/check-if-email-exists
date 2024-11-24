@@ -38,9 +38,7 @@ pub const MAX_QUEUE_PRIORITY: u8 = 5;
 /// global prefetch limit set to the concurrency limit.
 ///
 /// Returns a tuple of (check_channel, preprocess_channel).
-pub async fn setup_rabbit_mq(
-	config: Arc<BackendConfig>,
-) -> Result<(Channel, Channel), anyhow::Error> {
+pub async fn setup_rabbit_mq(config: &BackendConfig) -> Result<(Channel, Channel), anyhow::Error> {
 	let options = ConnectionProperties::default()
 		// Use tokio executor and reactor.
 		.with_executor(tokio_executor_trait::Tokio::current())

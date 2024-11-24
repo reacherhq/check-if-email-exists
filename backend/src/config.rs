@@ -17,21 +17,28 @@
 use crate::create_db;
 #[cfg(feature = "worker")]
 use crate::worker::check_email::TaskWebhook;
+use crate::worker::setup_rabbit_mq;
 use check_if_email_exists::config::ReacherConfig;
 use check_if_email_exists::{
 	CheckEmailInputProxy, GmailVerifMethod, HotmailB2BVerifMethod, HotmailB2CVerifMethod,
 	SentryConfig, YahooVerifMethod,
 };
 use config::Config;
+use lapin::Channel;
 use serde::de::{self, Deserializer, Visitor};
 use serde::Deserialize;
 use sqlx::PgPool;
+use std::sync::Arc;
 use std::{env, fmt};
 
 #[derive(Debug, Deserialize)]
 pub struct BackendConfig {
 	#[serde(skip)]
 	pg_pool: Option<PgPool>,
+	#[serde(skip)]
+	check_email_channel: Option<Arc<Channel>>,
+	#[serde(skip)]
+	preprocess_channel: Option<Arc<Channel>>,
 
 	/// Name of the backend.
 	pub backend_name: String,
@@ -96,8 +103,16 @@ impl BackendConfig {
 		}
 	}
 
-	pub fn get_pg_pool(&self) -> Option<&PgPool> {
-		self.pg_pool.as_ref()
+	pub fn get_pg_pool(&self) -> Option<PgPool> {
+		self.pg_pool.clone()
+	}
+
+	pub fn get_check_email_channel(&self) -> Option<Arc<Channel>> {
+		self.check_email_channel.clone()
+	}
+
+	pub fn get_preprocess_channel(&self) -> Option<Arc<Channel>> {
+		self.preprocess_channel.clone()
 	}
 }
 
@@ -338,6 +353,18 @@ pub async fn load_config() -> Result<BackendConfig, anyhow::Error> {
 		None
 	};
 	cfg.pg_pool = pg_pool;
+
+	let (check_email_channel, preprocess_channel) = if cfg.worker.enable {
+		let (check_email_channel, preprocess_channel) = setup_rabbit_mq(&cfg).await?;
+		(
+			Some(Arc::new(check_email_channel)),
+			Some(Arc::new(preprocess_channel)),
+		)
+	} else {
+		(None, None)
+	};
+	cfg.check_email_channel = check_email_channel;
+	cfg.preprocess_channel = preprocess_channel;
 
 	Ok(cfg)
 }

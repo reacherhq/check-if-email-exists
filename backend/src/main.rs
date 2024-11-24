@@ -46,7 +46,7 @@ async fn main() -> Result<(), anyhow::Error> {
 
 	#[cfg(feature = "worker")]
 	{
-		let (check_channel, preprocess_channel) = setup_rabbit_mq(Arc::clone(&config)).await?;
+		let (check_channel, preprocess_channel) = setup_rabbit_mq(&config).await?;
 		let (check_channel, preprocess_channel) =
 			(Arc::new(check_channel), Arc::new(preprocess_channel));
 

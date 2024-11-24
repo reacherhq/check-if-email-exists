@@ -166,7 +166,7 @@ pub fn v1_create_bulk_job(
 		.and(check_header(Arc::clone(&config)))
 		.and(with_config(Arc::clone(&config)))
 		.and(with_channel(channel))
-		.and(with_db(config.get_pg_pool().cloned()))
+		.and(with_db(config.get_pg_pool()))
 		// When accepting a body, we want a JSON body (and to reject huge
 		// payloads)...
 		// TODO: Configure max size limit for a bulk job

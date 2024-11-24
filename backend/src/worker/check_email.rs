@@ -147,7 +147,7 @@ pub(crate) async fn do_check_email_work(
 			} else {
 				save_to_db(
 					&config.backend_name,
-					config.get_pg_pool().cloned(),
+					config.get_pg_pool(),
 					payload,
 					&worker_output,
 				)

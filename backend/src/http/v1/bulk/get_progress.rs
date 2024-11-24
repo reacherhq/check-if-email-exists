@@ -149,7 +149,7 @@ pub fn v1_get_bulk_job_progress(
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v1" / "bulk" / i32)
 		.and(warp::get())
-		.and(with_db(config.get_pg_pool().cloned()))
+		.and(with_db(config.get_pg_pool()))
 		.and_then(http_handler)
 		// View access logs by setting `RUST_LOG=reacher`.
 		.with(warp::log(LOG_TARGET))

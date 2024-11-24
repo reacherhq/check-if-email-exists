@@ -46,10 +46,10 @@ pub fn create_routes(
 		// The 3 following routes will 404 if o is None.
 		.or(v0::bulk::post::create_bulk_job(
 			Arc::clone(&config),
-			pg_pool.cloned(),
+			pg_pool.clone(),
 		))
-		.or(v0::bulk::get::get_bulk_job_status(pg_pool.cloned()))
-		.or(v0::bulk::results::get_bulk_job_result(pg_pool.cloned()));
+		.or(v0::bulk::get::get_bulk_job_status(pg_pool.clone()))
+		.or(v0::bulk::results::get_bulk_job_result(pg_pool));
 
 	#[cfg(feature = "worker")]
 	{
@@ -110,7 +110,7 @@ pub async fn run_warp_server(
 		let pg_pool = config
 			.get_pg_pool()
 			.expect("DATABASE_URL is required when RCH_ENABLE_BULK is set");
-		let runner = v0::bulk::create_job_registry(pg_pool).await?;
+		let runner = v0::bulk::create_job_registry(&pg_pool).await?;
 		Some(runner)
 	} else {
 		None
