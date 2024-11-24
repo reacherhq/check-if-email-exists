@@ -65,7 +65,7 @@ async fn main() -> Result<(), anyhow::Error> {
 
 		tokio::try_join!(server_future, worker_future)?;
 
-		println!("Shutting down...");
+		info!("Shutting down...");
 	}
 
 	#[cfg(not(feature = "worker"))]
