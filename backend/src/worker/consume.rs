@@ -14,7 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use super::do_work::{do_check_email_work, do_preprocess_work, TaskError, TaskPayload};
+use super::check_email::{do_check_email_work, CheckEmailTask, TaskError};
+use super::preprocess::{do_preprocess_work, PreprocessTask};
 use super::response::send_single_shot_reply;
 use crate::config::{BackendConfig, Queue, ThrottleConfig};
 use anyhow::Context;
@@ -146,13 +147,16 @@ async fn consume_preprocess(
 	// Loop over the incoming messages
 	while let Some(delivery) = consumer.next().await {
 		let delivery = delivery?;
-		let payload = serde_json::from_slice::<TaskPayload>(&delivery.data)?;
+		let payload = serde_json::from_slice::<PreprocessTask>(&delivery.data)?;
 		debug!(target: LOG_TARGET, email=payload.input.to_email, "New Preprocess job");
 
 		let channel_clone = Arc::clone(&check_channel);
+		let config_clone = Arc::clone(&config);
 
 		tokio::spawn(async move {
-			if let Err(e) = do_preprocess_work(&payload, delivery, channel_clone).await {
+			if let Err(e) =
+				do_preprocess_work(&payload, delivery, channel_clone, config_clone).await
+			{
 				error!(target: LOG_TARGET, email=payload.input.to_email, error=?e, "Error preprocessing message");
 			}
 		});
@@ -191,7 +195,7 @@ async fn consume_check_email(
 			// Loop over the incoming messages
 			while let Some(delivery) = consumer.next().await {
 				let delivery = delivery?;
-				let payload = serde_json::from_slice::<TaskPayload>(&delivery.data)?;
+				let payload = serde_json::from_slice::<CheckEmailTask>(&delivery.data)?;
 				debug!(target: LOG_TARGET, queue=?queue_clone.to_string(), email=?payload.input.to_email, "Consuming message");
 
 				// Reset throttle counters if needed

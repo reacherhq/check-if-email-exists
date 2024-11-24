@@ -33,7 +33,7 @@ use crate::http::v1::bulk::post::publish_task;
 use crate::http::v1::with_channel;
 use crate::http::{check_header, with_config, ReacherResponseError};
 use crate::worker::consume::MAX_QUEUE_PRIORITY;
-use crate::worker::do_work::TaskPayload;
+use crate::worker::preprocess::PreprocessTask;
 use crate::worker::response::SingleShotReply;
 
 /// The main endpoint handler that implements the logic of this route.
@@ -76,7 +76,6 @@ async fn http_handler(
 		.await
 		.map_err(ReacherResponseError::from)?;
 
-	let check_email_input = body.to_check_email_input(Arc::clone(&config));
 	let properties = BasicProperties::default()
 		.with_content_type("application/json".into())
 		.with_priority(MAX_QUEUE_PRIORITY) // Highes priority
@@ -85,8 +84,8 @@ async fn http_handler(
 
 	publish_task(
 		channel.clone(),
-		TaskPayload {
-			input: check_email_input,
+		PreprocessTask {
+			input: body,
 			job_id: None,
 			webhook: None,
 		},

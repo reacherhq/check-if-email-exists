@@ -15,14 +15,10 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use super::response::save_to_db;
-use crate::config::{BackendConfig, Queue};
+use crate::config::BackendConfig;
 use crate::worker::response::send_single_shot_reply;
-use anyhow::anyhow;
-use check_if_email_exists::mx::check_mx;
-use check_if_email_exists::syntax::check_syntax;
 use check_if_email_exists::{
-	check_email, is_gmail, is_hotmail_b2b, is_hotmail_b2c, is_yahoo, CheckEmailInput,
-	CheckEmailOutput, HotmailVerifMethod, Reachable, YahooVerifMethod, LOG_TARGET,
+	check_email, CheckEmailInput, CheckEmailOutput, Reachable, LOG_TARGET,
 };
 use core::time;
 use lapin::message::Delivery;
@@ -36,14 +32,14 @@ use tracing::{debug, info};
 use warp::http::StatusCode;
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct TaskPayload {
+pub struct CheckEmailTask {
 	pub input: CheckEmailInput,
 	// If the task is a part of a job, then this field will be set.
 	pub job_id: Option<i32>,
 	pub webhook: Option<TaskWebhook>,
 }
 
-impl TaskPayload {
+impl CheckEmailTask {
 	/// Returns true if the task is a single-shot email verification via the
 	/// /v1/check_email, endpoint, i.e. not a part of a bulk verification job.
 	pub fn is_single_shot(&self) -> bool {
@@ -117,7 +113,7 @@ struct WebhookOutput<'a> {
 
 /// Processes the check email task asynchronously.
 pub(crate) async fn do_check_email_work(
-	payload: &TaskPayload,
+	payload: &CheckEmailTask,
 	delivery: Delivery,
 	channel: Arc<Channel>,
 	pg_pool: PgPool,
@@ -167,7 +163,7 @@ pub(crate) async fn do_check_email_work(
 }
 
 async fn inner_check_email(
-	payload: &TaskPayload,
+	payload: &CheckEmailTask,
 	config: Arc<BackendConfig>,
 ) -> Result<CheckEmailOutput, TaskError> {
 	let output = check_email(&payload.input, &config.get_reacher_config()).await;
@@ -198,57 +194,4 @@ async fn inner_check_email(
 	}
 
 	Ok(output)
-}
-
-pub async fn do_preprocess_work(
-	payload: &TaskPayload,
-	delivery: Delivery,
-	channel: Arc<Channel>,
-) -> Result<(), anyhow::Error> {
-	let syntax = check_syntax(&payload.input.to_email);
-	let mx = check_mx(&syntax).await?;
-	// Get first hostname from MX records.
-	let mx_hostname = mx
-		.lookup?
-		.iter()
-		.next()
-		.ok_or_else(|| anyhow!("No MX records found"))?
-		.exchange()
-		.to_string();
-
-	let queue = if is_gmail(&mx_hostname) {
-		Queue::GmailSmtp
-	} else if is_hotmail_b2b(&mx_hostname) {
-		Queue::HotmailB2BSmtp
-	} else if is_hotmail_b2c(&mx_hostname) {
-		if payload.input.hotmail_verif_method == HotmailVerifMethod::Smtp {
-			Queue::HotmailB2CSmtp
-		} else {
-			Queue::HotmailB2CHeadless
-		}
-	} else if is_yahoo(&mx_hostname) {
-		if payload.input.yahoo_verif_method == YahooVerifMethod::Smtp {
-			Queue::YahooSmtp
-		} else {
-			Queue::YahooHeadless
-		}
-	} else {
-		Queue::EverythingElseSmtp
-	};
-
-	channel
-		.basic_publish(
-			"",
-			format!("{}", queue).as_str(),
-			BasicPublishOptions::default(),
-			&delivery.data,
-			delivery.properties.clone(),
-		)
-		.await?
-		.await?;
-
-	delivery.ack(BasicAckOptions::default()).await?;
-	debug!(target: LOG_TARGET, email=?payload.input.to_email, queue=?queue.to_string(), "Message do_preprocess_worked");
-
-	Ok(())
 }

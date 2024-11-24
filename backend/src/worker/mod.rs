@@ -14,8 +14,16 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+// Each file corresponds to one step in the worker pipeline. The worker pipeline
+// is defined as:
+// - consume from RabbitMQ
+// - preprocess
+// - check email
+// - send response (either to the reply_to queue or save to the database)
+
+pub mod check_email;
 pub mod consume;
-pub mod do_work;
+pub mod preprocess;
 pub mod response;
 
 pub use consume::{run_worker, setup_rabbit_mq};

@@ -18,7 +18,6 @@
 
 use std::sync::Arc;
 
-use check_if_email_exists::CheckEmailInputBuilder;
 use check_if_email_exists::LOG_TARGET;
 use futures::stream::StreamExt;
 use futures::stream::TryStreamExt;
@@ -35,8 +34,10 @@ use crate::http::check_header;
 use crate::http::v1::with_channel;
 use crate::http::with_config;
 use crate::http::with_db;
+use crate::http::CheckEmailRequest;
 use crate::http::ReacherResponseError;
-use crate::worker::do_work::{TaskPayload, TaskWebhook};
+use crate::worker::check_email::TaskWebhook;
+use crate::worker::preprocess::PreprocessTask;
 
 const PREPROCESS_QUEUE: &str = "preprocess";
 
@@ -85,15 +86,14 @@ async fn http_handler(
 	.map_err(ReacherResponseError::from)?;
 
 	let payloads = body.input.iter().map(|email| {
-		let input = CheckEmailInputBuilder::default()
-			.to_email(email.to_string())
-			.from_email(config.from_email.clone())
-			.hello_name(config.hello_name.clone())
-			.proxy(config.proxy.clone())
-			.build()
-			.map_err(ReacherResponseError::from)?;
+		let input = CheckEmailRequest {
+			to_email: email.clone(),
+			from_email: None,
+			hello_name: None,
+			proxy: None,
+		};
 
-		Ok(TaskPayload {
+		Ok(PreprocessTask {
 			input,
 			job_id: Some(rec.id),
 			webhook: body.webhook.clone(),
@@ -126,7 +126,7 @@ async fn http_handler(
 /// Publish a task to the "preprocess" queue.
 pub async fn publish_task(
 	channel: Arc<Channel>,
-	payload: TaskPayload,
+	payload: PreprocessTask,
 	properties: BasicProperties,
 ) -> Result<(), ReacherResponseError> {
 	let channel = Arc::clone(&channel);

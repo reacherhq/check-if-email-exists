@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use super::do_work::{TaskError, TaskPayload};
+use super::check_email::{CheckEmailTask, TaskError};
 use anyhow::bail;
 use check_if_email_exists::{CheckEmailOutput, LOG_TARGET};
 use lapin::message::Delivery;
@@ -37,7 +37,7 @@ use warp::http::StatusCode;
 pub async fn save_to_db(
 	backend_name: &str,
 	pg_pool: PgPool,
-	payload: &TaskPayload,
+	payload: &CheckEmailTask,
 	worker_output: &Result<CheckEmailOutput, TaskError>,
 ) -> Result<(), anyhow::Error> {
 	let job_id = payload.job_id.unwrap();
