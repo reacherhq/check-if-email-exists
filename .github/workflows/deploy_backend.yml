@@ -3,7 +3,7 @@ name: deploy_backend
 on:
   push:
     tags:
-      - "backend/v*.*.*"
+      - "v*.*.*"
 
 jobs:
   docker-publish:
@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@master
       - name: Set GITHUB_TAG arg
         id: vars
-        run: echo ::set-output name=GITHUB_TAG::${GITHUB_REF:18} # Remove /refs/head/backend/
+        run: echo ::set-output name=GITHUB_TAG::${GITHUB_REF}
       - name: Print version
         run: echo "Publishing reacherhq/backend:${{ steps.vars.outputs.GITHUB_TAG }}"
       - name: Publish to Registry
