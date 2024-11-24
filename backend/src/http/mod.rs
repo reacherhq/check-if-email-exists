@@ -24,8 +24,6 @@ use crate::config::BackendConfig;
 use check_if_email_exists::LOG_TARGET;
 use error::handle_rejection;
 pub use error::ReacherResponseError;
-#[cfg(feature = "worker")]
-use lapin::Channel;
 use sqlx::PgPool;
 use sqlxmq::JobRunnerHandle;
 use std::env;
@@ -38,7 +36,6 @@ use warp::Filter;
 
 pub fn create_routes(
 	config: Arc<BackendConfig>,
-	#[cfg(feature = "worker")] channel: Arc<Channel>,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	let pg_pool = config.get_pg_pool();
 	let t = version::get::get_version()
@@ -53,19 +50,13 @@ pub fn create_routes(
 
 	#[cfg(feature = "worker")]
 	{
-		t.or(v1::check_email::post::v1_check_email(
-			Arc::clone(&config),
-			channel.clone(),
-		))
-		.or(v1::bulk::post::v1_create_bulk_job(
-			Arc::clone(&config),
-			channel,
-		))
-		.or(v1::bulk::get_progress::v1_get_bulk_job_progress(
-			Arc::clone(&config),
-		))
-		.or(v1::bulk::get_results::v1_get_bulk_job_results(config))
-		.recover(handle_rejection)
+		t.or(v1::check_email::post::v1_check_email(Arc::clone(&config)))
+			.or(v1::bulk::post::v1_create_bulk_job(Arc::clone(&config)))
+			.or(v1::bulk::get_progress::v1_get_bulk_job_progress(
+				Arc::clone(&config),
+			))
+			.or(v1::bulk::get_results::v1_get_bulk_job_results(config))
+			.recover(handle_rejection)
 	}
 
 	#[cfg(not(feature = "worker"))]
@@ -83,7 +74,6 @@ pub fn create_routes(
 /// keep it alive.
 pub async fn run_warp_server(
 	config: Arc<BackendConfig>,
-	#[cfg(feature = "worker")] channel: Arc<Channel>,
 ) -> Result<Option<JobRunnerHandle>, anyhow::Error> {
 	let host = config
 		.http_host
@@ -100,7 +90,7 @@ pub async fn run_warp_server(
 		.unwrap_or(config.http_port);
 
 	#[cfg(feature = "worker")]
-	let routes = create_routes(Arc::clone(&config), channel);
+	let routes = create_routes(Arc::clone(&config));
 	#[cfg(not(feature = "worker"))]
 	let routes = create_routes(Arc::clone(&config), pg_pool.clone());
 
@@ -158,11 +148,4 @@ pub fn check_header(config: Arc<BackendConfig>) -> warp::filters::BoxedFilter<()
 	} else {
 		warp::any().boxed()
 	}
-}
-
-/// Warp filter that adds the BackendConfig to the handler.
-pub fn with_config(
-	config: Arc<BackendConfig>,
-) -> impl Filter<Extract = (Arc<BackendConfig>,), Error = std::convert::Infallible> + Clone {
-	warp::any().map(move || Arc::clone(&config))
 }

@@ -32,7 +32,6 @@ use warp::Filter;
 use crate::config::BackendConfig;
 use crate::http::check_header;
 use crate::http::v1::with_channel;
-use crate::http::with_config;
 use crate::http::with_db;
 use crate::http::CheckEmailRequest;
 use crate::http::ReacherResponseError;
@@ -55,19 +54,10 @@ struct Response {
 }
 
 async fn http_handler(
-	config: Arc<BackendConfig>,
 	channel: Arc<Channel>,
 	pg_pool: PgPool,
 	body: Request,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-	if !config.worker.enable {
-		return Err(ReacherResponseError::new(
-			StatusCode::SERVICE_UNAVAILABLE,
-			"Worker is disabled.",
-		)
-		.into());
-	}
-
 	if body.input.is_empty() {
 		return Err(ReacherResponseError::new(StatusCode::BAD_REQUEST, "Empty input").into());
 	}
@@ -159,13 +149,11 @@ pub async fn publish_task(
 /// a new job to check them.
 pub fn v1_create_bulk_job(
 	config: Arc<BackendConfig>,
-	channel: Arc<Channel>,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v1" / "bulk")
 		.and(warp::post())
 		.and(check_header(Arc::clone(&config)))
-		.and(with_config(Arc::clone(&config)))
-		.and(with_channel(channel))
+		.and(with_channel(config.get_preprocess_channel()))
 		.and(with_db(config.get_pg_pool()))
 		// When accepting a body, we want a JSON body (and to reject huge
 		// payloads)...

@@ -24,7 +24,7 @@ use std::sync::Arc;
 use warp::{http, Filter};
 
 use crate::config::BackendConfig;
-use crate::http::{check_header, with_config, ReacherResponseError};
+use crate::http::{check_header, ReacherResponseError};
 
 /// The request body for the `POST /v0/check_email` endpoint.
 #[derive(Debug, Deserialize, Serialize)]
@@ -97,4 +97,11 @@ pub fn post_check_email<'a>(
 		.and_then(http_handler)
 		// View access logs by setting `RUST_LOG=reacher`.
 		.with(warp::log(LOG_TARGET))
+}
+
+/// Warp filter that adds the BackendConfig to the handler.
+fn with_config(
+	config: Arc<BackendConfig>,
+) -> impl Filter<Extract = (Arc<BackendConfig>,), Error = std::convert::Infallible> + Clone {
+	warp::any().map(move || Arc::clone(&config))
 }

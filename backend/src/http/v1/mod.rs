@@ -16,14 +16,28 @@
 
 use lapin::Channel;
 use std::sync::Arc;
+use warp::http::StatusCode;
 use warp::Filter;
+
+use super::ReacherResponseError;
 
 pub mod bulk;
 pub mod check_email;
 
-/// Warp filter that extracts lapin Channel.
+/// Warp filter that extracts lapin Channel, or returns a 503 error if it's not
+/// available.
 pub fn with_channel(
-	channel: Arc<Channel>,
-) -> impl Filter<Extract = (Arc<Channel>,), Error = std::convert::Infallible> + Clone {
-	warp::any().map(move || Arc::clone(&channel))
+	channel: Option<Arc<Channel>>,
+) -> impl Filter<Extract = (Arc<Channel>,), Error = warp::Rejection> + Clone {
+	warp::any().and_then(move || {
+		let channel = channel.clone();
+		async move {
+			channel.ok_or_else(|| {
+				warp::reject::custom(ReacherResponseError::new(
+					StatusCode::SERVICE_UNAVAILABLE,
+					"Please configure a RabbitMQ instance on Reacher before calling this endpoint",
+				))
+			})
+		}
+	})
 }

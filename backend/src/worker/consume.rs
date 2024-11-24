@@ -45,7 +45,7 @@ pub async fn setup_rabbit_mq(config: &BackendConfig) -> Result<(Channel, Channel
 		.with_reactor(tokio_reactor_trait::Tokio)
 		.with_connection_name(config.backend_name.clone().into());
 
-	let worker_config = config.must_worker_config();
+	let worker_config = config.must_worker_config()?;
 	let conn = Connection::connect(&worker_config.rabbitmq.url, options)
 		.await
 		.with_context(|| format!("Connecting to rabbitmq {}", &worker_config.rabbitmq.url))?;
@@ -98,18 +98,10 @@ pub async fn setup_rabbit_mq(config: &BackendConfig) -> Result<(Channel, Channel
 }
 
 /// Start the worker to consume messages from the queue.
-pub async fn run_worker(
-	config: Arc<BackendConfig>,
-	check_channel: Arc<Channel>,
-	preprocess_channel: Arc<Channel>,
-) -> Result<(), anyhow::Error> {
+pub async fn run_worker(config: Arc<BackendConfig>) -> Result<(), anyhow::Error> {
 	tokio::try_join!(
-		consume_preprocess(
-			Arc::clone(&config),
-			Arc::clone(&check_channel),
-			preprocess_channel
-		),
-		consume_check_email(Arc::clone(&config), check_channel)
+		consume_preprocess(Arc::clone(&config)),
+		consume_check_email(config)
 	)?;
 
 	Ok(())
@@ -117,11 +109,10 @@ pub async fn run_worker(
 
 /// Consume "Preprocess" queue, by figuring out the email provider and routing
 /// (i.e. re-publishing) to the correct queue.
-async fn consume_preprocess(
-	config: Arc<BackendConfig>,
-	check_channel: Arc<Channel>,
-	preprocess_channel: Arc<Channel>,
-) -> Result<(), anyhow::Error> {
+async fn consume_preprocess(config: Arc<BackendConfig>) -> Result<(), anyhow::Error> {
+	let preprocess_channel = config.must_worker_config()?.preprocess_channel;
+	let check_email_channel = config.must_worker_config()?.check_email_channel;
+
 	let mut consumer = preprocess_channel
 		.basic_consume(
 			"preprocess",
@@ -137,7 +128,7 @@ async fn consume_preprocess(
 		let payload = serde_json::from_slice::<PreprocessTask>(&delivery.data)?;
 		debug!(target: LOG_TARGET, email=payload.input.to_email, "New Preprocess job");
 
-		let channel_clone = Arc::clone(&check_channel);
+		let channel_clone = Arc::clone(&check_email_channel);
 		let config_clone = Arc::clone(&config);
 
 		tokio::spawn(async move {
@@ -151,12 +142,10 @@ async fn consume_preprocess(
 	Ok(())
 }
 
-async fn consume_check_email(
-	config: Arc<BackendConfig>,
-	channel: Arc<Channel>,
-) -> Result<(), anyhow::Error> {
-	let config_clone = config.clone();
-	let worker_config = config_clone.must_worker_config();
+async fn consume_check_email(config: Arc<BackendConfig>) -> Result<(), anyhow::Error> {
+	let config_clone = Arc::clone(&config);
+	let worker_config = config_clone.must_worker_config()?;
+	let channel = worker_config.check_email_channel;
 
 	let throttle = Arc::new(Mutex::new(Throttle::new()));
 
@@ -167,7 +156,7 @@ async fn consume_check_email(
 		let queue_clone = queue.clone();
 
 		tokio::spawn(async move {
-			let worker_config = config_clone.must_worker_config();
+			let worker_config = config_clone.must_worker_config()?;
 
 			let mut consumer = channel_clone
 				.basic_consume(

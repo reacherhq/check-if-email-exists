@@ -19,7 +19,7 @@
 
 use check_if_email_exists::{setup_sentry, LOG_TARGET};
 #[cfg(feature = "worker")]
-use reacher_backend::worker::{run_worker, setup_rabbit_mq};
+use reacher_backend::worker::run_worker;
 use std::sync::Arc;
 use tracing::info;
 
@@ -46,14 +46,10 @@ async fn main() -> Result<(), anyhow::Error> {
 
 	#[cfg(feature = "worker")]
 	{
-		let (check_channel, preprocess_channel) = setup_rabbit_mq(&config).await?;
-		let (check_channel, preprocess_channel) =
-			(Arc::new(check_channel), Arc::new(preprocess_channel));
-
-		let server_future = run_warp_server(Arc::clone(&config), Arc::clone(&preprocess_channel));
+		let server_future = run_warp_server(Arc::clone(&config));
 		let worker_future = async {
 			if config.worker.enable {
-				run_worker(config, check_channel, preprocess_channel).await?;
+				run_worker(config).await?;
 			}
 			Ok(())
 		};

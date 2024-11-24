@@ -31,25 +31,16 @@ use crate::config::BackendConfig;
 use crate::http::v0::check_email::post::CheckEmailRequest;
 use crate::http::v1::bulk::post::publish_task;
 use crate::http::v1::with_channel;
-use crate::http::{check_header, with_config, ReacherResponseError};
+use crate::http::{check_header, ReacherResponseError};
 use crate::worker::consume::MAX_QUEUE_PRIORITY;
 use crate::worker::preprocess::PreprocessTask;
 use crate::worker::response::SingleShotReply;
 
 /// The main endpoint handler that implements the logic of this route.
 async fn http_handler(
-	config: Arc<BackendConfig>,
 	channel: Arc<Channel>,
 	body: CheckEmailRequest,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-	if !config.worker.enable {
-		return Err(ReacherResponseError::new(
-			StatusCode::SERVICE_UNAVAILABLE,
-			"Worker is disabled.",
-		)
-		.into());
-	}
-
 	// The to_email field must be present
 	if body.to_email.is_empty() {
 		return Err(ReacherResponseError::new(
@@ -161,13 +152,11 @@ async fn http_handler(
 /// Create the `POST /v1/check_email` endpoint.
 pub fn v1_check_email(
 	config: Arc<BackendConfig>,
-	channel: Arc<Channel>,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v1" / "check_email")
 		.and(warp::post())
 		.and(check_header(Arc::clone(&config)))
-		.and(with_config(config))
-		.and(with_channel(channel))
+		.and(with_channel(config.get_preprocess_channel()))
 		// When accepting a body, we want a JSON body (and to reject huge
 		// payloads)...
 		.and(warp::body::content_length_limit(1024 * 16))

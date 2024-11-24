@@ -18,6 +18,7 @@ use crate::create_db;
 #[cfg(feature = "worker")]
 use crate::worker::check_email::TaskWebhook;
 use crate::worker::setup_rabbit_mq;
+use anyhow::bail;
 use check_if_email_exists::config::ReacherConfig;
 use check_if_email_exists::{
 	CheckEmailInputProxy, GmailVerifMethod, HotmailB2BVerifMethod, HotmailB2CVerifMethod,
@@ -81,25 +82,36 @@ impl BackendConfig {
 	/// # Panics
 	///
 	/// Panics if the worker configuration is missing.
-	pub fn must_worker_config(&self) -> MustWorkerConfig {
-		MustWorkerConfig {
-			throttle: self
-				.worker
-				.throttle
-				.clone()
-				.expect("worker.throttle is missing"),
-			rabbitmq: self
-				.worker
-				.rabbitmq
-				.clone()
-				.expect("worker.rabbitmq is missing"),
-			#[cfg(feature = "worker")]
-			webhook: self.worker.webhook.clone(),
-			postgres: self
-				.worker
-				.postgres
-				.clone()
-				.expect("worker.postgres is missing"),
+	pub fn must_worker_config(&self) -> Result<MustWorkerConfig, anyhow::Error> {
+		match (
+			self.worker.enable,
+			&self.worker.throttle,
+			&self.worker.rabbitmq,
+			&self.worker.postgres,
+			&self.pg_pool,
+			&self.check_email_channel,
+			&self.preprocess_channel,
+		) {
+			(
+				true,
+				Some(throttle),
+				Some(rabbitmq),
+				Some(postgres),
+				Some(pg_pool),
+				Some(check_email_channel),
+				Some(preprocess_channel),
+			) => Ok(MustWorkerConfig {
+				pg_pool: pg_pool.clone(),
+				check_email_channel: check_email_channel.clone(),
+				preprocess_channel: preprocess_channel.clone(),
+				throttle: throttle.clone(),
+				rabbitmq: rabbitmq.clone(),
+				#[cfg(feature = "worker")]
+				webhook: self.worker.webhook.clone(),
+				postgres: postgres.clone(),
+			}),
+			(true, _, _, _, _, _, _) => bail!("Worker configuration is missing"),
+			_ => bail!("Calling must_worker_config on a non-worker backend"),
 		}
 	}
 
@@ -143,9 +155,14 @@ pub struct WorkerConfig {
 	pub postgres: Option<PostgresConfig>,
 }
 
-/// Worker configuration that must be present if worker.enable is true.
-#[derive(Debug, Deserialize, Clone)]
+/// Worker configuration that must be present if worker.enable is true. Used as
+/// a domain type to ensure that the worker configuration is present.
+#[derive(Debug, Clone)]
 pub struct MustWorkerConfig {
+	pub pg_pool: PgPool,
+	pub check_email_channel: Arc<Channel>,
+	pub preprocess_channel: Arc<Channel>,
+
 	pub throttle: ThrottleConfig,
 	pub rabbitmq: RabbitMQConfig,
 	#[cfg(feature = "worker")]
@@ -345,7 +362,7 @@ pub async fn load_config() -> Result<BackendConfig, anyhow::Error> {
 	let mut cfg = cfg.try_deserialize::<BackendConfig>()?;
 
 	let pg_pool = if cfg.worker.enable {
-		Some(create_db(&cfg.must_worker_config().postgres.db_url).await?)
+		Some(create_db(&cfg.must_worker_config()?.postgres.db_url).await?)
 	} else if let Ok(db_url) = env::var("DATABASE_URL") {
 		// For legacy reasons, we also support the DATABASE_URL environment variable:
 		Some(create_db(&db_url).await?)
