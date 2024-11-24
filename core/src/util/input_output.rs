@@ -184,11 +184,11 @@ pub struct CheckEmailInput {
 	/// Select how to verify Hotmail/Outlook/Microsoft email addresses.
 	///
 	/// Defaults to Headless.
-	pub hotmail_b2b_verif_method: HotmailB2BVerifMethod,
+	pub hotmailb2b_verif_method: HotmailB2BVerifMethod,
 	/// Select how to verify Hotmail/Outlook/Microsoft email addresses.
 	///
 	/// Defaults to Headless.
-	pub hotmail_b2c_verif_method: HotmailB2CVerifMethod,
+	pub hotmailb2c_verif_method: HotmailB2CVerifMethod,
 	/// Whether to check if a gravatar image is existing for the given email.
 	/// Adds a bit of latency to the verification process.
 	///
@@ -220,8 +220,8 @@ impl Default for CheckEmailInput {
 			smtp_timeout: Some(Duration::from_secs(30)),
 			yahoo_verif_method: YahooVerifMethod::Headless,
 			gmail_verif_method: GmailVerifMethod::Smtp,
-			hotmail_b2b_verif_method: HotmailB2BVerifMethod::Smtp,
-			hotmail_b2c_verif_method: HotmailB2CVerifMethod::Headless,
+			hotmailb2b_verif_method: HotmailB2BVerifMethod::Smtp,
+			hotmailb2c_verif_method: HotmailB2CVerifMethod::Headless,
 			check_gravatar: false,
 			haveibeenpwned_api_key: None,
 			retries: 1,

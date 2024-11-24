@@ -382,14 +382,17 @@
 						"type": "number",
 						"description": "SMTP port to use for email validation. Defaults to 25, but 465, 587, and 2525 are sometimes also used."
 					},
-					"yahoo_verif_method": {
-						"$ref": "#/components/schemas/YahooVerifMethod"
-					},
 					"gmail_verif_method": {
 						"$ref": "#/components/schemas/GmailVerifMethod"
 					},
-					"hotmail_verif_method": {
-						"$ref": "#/components/schemas/HotmailVerifMethod"
+					"hotmailb2b_verif_method": {
+						"$ref": "#/components/schemas/HotmailB2BVerifMethod"
+					},
+					"hotmailb2c_verif_method": {
+						"$ref": "#/components/schemas/HotmailB2CVerifMethod"
+					},
+					"yahoo_verif_method": {
+						"$ref": "#/components/schemas/YahooVerifMethod"
 					},
 					"check_gravatar": {
 						"type": "boolean",
@@ -615,14 +618,23 @@
 				"enum": ["Api", "Headless", "Smtp"],
 				"description": "Enumeration describing the method used to verify Yahoo emails."
 			},
-			"HotmailVerifMethod": {
+			"HotmailB2BVerifMethod": {
 				"type": "string",
 				"x-stoplight": {
 					"id": "ntdugsleyotut"
 				},
-				"title": "HotmailVerifMethod",
-				"enum": ["Api", "Headless", "Smtp"],
-				"description": "Enumeration describing the method used to verify Hotmail emails."
+				"title": "HotmailB2BVerifMethod",
+				"enum": ["Smtp"],
+				"description": "Enumeration describing the method used to verify Hotmail B2B emails."
+			},
+			"HotmailB2CVerifMethod": {
+				"type": "string",
+				"x-stoplight": {
+					"id": "cuc5bj6ra2t0i"
+				},
+				"title": "HotmailB2CVerifMethod",
+				"enum": ["Smtp", "Headless", "Api"],
+				"description": "Enumeration describing the method used to verify Hotmail B2C emails."
 			},
 			"GmailVerifMethod": {
 				"type": "string",

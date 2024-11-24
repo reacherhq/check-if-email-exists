@@ -16,7 +16,9 @@
 
 //! This file implements the `POST /v0/check_email` endpoint.
 
-use check_if_email_exists::{check_email, CheckEmailInput, CheckEmailInputProxy, LOG_TARGET};
+use check_if_email_exists::{
+	check_email, CheckEmailInput, CheckEmailInputProxy, GmailVerifMethod, LOG_TARGET,
+};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use warp::{http, Filter};
@@ -30,6 +32,10 @@ pub struct CheckEmailRequest {
 	pub to_email: String,
 	pub from_email: Option<String>,
 	pub hello_name: Option<String>,
+	pub gmail_verif_method: Option<GmailVerifMethod>,
+	pub hotmailb2b_verif_method: Option<String>,
+	pub hotmailb2c_verif_method: Option<String>,
+	pub yahoo_verif_method: Option<String>,
 	pub proxy: Option<CheckEmailInputProxy>,
 }
 
@@ -40,8 +46,8 @@ impl CheckEmailRequest {
 			from_email: self.from_email.clone().unwrap_or(config.from_email.clone()),
 			hello_name: self.hello_name.clone().unwrap_or(config.hello_name.clone()),
 			gmail_verif_method: config.verif_method.gmail,
-			hotmail_b2b_verif_method: config.verif_method.hotmailb2b,
-			hotmail_b2c_verif_method: config.verif_method.hotmailb2c,
+			hotmailb2b_verif_method: config.verif_method.hotmailb2b,
+			hotmailb2c_verif_method: config.verif_method.hotmailb2c,
 			yahoo_verif_method: config.verif_method.yahoo,
 			proxy: self
 				.proxy
