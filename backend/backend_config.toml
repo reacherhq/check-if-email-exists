@@ -25,6 +25,18 @@ from_email = "reacher@gmail.com"
 # verifications.
 webdriver_addr = "http://localhost:9515"
 
+# Uncomment the following lines to route all SMTP verification requests to the
+# specified proxy. Note that the proxy must be a SOCKS5 proxy to work with the
+# SMTP protocol. This proxy will not be used for headless verifications.
+#
+# The username and password are optional, and only needed if the proxy requires
+# authentication.
+# [proxy]
+# host = "my.proxy.com"
+# port = 1080
+# username = "my-username"
+# password = "my-password"
+
 [worker]
 enable = true
 

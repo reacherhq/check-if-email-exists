@@ -100,11 +100,11 @@ impl Serialize for TaskError {
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct TaskWebhook {
-	pub on_each_email: Option<TaskWebhookOnEachEmail>,
+	pub on_each_email: Option<Webhook>,
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
-pub struct TaskWebhookOnEachEmail {
+pub struct Webhook {
 	pub url: String,
 	pub extra: Option<serde_json::Value>,
 }

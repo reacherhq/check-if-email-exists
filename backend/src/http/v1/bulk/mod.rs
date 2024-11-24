@@ -14,6 +14,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+pub mod get_progress;
 pub mod get_results;
-pub mod get_summary;
 pub mod post;

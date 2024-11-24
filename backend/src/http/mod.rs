@@ -65,7 +65,7 @@ pub fn create_routes(
 			channel,
 			pg_pool.clone(),
 		))
-		.or(v1::bulk::get_summary::v1_get_bulk_job_summary(
+		.or(v1::bulk::get_progress::v1_get_bulk_job_progress(
 			pg_pool.clone(),
 		))
 		.or(v1::bulk::get_results::v1_get_bulk_job_results(pg_pool))
