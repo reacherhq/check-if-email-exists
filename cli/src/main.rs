@@ -16,7 +16,7 @@
 
 use check_if_email_exists::{
 	check_email, config::ReacherConfig, CheckEmailInputBuilder, CheckEmailInputProxy,
-	GmailVerifMethod, HotmailVerifMethod, YahooVerifMethod,
+	GmailVerifMethod, HotmailB2BVerifMethod, HotmailB2CVerifMethod, YahooVerifMethod,
 };
 use clap::Parser;
 use once_cell::sync::Lazy;
@@ -56,17 +56,21 @@ pub struct Cli {
 	#[clap(long, env, default_value = "25")]
 	pub smtp_port: u16,
 
-	/// Select how to verify Yahoo email addresses: Api, Headless or Smtp.
-	#[clap(long, env, default_value = "Headless", parse(try_from_str))]
+	/// Select how to verify Yahoo email addresses: api, headless or smtp.
+	#[clap(long, env, default_value = "headless", parse(try_from_str))]
 	pub yahoo_verif_method: YahooVerifMethod,
 
-	/// Select how to verify Gmail email addresses: Api or Smtp.
-	#[clap(long, env, default_value = "Smtp", parse(try_from_str))]
+	/// Select how to verify Gmail email addresses: api or smtp.
+	#[clap(long, env, default_value = "smtp", parse(try_from_str))]
 	pub gmail_verif_method: GmailVerifMethod,
 
-	/// Select how to verify Hotmail email addresses: Api, Headless or Smtp.
-	#[clap(long, env, default_value = "Headless", parse(try_from_str))]
-	pub hotmail_verif_method: HotmailVerifMethod,
+	/// Select how to verify Hotmail B2B email addresses: smtp.
+	#[clap(long, env, default_value = "smtp", parse(try_from_str))]
+	pub hotmailb2b_verif_method: HotmailB2BVerifMethod,
+
+	/// Select how to verify Hotmail B2C email addresses: headless or smtp.
+	#[clap(long, env, default_value = "headless", parse(try_from_str))]
+	pub hotmailb2c_verif_method: HotmailB2CVerifMethod,
 
 	/// Whether to check if a gravatar image is existing for the given email.
 	#[clap(long, env, default_value = "false", parse(try_from_str))]
@@ -97,7 +101,8 @@ async fn main() -> Result<(), anyhow::Error> {
 		.smtp_port(CONF.smtp_port)
 		.yahoo_verif_method(CONF.yahoo_verif_method)
 		.gmail_verif_method(CONF.gmail_verif_method)
-		.hotmail_verif_method(CONF.hotmail_verif_method)
+		.hotmailb2b_verif_method(CONF.hotmailb2b_verif_method)
+		.hotmailb2c_verif_method(CONF.hotmailb2c_verif_method)
 		.check_gravatar(CONF.check_gravatar)
 		.haveibeenpwned_api_key(CONF.haveibeenpwned_api_key.clone());
 

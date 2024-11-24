@@ -102,7 +102,7 @@ pub async fn check_smtp(
 	let to_email_str = to_email.to_string();
 
 	if is_hotmail_b2c(&host_str) {
-		if let HotmailB2CVerifMethod::Headless = &input.hotmail_b2c_verif_method {
+		if let HotmailB2CVerifMethod::Headless = &input.hotmailb2c_verif_method {
 			return (
 				outlook::headless::check_password_recovery(&to_email_str, &config.webdriver_addr)
 					.await

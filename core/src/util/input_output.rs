@@ -93,10 +93,9 @@ impl FromStr for YahooVerifMethod {
 
 	fn from_str(s: &str) -> Result<Self, Self::Err> {
 		match s {
-			"Api" => Ok(Self::Api),
-
-			"Headless" => Ok(Self::Headless),
-			"Smtp" => Ok(Self::Smtp),
+			"api" => Ok(Self::Api),
+			"headless" => Ok(Self::Headless),
+			"smtp" => Ok(Self::Smtp),
 			_ => Err(format!("Unknown yahoo verify method: {}", s)),
 		}
 	}
@@ -116,8 +115,8 @@ impl FromStr for GmailVerifMethod {
 
 	fn from_str(s: &str) -> Result<Self, Self::Err> {
 		match s {
-			"Api" => Ok(Self::Api),
-			"Smtp" => Ok(Self::Smtp),
+			"api" => Ok(Self::Api),
+			"smtp" => Ok(Self::Smtp),
 			_ => Err(format!("Unknown gmail verify method: {}", s)),
 		}
 	}
@@ -128,6 +127,17 @@ impl FromStr for GmailVerifMethod {
 pub enum HotmailB2BVerifMethod {
 	/// Use Hotmail's SMTP servers to check if an email exists.
 	Smtp,
+}
+
+impl FromStr for HotmailB2BVerifMethod {
+	type Err = String;
+
+	fn from_str(s: &str) -> Result<Self, Self::Err> {
+		match s {
+			"smtp" => Ok(Self::Smtp),
+			_ => Err(format!("Unknown hotmailb2b verify method: {}", s)),
+		}
+	}
 }
 
 /// Select how to verify Hotmail B2C emails.
@@ -142,6 +152,18 @@ pub enum HotmailB2CVerifMethod {
 	Headless,
 	/// Use Hotmail's SMTP servers to check if an email exists.
 	Smtp,
+}
+
+impl FromStr for HotmailB2CVerifMethod {
+	type Err = String;
+
+	fn from_str(s: &str) -> Result<Self, Self::Err> {
+		match s {
+			"headless" => Ok(Self::Headless),
+			"smtp" => Ok(Self::Smtp),
+			_ => Err(format!("Unknown hotmailb2c verify method: {}", s)),
+		}
+	}
 }
 
 /// Builder pattern for the input argument into the main `email_exists`

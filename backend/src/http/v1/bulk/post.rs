@@ -91,6 +91,10 @@ async fn http_handler(
 			from_email: None,
 			hello_name: None,
 			proxy: None,
+			gmail_verif_method: None,
+			hotmailb2b_verif_method: None,
+			hotmailb2c_verif_method: None,
+			yahoo_verif_method: None,
 		};
 
 		Ok(PreprocessTask {
