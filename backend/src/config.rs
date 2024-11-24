@@ -92,7 +92,7 @@ impl BackendConfig {
 	}
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Default, Deserialize, Clone)]
 pub struct VerifMethodConfig {
 	/// Verification method for Gmail emails.
 	pub gmail: GmailVerifMethod,
@@ -104,7 +104,7 @@ pub struct VerifMethodConfig {
 	pub yahoo: YahooVerifMethod,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Default, Deserialize, Clone)]
 pub struct WorkerConfig {
 	pub enable: bool,
 

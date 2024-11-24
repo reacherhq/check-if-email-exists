@@ -73,7 +73,7 @@ impl SmtpSecurity {
 }
 
 /// Select how to verify Yahoo emails.
-#[derive(Debug, Clone, Copy, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Deserialize, Serialize)]
 pub enum YahooVerifMethod {
 	/// Use Yahoo's API to check if an email exists.
 	Api,
@@ -83,6 +83,7 @@ pub enum YahooVerifMethod {
 	/// its endpoint, usually http://localhost:9515, into the environment
 	/// variable RCH_WEBDRIVER_ADDR. We recommend running chromedriver (and not
 	/// geckodriver) as it allows parallel requests.
+	#[default]
 	Headless,
 	/// Use Yahoo's SMTP servers to check if an email exists.
 	Smtp,
@@ -102,11 +103,12 @@ impl FromStr for YahooVerifMethod {
 }
 
 /// Select how to verify Gmail emails.
-#[derive(Debug, Clone, Copy, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize)]
 pub enum GmailVerifMethod {
 	/// Use Gmail's API to check if an email exists.
 	Api,
 	/// Use Gmail's SMTP servers to check if an email exists.
+	#[default]
 	Smtp,
 }
 
@@ -123,9 +125,10 @@ impl FromStr for GmailVerifMethod {
 }
 
 /// Select how to verify Hotmail B2B emails.
-#[derive(Debug, Clone, Copy, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Deserialize, Serialize)]
 pub enum HotmailB2BVerifMethod {
 	/// Use Hotmail's SMTP servers to check if an email exists.
+	#[default]
 	Smtp,
 }
 
@@ -141,7 +144,7 @@ impl FromStr for HotmailB2BVerifMethod {
 }
 
 /// Select how to verify Hotmail B2C emails.
-#[derive(Debug, Clone, Copy, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Deserialize, Serialize)]
 pub enum HotmailB2CVerifMethod {
 	/// Use Hotmail's password recovery page to check if an email exists.
 	///
@@ -149,6 +152,7 @@ pub enum HotmailB2CVerifMethod {
 	/// its endpoint, usually http://localhost:9515, into the environment
 	/// variable RCH_WEBDRIVER_ADDR. We recommend running chromedriver (and not
 	/// geckodriver) as it allows parallel requests.
+	#[default]
 	Headless,
 	/// Use Hotmail's SMTP servers to check if an email exists.
 	Smtp,
@@ -240,10 +244,10 @@ impl Default for CheckEmailInput {
 			smtp_port: 25,
 			smtp_security: SmtpSecurity::default(),
 			smtp_timeout: Some(Duration::from_secs(30)),
-			yahoo_verif_method: YahooVerifMethod::Headless,
-			gmail_verif_method: GmailVerifMethod::Smtp,
-			hotmailb2b_verif_method: HotmailB2BVerifMethod::Smtp,
-			hotmailb2c_verif_method: HotmailB2CVerifMethod::Headless,
+			yahoo_verif_method: YahooVerifMethod::default(),
+			gmail_verif_method: GmailVerifMethod::default(),
+			hotmailb2b_verif_method: HotmailB2BVerifMethod::default(),
+			hotmailb2c_verif_method: HotmailB2CVerifMethod::default(),
 			check_gravatar: false,
 			haveibeenpwned_api_key: None,
 			retries: 1,

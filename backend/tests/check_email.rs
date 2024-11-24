@@ -35,6 +35,7 @@ mod tests {
 			http_host: "localhost".into(),
 			http_port: 8080,
 			header_secret: Some(header_secret.to_string()),
+			verif_method: Default::default(),
 			proxy: None,
 			worker: Default::default(),
 			sentry: None,
