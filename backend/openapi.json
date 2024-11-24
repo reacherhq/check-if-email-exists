@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Reacher",
 		"version": "0.10.0",
-		"description": "### What is Reacher?\n\nReacher is a powerful, free and open-source email verification API service. It is provided both as a SaaS and as a self-host solution.",
+		"description": "### What is Reacher?\n\nReacher is a robust, open-source email verification API service available as both a SaaS and self-hosted solution.",
 		"license": {
 			"name": "AGPL-3.0 OR Commercial",
 			"url": "https://github.com/reacherhq/check-if-email-exists/blob/master/LICENSE.md"
@@ -42,7 +42,7 @@
 				"x-stoplight": {
 					"id": "yho6jrv7p04qv"
 				},
-				"description": "Perform a full verification of an email address.\n\nThis endpoint replaces the previous `/v0/check_email` endpoint, but has the same input and output format. Contrarily to the `/v0/check_email` endpoint, the new `/v1/check_email` endpoint will add the email to verify to a queue, and the Reacher server will perform all verifications inside the queue according to its configuration's throttle, concurrency and other parameters.",
+				"description": "Perform a comprehensive verification of an email address. This endpoint supersedes the previous `/v0/check_email` endpoint, maintaining the same input and output format. Unlike the `/v0/check_email` endpoint, the new `/v1/check_email` endpoint queues the email for verification, and the Reacher server processes the queue based on its configuration settings such as throttle and concurrency.",
 				"requestBody": {
 					"description": "Request object containing all parameters necessary for an email verification.",
 					"content": {
@@ -75,7 +75,7 @@
 											"x-stoplight": {
 												"id": "614agdy9mxybk"
 											},
-											"description": "The unique ID generated for this bulk verification job. You must pass in this `job_id` to query the progress or results of this bulk verification."
+											"description": "The unique ID generated for this bulk verification job. Use this `job_id` to query the progress or results of the bulk verification."
 										}
 									}
 								}
@@ -87,7 +87,7 @@
 				"x-stoplight": {
 					"id": "jpoyy08arq31b"
 				},
-				"description": "Perform a bulk email verification.",
+				"description": "Initiate a bulk email verification.",
 				"requestBody": {
 					"content": {
 						"application/json": {
@@ -160,7 +160,7 @@
 												"id": "7baymbmoaj5vo"
 											},
 											"format": "date-time",
-											"description": "The date and time at which the bulk verification job was created."
+											"description": "The date and time when the bulk verification job was created."
 										},
 										"finished_at": {
 											"type": "string",
@@ -168,7 +168,7 @@
 												"id": "7lhzxsb1ixnvz"
 											},
 											"format": "date-time",
-											"description": "If the bulk verification job is finished, the date and time at which it was completed."
+											"description": "If the bulk verification job is completed, the date and time when it was finished."
 										},
 										"total_records": {
 											"type": "integer",
@@ -182,14 +182,14 @@
 											"x-stoplight": {
 												"id": "oqxvsorhd06ch"
 											},
-											"description": "The number of emails that have been verified at the point of the query."
+											"description": "The number of emails that have been verified at the time of the query."
 										},
 										"summary": {
 											"type": "object",
 											"x-stoplight": {
 												"id": "n5q382zces1lq"
 											},
-											"description": "A summary of already processed emails.",
+											"description": "A summary of the processed emails.",
 											"required": [
 												"total_safe",
 												"total_invalid",
@@ -202,28 +202,28 @@
 													"x-stoplight": {
 														"id": "4nss0vedcrjc4"
 													},
-													"description": "The number of emails where is_reachable is \"safe\"."
+													"description": "The number of emails where `is_reachable` is \"safe\"."
 												},
 												"total_invalid": {
 													"type": "integer",
 													"x-stoplight": {
 														"id": "uzzk7ija2l5sv"
 													},
-													"description": "The number of emails where is_reachable is \"invalid\"."
+													"description": "The number of emails where `is_reachable` is \"invalid\"."
 												},
 												"total_risky": {
 													"type": "integer",
 													"x-stoplight": {
 														"id": "sqjtoggge6us3"
 													},
-													"description": "The number of emails where is_reachable is \"risky\"."
+													"description": "The number of emails where `is_reachable` is \"risky\"."
 												},
 												"total_unknown": {
 													"type": "integer",
 													"x-stoplight": {
 														"id": "8lsodukakqreu"
 													},
-													"description": "The number of emails where is_reachable is \"unknown\"."
+													"description": "The number of emails where `is_reachable` is \"unknown\"."
 												}
 											}
 										},
@@ -232,7 +232,7 @@
 												"id": "tsw5sp5cxe7ad"
 											},
 											"enum": ["Running", "Completed"],
-											"description": "Either \"Running\" or \"Completed\"."
+											"description": "The status of the job, either \"Running\" or \"Completed\"."
 										}
 									}
 								}
@@ -244,7 +244,7 @@
 				"x-stoplight": {
 					"id": "phrhxrak01ja6"
 				},
-				"description": "See the progress of a bulk verification job."
+				"description": "Retrieve the progress of a bulk verification job."
 			}
 		},
 		"/v1/bulk/{job_id}/results": {
@@ -260,7 +260,7 @@
 				}
 			],
 			"get": {
-				"summary": "Your GET endpoint",
+				"summary": "Retrieve bulk verification results",
 				"responses": {
 					"200": {
 						"description": "OK",
@@ -283,7 +283,7 @@
 				"x-stoplight": {
 					"id": "skx9nlfib3but"
 				},
-				"description": "Get the results of a bulk verification job. This endpoint will error if the job is still running, please query `GET /v1/bulk/{job_id}` first to see the progress of the job.",
+				"description": "Retrieve the results of a bulk verification job. This endpoint will return an error if the job is still running. Please query `GET /v1/bulk/{job_id}` first to check the job's progress.",
 				"parameters": [
 					{
 						"schema": {
@@ -300,7 +300,7 @@
 						},
 						"in": "query",
 						"name": "offset",
-						"description": "The offset from which we return the results, which is equivalent to the number of elements in the array to skip."
+						"description": "The offset from which to return the results, equivalent to the number of elements in the array to skip."
 					}
 				]
 			}
@@ -322,7 +322,7 @@
 					}
 				},
 				"operationId": "post-v0-check-email",
-				"description": "**Sunset notice: please use `/v1/check_email` instead.** Both endpoints take the same input arguments and return the same output; only their inner implementation is different, see below.\n\nPerform a full verification of an email address.\n\nContrarily to the /v1/check_email endpoint, this endpoint will perform an email verification immediately, without taking into account the Reacher server's throttling, concurrency and other configurations. As such, this endpoint is slightly riskier than the /v1/check_email, as the Reacher server's IP reputation can be impacted if this endpoint is called too often.",
+				"description": "**Sunset notice: please use `/v1/check_email` instead.** Both endpoints accept the same input arguments and return the same output; only their internal implementation differs. Perform a comprehensive verification of an email address. Unlike the `/v1/check_email` endpoint, this endpoint performs an email verification immediately, without considering the Reacher server's throttling, concurrency, and other configurations. As such, this endpoint is slightly riskier than `/v1/check_email`, as the Reacher server's IP reputation can be impacted if this endpoint is called too frequently.",
 				"requestBody": {
 					"content": {
 						"application/json": {
@@ -380,7 +380,7 @@
 					},
 					"smtp_port": {
 						"type": "number",
-						"description": "SMTP port to use for email validation. Defaults to 25, but 465, 587 and 2525 are sometimes also used."
+						"description": "SMTP port to use for email validation. Defaults to 25, but 465, 587, and 2525 are sometimes also used."
 					},
 					"yahoo_verif_method": {
 						"$ref": "#/components/schemas/YahooVerifMethod"
@@ -393,7 +393,7 @@
 					},
 					"check_gravatar": {
 						"type": "boolean",
-						"description": "Whether to check if a gravatar image is existing for the given email."
+						"description": "Whether to check if a Gravatar image exists for the given email."
 					}
 				}
 			},
@@ -432,7 +432,7 @@
 						}
 					}
 				},
-				"description": "The verification result of an email.",
+				"description": "The result of the email verification process.",
 				"required": [
 					"input",
 					"is_reachable",
@@ -445,7 +445,7 @@
 					"input": {
 						"type": "string",
 						"format": "email",
-						"description": "The input email address."
+						"description": "The email address that was verified."
 					},
 					"is_reachable": {
 						"$ref": "#/components/schemas/Reachable"
@@ -459,7 +459,7 @@
 								"$ref": "#/components/schemas/CoreError"
 							}
 						],
-						"description": "Miscellaneous information about the email account."
+						"description": "Additional information about the email account."
 					},
 					"mx": {
 						"oneOf": [
@@ -470,7 +470,7 @@
 								"$ref": "#/components/schemas/CoreError"
 							}
 						],
-						"description": "Information gathered from querying the MX records of the mail server."
+						"description": "Details obtained from querying the mail server's MX records."
 					},
 					"smtp": {
 						"oneOf": [
@@ -481,7 +481,7 @@
 								"$ref": "#/components/schemas/CoreError"
 							}
 						],
-						"description": "Verifications performed by connecting to the mail server via SMTP."
+						"description": "Results from connecting to the mail server via SMTP."
 					},
 					"syntax": {
 						"$ref": "#/components/schemas/SyntaxDetails"
@@ -495,24 +495,24 @@
 				"type": "string",
 				"title": "Reachable",
 				"enum": ["invalid", "unknown", "safe", "risky"],
-				"description": "An enum to describe how confident we are that the recipient address is real: `safe`, `risky`, `invalid` and `unknown`. Check our FAQ to know the meanings of the 4 possibilities: https://help.reacher.email/email-attributes-inside-json."
+				"description": "An enumeration describing the confidence level that the recipient address is valid: `safe`, `risky`, `invalid`, or `unknown`. Refer to our FAQ for detailed definitions: https://help.reacher.email/email-attributes-inside-json."
 			},
 			"MiscDetails": {
 				"title": "MiscDetails",
 				"type": "object",
-				"description": "Miscellaneous information about the email account.",
+				"description": "Additional information about the email account.",
 				"properties": {
 					"is_disposable": {
 						"type": "boolean",
-						"description": "Is the address provided by a known disposable email address provider?"
+						"description": "Indicates if the email address is from a known disposable email provider."
 					},
 					"is_role_account": {
 						"type": "boolean",
-						"description": "Is this email a role-based account?"
+						"description": "Indicates if the email address is a role-based account."
 					},
 					"gravatar_url": {
 						"type": "string",
-						"description": "URL to the email's Gravatar profile picture. It is only populated if check_gravatar is set to true in the request, and if the email has an associated Gravatar."
+						"description": "URL to the Gravatar profile picture associated with the email, if available and requested."
 					}
 				},
 				"required": ["is_disposable", "is_role_account"]
@@ -523,43 +523,43 @@
 				"properties": {
 					"accepts_mail": {
 						"type": "boolean",
-						"description": "Does the server accept mails?"
+						"description": "Indicates if the mail server accepts emails."
 					},
 					"records": {
 						"type": "array",
-						"description": "The list of FQDN (Fully Qualified Domain Names) of the mail server.",
+						"description": "List of Fully Qualified Domain Names (FQDN) of the mail server.",
 						"items": {
 							"type": "string"
 						}
 					}
 				},
 				"required": ["accepts_mail", "records"],
-				"description": "Object holding the MX details of the mail server."
+				"description": "Details about the mail server's MX records."
 			},
 			"SmtpDetails": {
 				"title": "SmtpDetails",
 				"type": "object",
-				"description": "Verifications performed by connecting to the mail server via SMTP.",
+				"description": "Results from SMTP connection attempts to the mail server.",
 				"properties": {
 					"can_connect_smtp": {
 						"type": "boolean",
-						"description": "Can the mail exchanger of the email address domain be contacted successfully?"
+						"description": "Indicates if the mail exchanger can be contacted successfully."
 					},
 					"has_full_inbox": {
 						"type": "boolean",
-						"description": "Is the inbox of this mailbox full?"
+						"description": "Indicates if the mailbox is full."
 					},
 					"is_catch_all": {
 						"type": "boolean",
-						"description": "Is this email address a catch-all address?"
+						"description": "Indicates if the email address is a catch-all address."
 					},
 					"is_deliverable": {
 						"type": "boolean",
-						"description": "Is an email sent to this address deliverable?"
+						"description": "Indicates if an email sent to this address is deliverable."
 					},
 					"is_disabled": {
 						"type": "boolean",
-						"description": "Has this email address been disabled by the email provider?"
+						"description": "Indicates if the email address has been disabled by the provider."
 					}
 				},
 				"required": [
@@ -573,19 +573,19 @@
 			"SyntaxDetails": {
 				"title": "SyntaxDetails",
 				"type": "object",
-				"description": "Syntax validation of an email address.",
+				"description": "Validation of the email address syntax.",
 				"properties": {
 					"domain": {
 						"type": "string",
-						"description": "The domain name of the email, i.e. the part after the \"@\" symbol."
+						"description": "The domain part of the email address."
 					},
 					"is_valid_syntax": {
 						"type": "boolean",
-						"description": "Is the address syntactically valid?"
+						"description": "Indicates if the email address syntax is valid."
 					},
 					"username": {
 						"type": "string",
-						"description": "The username of the email, i.e. the part before the \"@\" symbol."
+						"description": "The username part of the email address."
 					}
 				},
 				"required": ["domain", "is_valid_syntax", "username"]
@@ -596,11 +596,11 @@
 					"id": "a872ead6474cd"
 				},
 				"type": "object",
-				"description": "Object describing an error happening during the misc, MX, or SMTP verifications.",
+				"description": "Details of an error encountered during the verification process.",
 				"properties": {
 					"type": {
 						"type": "string",
-						"description": "An error type."
+						"description": "The type of error."
 					},
 					"message": {
 						"type": "string",
@@ -613,7 +613,7 @@
 				"type": "string",
 				"title": "YahooVerifMethod",
 				"enum": ["Api", "Headless", "Smtp"],
-				"description": "An enum to describe how we verify Yahoo emails."
+				"description": "Enumeration describing the method used to verify Yahoo emails."
 			},
 			"HotmailVerifMethod": {
 				"type": "string",
@@ -622,7 +622,7 @@
 				},
 				"title": "HotmailVerifMethod",
 				"enum": ["Api", "Headless", "Smtp"],
-				"description": "An enum to describe how we verify Hotmail emails."
+				"description": "Enumeration describing the method used to verify Hotmail emails."
 			},
 			"GmailVerifMethod": {
 				"type": "string",
@@ -631,7 +631,7 @@
 				},
 				"title": "GmailVerifMethod",
 				"enum": ["Api", "Smtp"],
-				"description": "An enum to describe how we verify Gmail emails.",
+				"description": "Enumeration describing the method used to verify Gmail emails.",
 				"x-internal": false
 			},
 			"CheckEmailInputProxy": {
@@ -648,23 +648,23 @@
 				"properties": {
 					"host": {
 						"type": "string",
-						"description": "The proxy host."
+						"description": "The proxy host address."
 					},
 					"port": {
 						"type": "integer",
-						"description": "The proxy port."
+						"description": "The proxy port number."
 					},
 					"username": {
 						"type": "string",
-						"description": "Username to pass to proxy authentication."
+						"description": "Username for proxy authentication."
 					},
 					"password": {
 						"type": "string",
-						"description": "Password to pass to proxy authentication."
+						"description": "Password for proxy authentication."
 					}
 				},
 				"required": ["host", "port"],
-				"description": "Proxy information for email verification."
+				"description": "Proxy configuration for email verification."
 			},
 			"DebugDetails": {
 				"title": "DebugDetails",
@@ -678,14 +678,14 @@
 						"x-stoplight": {
 							"id": "60i65k60m8e8d"
 						},
-						"description": "The time when the email verification started."
+						"description": "The timestamp when the email verification started."
 					},
 					"end_time": {
 						"type": "string",
 						"x-stoplight": {
 							"id": "zw4ccbvwsoh6q"
 						},
-						"description": "The time when the email verification ended."
+						"description": "The timestamp when the email verification ended."
 					},
 					"duration": {
 						"$ref": "#/components/schemas/Duration"
@@ -695,7 +695,7 @@
 						"x-stoplight": {
 							"id": "2jrbdecvqh4t5"
 						},
-						"description": "The name of the server that performed the email verification."
+						"description": "The name of the server that performed the verification."
 					},
 					"smtp": {
 						"$ref": "#/components/schemas/DebugDetailsSmtp"
@@ -715,15 +715,15 @@
 					"id": "bg9y0iez4zati"
 				},
 				"type": "object",
-				"description": "An object representing a duration (seconds + nanoseconds).",
+				"description": "An object representing a duration in seconds and nanoseconds.",
 				"properties": {
 					"secs": {
 						"type": "number",
-						"description": "Seconds"
+						"description": "Duration in seconds."
 					},
 					"nanos": {
 						"type": "number",
-						"description": "Nanoseconds"
+						"description": "Duration in nanoseconds."
 					}
 				},
 				"required": ["secs", "nanos"]
@@ -739,7 +739,7 @@
 						"$ref": "#/components/schemas/VerifMethod"
 					}
 				},
-				"description": "Smtp details used for debugging, such as which method is used."
+				"description": "SMTP details used for debugging, including the verification method."
 			},
 			"VerifMethod": {
 				"title": "VerifMethod",
@@ -747,7 +747,7 @@
 					"id": "9xw9e1jwti230"
 				},
 				"type": "object",
-				"description": "The verification method used for the email.",
+				"description": "The method used for email verification.",
 				"required": ["type"],
 				"properties": {
 					"type": {
@@ -755,7 +755,7 @@
 							"id": "4ogsz639tcdb6"
 						},
 						"enum": ["Smtp", "Headless", "Api", "Skipped"],
-						"description": "The method used to perform the email verification"
+						"description": "The method used for the email verification."
 					}
 				}
 			},
@@ -765,7 +765,7 @@
 					"id": "6053d3ngu2hfn"
 				},
 				"type": "object",
-				"description": "Optional webhook configuration to send email verification results to for bulk email verification.",
+				"description": "Optional webhook configuration for sending email verification results during bulk verification.",
 				"properties": {
 					"on_each_email": {
 						"$ref": "#/components/schemas/Webhook"
@@ -778,7 +778,7 @@
 					"id": "p9emghvcb92fj"
 				},
 				"type": "object",
-				"description": "If a webhook is set, Reacher will send the email verification result to the specified webhook. The method will be POST, and the body will containt the email verification response.",
+				"description": "Configuration for a webhook to receive email verification results. The method will be POST, and the body will contain the email verification response.",
 				"required": ["url"],
 				"properties": {
 					"url": {
@@ -786,7 +786,7 @@
 						"x-stoplight": {
 							"id": "iraaa1ism4bzi"
 						},
-						"description": "The URL to send the email verification result to."
+						"description": "The URL to send the email verification results to."
 					},
 					"extra": {
 						"type": "object",
