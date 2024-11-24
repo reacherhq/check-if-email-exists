@@ -18,7 +18,6 @@
 //! functions, depending on whether the `bulk` feature is enabled or not.
 
 use check_if_email_exists::{setup_sentry, LOG_TARGET};
-use reacher_backend::create_db;
 #[cfg(feature = "worker")]
 use reacher_backend::worker::{run_worker, setup_rabbit_mq};
 use std::sync::Arc;
@@ -35,7 +34,7 @@ async fn main() -> Result<(), anyhow::Error> {
 	// Initialize logging.
 	tracing_subscriber::fmt::init();
 	info!(target: LOG_TARGET, version=?CARGO_PKG_VERSION, "Running Reacher");
-	let config = load_config()?;
+	let config = load_config().await?;
 
 	// Setup sentry bug tracking.
 	let _guard: sentry::ClientInitGuard;
@@ -50,15 +49,11 @@ async fn main() -> Result<(), anyhow::Error> {
 		let (check_channel, preprocess_channel) = setup_rabbit_mq(Arc::clone(&config)).await?;
 		let (check_channel, preprocess_channel) =
 			(Arc::new(check_channel), Arc::new(preprocess_channel));
-		let pg_pool = create_db(Arc::clone(&config)).await?;
-		let server_future = run_warp_server(
-			Arc::clone(&config),
-			Arc::clone(&preprocess_channel),
-			pg_pool.clone(),
-		);
+
+		let server_future = run_warp_server(Arc::clone(&config), Arc::clone(&preprocess_channel));
 		let worker_future = async {
 			if config.worker.enable {
-				run_worker(config, pg_pool, check_channel, preprocess_channel).await?;
+				run_worker(config, check_channel, preprocess_channel).await?;
 			}
 			Ok(())
 		};

@@ -35,6 +35,7 @@ services:
             RCH__BACKEND_NAME: worker1
             RUST_LOG: reacher=info
             RCH__HTTP_HOST: 0.0.0.0
+            RCH__WORKER__ENABLE: true
             RCH__WORKER__RABBITMQ__URL: amqp://guest:guest@rabbitmq:5672
             RCH__WORKER__POSTGRES__DB_URL: postgres://postgres:postgres@postgres:5432/reacher_db
         restart: always
@@ -51,6 +52,7 @@ services:
             RCH__BACKEND_NAME: worker2
             RUST_LOG: reacher=info
             RCH__HTTP_HOST: 0.0.0.0
+            RCH__WORKER__ENABLE: true
             RCH__WORKER__RABBITMQ__URL: amqp://guest:guest@rabbitmq:5672
             RCH__WORKER__POSTGRES__DB_URL: postgres://postgres:postgres@postgres:5432/reacher_db
         restart: always

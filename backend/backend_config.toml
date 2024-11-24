@@ -52,7 +52,7 @@ hotmailb2c = "headless"
 yahoo = "headless"
 
 [worker]
-enable = true
+enable = false
 
 # Fields below are only used if the worker is enabled.
 

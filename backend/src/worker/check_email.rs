@@ -24,7 +24,6 @@ use core::time;
 use lapin::message::Delivery;
 use lapin::{options::*, Channel};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use std::fmt::Debug;
 use std::sync::Arc;
 use thiserror::Error;
@@ -116,7 +115,6 @@ pub(crate) async fn do_check_email_work(
 	payload: &CheckEmailTask,
 	delivery: Delivery,
 	channel: Arc<Channel>,
-	pg_pool: PgPool,
 	config: Arc<BackendConfig>,
 ) -> Result<(), anyhow::Error> {
 	let worker_output = inner_check_email(payload, Arc::clone(&config)).await;
@@ -147,7 +145,13 @@ pub(crate) async fn do_check_email_work(
 			if payload.is_single_shot() {
 				send_single_shot_reply(channel, &delivery, &worker_output).await?;
 			} else {
-				save_to_db(&config.backend_name, pg_pool, payload, &worker_output).await?;
+				save_to_db(
+					&config.backend_name,
+					config.get_pg_pool().cloned(),
+					payload,
+					&worker_output,
+				)
+				.await?;
 			}
 
 			info!(target: LOG_TARGET,

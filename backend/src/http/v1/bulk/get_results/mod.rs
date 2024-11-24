@@ -20,11 +20,12 @@ use check_if_email_exists::LOG_TARGET;
 use csv::WriterBuilder;
 use serde::{Deserialize, Serialize};
 use sqlx::{Executor, PgPool, Row};
-use std::convert::TryInto;
 use std::iter::Iterator;
+use std::{convert::TryInto, sync::Arc};
 use warp::http::StatusCode;
 use warp::Filter;
 
+use crate::config::BackendConfig;
 use crate::http::{with_db, ReacherResponseError};
 use csv_helper::{CsvResponse, CsvWrapper};
 
@@ -175,11 +176,11 @@ async fn job_result_csv(
 }
 
 pub fn v1_get_bulk_job_results(
-	pg_pool: PgPool,
+	config: Arc<BackendConfig>,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v1" / "bulk" / i32 / "results")
 		.and(warp::get())
-		.and(with_db(pg_pool))
+		.and(with_db(config.get_pg_pool().cloned()))
 		.and(warp::query::<Request>())
 		.and_then(http_handler)
 		// View access logs by setting `RUST_LOG=reacher_backend`.

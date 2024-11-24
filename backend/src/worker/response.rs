@@ -36,10 +36,11 @@ use warp::http::StatusCode;
 /// Panics if the task is a single-shot task, i.e. if `payload.job_id` is `None`.
 pub async fn save_to_db(
 	backend_name: &str,
-	pg_pool: PgPool,
+	pg_pool: Option<PgPool>,
 	payload: &CheckEmailTask,
 	worker_output: &Result<CheckEmailOutput, TaskError>,
 ) -> Result<(), anyhow::Error> {
+	let pg_pool = pg_pool.ok_or_else(|| anyhow::anyhow!("No DB pool provided"))?;
 	let job_id = payload.job_id.unwrap();
 
 	let payload_json = serde_json::to_value(payload)?;

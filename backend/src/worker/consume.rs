@@ -22,7 +22,6 @@ use anyhow::Context;
 use check_if_email_exists::LOG_TARGET;
 use futures::stream::StreamExt;
 use lapin::{options::*, types::FieldTable, Channel, Connection, ConnectionProperties};
-use sqlx::PgPool;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::Mutex;
@@ -103,7 +102,6 @@ pub async fn setup_rabbit_mq(
 /// Start the worker to consume messages from the queue.
 pub async fn run_worker(
 	config: Arc<BackendConfig>,
-	pg_pool: PgPool,
 	check_channel: Arc<Channel>,
 	preprocess_channel: Arc<Channel>,
 ) -> Result<(), anyhow::Error> {
@@ -113,7 +111,7 @@ pub async fn run_worker(
 			Arc::clone(&check_channel),
 			preprocess_channel
 		),
-		consume_check_email(Arc::clone(&config), pg_pool, check_channel)
+		consume_check_email(Arc::clone(&config), check_channel)
 	)?;
 
 	Ok(())
@@ -157,17 +155,16 @@ async fn consume_preprocess(
 
 async fn consume_check_email(
 	config: Arc<BackendConfig>,
-	pg_pool: PgPool,
 	channel: Arc<Channel>,
 ) -> Result<(), anyhow::Error> {
-	let worker_config = config.must_worker_config();
+	let config_clone = config.clone();
+	let worker_config = config_clone.must_worker_config();
 
 	let throttle = Arc::new(Mutex::new(Throttle::new()));
 
 	for queue in &worker_config.rabbitmq.queues.into_queues() {
 		let channel_clone = Arc::clone(&channel);
 		let config_clone = Arc::clone(&config);
-		let pg_pool_clone = pg_pool.clone();
 		let throttle_clone = Arc::clone(&throttle);
 		let queue_clone = queue.clone();
 
@@ -227,18 +224,11 @@ async fn consume_check_email(
 
 				let config_clone2 = Arc::clone(&config_clone);
 				let channel_clone2 = Arc::clone(&channel_clone);
-				let pg_pool_clone2 = pg_pool_clone.clone();
 
 				info!(target: LOG_TARGET, email=payload.input.to_email, job_id=?payload.job_id, queue=?queue_clone.to_string(), "Starting task");
 				tokio::spawn(async move {
-					if let Err(e) = do_check_email_work(
-						&payload,
-						delivery,
-						channel_clone2,
-						pg_pool_clone2,
-						config_clone2,
-					)
-					.await
+					if let Err(e) =
+						do_check_email_work(&payload, delivery, channel_clone2, config_clone2).await
 					{
 						error!(target: LOG_TARGET, email=payload.input.to_email, error=?e, "Error processing message");
 					}

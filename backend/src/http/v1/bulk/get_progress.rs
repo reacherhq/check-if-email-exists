@@ -16,6 +16,8 @@
 
 //! This file implements the `GET /bulk/{id}` endpoint.
 
+use std::sync::Arc;
+
 use check_if_email_exists::LOG_TARGET;
 use serde::Serialize;
 use sqlx::types::chrono::{DateTime, Utc};
@@ -23,6 +25,7 @@ use sqlx::PgPool;
 use warp::http::StatusCode;
 use warp::Filter;
 
+use crate::config::BackendConfig;
 use crate::http::{with_db, ReacherResponseError};
 
 /// NOTE: Type conversions from postgres to rust types
@@ -142,11 +145,11 @@ async fn http_handler(job_id: i32, conn_pool: PgPool) -> Result<impl warp::Reply
 }
 
 pub fn v1_get_bulk_job_progress(
-	pg_pool: PgPool,
+	config: Arc<BackendConfig>,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v1" / "bulk" / i32)
 		.and(warp::get())
-		.and(with_db(pg_pool))
+		.and(with_db(config.get_pg_pool().cloned()))
 		.and_then(http_handler)
 		// View access logs by setting `RUST_LOG=reacher`.
 		.with(warp::log(LOG_TARGET))

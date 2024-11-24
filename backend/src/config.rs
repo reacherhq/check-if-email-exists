@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use crate::create_db;
 #[cfg(feature = "worker")]
 use crate::worker::check_email::TaskWebhook;
 use check_if_email_exists::config::ReacherConfig;
@@ -24,10 +25,14 @@ use check_if_email_exists::{
 use config::Config;
 use serde::de::{self, Deserializer, Visitor};
 use serde::Deserialize;
-use std::fmt;
+use sqlx::PgPool;
+use std::{env, fmt};
 
 #[derive(Debug, Deserialize)]
 pub struct BackendConfig {
+	#[serde(skip)]
+	pg_pool: Option<PgPool>,
+
 	/// Name of the backend.
 	pub backend_name: String,
 
@@ -89,6 +94,10 @@ impl BackendConfig {
 				.clone()
 				.expect("worker.postgres is missing"),
 		}
+	}
+
+	pub fn get_pg_pool(&self) -> Option<&PgPool> {
+		self.pg_pool.as_ref()
 	}
 }
 
@@ -312,22 +321,32 @@ impl ThrottleConfig {
 
 /// Load the worker configuration from the worker_config.toml file and from the
 /// environment.
-pub fn load_config() -> Result<BackendConfig, anyhow::Error> {
+pub async fn load_config() -> Result<BackendConfig, anyhow::Error> {
 	let cfg = Config::builder()
 		.add_source(config::File::with_name("backend_config"))
 		.add_source(config::Environment::with_prefix("RCH").separator("__"))
 		.build()?;
 
-	let cfg = cfg.try_deserialize::<BackendConfig>()?;
+	let mut cfg = cfg.try_deserialize::<BackendConfig>()?;
+
+	let pg_pool = if cfg.worker.enable {
+		Some(create_db(&cfg.must_worker_config().postgres.db_url).await?)
+	} else if let Ok(db_url) = env::var("DATABASE_URL") {
+		// For legacy reasons, we also support the DATABASE_URL environment variable:
+		Some(create_db(&db_url).await?)
+	} else {
+		None
+	};
+	cfg.pg_pool = pg_pool;
 
 	Ok(cfg)
 }
 
 #[cfg(test)]
 mod test {
-	#[test]
-	fn test_load_config() {
-		let cfg = super::load_config();
+	#[tokio::test]
+	async fn test_load_config() {
+		let cfg = super::load_config().await;
 		assert!(cfg.is_ok());
 	}
 }

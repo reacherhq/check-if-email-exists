@@ -160,14 +160,13 @@ pub async fn publish_task(
 pub fn v1_create_bulk_job(
 	config: Arc<BackendConfig>,
 	channel: Arc<Channel>,
-	pg_pool: PgPool,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v1" / "bulk")
 		.and(warp::post())
 		.and(check_header(Arc::clone(&config)))
-		.and(with_config(config))
+		.and(with_config(Arc::clone(&config)))
 		.and(with_channel(channel))
-		.and(with_db(pg_pool))
+		.and(with_db(config.get_pg_pool().cloned()))
 		// When accepting a body, we want a JSON body (and to reject huge
 		// payloads)...
 		// TODO: Configure max size limit for a bulk job
