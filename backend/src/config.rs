@@ -221,7 +221,7 @@ impl<'de> Deserialize<'de> for RabbitMQQueues {
 }
 
 impl RabbitMQQueues {
-	pub fn into_queues(self) -> Vec<Queue> {
+	pub fn to_queues(&self) -> Vec<Queue> {
 		match self {
 			RabbitMQQueues::All => vec![
 				Queue::Gmail,
@@ -362,7 +362,15 @@ pub async fn load_config() -> Result<BackendConfig, anyhow::Error> {
 	let mut cfg = cfg.try_deserialize::<BackendConfig>()?;
 
 	let pg_pool = if cfg.worker.enable {
-		Some(create_db(&cfg.must_worker_config()?.postgres.db_url).await?)
+		let db_url = cfg
+			.worker
+			.postgres
+			.as_ref()
+			.map(|c| &c.db_url)
+			.ok_or_else(|| {
+				anyhow::anyhow!("Worker configuration is missing the postgres configuration")
+			})?;
+		Some(create_db(db_url).await?)
 	} else if let Ok(db_url) = env::var("DATABASE_URL") {
 		// For legacy reasons, we also support the DATABASE_URL environment variable:
 		Some(create_db(&db_url).await?)
@@ -372,7 +380,11 @@ pub async fn load_config() -> Result<BackendConfig, anyhow::Error> {
 	cfg.pg_pool = pg_pool;
 
 	let (check_email_channel, preprocess_channel) = if cfg.worker.enable {
-		let (check_email_channel, preprocess_channel) = setup_rabbit_mq(&cfg).await?;
+		let rabbitmq_config = cfg.worker.rabbitmq.as_ref().ok_or_else(|| {
+			anyhow::anyhow!("Worker configuration is missing the rabbitmq configuration")
+		})?;
+		let (check_email_channel, preprocess_channel) =
+			setup_rabbit_mq(&cfg.backend_name, rabbitmq_config).await?;
 		(
 			Some(Arc::new(check_email_channel)),
 			Some(Arc::new(preprocess_channel)),

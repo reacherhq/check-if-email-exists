@@ -17,7 +17,7 @@
 use super::check_email::{do_check_email_work, CheckEmailTask, TaskError};
 use super::preprocess::{do_preprocess_work, PreprocessTask};
 use super::response::send_single_shot_reply;
-use crate::config::{BackendConfig, RabbitMQQueues, ThrottleConfig};
+use crate::config::{BackendConfig, RabbitMQConfig, RabbitMQQueues, ThrottleConfig};
 use anyhow::Context;
 use check_if_email_exists::LOG_TARGET;
 use futures::stream::StreamExt;
@@ -38,27 +38,29 @@ pub const MAX_QUEUE_PRIORITY: u8 = 5;
 /// global prefetch limit set to the concurrency limit.
 ///
 /// Returns a tuple of (check_channel, preprocess_channel).
-pub async fn setup_rabbit_mq(config: &BackendConfig) -> Result<(Channel, Channel), anyhow::Error> {
+pub async fn setup_rabbit_mq(
+	backend_name: &str,
+	config: &RabbitMQConfig,
+) -> Result<(Channel, Channel), anyhow::Error> {
 	let options = ConnectionProperties::default()
 		// Use tokio executor and reactor.
 		.with_executor(tokio_executor_trait::Tokio::current())
 		.with_reactor(tokio_reactor_trait::Tokio)
-		.with_connection_name(config.backend_name.clone().into());
+		.with_connection_name(backend_name.into());
 
-	let worker_config = config.must_worker_config()?;
-	let conn = Connection::connect(&worker_config.rabbitmq.url, options)
+	let conn = Connection::connect(&config.url, options)
 		.await
-		.with_context(|| format!("Connecting to rabbitmq {}", &worker_config.rabbitmq.url))?;
+		.with_context(|| format!("Connecting to rabbitmq {}", &config.url))?;
 	let check_channel = conn.create_channel().await?;
 	let preprocess_channel = conn.create_channel().await?;
 
-	info!(target: LOG_TARGET, backend=?config.backend_name,state=?conn.status().state(), "Connected to AMQP broker");
+	info!(target: LOG_TARGET, backend=?backend_name,state=?conn.status().state(), "Connected to AMQP broker");
 
 	let mut queue_args = FieldTable::default();
 	queue_args.insert("x-max-priority".into(), MAX_QUEUE_PRIORITY.into());
 
 	// Assert all queues are declared.
-	for queue in RabbitMQQueues::All.into_queues().iter() {
+	for queue in RabbitMQQueues::All.to_queues().iter() {
 		check_channel
 			.queue_declare(
 				format!("{}", queue).as_str(),
@@ -74,7 +76,7 @@ pub async fn setup_rabbit_mq(config: &BackendConfig) -> Result<(Channel, Channel
 	// Set up prefetch (concurrency) limit using qos
 	check_channel
 		.basic_qos(
-			worker_config.rabbitmq.concurrency,
+			config.concurrency,
 			// Set global to true to apply to all consumers.
 			// ref: https://www.rabbitmq.com/docs/consumer-prefetch#independent-consumers
 			BasicQosOptions { global: true },
@@ -92,7 +94,7 @@ pub async fn setup_rabbit_mq(config: &BackendConfig) -> Result<(Channel, Channel
 		)
 		.await?;
 
-	info!(target: LOG_TARGET, queues=?worker_config.rabbitmq.queues.into_queues(), concurrency=?worker_config.rabbitmq.concurrency, "Worker will start consuming messages");
+	info!(target: LOG_TARGET, queues=?config.queues.to_queues(), concurrency=?config.concurrency, "Worker will start consuming messages");
 
 	Ok((check_channel, preprocess_channel))
 }
@@ -149,7 +151,7 @@ async fn consume_check_email(config: Arc<BackendConfig>) -> Result<(), anyhow::E
 
 	let throttle = Arc::new(Mutex::new(Throttle::new()));
 
-	for queue in &worker_config.rabbitmq.queues.into_queues() {
+	for queue in worker_config.rabbitmq.queues.to_queues() {
 		let channel_clone = Arc::clone(&channel);
 		let config_clone = Arc::clone(&config);
 		let throttle_clone = Arc::clone(&throttle);
