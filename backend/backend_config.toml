@@ -1,35 +1,34 @@
 # Backend configuration
 
-# Backend name to identify the backend.
+# Name to identify the backend.
 backend_name = "backend-dev"
 
-# Backend host to bind to.
+# Host to bind the backend to.
 http_host = "127.0.0.1"
 
-# Backend port.
+# Port for the backend.
 http_port = 8080
 
-# Shared secret between a trusted client and the backend, that must be present
-# in the `x-reacher-secret` header of all incoming requests.
+# Shared secret between a trusted client and the backend, required in the
+# `x-reacher-secret` header of all incoming requests.
 # header_secret = "my-secret"
 
-# The name to use during the EHLO/HELO command in the SMTP conversation.
-# Ideally, this should match the reverse DNS of the IP address of the server.
+# Name to use during the EHLO/HELO command in the SMTP conversation.
+# Ideally, this should match the reverse DNS of the server's IP address.
 hello_name = "reacher"
 
-# The email to use during the MAIL FROM command in the SMTP conversation.
+# Email to use during the MAIL FROM command in the SMTP conversation.
 # Ideally, the domain of this email should match the "hello_name" above.
 from_email = "reacher@gmail.com"
 
-# The address of the Chrome WebDriver server to use for making headless email
-# verifications.
+# Address of the Chrome WebDriver server for headless email verifications.
 webdriver_addr = "http://localhost:9515"
 
-# Uncomment the following lines to route all SMTP verification requests to the
-# specified proxy. Note that the proxy must be a SOCKS5 proxy to work with the
-# SMTP protocol. This proxy will not be used for headless verifications.
+# Uncomment the following lines to route all SMTP verification requests through
+# a specified proxy. Note that the proxy must be a SOCKS5 proxy to work with
+# the SMTP protocol. This proxy will not be used for headless verifications.
 #
-# The username and password are optional, and only needed if the proxy requires
+# The username and password are optional and only needed if the proxy requires
 # authentication.
 # [proxy]
 # host = "my.proxy.com"
@@ -37,19 +36,19 @@ webdriver_addr = "http://localhost:9515"
 # username = "my-username"
 # password = "my-password"
 
-# The verification method to use for each email provider. The available methods
-# are: "smtp", "headless" and "api". However, not all methods are supported by
+# Verification method to use for each email provider. Available methods are:
+# "smtp", "headless", and "api". Note that not all methods are supported by
 # all email providers.
 [verif_method]
 # Gmail currently only supports the "smtp" method.
 gmail = "smtp"
 # Hotmail B2B currently only supports the "smtp" method.
 hotmailb2b = "smtp"
-# Hotmail B2C currently supports the "headless" and "smtp" methods. The
-# "headless" method is recommended.
-hotmailb2c = "headless"
-# Yahoo currently supports the "headless" and "smtp" methods. The "headless"
+# Hotmail B2C supports both "headless" and "smtp" methods. The "headless"
 # method is recommended.
+hotmailb2c = "headless"
+# Yahoo supports both "headless" and "smtp" methods. The "headless" method is
+# recommended.
 yahoo = "headless"
 
 [worker]
@@ -57,11 +56,11 @@ enable = true
 
 # Fields below are only used if the worker is enabled.
 
-# Throttle the maximum number of requests per second, per minute, per hour, an
+# Throttle the maximum number of requests per second, per minute, per hour, and
 # per day for this worker.
-# All fields are optional, comment them out to disable the limit.
+# All fields are optional; comment them out to disable the limit.
 #
-# Important: these throttle configurations only apply to bulk verification, and
+# Important: these throttle configurations only apply to bulk verification and
 # not to the single /v0/check_email endpoint. The latter endpoint always
 # executes the verification immediately, regardless of the throttle settings.
 [worker.throttle]
@@ -74,33 +73,32 @@ enable = true
 [worker.rabbitmq]
 url = "amqp://guest:guest@localhost:5672"
 
-# Queues to consume emails from. By default the worker consumes from all
+# Queues to consume emails from. By default, the worker consumes from all
 # queues.
 #
-# If you wish to consume from only a subset of queues, you can uncomment
-# the line `queues = "all"`, and then specify the queues you want to
-# consume from.
+# To consume from only a subset of queues, uncomment the line `queues = "all"`
+# and specify the queues you want to consume from.
 #
 # Below is the exhaustive list of queue names that the worker can consume from:
-# - "check.gmail": subcribe exclusively to Gmail emails.
-# - "check.hotmailb2b": subcribe exclusively to Hotmail B2B emails.
-# - "check.hotmailb2c": subcribe exclusively to Hotmail B2C emails.
-# - "check.yahoo": subcribe exclusively to Yahoo emails.
-# - "check.everything_else": subcribe to all emails that are not Gmail, Yahoo, or Hotmail.
+# - "check.gmail": subscribe exclusively to Gmail emails.
+# - "check.hotmailb2b": subscribe exclusively to Hotmail B2B emails.
+# - "check.hotmailb2c": subscribe exclusively to Hotmail B2C emails.
+# - "check.yahoo": subscribe exclusively to Yahoo emails.
+# - "check.everything_else": subscribe to all emails that are not Gmail, Yahoo, or Hotmail.
 #
 # queues = ["check.gmail", "check.hotmail.b2b", "check.hotmail.b2c", "check.yahoo", "check.everything_else"]
 queues = "all"
 
-# Number of concurrent emails to verify for this worker, across all queues.
+# Number of concurrent emails to verify for this worker across all queues.
 concurrency = 20
 
-# Postgres configuration. Currently, we require a Postgres database to store
-# the results of the verifications. This might change in the future, where the
-# storage can be pluggable.
+# Postgres configuration. Currently, a Postgres database is required to store
+# the results of the verifications. This might change in the future, allowing
+# for pluggable storage.
 [worker.postgres]
 db_url = "postgresql://localhost/reacherdb"
 
-# The optional webhook URL to send the results to. This will one POST request
+# Optional webhook URL to send the results to. This will send one POST request
 # per email verification, with the result in the body.
 # [worker.webhook.on_each_email]
 # url = "http://localhost:8080/webhook"
