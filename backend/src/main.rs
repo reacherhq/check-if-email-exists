@@ -61,8 +61,7 @@ async fn main() -> Result<(), anyhow::Error> {
 
 	#[cfg(not(feature = "worker"))]
 	{
-		let pg_pool = create_db(Arc::clone(&config)).await?;
-		run_warp_server(config, pg_pool).await?;
+		run_warp_server(config).await?;
 	}
 
 	Ok(())

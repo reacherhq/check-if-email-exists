@@ -89,10 +89,7 @@ pub async fn run_warp_server(
 		})
 		.unwrap_or(config.http_port);
 
-	#[cfg(feature = "worker")]
 	let routes = create_routes(Arc::clone(&config));
-	#[cfg(not(feature = "worker"))]
-	let routes = create_routes(Arc::clone(&config), pg_pool.clone());
 
 	// Run v0 bulk job listener.
 	let is_bulk_enabled = env::var("RCH_ENABLE_BULK").unwrap_or_else(|_| "0".into()) == "1";

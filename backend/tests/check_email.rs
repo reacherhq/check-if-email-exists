@@ -27,19 +27,9 @@ mod tests {
 	const FOO_BAR_BAZ_RESPONSE: &str = r#"{"input":"foo@bar.baz","is_reachable":"invalid","misc":{"is_disposable":false,"is_role_account":false,"gravatar_url":null,"haveibeenpwned":null},"mx":{"accepts_mail":false,"records":[]},"smtp":{"can_connect_smtp":false,"has_full_inbox":false,"is_catch_all":false,"is_deliverable":false,"is_disabled":false},"syntax":{"address":"foo@bar.baz","domain":"bar.baz","is_valid_syntax":true,"username":"foo","normalized_email":"foo@bar.baz","suggestion":null}"#;
 
 	fn create_backend_config(header_secret: &str) -> Arc<BackendConfig> {
-		Arc::new(BackendConfig {
-			backend_name: "reacher-test".into(),
-			from_email: "test".into(),
-			hello_name: "test".into(),
-			webdriver_addr: "localhost:9515".into(),
-			http_host: "localhost".into(),
-			http_port: 8080,
-			header_secret: Some(header_secret.to_string()),
-			verif_method: Default::default(),
-			proxy: None,
-			worker: Default::default(),
-			sentry: None,
-		})
+		let mut config = BackendConfig::default();
+		config.header_secret = Some(header_secret.to_string());
+		Arc::new(config)
 	}
 
 	#[tokio::test]
@@ -49,7 +39,7 @@ mod tests {
 			.method("POST")
 			.header(REACHER_SECRET_HEADER, "foobar")
 			.json(&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar"}"#).unwrap())
-			.reply(&create_routes(create_backend_config("foobar"), None))
+			.reply(&create_routes(create_backend_config("foobar")))
 			.await;
 
 		assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
@@ -66,7 +56,7 @@ mod tests {
 				&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar.baz"}"#)
 					.unwrap(),
 			)
-			.reply(&create_routes(create_backend_config("foobar"), None))
+			.reply(&create_routes(create_backend_config("foobar")))
 			.await;
 
 		assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
@@ -82,7 +72,7 @@ mod tests {
 				&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar.baz"}"#)
 					.unwrap(),
 			)
-			.reply(&create_routes(create_backend_config("foobar"), None))
+			.reply(&create_routes(create_backend_config("foobar")))
 			.await;
 
 		assert_eq!(resp.status(), StatusCode::BAD_REQUEST, "{:?}", resp.body());
@@ -99,7 +89,7 @@ mod tests {
 				&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar.baz"}"#)
 					.unwrap(),
 			)
-			.reply(&create_routes(create_backend_config("foobar"), None))
+			.reply(&create_routes(create_backend_config("foobar")))
 			.await;
 
 		assert_eq!(resp.status(), StatusCode::BAD_REQUEST, "{:?}", resp.body());
@@ -113,7 +103,7 @@ mod tests {
 			.method("POST")
 			.header(REACHER_SECRET_HEADER, "foobar")
 			.json(&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar"}"#).unwrap())
-			.reply(&create_routes(create_backend_config("foobar"), None))
+			.reply(&create_routes(create_backend_config("foobar")))
 			.await;
 
 		assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
@@ -127,7 +117,7 @@ mod tests {
 			.method("POST")
 			.header(REACHER_SECRET_HEADER, "foobar")
 			.json(&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": ""}"#).unwrap())
-			.reply(&create_routes(create_backend_config("foobar"), None))
+			.reply(&create_routes(create_backend_config("foobar")))
 			.await;
 
 		assert_eq!(resp.status(), StatusCode::BAD_REQUEST, "{:?}", resp.body());

@@ -17,6 +17,7 @@
 use crate::create_db;
 #[cfg(feature = "worker")]
 use crate::worker::check_email::TaskWebhook;
+#[cfg(feature = "worker")]
 use crate::worker::setup_rabbit_mq;
 use anyhow::bail;
 use check_if_email_exists::config::ReacherConfig;
@@ -25,22 +26,17 @@ use check_if_email_exists::{
 	SentryConfig, YahooVerifMethod,
 };
 use config::Config;
+#[cfg(feature = "worker")]
 use lapin::Channel;
 use serde::de::{self, Deserializer, Visitor};
 use serde::Deserialize;
 use sqlx::PgPool;
+#[cfg(feature = "worker")]
 use std::sync::Arc;
 use std::{env, fmt};
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 pub struct BackendConfig {
-	#[serde(skip)]
-	pg_pool: Option<PgPool>,
-	#[serde(skip)]
-	check_email_channel: Option<Arc<Channel>>,
-	#[serde(skip)]
-	preprocess_channel: Option<Arc<Channel>>,
-
 	/// Name of the backend.
 	pub backend_name: String,
 
@@ -66,6 +62,16 @@ pub struct BackendConfig {
 
 	/// Sentry configuration to report errors.
 	pub sentry: Option<SentryConfig>,
+
+	// Internal fields, not part of the configuration.
+	#[serde(skip)]
+	pg_pool: Option<PgPool>,
+	#[cfg(feature = "worker")]
+	#[serde(skip)]
+	check_email_channel: Option<Arc<Channel>>,
+	#[cfg(feature = "worker")]
+	#[serde(skip)]
+	preprocess_channel: Option<Arc<Channel>>,
 }
 
 impl BackendConfig {
@@ -89,9 +95,12 @@ impl BackendConfig {
 			&self.worker.rabbitmq,
 			&self.worker.postgres,
 			&self.pg_pool,
+			#[cfg(feature = "worker")]
 			&self.check_email_channel,
+			#[cfg(feature = "worker")]
 			&self.preprocess_channel,
 		) {
+			#[cfg(feature = "worker")]
 			(
 				true,
 				Some(throttle),
@@ -102,7 +111,9 @@ impl BackendConfig {
 				Some(preprocess_channel),
 			) => Ok(MustWorkerConfig {
 				pg_pool: pg_pool.clone(),
+				#[cfg(feature = "worker")]
 				check_email_channel: check_email_channel.clone(),
+				#[cfg(feature = "worker")]
 				preprocess_channel: preprocess_channel.clone(),
 				throttle: throttle.clone(),
 				rabbitmq: rabbitmq.clone(),
@@ -110,6 +121,7 @@ impl BackendConfig {
 				webhook: self.worker.webhook.clone(),
 				postgres: postgres.clone(),
 			}),
+			#[cfg(feature = "worker")]
 			(true, _, _, _, _, _, _) => bail!("Worker configuration is missing"),
 			_ => bail!("Calling must_worker_config on a non-worker backend"),
 		}
@@ -119,10 +131,12 @@ impl BackendConfig {
 		self.pg_pool.clone()
 	}
 
+	#[cfg(feature = "worker")]
 	pub fn get_check_email_channel(&self) -> Option<Arc<Channel>> {
 		self.check_email_channel.clone()
 	}
 
+	#[cfg(feature = "worker")]
 	pub fn get_preprocess_channel(&self) -> Option<Arc<Channel>> {
 		self.preprocess_channel.clone()
 	}
@@ -160,7 +174,9 @@ pub struct WorkerConfig {
 #[derive(Debug, Clone)]
 pub struct MustWorkerConfig {
 	pub pg_pool: PgPool,
+	#[cfg(feature = "worker")]
 	pub check_email_channel: Arc<Channel>,
+	#[cfg(feature = "worker")]
 	pub preprocess_channel: Arc<Channel>,
 
 	pub throttle: ThrottleConfig,
@@ -379,21 +395,24 @@ pub async fn load_config() -> Result<BackendConfig, anyhow::Error> {
 	};
 	cfg.pg_pool = pg_pool;
 
-	let (check_email_channel, preprocess_channel) = if cfg.worker.enable {
-		let rabbitmq_config = cfg.worker.rabbitmq.as_ref().ok_or_else(|| {
-			anyhow::anyhow!("Worker configuration is missing the rabbitmq configuration")
-		})?;
-		let (check_email_channel, preprocess_channel) =
-			setup_rabbit_mq(&cfg.backend_name, rabbitmq_config).await?;
-		(
-			Some(Arc::new(check_email_channel)),
-			Some(Arc::new(preprocess_channel)),
-		)
-	} else {
-		(None, None)
-	};
-	cfg.check_email_channel = check_email_channel;
-	cfg.preprocess_channel = preprocess_channel;
+	#[cfg(feature = "worker")]
+	{
+		let (check_email_channel, preprocess_channel) = if cfg.worker.enable {
+			let rabbitmq_config = cfg.worker.rabbitmq.as_ref().ok_or_else(|| {
+				anyhow::anyhow!("Worker configuration is missing the rabbitmq configuration")
+			})?;
+			let (check_email_channel, preprocess_channel) =
+				setup_rabbit_mq(&cfg.backend_name, rabbitmq_config).await?;
+			(
+				Some(Arc::new(check_email_channel)),
+				Some(Arc::new(preprocess_channel)),
+			)
+		} else {
+			(None, None)
+		};
+		cfg.check_email_channel = check_email_channel;
+		cfg.preprocess_channel = preprocess_channel;
+	}
 
 	Ok(cfg)
 }
