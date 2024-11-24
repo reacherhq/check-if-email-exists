@@ -17,7 +17,10 @@
 #[cfg(feature = "worker")]
 use crate::worker::check_email::TaskWebhook;
 use check_if_email_exists::config::ReacherConfig;
-use check_if_email_exists::{CheckEmailInputProxy, SentryConfig};
+use check_if_email_exists::{
+	CheckEmailInputProxy, GmailVerifMethod, HotmailB2BVerifMethod, HotmailB2CVerifMethod,
+	SentryConfig, YahooVerifMethod,
+};
 use config::Config;
 use serde::de::{self, Deserializer, Visitor};
 use serde::Deserialize;
@@ -33,6 +36,9 @@ pub struct BackendConfig {
 	pub hello_name: String,
 	pub webdriver_addr: String,
 	pub proxy: Option<CheckEmailInputProxy>,
+
+	/// Verification method configuration.
+	pub verif_method: VerifMethodConfig,
 
 	/** Backend-specific config*/
 	/// Backend host
@@ -86,7 +92,19 @@ impl BackendConfig {
 	}
 }
 
-#[derive(Debug, Default, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone)]
+pub struct VerifMethodConfig {
+	/// Verification method for Gmail emails.
+	pub gmail: GmailVerifMethod,
+	/// Verification method for Hotmail B2B emails.
+	pub hotmailb2b: HotmailB2BVerifMethod,
+	/// Verification method for Hotmail B2C emails.
+	pub hotmailb2c: HotmailB2CVerifMethod,
+	/// Verification method for Yahoo emails.
+	pub yahoo: YahooVerifMethod,
+}
+
+#[derive(Debug, Deserialize, Clone)]
 pub struct WorkerConfig {
 	pub enable: bool,
 

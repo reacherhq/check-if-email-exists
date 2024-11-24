@@ -49,7 +49,7 @@ impl From<ReqwestError> for GmailError {
 
 /// Use HTTP request to verify if a Gmail email address exists.
 /// See: <https://blog.0day.rocks/abusing-gmail-to-get-previously-unlisted-e-mail-addresses-41544b62b2>
-pub async fn check_gmail(
+pub async fn check_gmail_via_api(
 	to_email: &EmailAddress,
 	input: &CheckEmailInput,
 ) -> Result<SmtpDetails, GmailError> {
@@ -98,7 +98,7 @@ mod tests {
 			.build()
 			.unwrap();
 
-		let smtp_details = check_gmail(&to_email, &input).await;
+		let smtp_details = check_gmail_via_api(&to_email, &input).await;
 
 		assert!(smtp_details.is_ok());
 		assert!(smtp_details.unwrap().is_deliverable);

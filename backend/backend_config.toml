@@ -37,6 +37,21 @@ webdriver_addr = "http://localhost:9515"
 # username = "my-username"
 # password = "my-password"
 
+# The verification method to use for each email provider. The available methods
+# are: "smtp", "headless" and "api". However, not all methods are supported by
+# all email providers.
+[verif_method]
+# Gmail currently only supports the "smtp" method.
+gmail = "smtp"
+# Hotmail B2B currently only supports the "smtp" method.
+hotmailb2b = "smtp"
+# Hotmail B2C currently supports the "headless" and "smtp" methods. The
+# "headless" method is recommended.
+hotmailb2c = "headless"
+# Yahoo currently supports the "headless" and "smtp" methods. The "headless"
+# method is recommended.
+yahoo = "headless"
+
 [worker]
 enable = true
 

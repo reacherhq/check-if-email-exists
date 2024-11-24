@@ -39,6 +39,10 @@ impl CheckEmailRequest {
 			to_email: self.to_email.clone(),
 			from_email: self.from_email.clone().unwrap_or(config.from_email.clone()),
 			hello_name: self.hello_name.clone().unwrap_or(config.hello_name.clone()),
+			gmail_verif_method: config.verif_method.gmail,
+			hotmail_b2b_verif_method: config.verif_method.hotmailb2b,
+			hotmail_b2c_verif_method: config.verif_method.hotmailb2c,
+			yahoo_verif_method: config.verif_method.yahoo,
 			proxy: self
 				.proxy
 				.as_ref()

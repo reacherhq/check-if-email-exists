@@ -123,11 +123,16 @@ impl FromStr for GmailVerifMethod {
 	}
 }
 
-/// Select how to verify Hotmail emails.
+/// Select how to verify Hotmail B2B emails.
 #[derive(Debug, Clone, Copy, PartialEq, Deserialize, Serialize)]
-pub enum HotmailVerifMethod {
-	/// Use OneDrive API to check if an email exists.
-	OneDriveApi,
+pub enum HotmailB2BVerifMethod {
+	/// Use Hotmail's SMTP servers to check if an email exists.
+	Smtp,
+}
+
+/// Select how to verify Hotmail B2C emails.
+#[derive(Debug, Clone, Copy, PartialEq, Deserialize, Serialize)]
+pub enum HotmailB2CVerifMethod {
 	/// Use Hotmail's password recovery page to check if an email exists.
 	///
 	/// This assumes you have a WebDriver compatible process running, then pass
@@ -137,20 +142,6 @@ pub enum HotmailVerifMethod {
 	Headless,
 	/// Use Hotmail's SMTP servers to check if an email exists.
 	Smtp,
-}
-
-impl FromStr for HotmailVerifMethod {
-	type Err = String;
-
-	fn from_str(s: &str) -> Result<Self, Self::Err> {
-		match s {
-			"OneDriveApi" => Ok(Self::OneDriveApi),
-
-			"Headless" => Ok(Self::Headless),
-			"Smtp" => Ok(Self::Smtp),
-			_ => Err(format!("Unknown hotmail verify method: {}", s)),
-		}
-	}
 }
 
 /// Builder pattern for the input argument into the main `email_exists`
@@ -193,7 +184,11 @@ pub struct CheckEmailInput {
 	/// Select how to verify Hotmail/Outlook/Microsoft email addresses.
 	///
 	/// Defaults to Headless.
-	pub hotmail_verif_method: HotmailVerifMethod,
+	pub hotmail_b2b_verif_method: HotmailB2BVerifMethod,
+	/// Select how to verify Hotmail/Outlook/Microsoft email addresses.
+	///
+	/// Defaults to Headless.
+	pub hotmail_b2c_verif_method: HotmailB2CVerifMethod,
 	/// Whether to check if a gravatar image is existing for the given email.
 	/// Adds a bit of latency to the verification process.
 	///
@@ -225,7 +220,8 @@ impl Default for CheckEmailInput {
 			smtp_timeout: Some(Duration::from_secs(30)),
 			yahoo_verif_method: YahooVerifMethod::Headless,
 			gmail_verif_method: GmailVerifMethod::Smtp,
-			hotmail_verif_method: HotmailVerifMethod::Headless,
+			hotmail_b2b_verif_method: HotmailB2BVerifMethod::Smtp,
+			hotmail_b2c_verif_method: HotmailB2CVerifMethod::Headless,
 			check_gravatar: false,
 			haveibeenpwned_api_key: None,
 			retries: 1,

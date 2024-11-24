@@ -69,12 +69,6 @@ impl From<HeadlessError> for SmtpError {
 	}
 }
 
-impl From<Microsoft365Error> for SmtpError {
-	fn from(e: Microsoft365Error) -> Self {
-		SmtpError::Microsoft365Error(e)
-	}
-}
-
 impl SmtpError {
 	/// Get a human-understandable description of the error, in form of an enum
 	/// SmtpErrorDesc. This only parses the following known errors:
