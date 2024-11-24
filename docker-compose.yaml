@@ -21,8 +21,6 @@ services:
             POSTGRES_USER: postgres
             POSTGRES_PASSWORD: postgres
             POSTGRES_DB: reacher_db
-        volumes:
-            - ./backend/postgres_data:/var/lib/postgresql/data
         restart: always
 
     worker1:
