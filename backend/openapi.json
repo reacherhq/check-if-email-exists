@@ -498,7 +498,7 @@
 				"type": "string",
 				"title": "Reachable",
 				"enum": ["invalid", "unknown", "safe", "risky"],
-				"description": "An enumeration describing the confidence level that the recipient address is valid: `safe`, `risky`, `invalid`, or `unknown`. Refer to our FAQ for detailed definitions: https://help.reacher.email/email-attributes-inside-json."
+				"description": "An enumeration describing the confidence level that the recipient address is valid: `safe`, `risky`, `invalid`, or `unknown`. Refer to our FAQ for detailed definitions: https://docs.reacher.email/getting-started/is-reachable."
 			},
 			"MiscDetails": {
 				"title": "MiscDetails",

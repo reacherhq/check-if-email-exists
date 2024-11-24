@@ -23,22 +23,17 @@ use crate::{
 use async_smtp::EmailAddress;
 use reqwest::Error as ReqwestError;
 use serde::Serialize;
-use std::fmt;
+use thiserror::Error;
 
 const GLXU_PAGE: &str = "https://mail.google.com/mail/gxlu";
 
 /// Possible errors when checking Gmail email addresses.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Error, Serialize)]
 pub enum GmailError {
 	/// Error when serializing or deserializing HTTP requests and responses.
 	#[serde(serialize_with = "ser_with_display")]
+	#[error("Error serializing or deserializing HTTP requests and responses: {0}")]
 	ReqwestError(ReqwestError),
-}
-
-impl fmt::Display for GmailError {
-	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		write!(f, "{self:?}")
-	}
 }
 
 impl From<ReqwestError> for GmailError {

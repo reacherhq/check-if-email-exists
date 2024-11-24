@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::io;
-
 use crate::syntax::SyntaxDetails;
 use crate::util::ser_with_display::ser_with_display;
 use hickory_resolver::error::{ResolveError, ResolveErrorKind};
@@ -23,6 +21,8 @@ use hickory_resolver::lookup::MxLookup;
 use hickory_resolver::system_conf::read_system_conf;
 use hickory_resolver::TokioAsyncResolver;
 use serde::{ser::SerializeMap, Serialize, Serializer};
+use std::io;
+use thiserror::Error;
 
 /// Details about the MX lookup.
 #[derive(Debug)]
@@ -69,27 +69,18 @@ impl Serialize for MxDetails {
 }
 
 /// Errors that can happen on MX lookups.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Error, Serialize)]
 #[serde(tag = "type", content = "message")]
 pub enum MxError {
 	/// Error with IO.
 	#[serde(serialize_with = "ser_with_display")]
+	#[error("IO error: {0}")]
 	IoError(io::Error),
 	/// Error while resolving MX lookups.
 	#[serde(serialize_with = "ser_with_display")]
+	#[error("Resolve error: {0}")]
 	ResolveError(Box<ResolveError>),
 }
-
-impl std::fmt::Display for MxError {
-	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		match self {
-			MxError::IoError(e) => write!(f, "IO error: {}", e),
-			MxError::ResolveError(e) => write!(f, "Resolve error: {}", e),
-		}
-	}
-}
-
-impl std::error::Error for MxError {}
 
 impl From<io::Error> for MxError {
 	fn from(e: io::Error) -> Self {
