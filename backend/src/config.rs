@@ -111,58 +111,115 @@ pub struct MustWorkerConfig {
 	pub postgres: PostgresConfig,
 }
 
+#[derive(Debug, Clone)]
+pub enum RabbitMQQueues {
+	All,
+	Only(Vec<Queue>),
+}
+
+/// Deserialize RabbitMQQueues from a string or a list of strings.
+/// If the value is "all", then we return RabbitMQQueues::All.
+/// If the value is a list of strings, then we return RabbitMQQueues::Only.
+impl<'de> Deserialize<'de> for RabbitMQQueues {
+	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+	where
+		D: Deserializer<'de>,
+	{
+		struct RabbitMQQueuesVisitor;
+
+		impl<'de> Visitor<'de> for RabbitMQQueuesVisitor {
+			type Value = RabbitMQQueues;
+
+			fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+				formatter.write_str("a string 'all' or a list of queue strings")
+			}
+
+			fn visit_str<E>(self, value: &str) -> Result<RabbitMQQueues, E>
+			where
+				E: de::Error,
+			{
+				if value == "all" {
+					Ok(RabbitMQQueues::All)
+				} else {
+					Err(de::Error::unknown_variant(value, &["all"]))
+				}
+			}
+
+			fn visit_seq<A>(self, mut seq: A) -> Result<RabbitMQQueues, A::Error>
+			where
+				A: serde::de::SeqAccess<'de>,
+			{
+				let mut queues = Vec::new();
+				while let Some(value) = seq.next_element()? {
+					queues.push(value);
+				}
+				Ok(RabbitMQQueues::Only(queues))
+			}
+		}
+
+		deserializer.deserialize_any(RabbitMQQueuesVisitor)
+	}
+}
+
+impl RabbitMQQueues {
+	pub fn into_queues(self) -> Vec<Queue> {
+		match self {
+			RabbitMQQueues::All => vec![
+				Queue::Gmail,
+				Queue::HotmailB2B,
+				Queue::HotmailB2C,
+				Queue::Yahoo,
+				Queue::EverythingElse,
+			],
+			RabbitMQQueues::Only(queues) => queues.clone(),
+		}
+	}
+}
+
 #[derive(Debug, Deserialize, Clone)]
 pub struct RabbitMQConfig {
 	pub url: String,
-	/// Queues to consume emails from.
+	/// Queues to consume emails from. By default the worker consumes from all
+	/// queues.
 	///
-	/// Queue names are in the format "check.<provider>.<verif_method>", where:
-	/// - <verif_method> is the verification method to use. It can be "smtp",
-	///   "headless", or "api". Note that _not_ all verification methods are
-	///   available for all providers. For example, currently the Headless method
-	///   is not available for Gmail. However, the Smtp method is available for
-	///   all providers.
-	/// - <provider> is the email provider to verify. It can be "gmail", "yahoo",
-	///   "hotmail", or "everything_else".
+	/// If you wish to consume from only a subset of queues, you can uncomment
+	/// the line `queues = "all"`, and then specify the queues you want to
+	/// consume from.
 	///
 	/// Below is the exhaustive list of queue names that the worker can consume from:
-	/// - "check.gmail.smtp": subcribe exclusively to Gmail emails.
-	/// - "check.hotmail.b2b.smtp": subcribe exclusively to Hotmail B2B emails.
-	/// - "check.hotmail.b2c.smtp": subcribe exclusively to Hotmail B2C emails where the verification method is explicity set to SMTP (default method is Headless).
-	/// - "check.hotmail.b2c.headless": subcribe exclusively to Hotmail B2C emails where the verification method is explicity set to Headless (default method is Headless).
-	/// - "check.yahoo.smtp": subcribe exclusively to Yahoo emails where the verification method is explicity set to SMTP (default method is Headless).
-	/// - "check.yahoo.headless": subcribe exclusively to Yahoo emails where the verification method is explicity set to Headless (default method is Headless).
-	/// - "check.everything_else.smtp": subcribe to all emails that are not Gmail, Yahoo, or Hotmail, the method used will be SMTP.
-	pub queues: Vec<Queue>,
+	/// - "check.gmail": subcribe exclusively to Gmail emails.
+	/// - "check.hotmailb2b": subcribe exclusively to Hotmail B2B emails.
+	/// - "check.hotmailb2c": subcribe exclusively to Hotmail B2C emails.
+	/// - "check.yahoo": subcribe exclusively to Yahoo emails.
+	/// - "check.everything_else": subcribe to all emails that are not Gmail, Yahoo, or Hotmail.
+	///
+	/// queues = ["check.gmail", "check.hotmailb2b", "check.hotmailb2c", "check.yahoo", "check.everything_else"]
+	pub queues: RabbitMQQueues,
 	/// Total number of concurrent messages that the worker can process, across
 	/// all queues.
 	pub concurrency: u16,
 }
 
 /// Queue names that the worker can consume from. Each email is routed to a
-/// one and only one queue, based on the email provider and the verification
-/// method. The worker can consume from multiple queues.
+/// one and only one queue, based on the email provider. A single worker can
+/// consume from multiple queues.
 #[derive(Debug, Clone)]
 pub enum Queue {
-	GmailSmtp,
-	HotmailB2BSmtp,
-	HotmailB2CSmtp,
-	HotmailB2CHeadless,
-	YahooSmtp,
-	YahooHeadless,
-	EverythingElseSmtp,
+	Gmail,
+	HotmailB2B,
+	HotmailB2C,
+	Yahoo,
+	EverythingElse,
 }
 
 impl fmt::Display for Queue {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		match self {
-			Queue::GmailSmtp => write!(f, "check.gmail.smtp"),
-			Queue::HotmailB2BSmtp => write!(f, "check.hotmail.b2b.smtp"),
-			Queue::HotmailB2CSmtp => write!(f, "check.hotmail.b2c.smtp"),
-			Queue::HotmailB2CHeadless => write!(f, "check.hotmail.b2c.headless"),
-			Queue::YahooSmtp => write!(f, "check.yahoo.smtp"),
-			Queue::YahooHeadless => write!(f, "check.yahoo.headless"),
-			Queue::EverythingElseSmtp => write!(f, "check.everything_else.smtp"),
+			Queue::Gmail => write!(f, "check.gmail"),
+			Queue::HotmailB2B => write!(f, "check.hotmailb2b"),
+			Queue::HotmailB2C => write!(f, "check.hotmailb2c"),
+			Queue::Yahoo => write!(f, "check.yahoo"),
+			Queue::EverythingElse => write!(f, "check.everything_else"),
 		}
 	}
 }
@@ -187,23 +244,19 @@ impl<'de> Deserialize<'de> for Queue {
 				E: de::Error,
 			{
 				match value {
-					"check.gmail.smtp" => Ok(Queue::GmailSmtp),
-					"check.hotmail.b2b.smtp" => Ok(Queue::HotmailB2BSmtp),
-					"check.hotmail.b2c.smtp" => Ok(Queue::HotmailB2CSmtp),
-					"check.hotmail.b2c.headless" => Ok(Queue::HotmailB2CHeadless),
-					"check.yahoo.smtp" => Ok(Queue::YahooSmtp),
-					"check.yahoo.headless" => Ok(Queue::YahooHeadless),
-					"check.everything_else.smtp" => Ok(Queue::EverythingElseSmtp),
+					"check.gmail" => Ok(Queue::Gmail),
+					"check.hotmailb2b" => Ok(Queue::HotmailB2B),
+					"check.hotmailb2c" => Ok(Queue::HotmailB2C),
+					"check.yahoo" => Ok(Queue::Yahoo),
+					"check.everything_else" => Ok(Queue::EverythingElse),
 					_ => Err(de::Error::unknown_variant(
 						value,
 						&[
-							"check.gmail.smtp",
-							"check.hotmail.b2b.smtp",
-							"check.hotmail.b2c.smtp",
-							"check.hotmail.b2c.headless",
-							"check.yahoo.smtp",
-							"check.yahoo.headless",
-							"check.everything_else.smtp",
+							"check.gmail",
+							"check.hotmailb2b",
+							"check.hotmailb2c",
+							"check.yahoo",
+							"check.everything_else",
 						],
 					)),
 				}
@@ -241,7 +294,7 @@ impl ThrottleConfig {
 
 /// Load the worker configuration from the worker_config.toml file and from the
 /// environment.
-pub fn load_config() -> Result<BackendConfig, config::ConfigError> {
+pub fn load_config() -> Result<BackendConfig, anyhow::Error> {
 	let cfg = Config::builder()
 		.add_source(config::File::with_name("backend_config"))
 		.add_source(config::Environment::with_prefix("RCH").separator("__"))
@@ -250,4 +303,13 @@ pub fn load_config() -> Result<BackendConfig, config::ConfigError> {
 	let cfg = cfg.try_deserialize::<BackendConfig>()?;
 
 	Ok(cfg)
+}
+
+#[cfg(test)]
+mod test {
+	#[test]
+	fn test_load_config() {
+		let cfg = super::load_config();
+		assert!(cfg.is_ok());
+	}
 }

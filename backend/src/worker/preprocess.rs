@@ -56,11 +56,11 @@ pub async fn do_preprocess_work(
 		.to_string();
 
 	let queue = match mx_hostname.as_str() {
-		hostname if is_gmail(hostname) => Queue::GmailSmtp,
-		hostname if is_hotmail_b2b(hostname) => Queue::HotmailB2BSmtp,
-		hostname if is_hotmail_b2c(hostname) => Queue::HotmailB2CHeadless,
-		hostname if is_yahoo(hostname) => Queue::YahooHeadless,
-		_ => Queue::EverythingElseSmtp,
+		hostname if is_gmail(hostname) => Queue::Gmail,
+		hostname if is_hotmail_b2b(hostname) => Queue::HotmailB2B,
+		hostname if is_hotmail_b2c(hostname) => Queue::HotmailB2C,
+		hostname if is_yahoo(hostname) => Queue::Yahoo,
+		_ => Queue::EverythingElse,
 	};
 	let check_email_input = payload.input.to_check_email_input(config);
 	let check_email_task = CheckEmailTask {

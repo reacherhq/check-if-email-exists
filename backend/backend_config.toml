@@ -59,36 +59,22 @@ enable = true
 [worker.rabbitmq]
 url = "amqp://guest:guest@localhost:5672"
 
-# Queues to consume emails from.
-# 
-# Queue names are in the format "check.<provider>.<verif_method>", where:
-# - <verif_method> is the verification method to use. It can be "smtp",
-# "headless", or "api". Note that _not_ all verification methods are
-# available for all providers. For example, currently the Headless method
-# is not available for Gmail. However, the Smtp method is available for
-# all providers.
-# - <provider> is the email provider to verify. It can be "gmail", "yahoo",
-# "hotmail", or "everything_else".
-# 
-# Below is the exhaustive list of queue names that the worker can consume from:
-# - "check.gmail.smtp": subcribe exclusively to Gmail emails.
-# - "check.hotmail.b2b.smtp": subcribe exclusively to Hotmail B2B emails.
-# - "check.hotmail.b2c.smtp": subcribe exclusively to Hotmail B2C emails where the verification method is explicity set to SMTP (default method is Headless).
-# - "check.hotmail.b2c.headless": subcribe exclusively to Hotmail B2C emails where the verification method is explicity set to Headless (default method is Headless).
-# - "check.yahoo.smtp": subcribe exclusively to Yahoo emails where the verification method is explicity set to SMTP (default method is Headless).
-# - "check.yahoo.headless": subcribe exclusively to Yahoo emails where the verification method is explicity set to Headless (default method is Headless).
-# - "check.everything_else.smtp": subcribe to all emails that are not Gmail, Yahoo, or Hotmail, the method used will be SMTP.
+# Queues to consume emails from. By default the worker consumes from all
+# queues.
 #
-# Comment out the queues that you don't want to consume from.
-queues = [
-    "check.gmail.smtp",
-    "check.hotmail.b2b.smtp",
-    "check.hotmail.b2c.smtp",
-    "check.hotmail.b2c.headless",
-    "check.yahoo.smtp",
-    "check.yahoo.headless",
-    "check.everything_else.smtp",
-]
+# If you wish to consume from only a subset of queues, you can uncomment
+# the line `queues = "all"`, and then specify the queues you want to
+# consume from.
+#
+# Below is the exhaustive list of queue names that the worker can consume from:
+# - "check.gmail": subcribe exclusively to Gmail emails.
+# - "check.hotmailb2b": subcribe exclusively to Hotmail B2B emails.
+# - "check.hotmailb2c": subcribe exclusively to Hotmail B2C emails.
+# - "check.yahoo": subcribe exclusively to Yahoo emails.
+# - "check.everything_else": subcribe to all emails that are not Gmail, Yahoo, or Hotmail.
+#
+# queues = ["check.gmail", "check.hotmail.b2b", "check.hotmail.b2c", "check.yahoo", "check.everything_else"]
+queues = "all"
 
 # Number of concurrent emails to verify for this worker, across all queues.
 concurrency = 20

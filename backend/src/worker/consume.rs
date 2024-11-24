@@ -17,7 +17,7 @@
 use super::check_email::{do_check_email_work, CheckEmailTask, TaskError};
 use super::preprocess::{do_preprocess_work, PreprocessTask};
 use super::response::send_single_shot_reply;
-use crate::config::{BackendConfig, Queue, ThrottleConfig};
+use crate::config::{BackendConfig, RabbitMQQueues, ThrottleConfig};
 use anyhow::Context;
 use check_if_email_exists::LOG_TARGET;
 use futures::stream::StreamExt;
@@ -61,16 +61,7 @@ pub async fn setup_rabbit_mq(
 	queue_args.insert("x-max-priority".into(), MAX_QUEUE_PRIORITY.into());
 
 	// Assert all queues are declared.
-	let queues = [
-		Queue::GmailSmtp,
-		Queue::HotmailB2BSmtp,
-		Queue::HotmailB2CSmtp,
-		Queue::HotmailB2CHeadless,
-		Queue::YahooSmtp,
-		Queue::YahooHeadless,
-		Queue::EverythingElseSmtp,
-	];
-	for queue in queues.iter() {
+	for queue in RabbitMQQueues::All.into_queues().iter() {
 		check_channel
 			.queue_declare(
 				format!("{}", queue).as_str(),
@@ -104,7 +95,7 @@ pub async fn setup_rabbit_mq(
 		)
 		.await?;
 
-	info!(target: LOG_TARGET, queues=?worker_config.rabbitmq.queues, concurrency=?worker_config.rabbitmq.concurrency, "Worker will start consuming messages");
+	info!(target: LOG_TARGET, queues=?worker_config.rabbitmq.queues.into_queues(), concurrency=?worker_config.rabbitmq.concurrency, "Worker will start consuming messages");
 
 	Ok((check_channel, preprocess_channel))
 }
@@ -173,7 +164,7 @@ async fn consume_check_email(
 
 	let throttle = Arc::new(Mutex::new(Throttle::new()));
 
-	for queue in &worker_config.rabbitmq.queues {
+	for queue in &worker_config.rabbitmq.queues.into_queues() {
 		let channel_clone = Arc::clone(&channel);
 		let config_clone = Arc::clone(&config);
 		let pg_pool_clone = pg_pool.clone();
