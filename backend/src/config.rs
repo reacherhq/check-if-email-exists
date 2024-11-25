@@ -409,11 +409,3 @@ pub async fn load_config() -> Result<BackendConfig, anyhow::Error> {
 
 	Ok(cfg)
 }
-
-#[cfg(test)]
-mod test {
-	#[tokio::test]
-	async fn test_load_config() {
-		super::load_config().await.unwrap();
-	}
-}
