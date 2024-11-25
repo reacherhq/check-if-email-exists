@@ -17,8 +17,8 @@
 //! This file implements the `POST /bulk` endpoint.
 
 use check_if_email_exists::{
-	check_email, config::ReacherConfig, CheckEmailInput, CheckEmailInputBuilder,
-	CheckEmailInputProxy, CheckEmailOutput, Reachable, SentryConfig, LOG_TARGET,
+	check_email, CheckEmailInput, CheckEmailInputBuilder, CheckEmailInputProxy, CheckEmailOutput,
+	Reachable, LOG_TARGET,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres};
@@ -64,7 +64,7 @@ impl Iterator for TaskInputIterator {
 	fn next(&mut self) -> Option<Self::Item> {
 		if self.index < self.body.smtp_ports.len() {
 			let mut item = CheckEmailInputBuilder::default();
-			let mut item = item.to_email(self.body.to_email.clone());
+			let mut item: &mut CheckEmailInputBuilder = item.to_email(self.body.to_email.clone());
 
 			if let Some(name) = &self.body.hello_name {
 				item = item.hello_name(name.clone());
@@ -79,6 +79,19 @@ impl Iterator for TaskInputIterator {
 			if let Some(proxy) = &self.body.proxy {
 				item = item.proxy(Some(proxy.clone()));
 			}
+
+			// Currently, for the legacy and deprecated /v0/bulk endpoints, we
+			// don't pass in a BackendConfig to the job. Therefore, we must create
+			// an ad-hoc ReacherConfig here, using the legacy env::var() method.
+			// This is a temporary solution until the /v0/bulk endpoints are
+			// removed.
+			let backend_name = env::var("RCH_BACKEND_NAME").unwrap_or_else(|_| "reacher".into());
+			let sentry_dsn = env::var("RCH_SENTRY_DSN");
+			let webdriver_addr =
+				env::var("RCH_WEBDRIVER_ADDR").unwrap_or_else(|_| "http://localhost:9515".into());
+			item.backend_name(backend_name);
+			item.sentry_dsn(sentry_dsn.ok());
+			item.webdriver_addr(webdriver_addr);
 
 			self.index += 1;
 			Some(item.build().unwrap())
@@ -161,25 +174,8 @@ pub async fn email_verification_task(
 			current_job.id(),
 		);
 
-		// Currently, for the legacy and deprecated /v0/bulk endpoints, we
-		// don't pass in a BackendConfig to the job. Therefore, we must create
-		// an ad-hoc ReacherConfig here, using the legacy env::var() method.
-		// This is a temporary solution until the /v0/bulk endpoints are
-		// removed.
-		let backend_name = env::var("RCH_BACKEND_NAME").unwrap_or_else(|_| "reacher".into());
-		let sentry_dsn = env::var("RCH_SENTRY_DSN");
-		let webdriver_addr =
-			env::var("RCH_WEBDRIVER_ADDR").unwrap_or_else(|_| "localhost:9515".into());
-		let config = ReacherConfig {
-			backend_name: backend_name.clone(),
-			webdriver_addr,
-			sentry: sentry_dsn
-				.ok()
-				.map(|dsn| SentryConfig { dsn, backend_name }),
-		};
-
 		let to_email = check_email_input.to_email.clone();
-		let response = check_email(&check_email_input, &config).await;
+		let response = check_email(&check_email_input).await;
 
 		debug!(
 			target: LOG_TARGET,

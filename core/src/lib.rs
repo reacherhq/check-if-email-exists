@@ -35,7 +35,6 @@
 //!
 //! ```rust
 //! use check_if_email_exists::{check_email, CheckEmailInputBuilder, CheckEmailInputProxy};
-//! use check_if_email_exists::config::ReacherConfig;
 //!
 //! async fn check() {
 //!     // Let's say we want to test the deliverability of someone@gmail.com.
@@ -55,14 +54,8 @@
 //!         .build()
 //!         .unwrap();
 //!
-//!     // We also need to set some configuration parameters.
-//!     let config = ReacherConfig {
-//!         backend_name: "my-backend".into(),
-//!         ..Default::default()
-//!     };
-//!
 //!     // Verify this input, using async/await syntax.
-//!     let result = check_email(&input, &config).await;
+//!     let result = check_email(&input).await;
 //!
 //!     // `result` is a `Vec<CheckEmailOutput>`, where the CheckEmailOutput
 //!     // struct contains all information about one email.
@@ -70,7 +63,6 @@
 //! }
 //! ```
 
-pub mod config;
 mod haveibeenpwned;
 pub mod misc;
 pub mod mx;
@@ -79,7 +71,6 @@ pub mod smtp;
 pub mod syntax;
 mod util;
 
-use config::ReacherConfig;
 use hickory_proto::rr::rdata::MX;
 use misc::{check_misc, MiscDetails};
 use mx::check_mx;
@@ -128,7 +119,7 @@ fn calculate_reachable(misc: &MiscDetails, smtp: &Result<SmtpDetails, SmtpError>
 ///
 /// Returns a `CheckEmailOutput` output, whose `is_reachable` field is one of
 /// `Safe`, `Invalid`, `Risky` or `Unknown`.
-pub async fn check_email(input: &CheckEmailInput, config: &ReacherConfig) -> CheckEmailOutput {
+pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 	let start_time = SystemTime::now();
 	let to_email = &input.to_email;
 
@@ -253,7 +244,6 @@ pub async fn check_email(input: &CheckEmailInput, config: &ReacherConfig) -> Che
 		input.smtp_port,
 		my_syntax.domain.as_ref(),
 		input,
-		config,
 	)
 	.await;
 
@@ -277,7 +267,7 @@ pub async fn check_email(input: &CheckEmailInput, config: &ReacherConfig) -> Che
 				.duration_since(start_time)
 				.unwrap_or(Duration::from_secs(0)),
 			smtp: smtp_debug,
-			backend_name: config.backend_name.clone(),
+			backend_name: input.backend_name.clone(),
 		},
 	}
 }

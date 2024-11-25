@@ -31,8 +31,7 @@ use hickory_proto::rr::Name;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-	config::ReacherConfig, util::input_output::CheckEmailInput, GmailVerifMethod,
-	HotmailB2CVerifMethod, YahooVerifMethod,
+	util::input_output::CheckEmailInput, GmailVerifMethod, HotmailB2CVerifMethod, YahooVerifMethod,
 };
 use connect::check_smtp_with_retry;
 pub use error::*;
@@ -96,7 +95,6 @@ pub async fn check_smtp(
 	port: u16,
 	domain: &str,
 	input: &CheckEmailInput,
-	config: &ReacherConfig,
 ) -> (Result<SmtpDetails, SmtpError>, SmtpDebug) {
 	let host_str = host.to_string();
 	let to_email_str = to_email.to_string();
@@ -104,7 +102,7 @@ pub async fn check_smtp(
 	if is_hotmail_b2c(&host_str) {
 		if let HotmailB2CVerifMethod::Headless = &input.hotmailb2c_verif_method {
 			return (
-				outlook::headless::check_password_recovery(&to_email_str, &config.webdriver_addr)
+				outlook::headless::check_password_recovery(&to_email_str, &input.webdriver_addr)
 					.await
 					.map_err(Into::into),
 				SmtpDebug {
@@ -137,7 +135,7 @@ pub async fn check_smtp(
 			}
 			YahooVerifMethod::Headless => {
 				return (
-					yahoo::check_headless(&to_email_str, &config.webdriver_addr)
+					yahoo::check_headless(&to_email_str, &input.webdriver_addr)
 						.await
 						.map_err(Into::into),
 					SmtpDebug {
@@ -164,7 +162,7 @@ pub async fn check_smtp(
 #[cfg(test)]
 mod tests {
 	use super::{check_smtp, SmtpConnection, SmtpError};
-	use crate::{config::ReacherConfig, CheckEmailInputBuilder};
+	use crate::CheckEmailInputBuilder;
 	use async_smtp::{smtp::error::Error, EmailAddress};
 	use hickory_proto::rr::Name;
 	use std::{str::FromStr, time::Duration};
@@ -182,16 +180,9 @@ mod tests {
 			.smtp_timeout(Some(Duration::from_millis(1)))
 			.build()
 			.unwrap();
-		let config = ReacherConfig::default();
 
-		let (res, smtp_debug) = runtime.block_on(check_smtp(
-			&to_email,
-			&host,
-			25,
-			"gmail.com",
-			&input,
-			&config,
-		));
+		let (res, smtp_debug) =
+			runtime.block_on(check_smtp(&to_email, &host, 25, "gmail.com", &input));
 		assert_eq!(
 			smtp_debug.verif_method,
 			super::VerifMethod::Smtp(SmtpConnection {

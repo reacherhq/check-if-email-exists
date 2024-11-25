@@ -197,7 +197,7 @@ pub struct CheckEmailInput {
 	/// Add timeout for the SMTP verification step. Set to None if you don't
 	/// want to use a timeout.
 	///
-	/// Defaults to 30s.
+	/// Defaults to None.
 	pub smtp_timeout: Option<Duration>,
 	/// Select how to verify Yahoo emails.
 	///
@@ -232,6 +232,20 @@ pub struct CheckEmailInput {
 	///
 	/// Defaults to Opportunistic.
 	pub smtp_security: SmtpSecurity,
+	/// The WebDriver address to use for headless verifications.
+	///
+	/// Defaults to http://localhost:9515.
+	pub webdriver_addr: String,
+	/// Identifier for the service currently running Reacher. We recommend
+	/// setting this to an unique identifier of the server where Reacher is
+	/// installed on.
+	///
+	/// Defaults to "backend-dev".
+	pub backend_name: String,
+	/// Sentry DSN to send errors to Sentry.
+	///
+	/// Defaults to None.
+	pub sentry_dsn: Option<String>,
 }
 
 impl Default for CheckEmailInput {
@@ -243,7 +257,7 @@ impl Default for CheckEmailInput {
 			proxy: None,
 			smtp_port: 25,
 			smtp_security: SmtpSecurity::default(),
-			smtp_timeout: Some(Duration::from_secs(30)),
+			smtp_timeout: None,
 			yahoo_verif_method: YahooVerifMethod::default(),
 			gmail_verif_method: GmailVerifMethod::default(),
 			hotmailb2b_verif_method: HotmailB2BVerifMethod::default(),
@@ -251,6 +265,9 @@ impl Default for CheckEmailInput {
 			check_gravatar: false,
 			haveibeenpwned_api_key: None,
 			retries: 1,
+			webdriver_addr: "http://localhost:9515".into(),
+			backend_name: "backend-dev".into(),
+			sentry_dsn: None,
 		}
 	}
 }

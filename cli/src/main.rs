@@ -15,8 +15,8 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use check_if_email_exists::{
-	check_email, config::ReacherConfig, CheckEmailInputBuilder, CheckEmailInputProxy,
-	GmailVerifMethod, HotmailB2BVerifMethod, HotmailB2CVerifMethod, YahooVerifMethod,
+	check_email, CheckEmailInputBuilder, CheckEmailInputProxy, GmailVerifMethod,
+	HotmailB2BVerifMethod, HotmailB2CVerifMethod, YahooVerifMethod,
 };
 use clap::Parser;
 use once_cell::sync::Lazy;
@@ -104,7 +104,8 @@ async fn main() -> Result<(), anyhow::Error> {
 		.hotmailb2b_verif_method(CONF.hotmailb2b_verif_method)
 		.hotmailb2c_verif_method(CONF.hotmailb2c_verif_method)
 		.check_gravatar(CONF.check_gravatar)
-		.haveibeenpwned_api_key(CONF.haveibeenpwned_api_key.clone());
+		.haveibeenpwned_api_key(CONF.haveibeenpwned_api_key.clone())
+		.backend_name("reacher-cli".to_string());
 
 	if let Some(proxy_host) = &CONF.proxy_host {
 		input = input.proxy(Some(CheckEmailInputProxy {
@@ -116,12 +117,7 @@ async fn main() -> Result<(), anyhow::Error> {
 	}
 	let input = input.build()?;
 
-	let config = ReacherConfig {
-		backend_name: "reacher-cli".to_string(),
-		..Default::default()
-	};
-
-	let result = check_email(&input, &config).await;
+	let result = check_email(&input).await;
 
 	match serde_json::to_string_pretty(&result) {
 		Ok(output) => {

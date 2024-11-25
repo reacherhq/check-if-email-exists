@@ -16,12 +16,11 @@
 
 mod gravatar;
 use crate::haveibeenpwned::check_haveibeenpwned;
-
-use serde::{Deserialize, Serialize};
-use std::default::Default;
-
 use crate::syntax::SyntaxDetails;
 use gravatar::check_gravatar;
+use serde::{Deserialize, Serialize};
+use std::default::Default;
+use thiserror::Error;
 
 const ROLE_ACCOUNTS: &str = include_str!("./roles.json");
 
@@ -41,7 +40,7 @@ pub struct MiscDetails {
 /// Error occured connecting to this email server via SMTP. Right now this
 /// enum has no variant, as `check_misc` cannot fail. But putting a placeholder
 /// right now to avoid future breaking changes.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Error, Serialize)]
 #[serde(tag = "type", content = "message")]
 pub enum MiscError {}
 

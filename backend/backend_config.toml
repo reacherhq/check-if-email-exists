@@ -24,12 +24,17 @@ from_email = "reacher@gmail.com"
 # Address of the Chrome WebDriver server for headless email verifications.
 webdriver_addr = "http://localhost:9515"
 
+# Timeout for each SMTP connection, in seconds. Leaving it commented out will
+# not set a timeout, i.e. the connection will wait indefinitely.
+# smtp_timeout = 45
+
 # Uncomment the following lines to route all SMTP verification requests through
 # a specified proxy. Note that the proxy must be a SOCKS5 proxy to work with
 # the SMTP protocol. This proxy will not be used for headless verifications.
 #
 # The username and password are optional and only needed if the proxy requires
 # authentication.
+# 
 # [proxy]
 # host = "my.proxy.com"
 # port = 1080
@@ -52,22 +57,9 @@ hotmailb2c = "headless"
 yahoo = "headless"
 
 [worker]
-enable = false
-
-# Fields below are only used if the worker is enabled.
-
-# Throttle the maximum number of requests per second, per minute, per hour, and
-# per day for this worker.
-# All fields are optional; comment them out to disable the limit.
-#
-# Important: these throttle configurations only apply to bulk verification and
-# not to the single /v0/check_email endpoint. The latter endpoint always
-# executes the verification immediately, regardless of the throttle settings.
-[worker.throttle]
-# max_requests_per_second = 20
-# max_requests_per_minute = 100
-# max_requests_per_hour = 1000
-# max_requests_per_day = 20000
+# Enable the worker to consume emails from the RabbitMQ queues. If set, the
+# RabbitMQ configuration below must be set as well.
+enable = true
 
 # RabbitMQ configuration.
 [worker.rabbitmq]
@@ -92,13 +84,27 @@ queues = "all"
 # Number of concurrent emails to verify for this worker across all queues.
 concurrency = 20
 
+# Throttle the maximum number of requests per second, per minute, per hour, and
+# per day for this worker.
+# All fields are optional; comment them out to disable the limit.
+#
+# Important: these throttle configurations only apply to /v1/* endpoints, and
+# not to the previous /v0/check_email endpoint. The latter endpoint always
+# executes the verification immediately, regardless of the throttle settings.
+[worker.throttle]
+# max_requests_per_second = 20
+# max_requests_per_minute = 100
+# max_requests_per_hour = 1000
+# max_requests_per_day = 20000
+
 # Postgres configuration. Currently, a Postgres database is required to store
 # the results of the verifications. This might change in the future, allowing
 # for pluggable storage.
 [worker.postgres]
 db_url = "postgresql://localhost/reacherdb"
 
-# Optional webhook URL to send the results to. This will send one POST request
-# per email verification, with the result in the body.
-# [worker.webhook.on_each_email]
-# url = "http://localhost:8080/webhook"
+# Optional Sentry configuration. If set, all errors will be sent to Sentry.
+# [sentry]
+# dsn = "<PASTE_YOUR_DSN_NOW>"
+# Identifier sent to Sentry, usually the same as the the top-level backend_name.
+# backend_name = "backend-dev"

@@ -17,10 +17,12 @@
 //! This file implements the `POST /v0/check_email` endpoint.
 
 use check_if_email_exists::{
-	check_email, CheckEmailInput, CheckEmailInputProxy, GmailVerifMethod, LOG_TARGET,
+	check_email, CheckEmailInput, CheckEmailInputProxy, GmailVerifMethod, HotmailB2BVerifMethod,
+	HotmailB2CVerifMethod, YahooVerifMethod, LOG_TARGET,
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+use std::time::Duration;
 use warp::{http, Filter};
 
 use crate::config::BackendConfig;
@@ -33,10 +35,11 @@ pub struct CheckEmailRequest {
 	pub from_email: Option<String>,
 	pub hello_name: Option<String>,
 	pub gmail_verif_method: Option<GmailVerifMethod>,
-	pub hotmailb2b_verif_method: Option<String>,
-	pub hotmailb2c_verif_method: Option<String>,
-	pub yahoo_verif_method: Option<String>,
+	pub hotmailb2b_verif_method: Option<HotmailB2BVerifMethod>,
+	pub hotmailb2c_verif_method: Option<HotmailB2CVerifMethod>,
+	pub yahoo_verif_method: Option<YahooVerifMethod>,
 	pub proxy: Option<CheckEmailInputProxy>,
+	pub smtp_port: Option<u16>,
 }
 
 impl CheckEmailRequest {
@@ -45,15 +48,22 @@ impl CheckEmailRequest {
 			to_email: self.to_email.clone(),
 			from_email: self.from_email.clone().unwrap_or(config.from_email.clone()),
 			hello_name: self.hello_name.clone().unwrap_or(config.hello_name.clone()),
-			gmail_verif_method: config.verif_method.gmail,
-			hotmailb2b_verif_method: config.verif_method.hotmailb2b,
-			hotmailb2c_verif_method: config.verif_method.hotmailb2c,
-			yahoo_verif_method: config.verif_method.yahoo,
+			gmail_verif_method: self.gmail_verif_method.unwrap_or(config.verif_method.gmail),
+			hotmailb2b_verif_method: self
+				.hotmailb2b_verif_method
+				.unwrap_or(config.verif_method.hotmailb2b),
+			hotmailb2c_verif_method: self
+				.hotmailb2c_verif_method
+				.unwrap_or(config.verif_method.hotmailb2c),
+			yahoo_verif_method: self.yahoo_verif_method.unwrap_or(config.verif_method.yahoo),
 			proxy: self
 				.proxy
 				.as_ref()
 				.or_else(|| config.proxy.as_ref())
 				.cloned(),
+			smtp_timeout: config.smtp_timeout.map(Duration::from_secs),
+			smtp_port: self.smtp_port.unwrap_or_default(),
+			sentry_dsn: config.sentry_dsn.clone(),
 			..Default::default()
 		}
 	}
@@ -73,11 +83,7 @@ async fn http_handler(
 	} else {
 		// Run the future to check an email.
 		Ok(warp::reply::json(
-			&check_email(
-				&body.to_check_email_input(Arc::clone(&config)),
-				&config.get_reacher_config(),
-			)
-			.await,
+			&check_email(&body.to_check_email_input(Arc::clone(&config))).await,
 		))
 	}
 }

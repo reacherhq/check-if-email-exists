@@ -20,22 +20,21 @@ use crate::worker::check_email::TaskWebhook;
 #[cfg(feature = "worker")]
 use crate::worker::setup_rabbit_mq;
 use anyhow::bail;
-use check_if_email_exists::config::ReacherConfig;
 use check_if_email_exists::{
 	CheckEmailInputProxy, GmailVerifMethod, HotmailB2BVerifMethod, HotmailB2CVerifMethod,
-	SentryConfig, YahooVerifMethod,
+	YahooVerifMethod,
 };
 use config::Config;
 #[cfg(feature = "worker")]
 use lapin::Channel;
 use serde::de::{self, Deserializer, Visitor};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 #[cfg(feature = "worker")]
 use std::sync::Arc;
 use std::{env, fmt};
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct BackendConfig {
 	/// Name of the backend.
 	pub backend_name: String,
@@ -56,12 +55,14 @@ pub struct BackendConfig {
 	pub http_port: u16,
 	/// Shared secret between a trusted client and the backend.
 	pub header_secret: Option<String>,
+	/// Timeout for each SMTP connection, in seconds. Leaving it commented out
+	/// will not set a timeout, i.e. the connection will wait indefinitely.
+	pub smtp_timeout: Option<u64>,
+	/// Sentry DSN to report errors to
+	pub sentry_dsn: Option<String>,
 
 	/// Worker configuration, only present if the backend is a worker.
 	pub worker: WorkerConfig,
-
-	/// Sentry configuration to report errors.
-	pub sentry: Option<SentryConfig>,
 
 	// Internal fields, not part of the configuration.
 	#[serde(skip)]
@@ -75,14 +76,6 @@ pub struct BackendConfig {
 }
 
 impl BackendConfig {
-	pub fn get_reacher_config(&self) -> ReacherConfig {
-		ReacherConfig {
-			backend_name: self.backend_name.clone(),
-			sentry: self.sentry.clone(),
-			webdriver_addr: self.webdriver_addr.clone(),
-		}
-	}
-
 	/// Get the worker configuration.
 	///
 	/// # Panics
@@ -142,7 +135,7 @@ impl BackendConfig {
 	}
 }
 
-#[derive(Debug, Default, Deserialize, Clone)]
+#[derive(Debug, Default, Deserialize, Clone, Serialize)]
 pub struct VerifMethodConfig {
 	/// Verification method for Gmail emails.
 	pub gmail: GmailVerifMethod,
@@ -154,7 +147,7 @@ pub struct VerifMethodConfig {
 	pub yahoo: YahooVerifMethod,
 }
 
-#[derive(Debug, Default, Deserialize, Clone)]
+#[derive(Debug, Default, Deserialize, Clone, Serialize)]
 pub struct WorkerConfig {
 	pub enable: bool,
 
@@ -186,7 +179,7 @@ pub struct MustWorkerConfig {
 	pub postgres: PostgresConfig,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub enum RabbitMQQueues {
 	All,
 	Only(Vec<Queue>),
@@ -251,7 +244,7 @@ impl RabbitMQQueues {
 	}
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct RabbitMQConfig {
 	pub url: String,
 	/// Queues to consume emails from. By default the worker consumes from all
@@ -278,7 +271,7 @@ pub struct RabbitMQConfig {
 /// Queue names that the worker can consume from. Each email is routed to a
 /// one and only one queue, based on the email provider. A single worker can
 /// consume from multiple queues.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub enum Queue {
 	Gmail,
 	HotmailB2B,
@@ -342,12 +335,12 @@ impl<'de> Deserialize<'de> for Queue {
 	}
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct PostgresConfig {
 	pub db_url: String,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct ThrottleConfig {
 	pub max_requests_per_second: Option<u32>,
 	pub max_requests_per_minute: Option<u32>,
@@ -415,13 +408,4 @@ pub async fn load_config() -> Result<BackendConfig, anyhow::Error> {
 	}
 
 	Ok(cfg)
-}
-
-#[cfg(test)]
-mod test {
-	#[tokio::test]
-	async fn test_load_config() {
-		let cfg = super::load_config().await;
-		assert!(cfg.is_ok());
-	}
 }

@@ -14,19 +14,20 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use async_smtp::EmailAddress;
-use reqwest::Error as ReqwestError;
-use serde::Serialize;
-
 use crate::{
 	smtp::{http_api::create_client, SmtpDetails},
 	util::ser_with_display::ser_with_display,
 	CheckEmailInput, LOG_TARGET,
 };
+use async_smtp::EmailAddress;
+use reqwest::Error as ReqwestError;
+use serde::Serialize;
+use thiserror::Error;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Error, Serialize)]
 pub enum Microsoft365Error {
 	#[serde(serialize_with = "ser_with_display")]
+	#[error("Reqwest error: {0}")]
 	ReqwestError(ReqwestError),
 }
 
@@ -37,6 +38,7 @@ impl From<ReqwestError> for Microsoft365Error {
 }
 
 /// Convert an email address to its corresponding OneDrive URL.
+#[allow(dead_code)]
 fn get_onedrive_url(email_address: &str) -> String {
 	let (username, domain) = email_address
 		.split_once('@')
@@ -63,6 +65,7 @@ fn get_onedrive_url(email_address: &str) -> String {
 /// a reliable indicator that an email-address is valid. However, a negative
 /// response is ambigious: the email address may or may not be valid but this
 /// cannot be determined by the method outlined here.
+#[allow(dead_code)]
 pub async fn check_microsoft365_api(
 	to_email: &EmailAddress,
 	input: &CheckEmailInput,
