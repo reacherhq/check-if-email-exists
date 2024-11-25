@@ -85,6 +85,7 @@ async fn http_handler(
 			hotmailb2b_verif_method: None,
 			hotmailb2c_verif_method: None,
 			yahoo_verif_method: None,
+			smtp_port: None,
 		};
 
 		Ok(PreprocessTask {
