@@ -38,6 +38,7 @@ impl From<ReqwestError> for Microsoft365Error {
 }
 
 /// Convert an email address to its corresponding OneDrive URL.
+#[allow(dead_code)]
 fn get_onedrive_url(email_address: &str) -> String {
 	let (username, domain) = email_address
 		.split_once('@')
@@ -64,6 +65,7 @@ fn get_onedrive_url(email_address: &str) -> String {
 /// a reliable indicator that an email-address is valid. However, a negative
 /// response is ambigious: the email address may or may not be valid but this
 /// cannot be determined by the method outlined here.
+#[allow(dead_code)]
 pub async fn check_microsoft365_api(
 	to_email: &EmailAddress,
 	input: &CheckEmailInput,

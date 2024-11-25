@@ -42,6 +42,9 @@ USER chrome
 
 ENV RUST_LOG=reacher=info
 ENV RCH__HTTP_HOST=0.0.0.0
+# Currently this Dockerfile is mainly used for single-shot verifications, so we
+# disable the worker by default.
+ENV RCH__WORKER__ENABLED=false
 
 EXPOSE 8080
 

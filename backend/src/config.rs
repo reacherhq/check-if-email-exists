@@ -28,13 +28,13 @@ use config::Config;
 #[cfg(feature = "worker")]
 use lapin::Channel;
 use serde::de::{self, Deserializer, Visitor};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 #[cfg(feature = "worker")]
 use std::sync::Arc;
 use std::{env, fmt};
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct BackendConfig {
 	/// Name of the backend.
 	pub backend_name: String,
@@ -135,7 +135,7 @@ impl BackendConfig {
 	}
 }
 
-#[derive(Debug, Default, Deserialize, Clone)]
+#[derive(Debug, Default, Deserialize, Clone, Serialize)]
 pub struct VerifMethodConfig {
 	/// Verification method for Gmail emails.
 	pub gmail: GmailVerifMethod,
@@ -147,7 +147,7 @@ pub struct VerifMethodConfig {
 	pub yahoo: YahooVerifMethod,
 }
 
-#[derive(Debug, Default, Deserialize, Clone)]
+#[derive(Debug, Default, Deserialize, Clone, Serialize)]
 pub struct WorkerConfig {
 	pub enable: bool,
 
@@ -179,7 +179,7 @@ pub struct MustWorkerConfig {
 	pub postgres: PostgresConfig,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub enum RabbitMQQueues {
 	All,
 	Only(Vec<Queue>),
@@ -244,7 +244,7 @@ impl RabbitMQQueues {
 	}
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct RabbitMQConfig {
 	pub url: String,
 	/// Queues to consume emails from. By default the worker consumes from all
@@ -271,7 +271,7 @@ pub struct RabbitMQConfig {
 /// Queue names that the worker can consume from. Each email is routed to a
 /// one and only one queue, based on the email provider. A single worker can
 /// consume from multiple queues.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub enum Queue {
 	Gmail,
 	HotmailB2B,
@@ -335,12 +335,12 @@ impl<'de> Deserialize<'de> for Queue {
 	}
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct PostgresConfig {
 	pub db_url: String,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct ThrottleConfig {
 	pub max_requests_per_second: Option<u32>,
 	pub max_requests_per_minute: Option<u32>,

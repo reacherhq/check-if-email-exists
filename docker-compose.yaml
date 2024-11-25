@@ -24,7 +24,7 @@ services:
         restart: always
 
     worker1:
-        image: reacherhq/backend:v0.10.0-beta.0
+        image: reacherhq/backend:v0.10.0-beta.2
         container_name: worker1
         ports:
             - "8080:8080"
@@ -41,7 +41,7 @@ services:
         restart: always
 
     worker2:
-        image: reacherhq/backend:v0.10.0-beta.0
+        image: reacherhq/backend:v0.10.0-beta.2
         container_name: worker2
         ports:
             - "8081:8080"
