@@ -21,6 +21,7 @@ use check_if_email_exists::{
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+use std::time::Duration;
 use warp::{http, Filter};
 
 use crate::config::BackendConfig;
@@ -54,6 +55,8 @@ impl CheckEmailRequest {
 				.as_ref()
 				.or_else(|| config.proxy.as_ref())
 				.cloned(),
+			smtp_timeout: config.smtp_timeout.map(Duration::from_secs),
+			sentry_dsn: config.sentry_dsn.clone(),
 			..Default::default()
 		}
 	}
@@ -73,11 +76,7 @@ async fn http_handler(
 	} else {
 		// Run the future to check an email.
 		Ok(warp::reply::json(
-			&check_email(
-				&body.to_check_email_input(Arc::clone(&config)),
-				&config.get_reacher_config(),
-			)
-			.await,
+			&check_email(&body.to_check_email_input(Arc::clone(&config))).await,
 		))
 	}
 }

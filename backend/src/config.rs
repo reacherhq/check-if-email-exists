@@ -20,10 +20,9 @@ use crate::worker::check_email::TaskWebhook;
 #[cfg(feature = "worker")]
 use crate::worker::setup_rabbit_mq;
 use anyhow::bail;
-use check_if_email_exists::config::ReacherConfig;
 use check_if_email_exists::{
 	CheckEmailInputProxy, GmailVerifMethod, HotmailB2BVerifMethod, HotmailB2CVerifMethod,
-	SentryConfig, YahooVerifMethod,
+	YahooVerifMethod,
 };
 use config::Config;
 #[cfg(feature = "worker")]
@@ -56,12 +55,14 @@ pub struct BackendConfig {
 	pub http_port: u16,
 	/// Shared secret between a trusted client and the backend.
 	pub header_secret: Option<String>,
+	/// Timeout for each SMTP connection, in seconds. Leaving it commented out
+	/// will not set a timeout, i.e. the connection will wait indefinitely.
+	pub smtp_timeout: Option<u64>,
+	/// Sentry DSN to report errors to
+	pub sentry_dsn: Option<String>,
 
 	/// Worker configuration, only present if the backend is a worker.
 	pub worker: WorkerConfig,
-
-	/// Sentry configuration to report errors.
-	pub sentry: Option<SentryConfig>,
 
 	// Internal fields, not part of the configuration.
 	#[serde(skip)]
@@ -75,14 +76,6 @@ pub struct BackendConfig {
 }
 
 impl BackendConfig {
-	pub fn get_reacher_config(&self) -> ReacherConfig {
-		ReacherConfig {
-			backend_name: self.backend_name.clone(),
-			sentry: self.sentry.clone(),
-			webdriver_addr: self.webdriver_addr.clone(),
-		}
-	}
-
 	/// Get the worker configuration.
 	///
 	/// # Panics

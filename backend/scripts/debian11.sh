@@ -9,27 +9,27 @@ set -e
 
 # You can change the default values of these variables inline here, or by
 # setting them in the environment before running this script, e.g.:
-# RCH_BACKEND_NAME="my-own-name" ./debian11.sh
+# RCH__BACKEND_NAME="my-own-name" ./debian11.sh
 
 # An unique identifier for the backend.
-RCH_BACKEND_NAME=${RCH_BACKEND_NAME:-"backend1.mycompany.com"}
+RCH__BACKEND_NAME=${RCH__BACKEND_NAME:-"backend1.mycompany.com"}
 # Docker Hub tag for reacherhq/backend.
-RCH_VERSION=${RCH_VERSION:-"v0.7.0"}
+RCH_VERSION=${RCH_VERSION:-"v0.10.0-beta.1"}
 # Optional: Send bug reports to a Sentry.io dashboard.
-RCH_SENTRY_DSN=${RCH_SENTRY_DSN:-}
+RCH__SENTRY_DSN=${RCH__SENTRY_DSN:-}
 # Protect the backend from the public via a `x-reacher-secret` header.
-RCH_HEADER_SECRET=${RCH_HEADER_SECRET:-}
+RCH__HEADER_SECRET=${RCH__HEADER_SECRET:-}
 # For the "FROM" field in emails.
-RCH_FROM_EMAIL=${RCH_FROM_EMAIL:-"hello@mycompany.com"}
+RCH__FROM_EMAIL=${RCH__FROM_EMAIL:-"hello@mycompany.com"}
 # For the "EHLO" field in emails. This should ideally match the server's
 # reverse DNS entry for optimal results.
-RCH_HELLO_NAME=${RCH_HELLO_NAME:-"backend1.mycompany.com"}
+RCH__HELLO_NAME=${RCH__HELLO_NAME:-"backend1.mycompany.com"}
 # Timeout for SMTP connections in seconds.
-RCH_SMTP_TIMEOUT=${RCH_SMTP_TIMEOUT:-"90"}
+RCH__SMTP_TIMEOUT=${RCH__SMTP_TIMEOUT:-"90"}
 # Logging. Setup to "debug" to show all logs.
 RUST_LOG=${RUST_LOG:-"info"}
 
-echo "Installing Reacher backend $RCH_VERSION on host $RCH_BACKEND_NAME..."
+echo "Installing Reacher backend $RCH_VERSION on host $RCH__BACKEND_NAME..."
 
 # Install Docker
 # https://docs.docker.com/engine/install/debian/
@@ -64,12 +64,12 @@ docker rm reacher_backend
 # Run the backend
 docker run -d \
     -e RUST_LOG=$RUST_LOG \
-    -e RCH_BACKEND_NAME=$RCH_BACKEND_NAME \
-    -e RCH_SENTRY_DSN=$RCH_SENTRY_DSN \
-    -e RCH_HEADER_SECRET=$RCH_HEADER_SECRET \
-    -e RCH_FROM_EMAIL=$RCH_FROM_EMAIL \
-    -e RCH_HELLO_NAME=$RCH_HELLO_NAME \
-    -e RCH_SMTP_TIMEOUT=$RCH_SMTP_TIMEOUT \
+    -e RCH__BACKEND_NAME=$RCH__BACKEND_NAME \
+    -e RCH__SENTRY_DSN=$RCH__SENTRY_DSN \
+    -e RCH__HEADER_SECRET=$RCH__HEADER_SECRET \
+    -e RCH__FROM_EMAIL=$RCH__FROM_EMAIL \
+    -e RCH__HELLO_NAME=$RCH__HELLO_NAME \
+    -e RCH__SMTP_TIMEOUT=$RCH__SMTP_TIMEOUT \
     -p 80:8080 \
     --name reacher_backend \
     reacherhq/backend:$RCH_VERSION

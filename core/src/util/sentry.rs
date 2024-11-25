@@ -20,29 +20,22 @@
 //! `check-if-email-exists` are known errors, in which case we don't log them
 //! to Sentry.
 
-use async_smtp::smtp::error::Error as AsyncSmtpError;
-use sentry::protocol::{Event, Exception, Level, Values};
-use serde::Deserialize;
-use tracing::{debug, info};
-
 use crate::misc::MiscError;
 use crate::mx::MxError;
 use crate::LOG_TARGET;
 use crate::{smtp::SmtpError, CheckEmailOutput};
+use async_smtp::smtp::error::Error as AsyncSmtpError;
+use sentry::protocol::{Event, Exception, Level, Values};
+use thiserror::Error;
+use tracing::{debug, info};
 
 const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-#[derive(Clone, Debug, Default, Deserialize)]
-pub struct SentryConfig {
-	pub dsn: String,
-	pub backend_name: String,
-}
-
 /// Setup Sentry.
-pub fn setup_sentry(config: &SentryConfig) -> sentry::ClientInitGuard {
+pub fn setup_sentry(sentry_dsn: &str) -> sentry::ClientInitGuard {
 	// Use an empty string if we don't have any env variable for sentry. Sentry
 	// will just silently ignore.
-	let sentry = sentry::init(config.dsn.clone());
+	let sentry = sentry::init(sentry_dsn);
 	if sentry.is_enabled() {
 		info!(target: LOG_TARGET, "Sentry is successfully set up.")
 	}
@@ -50,12 +43,13 @@ pub fn setup_sentry(config: &SentryConfig) -> sentry::ClientInitGuard {
 	sentry
 }
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 enum SentryError<'a> {
-	// TODO: Probably a good idea would be to `impl std:error:Error` for the
-	// three errors below.
+	#[error("MiscError: {0}")]
 	Misc(&'a MiscError),
+	#[error("MxError: {0}")]
 	Mx(&'a MxError),
+	#[error("SmtpError: {0}")]
 	Smtp(&'a SmtpError),
 }
 
@@ -72,7 +66,7 @@ impl<'a> SentryError<'a> {
 
 /// Helper function to send an Error event to Sentry. We redact all sensitive
 /// info before sending to Sentry, by removing all instances of `username`.
-fn error(err: SentryError, result: &CheckEmailOutput, config: &SentryConfig) {
+fn error(err: SentryError, result: &CheckEmailOutput, backend_name: &str) {
 	let exception_value = redact(format!("{err:?}").as_str(), &result.syntax.username);
 	debug!(target: LOG_TARGET, "Sending error to Sentry: {}", exception_value);
 
@@ -90,7 +84,7 @@ fn error(err: SentryError, result: &CheckEmailOutput, config: &SentryConfig) {
 		environment: Some("production".into()),
 		release: Some(CARGO_PKG_VERSION.into()),
 		message: Some(format!("{result:#?}")),
-		server_name: Some(config.backend_name.clone().into()),
+		server_name: Some(backend_name.to_string().into()),
 		transaction: Some(format!("check_email:{}", result.syntax.domain)),
 		..Default::default()
 	});
@@ -114,15 +108,15 @@ fn skip_smtp_transient_errors(message: &[String]) -> bool {
 
 /// Checks if the output from `check-if-email-exists` has a known error, in
 /// which case we don't log to Sentry to avoid spamming it.
-pub fn log_unknown_errors(result: &CheckEmailOutput, config: &SentryConfig) {
+pub fn log_unknown_errors(result: &CheckEmailOutput, backend_name: &str) {
 	match (&result.misc, &result.mx, &result.smtp) {
 		(Err(err), _, _) => {
 			// We log all misc errors.
-			error(SentryError::Misc(err), result, config);
+			error(SentryError::Misc(err), result, backend_name);
 		}
 		(_, Err(err), _) => {
 			// We log all mx errors.
-			error(SentryError::Mx(err), result, config);
+			error(SentryError::Mx(err), result, backend_name);
 		}
 		(_, _, Err(err)) if err.get_description().is_some() => {
 			// If the SMTP error is known, we don't track it in Sentry.
@@ -145,7 +139,7 @@ pub fn log_unknown_errors(result: &CheckEmailOutput, config: &SentryConfig) {
 			// Sentry, to be able to debug them better. We don't want to
 			// spam Sentry and log all instances of the error, hence the
 			// `count` check.
-			error(SentryError::Smtp(err), result, config);
+			error(SentryError::Smtp(err), result, backend_name);
 		}
 		// If everything is ok, we just return the result.
 		(Ok(_), Ok(_), Ok(_)) => {}

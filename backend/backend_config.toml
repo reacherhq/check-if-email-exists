@@ -24,12 +24,17 @@ from_email = "reacher@gmail.com"
 # Address of the Chrome WebDriver server for headless email verifications.
 webdriver_addr = "http://localhost:9515"
 
+# Timeout for each SMTP connection, in seconds. Leaving it commented out will
+# not set a timeout, i.e. the connection will wait indefinitely.
+# smtp_timeout = 45
+
 # Uncomment the following lines to route all SMTP verification requests through
 # a specified proxy. Note that the proxy must be a SOCKS5 proxy to work with
 # the SMTP protocol. This proxy will not be used for headless verifications.
 #
 # The username and password are optional and only needed if the proxy requires
 # authentication.
+# 
 # [proxy]
 # host = "my.proxy.com"
 # port = 1080
@@ -102,3 +107,9 @@ db_url = "postgresql://localhost/reacherdb"
 # per email verification, with the result in the body.
 # [worker.webhook.on_each_email]
 # url = "http://localhost:8080/webhook"
+
+# Optional Sentry configuration. If set, all errors will be sent to Sentry.
+# [sentry]
+# dsn = "<PASTE_YOUR_DSN_NOW>"
+# Identifier sent to Sentry, usually the same as the the top-level backend_name.
+# backend_name = "backend-dev"

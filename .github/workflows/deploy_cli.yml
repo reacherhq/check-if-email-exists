@@ -37,6 +37,7 @@ jobs:
 
   windows:
     runs-on: windows-latest
+    if: false # Disable Windows tests for now, because Reacher Worker is not supported on Windows
     needs: install-cross
     steps:
       - uses: actions/checkout@v2

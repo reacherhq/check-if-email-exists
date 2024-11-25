@@ -41,7 +41,7 @@ RUN chown chrome:chrome docker.sh
 USER chrome
 
 ENV RUST_LOG=reacher=info
-ENV RCH_HTTP_HOST=0.0.0.0
+ENV RCH__HTTP_HOST=0.0.0.0
 
 EXPOSE 8080
 

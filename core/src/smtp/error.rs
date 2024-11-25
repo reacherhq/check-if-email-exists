@@ -24,24 +24,31 @@ use crate::util::ser_with_display::ser_with_display;
 use async_smtp::smtp::error::Error as AsyncSmtpError;
 use fast_socks5::SocksError;
 use serde::Serialize;
+use thiserror::Error;
 
 /// Error occured connecting to this email server via SMTP.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Error, Serialize)]
 #[serde(tag = "type", content = "message")]
 pub enum SmtpError {
 	/// Error if we're using a SOCKS5 proxy.
 	#[serde(serialize_with = "ser_with_display")]
+	#[error("SOCKS5 error: {0}")]
 	SocksError(SocksError),
 	/// Error when communicating with SMTP server.
 	#[serde(serialize_with = "ser_with_display")]
+	#[error("SMTP error: {0}")]
 	SmtpError(AsyncSmtpError),
 	/// Error when verifying a Yahoo email via HTTP requests.
+	#[error("Yahoo error: {0}")]
 	YahooError(YahooError),
 	/// Error when verifying a Gmail email via a HTTP request.
+	#[error("Gmail error: {0}")]
 	GmailError(GmailError),
 	/// Error when verifying a Hotmail email via headless browser.
+	#[error("Headless verification error: {0}")]
 	HeadlessError(HeadlessError),
 	/// Error when verifying a Microsoft 365 email via HTTP request.
+	#[error("Microsoft 365 API error: {0}")]
 	Microsoft365Error(Microsoft365Error),
 }
 

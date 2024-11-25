@@ -117,7 +117,7 @@ pub(crate) async fn do_check_email_work(
 	channel: Arc<Channel>,
 	config: Arc<BackendConfig>,
 ) -> Result<(), anyhow::Error> {
-	let worker_output = inner_check_email(payload, Arc::clone(&config)).await;
+	let worker_output = inner_check_email(payload).await;
 
 	match (&worker_output, delivery.redelivered) {
 		(Ok(output), false) if output.is_reachable == Reachable::Unknown => {
@@ -166,11 +166,8 @@ pub(crate) async fn do_check_email_work(
 	Ok(())
 }
 
-async fn inner_check_email(
-	payload: &CheckEmailTask,
-	config: Arc<BackendConfig>,
-) -> Result<CheckEmailOutput, TaskError> {
-	let output = check_email(&payload.input, &config.get_reacher_config()).await;
+async fn inner_check_email(payload: &CheckEmailTask) -> Result<CheckEmailOutput, TaskError> {
+	let output = check_email(&payload.input).await;
 
 	// Check if we have a webhook to send the output to.
 	if let Some(TaskWebhook {

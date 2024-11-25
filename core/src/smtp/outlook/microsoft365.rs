@@ -14,19 +14,20 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use async_smtp::EmailAddress;
-use reqwest::Error as ReqwestError;
-use serde::Serialize;
-
 use crate::{
 	smtp::{http_api::create_client, SmtpDetails},
 	util::ser_with_display::ser_with_display,
 	CheckEmailInput, LOG_TARGET,
 };
+use async_smtp::EmailAddress;
+use reqwest::Error as ReqwestError;
+use serde::Serialize;
+use thiserror::Error;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Error, Serialize)]
 pub enum Microsoft365Error {
 	#[serde(serialize_with = "ser_with_display")]
+	#[error("Reqwest error: {0}")]
 	ReqwestError(ReqwestError),
 }
 

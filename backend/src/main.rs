@@ -38,7 +38,7 @@ async fn main() -> Result<(), anyhow::Error> {
 
 	// Setup sentry bug tracking.
 	let _guard: sentry::ClientInitGuard;
-	if let Some(sentry_config) = &config.sentry {
+	if let Some(sentry_config) = &config.sentry_dsn {
 		_guard = setup_sentry(sentry_config);
 	}
 

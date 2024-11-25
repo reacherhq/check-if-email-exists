@@ -14,20 +14,22 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use crate::util::ser_with_display::ser_with_display;
 use fantoccini::{
 	error::{CmdError, NewSessionError},
 	Client, ClientBuilder,
 };
 use serde::Serialize;
 use serde_json::Map;
+use thiserror::Error;
 
-use crate::util::ser_with_display::ser_with_display;
-
-#[derive(Debug, Serialize)]
+#[derive(Debug, Error, Serialize)]
 pub enum HeadlessError {
 	#[serde(serialize_with = "ser_with_display")]
+	#[error("Cmd error: {0}")]
 	Cmd(CmdError),
 	#[serde(serialize_with = "ser_with_display")]
+	#[error("New session error: {0}")]
 	NewSession(NewSessionError),
 }
 
