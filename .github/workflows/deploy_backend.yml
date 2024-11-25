@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@master
       - name: Set GITHUB_TAG arg
         id: vars
-        run: echo ::set-output name=GITHUB_TAG::${GITHUB_REF}
+        run: echo ::set-output name=GITHUB_TAG::${GITHUB_REF:10} # Remove /refs/head/
       - name: Print version
         run: echo "Publishing reacherhq/backend:${{ steps.vars.outputs.GITHUB_TAG }}"
       - name: Publish to Registry
