@@ -15,7 +15,7 @@ path = "src/main.rs"
 [dependencies]
 anyhow = "1.0"
 check-if-email-exists = { path = "../core" }
-clap = { version = "3.2", features = ["derive", "env"] }
+clap = { version = "4.5", features = ["derive", "env"] }
 env_logger = "0.11"
 once_cell = "1.19"
 openssl = { version = "0.10", features = ["vendored"] }
