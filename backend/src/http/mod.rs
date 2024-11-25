@@ -14,38 +14,55 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+mod error;
 mod v0;
+#[cfg(feature = "worker")]
+mod v1;
 mod version;
 
+use crate::config::BackendConfig;
 use check_if_email_exists::LOG_TARGET;
-use serde::Serialize;
-use sqlx::postgres::PgPoolOptions;
-use sqlx::{Pool, Postgres};
+use error::handle_rejection;
+pub use error::ReacherResponseError;
+use sqlx::PgPool;
 use sqlxmq::JobRunnerHandle;
 use std::env;
 use std::net::IpAddr;
 use std::sync::Arc;
 use tracing::info;
-use warp::Filter;
-use warp::{http, reject};
-
-use crate::config::BackendConfig;
-
 pub use v0::check_email::post::CheckEmailRequest;
+use warp::http::StatusCode;
+use warp::Filter;
 
-/// Creates the routes for the HTTP server.
-/// Making it public so that it can be used in tests/check_email.rs.
 pub fn create_routes(
 	config: Arc<BackendConfig>,
-	o: Option<Pool<Postgres>>,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-	version::get::get_version()
-		.or(v0::check_email::post::post_check_email(config.clone()))
+	let pg_pool = config.get_pg_pool();
+	let t = version::get::get_version()
+		.or(v0::check_email::post::post_check_email(Arc::clone(&config)))
 		// The 3 following routes will 404 if o is None.
-		.or(v0::bulk::post::create_bulk_job(config, o.clone()))
-		.or(v0::bulk::get::get_bulk_job_status(o.clone()))
-		.or(v0::bulk::results::get_bulk_job_result(o))
-		.recover(handle_rejection)
+		.or(v0::bulk::post::create_bulk_job(
+			Arc::clone(&config),
+			pg_pool.clone(),
+		))
+		.or(v0::bulk::get::get_bulk_job_status(pg_pool.clone()))
+		.or(v0::bulk::results::get_bulk_job_result(pg_pool));
+
+	#[cfg(feature = "worker")]
+	{
+		t.or(v1::check_email::post::v1_check_email(Arc::clone(&config)))
+			.or(v1::bulk::post::v1_create_bulk_job(Arc::clone(&config)))
+			.or(v1::bulk::get_progress::v1_get_bulk_job_progress(
+				Arc::clone(&config),
+			))
+			.or(v1::bulk::get_results::v1_get_bulk_job_results(config))
+			.recover(handle_rejection)
+	}
+
+	#[cfg(not(feature = "worker"))]
+	{
+		t.recover(handle_rejection)
+	}
 }
 
 /// Runs the Warp server.
@@ -57,7 +74,7 @@ pub fn create_routes(
 /// keep it alive.
 pub async fn run_warp_server(
 	config: Arc<BackendConfig>,
-) -> Result<Option<JobRunnerHandle>, Box<dyn std::error::Error + Send + Sync>> {
+) -> Result<Option<JobRunnerHandle>, anyhow::Error> {
 	let host = config
 		.http_host
 		.parse::<IpAddr>()
@@ -72,17 +89,19 @@ pub async fn run_warp_server(
 		})
 		.unwrap_or(config.http_port);
 
-	// Run bulk job listener.
-	let is_bulk_enabled = env::var("RCH_ENABLE_BULK").unwrap_or_else(|_| "0".into()) == "1";
-	let (db, runner) = if is_bulk_enabled {
-		let pool = create_db().await?;
-		let runner = v0::bulk::create_job_registry(&pool).await?;
-		(Some(pool), Some(runner))
-	} else {
-		(None, None)
-	};
+	let routes = create_routes(Arc::clone(&config));
 
-	let routes = create_routes(config.clone(), db);
+	// Run v0 bulk job listener.
+	let is_bulk_enabled = env::var("RCH_ENABLE_BULK").unwrap_or_else(|_| "0".into()) == "1";
+	let runner = if is_bulk_enabled {
+		let pg_pool = config
+			.get_pg_pool()
+			.expect("DATABASE_URL is required when RCH_ENABLE_BULK is set");
+		let runner = v0::bulk::create_job_registry(&pg_pool).await?;
+		Some(runner)
+	} else {
+		None
+	};
 
 	info!(target: LOG_TARGET, host=?host,port=?port, "Server is listening");
 	warp::serve(routes).run((host, port)).await;
@@ -91,18 +110,22 @@ pub async fn run_warp_server(
 	Ok(runner)
 }
 
-/// Create a DB pool for the deprecated /v0/bulk endpoints.
-async fn create_db() -> Result<Pool<Postgres>, sqlx::Error> {
-	let pg_conn = env::var("DATABASE_URL").expect("Environment variable DATABASE_URL must be set");
-
-	// create connection pool with database
-	// connection pool internally the shared db connection
-	// with arc so it can safely be cloned and shared across threads
-	let pool = PgPoolOptions::new().connect(pg_conn.as_str()).await?;
-
-	sqlx::migrate!("./migrations").run(&pool).await?;
-
-	Ok(pool)
+/// Warp filter to add the database pool to the handler. If the pool is not
+/// configured, it will return an error.
+pub fn with_db(
+	pg_pool: Option<PgPool>,
+) -> impl Filter<Extract = (PgPool,), Error = warp::Rejection> + Clone {
+	warp::any().and_then(move || {
+		let pool = pg_pool.clone();
+		async move {
+			pool.ok_or_else(|| {
+				warp::reject::custom(ReacherResponseError::new(
+					StatusCode::SERVICE_UNAVAILABLE,
+					"Please configure a database on Reacher before calling this endpoint",
+				))
+			})
+		}
+	})
 }
 
 /// The header which holds the Reacher backend secret.
@@ -121,32 +144,5 @@ pub fn check_header(config: Arc<BackendConfig>) -> warp::filters::BoxedFilter<()
 		warp::header::exact(REACHER_SECRET_HEADER, secret).boxed()
 	} else {
 		warp::any().boxed()
-	}
-}
-
-/// Warp filter that adds the BackendConfig to the handler.
-pub fn with_config(
-	config: Arc<BackendConfig>,
-) -> impl Filter<Extract = (Arc<BackendConfig>,), Error = std::convert::Infallible> + Clone {
-	warp::any().map(move || config.clone())
-}
-
-/// Struct describing an error response.
-#[derive(Serialize, Debug)]
-pub struct ReacherResponseError {
-	#[serde(skip)]
-	pub code: http::StatusCode,
-	pub message: String,
-}
-
-impl reject::Reject for ReacherResponseError {}
-
-/// This function receives a `Rejection` and tries to return a custom value,
-/// otherwise simply passes the rejection along.
-pub async fn handle_rejection(err: warp::Rejection) -> Result<impl warp::Reply, warp::Rejection> {
-	if let Some(err) = err.find::<ReacherResponseError>() {
-		Ok((warp::reply::with_status(warp::reply::json(err), err.code),))
-	} else {
-		Err(err)
 	}
 }

@@ -85,6 +85,7 @@ use misc::{check_misc, MiscDetails};
 use mx::check_mx;
 use rand::Rng;
 use smtp::{check_smtp, SmtpDetails, SmtpError};
+pub use smtp::{is_gmail, is_hotmail, is_hotmail_b2b, is_hotmail_b2c, is_yahoo};
 use std::time::{Duration, SystemTime};
 use syntax::{check_syntax, get_similar_mail_provider};
 pub use util::input_output::*;

@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n\t\tINSERT INTO v1_bulk_job (total_records)\n\t\tVALUES ($1)\n\t\tRETURNING id\n\t\t",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "96a32768eb750971bad4df10560b0331bf52b44dbd59020369adbbc6bc8dc830"
+}

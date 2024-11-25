@@ -32,14 +32,14 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
 	config::ReacherConfig, util::input_output::CheckEmailInput, GmailVerifMethod,
-	HotmailVerifMethod, YahooVerifMethod,
+	HotmailB2CVerifMethod, YahooVerifMethod,
 };
 use connect::check_smtp_with_retry;
 pub use error::*;
 
-use self::{
+pub use self::{
 	gmail::is_gmail,
-	outlook::{is_hotmail, is_microsoft365},
+	outlook::{is_hotmail, is_hotmail_b2b, is_hotmail_b2c},
 	yahoo::is_yahoo,
 };
 
@@ -98,94 +98,62 @@ pub async fn check_smtp(
 	input: &CheckEmailInput,
 	config: &ReacherConfig,
 ) -> (Result<SmtpDetails, SmtpError>, SmtpDebug) {
-	let host = host.to_string();
+	let host_str = host.to_string();
 	let to_email_str = to_email.to_string();
 
-	if is_hotmail(&host) {
-		match (&input.hotmail_verif_method, is_microsoft365(&host)) {
-			(HotmailVerifMethod::OneDriveApi, true) => {
-				match outlook::microsoft365::check_microsoft365_api(to_email, input).await {
-					Ok(Some(smtp_details)) => {
-						return {
-							(
-								Ok(smtp_details),
-								SmtpDebug {
-									verif_method: VerifMethod::Api,
-								},
-							)
-						}
-					}
-					// Continue in the event of an error/ambiguous result.
-					Err(err) => {
-						return (
-							Err(err.into()),
-							SmtpDebug {
-								verif_method: VerifMethod::Api,
-							},
-						);
-					}
-					_ => {}
-				}
-			}
-
-			(HotmailVerifMethod::Headless, false) => {
-				return (
-					outlook::headless::check_password_recovery(
-						to_email.to_string().as_str(),
-						&config.webdriver_addr,
-					)
+	if is_hotmail_b2c(&host_str) {
+		if let HotmailB2CVerifMethod::Headless = &input.hotmailb2c_verif_method {
+			return (
+				outlook::headless::check_password_recovery(&to_email_str, &config.webdriver_addr)
 					.await
-					.map_err(|err| err.into()),
-					SmtpDebug {
-						verif_method: VerifMethod::Headless,
-					},
-				);
-			}
-			_ => {}
-		};
-	} else if is_gmail(&host) {
+					.map_err(Into::into),
+				SmtpDebug {
+					verif_method: VerifMethod::Headless,
+				},
+			);
+		}
+	} else if is_gmail(&host_str) {
 		if let GmailVerifMethod::Api = &input.gmail_verif_method {
 			return (
-				gmail::check_gmail(to_email, input)
+				gmail::check_gmail_via_api(to_email, input)
 					.await
-					.map_err(|err| err.into()),
+					.map_err(Into::into),
 				SmtpDebug {
 					verif_method: VerifMethod::Api,
 				},
 			);
-		};
-	} else if is_yahoo(&host) {
+		}
+	} else if is_yahoo(&host_str) {
 		match &input.yahoo_verif_method {
 			YahooVerifMethod::Api => {
 				return (
 					yahoo::check_api(&to_email_str, input)
 						.await
-						.map_err(|e| e.into()),
+						.map_err(Into::into),
 					SmtpDebug {
 						verif_method: VerifMethod::Api,
 					},
-				)
+				);
 			}
-
 			YahooVerifMethod::Headless => {
 				return (
 					yahoo::check_headless(&to_email_str, &config.webdriver_addr)
 						.await
-						.map_err(|e| e.into()),
+						.map_err(Into::into),
 					SmtpDebug {
 						verif_method: VerifMethod::Headless,
 					},
-				)
+				);
 			}
-			_ => {}
-		};
+			_ => {} // For everything else, we use SMTP
+		}
 	}
 
 	(
-		check_smtp_with_retry(to_email, &host, port, domain, input, input.retries).await,
+		check_smtp_with_retry(to_email, &host_str, port, domain, input, input.retries).await,
 		SmtpDebug {
 			verif_method: VerifMethod::Smtp(SmtpConnection {
-				host,
+				host: host_str,
 				port,
 				used_proxy: input.proxy.is_some(),
 			}),

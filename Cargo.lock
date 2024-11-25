@@ -575,7 +575,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "check-if-email-exists"
-version = "0.9.1"
+version = "0.10.0"
 dependencies = [
  "async-native-tls",
  "async-recursion",
@@ -600,14 +600,16 @@ dependencies = [
  "sentry",
  "serde",
  "serde_json",
+ "thiserror",
  "tokio",
  "tracing",
 ]
 
 [[package]]
 name = "check-if-email-exists-cli"
-version = "0.9.1"
+version = "0.10.0"
 dependencies = [
+ "anyhow",
  "check-if-email-exists",
  "clap",
  "env_logger",
@@ -928,7 +930,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "strsim 0.11.1",
- "syn 2.0.66",
+ "syn 2.0.87",
 ]
 
 [[package]]
@@ -950,7 +952,7 @@ checksum = "d336a2a514f6ccccaa3e09b02d41d35330c07ddf03a62165fcec10bb561c7806"
 dependencies = [
  "darling_core 0.20.10",
  "quote",
- "syn 2.0.66",
+ "syn 2.0.87",
 ]
 
 [[package]]
@@ -1059,7 +1061,7 @@ dependencies = [
  "darling 0.20.10",
  "proc-macro2",
  "quote",
- "syn 2.0.66",
+ "syn 2.0.87",
 ]
 
 [[package]]
@@ -1069,7 +1071,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ab63b0e2bf4d5928aff72e83a7dace85d7bba5fe12dcc3c5a572d78caffd3f3c"
 dependencies = [
  "derive_builder_core 0.20.2",
- "syn 2.0.66",
+ "syn 2.0.87",
 ]
 
 [[package]]
@@ -2990,34 +2992,15 @@ dependencies = [
 
 [[package]]
 name = "reacher_backend"
-version = "0.7.0"
+version = "0.10.0"
 dependencies = [
+ "anyhow",
  "async-smtp",
  "check-if-email-exists",
  "config",
  "csv",
  "dotenv",
- "openssl",
- "sentry",
- "serde",
- "serde_json",
- "sqlx",
- "sqlxmq",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "uuid 1.10.0",
- "warp",
-]
-
-[[package]]
-name = "reacher_worker"
-version = "0.1.0"
-dependencies = [
- "async-smtp",
- "check-if-email-exists",
- "config",
- "futures-lite 2.5.0",
+ "futures",
  "lapin",
  "openssl",
  "reqwest 0.12.5",
@@ -3026,11 +3009,14 @@ dependencies = [
  "serde_json",
  "sqlx",
  "sqlxmq",
+ "thiserror",
  "tokio",
  "tokio-executor-trait",
  "tokio-reactor-trait",
  "tracing",
  "tracing-subscriber",
+ "uuid 1.10.0",
+ "warp",
 ]
 
 [[package]]

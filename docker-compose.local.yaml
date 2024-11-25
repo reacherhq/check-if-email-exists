@@ -1,3 +1,5 @@
+# Same as docker-compose.yaml but with the backend image version set to build
+# from the local Dockerfile. This is useful for development purposes.
 version: "3.8"
 
 services:
@@ -21,10 +23,14 @@ services:
             POSTGRES_USER: postgres
             POSTGRES_PASSWORD: postgres
             POSTGRES_DB: reacher_db
+        volumes:
+            - ./backend/postgres_data:/var/lib/postgresql/data
         restart: always
 
     worker1:
-        image: reacherhq/backend:v0.10.0-beta.0
+        build:
+            context: .
+            dockerfile: backend/Dockerfile
         container_name: worker1
         ports:
             - "8080:8080"
@@ -41,7 +47,9 @@ services:
         restart: always
 
     worker2:
-        image: reacherhq/backend:v0.10.0-beta.0
+        build:
+            context: .
+            dockerfile: backend/Dockerfile
         container_name: worker2
         ports:
             - "8081:8080"

@@ -3,7 +3,7 @@ name: deploy_cli
 on:
   push:
     tags:
-      - "cli/v*"
+      - "v*.*.*"
 
 env:
   # TODO: Rename to your binary

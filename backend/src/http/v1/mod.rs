@@ -14,14 +14,30 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-//! Main entry point of the `reacher_backend` binary. It has two `main`
-//! functions, depending on whether the `bulk` feature is enabled or not.
+use lapin::Channel;
+use std::sync::Arc;
+use warp::http::StatusCode;
+use warp::Filter;
 
-use std::env;
+use super::ReacherResponseError;
 
+pub mod bulk;
 pub mod check_email;
-pub mod config;
-pub mod db;
-pub mod worker;
 
-pub const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
+/// Warp filter that extracts lapin Channel, or returns a 503 error if it's not
+/// available.
+pub fn with_channel(
+	channel: Option<Arc<Channel>>,
+) -> impl Filter<Extract = (Arc<Channel>,), Error = warp::Rejection> + Clone {
+	warp::any().and_then(move || {
+		let channel = channel.clone();
+		async move {
+			channel.ok_or_else(|| {
+				warp::reject::custom(ReacherResponseError::new(
+					StatusCode::SERVICE_UNAVAILABLE,
+					"Please configure a RabbitMQ instance on Reacher before calling this endpoint",
+				))
+			})
+		}
+	})
+}

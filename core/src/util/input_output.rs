@@ -73,7 +73,7 @@ impl SmtpSecurity {
 }
 
 /// Select how to verify Yahoo emails.
-#[derive(Debug, Clone, Copy, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Deserialize, Serialize)]
 pub enum YahooVerifMethod {
 	/// Use Yahoo's API to check if an email exists.
 	Api,
@@ -83,6 +83,7 @@ pub enum YahooVerifMethod {
 	/// its endpoint, usually http://localhost:9515, into the environment
 	/// variable RCH_WEBDRIVER_ADDR. We recommend running chromedriver (and not
 	/// geckodriver) as it allows parallel requests.
+	#[default]
 	Headless,
 	/// Use Yahoo's SMTP servers to check if an email exists.
 	Smtp,
@@ -93,21 +94,21 @@ impl FromStr for YahooVerifMethod {
 
 	fn from_str(s: &str) -> Result<Self, Self::Err> {
 		match s {
-			"Api" => Ok(Self::Api),
-
-			"Headless" => Ok(Self::Headless),
-			"Smtp" => Ok(Self::Smtp),
+			"api" => Ok(Self::Api),
+			"headless" => Ok(Self::Headless),
+			"smtp" => Ok(Self::Smtp),
 			_ => Err(format!("Unknown yahoo verify method: {}", s)),
 		}
 	}
 }
 
 /// Select how to verify Gmail emails.
-#[derive(Debug, Clone, Copy, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize)]
 pub enum GmailVerifMethod {
 	/// Use Gmail's API to check if an email exists.
 	Api,
 	/// Use Gmail's SMTP servers to check if an email exists.
+	#[default]
 	Smtp,
 }
 
@@ -116,39 +117,55 @@ impl FromStr for GmailVerifMethod {
 
 	fn from_str(s: &str) -> Result<Self, Self::Err> {
 		match s {
-			"Api" => Ok(Self::Api),
-			"Smtp" => Ok(Self::Smtp),
+			"api" => Ok(Self::Api),
+			"smtp" => Ok(Self::Smtp),
 			_ => Err(format!("Unknown gmail verify method: {}", s)),
 		}
 	}
 }
 
-/// Select how to verify Hotmail emails.
-#[derive(Debug, Clone, Copy, Deserialize, Serialize)]
-pub enum HotmailVerifMethod {
-	/// Use OneDrive API to check if an email exists.
-	OneDriveApi,
+/// Select how to verify Hotmail B2B emails.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Deserialize, Serialize)]
+pub enum HotmailB2BVerifMethod {
+	/// Use Hotmail's SMTP servers to check if an email exists.
+	#[default]
+	Smtp,
+}
+
+impl FromStr for HotmailB2BVerifMethod {
+	type Err = String;
+
+	fn from_str(s: &str) -> Result<Self, Self::Err> {
+		match s {
+			"smtp" => Ok(Self::Smtp),
+			_ => Err(format!("Unknown hotmailb2b verify method: {}", s)),
+		}
+	}
+}
+
+/// Select how to verify Hotmail B2C emails.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Deserialize, Serialize)]
+pub enum HotmailB2CVerifMethod {
 	/// Use Hotmail's password recovery page to check if an email exists.
 	///
 	/// This assumes you have a WebDriver compatible process running, then pass
 	/// its endpoint, usually http://localhost:9515, into the environment
 	/// variable RCH_WEBDRIVER_ADDR. We recommend running chromedriver (and not
 	/// geckodriver) as it allows parallel requests.
+	#[default]
 	Headless,
 	/// Use Hotmail's SMTP servers to check if an email exists.
 	Smtp,
 }
 
-impl FromStr for HotmailVerifMethod {
+impl FromStr for HotmailB2CVerifMethod {
 	type Err = String;
 
 	fn from_str(s: &str) -> Result<Self, Self::Err> {
 		match s {
-			"OneDriveApi" => Ok(Self::OneDriveApi),
-
-			"Headless" => Ok(Self::Headless),
-			"Smtp" => Ok(Self::Smtp),
-			_ => Err(format!("Unknown hotmail verify method: {}", s)),
+			"headless" => Ok(Self::Headless),
+			"smtp" => Ok(Self::Smtp),
+			_ => Err(format!("Unknown hotmailb2c verify method: {}", s)),
 		}
 	}
 }
@@ -193,7 +210,11 @@ pub struct CheckEmailInput {
 	/// Select how to verify Hotmail/Outlook/Microsoft email addresses.
 	///
 	/// Defaults to Headless.
-	pub hotmail_verif_method: HotmailVerifMethod,
+	pub hotmailb2b_verif_method: HotmailB2BVerifMethod,
+	/// Select how to verify Hotmail/Outlook/Microsoft email addresses.
+	///
+	/// Defaults to Headless.
+	pub hotmailb2c_verif_method: HotmailB2CVerifMethod,
 	/// Whether to check if a gravatar image is existing for the given email.
 	/// Adds a bit of latency to the verification process.
 	///
@@ -223,9 +244,10 @@ impl Default for CheckEmailInput {
 			smtp_port: 25,
 			smtp_security: SmtpSecurity::default(),
 			smtp_timeout: Some(Duration::from_secs(30)),
-			yahoo_verif_method: YahooVerifMethod::Headless,
-			gmail_verif_method: GmailVerifMethod::Smtp,
-			hotmail_verif_method: HotmailVerifMethod::Headless,
+			yahoo_verif_method: YahooVerifMethod::default(),
+			gmail_verif_method: GmailVerifMethod::default(),
+			hotmailb2b_verif_method: HotmailB2BVerifMethod::default(),
+			hotmailb2c_verif_method: HotmailB2CVerifMethod::default(),
 			check_gravatar: false,
 			haveibeenpwned_api_key: None,
 			retries: 1,

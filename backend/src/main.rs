@@ -18,6 +18,8 @@
 //! functions, depending on whether the `bulk` feature is enabled or not.
 
 use check_if_email_exists::{setup_sentry, LOG_TARGET};
+#[cfg(feature = "worker")]
+use reacher_backend::worker::run_worker;
 use std::sync::Arc;
 use tracing::info;
 
@@ -28,11 +30,11 @@ const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Run a HTTP server using warp with bulk endpoints.
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+async fn main() -> Result<(), anyhow::Error> {
 	// Initialize logging.
 	tracing_subscriber::fmt::init();
 	info!(target: LOG_TARGET, version=?CARGO_PKG_VERSION, "Running Reacher");
-	let config = load_config()?;
+	let config = load_config().await?;
 
 	// Setup sentry bug tracking.
 	let _guard: sentry::ClientInitGuard;
@@ -40,7 +42,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 		_guard = setup_sentry(sentry_config);
 	}
 
-	let _bulk_job_runner = run_warp_server(Arc::new(config)).await?;
+	let config = Arc::new(config);
+
+	#[cfg(feature = "worker")]
+	{
+		let server_future = run_warp_server(Arc::clone(&config));
+		let worker_future = async {
+			if config.worker.enable {
+				run_worker(config).await?;
+			}
+			Ok(())
+		};
+
+		tokio::try_join!(server_future, worker_future)?;
+
+		info!("Shutting down...");
+	}
+
+	#[cfg(not(feature = "worker"))]
+	{
+		run_warp_server(config).await?;
+	}
 
 	Ok(())
 }

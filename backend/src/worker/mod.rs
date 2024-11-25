@@ -14,12 +14,16 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pub mod config;
-mod db;
-pub mod http;
-#[cfg(feature = "worker")]
-pub mod worker;
+// Each file corresponds to one step in the worker pipeline. The worker pipeline
+// is defined as:
+// - consume from RabbitMQ
+// - preprocess
+// - check email
+// - send response (either to the reply_to queue or save to the database)
 
-pub use db::create_db;
+pub mod check_email;
+pub mod consume;
+pub mod preprocess;
+pub mod response;
 
-const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
+pub use consume::{run_worker, setup_rabbit_mq};

@@ -15,7 +15,7 @@ Then run:
 
 ```bash
 > $ check_if_email_exists --help
-check-if-email-exists-cli 0.9.1
+check-if-email-exists-cli
 Check if an email address exists without sending any email.
 
 USAGE:
@@ -34,8 +34,8 @@ OPTIONS:
             reacher.email@gmail.com]
 
         --gmail-verif-method <GMAIL_VERIF_METHOD>
-            Select how to verify Gmail email addresses: Api or Smtp [env: GMAIL_VERIF_METHOD=]
-            [default: Smtp]
+            Select how to verify Gmail email addresses: api or smtp [env: GMAIL_VERIF_METHOD=]
+            [default: smtp]
 
     -h, --help
             Print help information
@@ -46,9 +46,13 @@ OPTIONS:
         --hello-name <HELLO_NAME>
             The name to use in the `EHLO:` SMTP command [env: HELLO_NAME=] [default: gmail.com]
 
-        --hotmail-verif-method <HOTMAIL_VERIF_METHOD>
-            Select how to verify Hotmail email addresses: Api, Headless or Smtp [env:
-            HOTMAIL_VERIF_METHOD=] [default: Headless]
+        --hotmailb2b-verif-method <HOTMAILB2B_VERIF_METHOD>
+            Select how to verify Hotmail B2B email addresses: smtp [env: HOTMAILB2B_VERIF_METHOD=]
+            [default: smtp]
+
+        --hotmailb2c-verif-method <HOTMAILB2C_VERIF_METHOD>
+            Select how to verify Hotmail B2C email addresses: headless or smtp [env:
+            HOTMAILB2C_VERIF_METHOD=] [default: headless]
 
         --proxy-host <PROXY_HOST>
             Use the specified SOCKS5 proxy host to perform email verification [env: PROXY_HOST=]
@@ -72,8 +76,9 @@ OPTIONS:
             Print version information
 
         --yahoo-verif-method <YAHOO_VERIF_METHOD>
-            Select how to verify Yahoo email addresses: Api, Headless or Smtp [env:
-            YAHOO_VERIF_METHOD=] [default: Headless]
+            Select how to verify Yahoo email addresses: api, headless or smtp [env:
+            YAHOO_VERIF_METHOD=] [default: headless]
+
 ```
 
 **💡 PRO TIP:** To show debug logs when running the binary, run:

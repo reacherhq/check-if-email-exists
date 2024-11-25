@@ -23,22 +23,17 @@ use crate::{
 use async_smtp::EmailAddress;
 use reqwest::Error as ReqwestError;
 use serde::Serialize;
-use std::fmt;
+use thiserror::Error;
 
 const GLXU_PAGE: &str = "https://mail.google.com/mail/gxlu";
 
 /// Possible errors when checking Gmail email addresses.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Error, Serialize)]
 pub enum GmailError {
 	/// Error when serializing or deserializing HTTP requests and responses.
 	#[serde(serialize_with = "ser_with_display")]
+	#[error("Error serializing or deserializing HTTP requests and responses: {0}")]
 	ReqwestError(ReqwestError),
-}
-
-impl fmt::Display for GmailError {
-	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		write!(f, "{self:?}")
-	}
 }
 
 impl From<ReqwestError> for GmailError {
@@ -49,7 +44,7 @@ impl From<ReqwestError> for GmailError {
 
 /// Use HTTP request to verify if a Gmail email address exists.
 /// See: <https://blog.0day.rocks/abusing-gmail-to-get-previously-unlisted-e-mail-addresses-41544b62b2>
-pub async fn check_gmail(
+pub async fn check_gmail_via_api(
 	to_email: &EmailAddress,
 	input: &CheckEmailInput,
 ) -> Result<SmtpDetails, GmailError> {
@@ -98,7 +93,7 @@ mod tests {
 			.build()
 			.unwrap();
 
-		let smtp_details = check_gmail(&to_email, &input).await;
+		let smtp_details = check_gmail_via_api(&to_email, &input).await;
 
 		assert!(smtp_details.is_ok());
 		assert!(smtp_details.unwrap().is_deliverable);

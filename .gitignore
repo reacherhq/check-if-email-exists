@@ -3,6 +3,9 @@ target
 .DS_Store
 private
 
+# docker-compose
+backend/postgres_data
+
 # Output when debugging Hotmail password recovery using a headless browser.
 hotmail.jpeg
 
