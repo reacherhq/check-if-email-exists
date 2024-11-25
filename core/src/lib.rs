@@ -35,7 +35,6 @@
 //!
 //! ```rust
 //! use check_if_email_exists::{check_email, CheckEmailInputBuilder, CheckEmailInputProxy};
-//! use check_if_email_exists::config::ReacherConfig;
 //!
 //! async fn check() {
 //!     // Let's say we want to test the deliverability of someone@gmail.com.
