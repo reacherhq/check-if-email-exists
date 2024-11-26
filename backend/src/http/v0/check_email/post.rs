@@ -106,7 +106,7 @@ pub fn post_check_email<'a>(
 }
 
 /// Warp filter that adds the BackendConfig to the handler.
-fn with_config(
+pub fn with_config(
 	config: Arc<BackendConfig>,
 ) -> impl Filter<Extract = (Arc<BackendConfig>,), Error = std::convert::Infallible> + Clone {
 	warp::any().map(move || Arc::clone(&config))

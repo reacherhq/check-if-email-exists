@@ -16,7 +16,7 @@
 
 //! This file implements the `POST /v1/check_email` endpoint.
 
-use check_if_email_exists::LOG_TARGET;
+use check_if_email_exists::{check_email, LOG_TARGET};
 use futures::StreamExt;
 use lapin::options::{
 	BasicAckOptions, BasicConsumeOptions, BasicRejectOptions, QueueDeclareOptions,
@@ -28,7 +28,7 @@ use warp::http::StatusCode;
 use warp::{http, Filter};
 
 use crate::config::BackendConfig;
-use crate::http::v0::check_email::post::CheckEmailRequest;
+use crate::http::v0::check_email::post::{with_config, CheckEmailRequest};
 use crate::http::v1::bulk::post::publish_task;
 use crate::http::v1::with_channel;
 use crate::http::{check_header, ReacherResponseError};
@@ -38,6 +38,7 @@ use crate::worker::response::SingleShotReply;
 
 /// The main endpoint handler that implements the logic of this route.
 async fn http_handler(
+	config: Arc<BackendConfig>,
 	channel: Arc<Channel>,
 	body: CheckEmailRequest,
 ) -> Result<impl warp::Reply, warp::Rejection> {
@@ -48,6 +49,17 @@ async fn http_handler(
 			"to_email field is required.",
 		)
 		.into());
+	}
+
+	// If worker mode is disabled, we do a direct check, and skip rabbitmq.
+	if !config.worker.enable {
+		let result = check_email(&body.to_check_email_input(Arc::clone(&config))).await;
+		let result_bz = serde_json::to_vec(&result).map_err(ReacherResponseError::from)?;
+		return Ok(warp::reply::with_header(
+			result_bz,
+			"Content-Type",
+			"application/json",
+		));
 	}
 
 	// Follow this RPC tutorial:
@@ -156,6 +168,7 @@ pub fn v1_check_email(
 	warp::path!("v1" / "check_email")
 		.and(warp::post())
 		.and(check_header(Arc::clone(&config)))
+		.and(with_config(config.clone()))
 		.and(with_channel(config.get_preprocess_channel()))
 		// When accepting a body, we want a JSON body (and to reject huge
 		// payloads)...
