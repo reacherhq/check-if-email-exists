@@ -16,7 +16,7 @@ Note that Reacher provides the same Docker image `reacherhq/backend` which can a
 
 With this architecture, it's possible to horizontally scale the number of workers, while making sure that the individual IPs don't get blacklisted. To do so, we propose to start with two types of workers.
 
-### Common Configuration to both workers
+### Shared Configuration between both workers
 
 To enable the above worker architecture, set the following parameters in [reacher-configuration-v0.10.md](../advanced/migrations/reacher-configuration-v0.10.md "mention"):&#x20;
 
