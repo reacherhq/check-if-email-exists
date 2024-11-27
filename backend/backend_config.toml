@@ -110,7 +110,7 @@ url = "amqp://guest:guest@localhost:5672"
 #
 # Env variable: RCH__WORKER__RABBITMQ__QUEUES
 #
-# queues = ["check.gmail", "check.hotmail.b2b", "check.hotmail.b2c", "check.yahoo", "check.everything_else"]
+# queues = ["check.gmail", "check.hotmailb2b", "check.hotmailb2c", "check.yahoo", "check.everything_else"]
 queues = "all"
 
 # Number of concurrent emails to verify for this worker across all queues.

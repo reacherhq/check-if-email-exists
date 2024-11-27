@@ -23,38 +23,40 @@ services:
             POSTGRES_DB: reacher_db
         restart: always
 
-    worker1:
+    worker_smtp:
         image: reacherhq/backend:beta
-        container_name: worker1
+        container_name: worker_smtp
         ports:
             - "8080:8080"
         depends_on:
             - postgres
             - rabbitmq
         environment:
-            RCH__BACKEND_NAME: worker1
+            RCH__BACKEND_NAME: worker_smtp
             RUST_LOG: reacher=info
             RCH__HTTP_HOST: 0.0.0.0
             RCH__WORKER__ENABLE: true
             RCH__WORKER__RABBITMQ__URL: amqp://guest:guest@rabbitmq:5672
+            RCH__WORKER__RABBITMQ__QUEUES: check.gmail,check.hotmailb2b,check.everything_else
             RCH__WORKER__POSTGRES__DB_URL: postgres://postgres:postgres@postgres:5432/reacher_db
-            RCH__WORKER__THROTTLE__MAX_REQUESTS_PER_DAY: 10000 # Recommended limit per IP per day
+            RCH__WORKER__THROTTLE__MAX_REQUESTS_PER_DAY: 10000 # Recommended limit per IP per day for SMTP requests
         restart: always
 
-    worker2:
+    worker_headless:
         image: reacherhq/backend:beta
-        container_name: worker2
+        container_name: worker_headless
         ports:
             - "8081:8080"
         depends_on:
             - postgres
             - rabbitmq
         environment:
-            RCH__BACKEND_NAME: worker2
+            RCH__BACKEND_NAME: worker_headless
             RUST_LOG: reacher=info
             RCH__HTTP_HOST: 0.0.0.0
             RCH__WORKER__ENABLE: true
             RCH__WORKER__RABBITMQ__URL: amqp://guest:guest@rabbitmq:5672
+            RCH__WORKER__RABBITMQ__QUEUES: check.hotmailb2c,check.yahoo
             RCH__WORKER__POSTGRES__DB_URL: postgres://postgres:postgres@postgres:5432/reacher_db
-            RCH__WORKER__THROTTLE__MAX_REQUESTS_PER_DAY: 10000 # Recommended limit per IP per day
+            RCH__WORKER__THROTTLE__MAX_REQUESTS_PER_MINUTE: 100 # Recommended limit for headless verifications
         restart: always

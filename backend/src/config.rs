@@ -366,7 +366,12 @@ impl ThrottleConfig {
 pub async fn load_config() -> Result<BackendConfig, anyhow::Error> {
 	let cfg = Config::builder()
 		.add_source(config::File::with_name("backend_config"))
-		.add_source(config::Environment::with_prefix("RCH").separator("__"))
+		.add_source(
+			config::Environment::with_prefix("RCH")
+				.separator("__")
+				.try_parsing(true)
+				.list_separator(","),
+		)
 		.build()?;
 
 	let mut cfg = cfg.try_deserialize::<BackendConfig>()?;
