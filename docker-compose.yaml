@@ -24,7 +24,7 @@ services:
         restart: always
 
     worker1:
-        image: reacherhq/backend:v0.10.0-beta.3
+        image: reacherhq/backend:beta
         container_name: worker1
         ports:
             - "8080:8080"
@@ -38,10 +38,11 @@ services:
             RCH__WORKER__ENABLE: true
             RCH__WORKER__RABBITMQ__URL: amqp://guest:guest@rabbitmq:5672
             RCH__WORKER__POSTGRES__DB_URL: postgres://postgres:postgres@postgres:5432/reacher_db
+            RCH__WORKER__THROTTLE__MAX_REQUESTS_PER_DAY: 10000 # Recommended limit per IP per day
         restart: always
 
     worker2:
-        image: reacherhq/backend:v0.10.0-beta.3
+        image: reacherhq/backend:beta
         container_name: worker2
         ports:
             - "8081:8080"
@@ -55,4 +56,5 @@ services:
             RCH__WORKER__ENABLE: true
             RCH__WORKER__RABBITMQ__URL: amqp://guest:guest@rabbitmq:5672
             RCH__WORKER__POSTGRES__DB_URL: postgres://postgres:postgres@postgres:5432/reacher_db
+            RCH__WORKER__THROTTLE__MAX_REQUESTS_PER_DAY: 10000 # Recommended limit per IP per day
         restart: always

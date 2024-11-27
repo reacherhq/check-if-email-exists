@@ -22,7 +22,7 @@ use crate::worker::setup_rabbit_mq;
 use anyhow::bail;
 use check_if_email_exists::{
 	CheckEmailInputProxy, GmailVerifMethod, HotmailB2BVerifMethod, HotmailB2CVerifMethod,
-	YahooVerifMethod,
+	YahooVerifMethod, LOG_TARGET,
 };
 use config::Config;
 #[cfg(feature = "worker")]
@@ -33,6 +33,7 @@ use sqlx::PgPool;
 #[cfg(feature = "worker")]
 use std::sync::Arc;
 use std::{env, fmt};
+use tracing::warn;
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct BackendConfig {
@@ -369,6 +370,10 @@ pub async fn load_config() -> Result<BackendConfig, anyhow::Error> {
 		.build()?;
 
 	let mut cfg = cfg.try_deserialize::<BackendConfig>()?;
+
+	if !cfg.worker.enable && (cfg.worker.rabbitmq.is_some() || cfg.worker.throttle.is_some()) {
+		warn!(target: LOG_TARGET, "worker.enable is set to false, ignoring throttling and concurrency settings.")
+	}
 
 	let pg_pool = if cfg.worker.enable {
 		let db_url = cfg

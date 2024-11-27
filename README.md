@@ -36,15 +36,12 @@ Then send a `POST http://localhost:8080/v0/check_email` request with the followi
 ```js
 {
     "to_email": "someone@gmail.com",
-    "from_email": "my@my-server.com", // (optional) email to use in the `FROM` SMTP command, defaults to "user@example.org"
-    "hello_name": "my-server.com",    // (optional) name to use in the `EHLO` SMTP command, defaults to "localhost"
     "proxy": {                        // (optional) SOCK5 proxy to run the verification through, default is empty
         "host": "my-proxy.io",
         "port": 1080,
         "username": "me",             // (optional) Proxy username
         "password": "pass"            // (optional) Proxy password
     },
-    "smtp_port": 587                  // (optional) SMTP port to do the email verification, defaults to 25
 }
 ```
 

@@ -9,10 +9,11 @@
 
 <br /><br />
 
-This crate holds the backend for [Reacher](https://reacher.email). The backend is a HTTP server with the following components:
+This crate holds the backend for [Reacher](https://reacher.email). The backend is both a HTTP server and a email verification worker. It has with the following components:
 
 -   [`check-if-email-exists`](https://github.com/reacherhq/check-if-email-exists), which performs the core email verification logic,
--   [`warp`](https://github.com/seanmonstar/warp) web framework.
+-   [`warp`](https://github.com/seanmonstar/warp) web framework,
+-   [`RabbitMQ`](https://www.rabbitmq.com/) worker for consuming a queue of incoming verification requests.
 
 ## Get Started
 
@@ -29,69 +30,22 @@ Then send a `POST http://localhost:8080/v0/check_email` request with the followi
 ```js
 {
     "to_email": "someone@gmail.com",
-    "from_email": "my@my-server.com", // (optional) email to use in the `FROM` SMTP command, defaults to "user@example.org"
-    "hello_name": "my-server.com",    // (optional) name to use in the `EHLO` SMTP command, defaults to "localhost"
     "proxy": {                        // (optional) SOCK5 proxy to run the verification through, default is empty
         "host": "my-proxy.io",
         "port": 1080,
         "username": "me",             // (optional) Proxy username
         "password": "pass"            // (optional) Proxy password
     },
-    "smtp_port": 587                  // (optional) SMTP port to do the email verification, defaults to 25
 }
 ```
 
-### Configuration
+## Configuration
 
-These are the environment variables used to configure the HTTP server. To pass them to the Docker container, use the `-e {ENV_VAR}={VALUE}` flag.
+The backend is configured via its [`backend_config.toml`](./backend_config.toml) file.
 
-| Env Var                             | Required?                   | Description                                                                                                                                                                                                                                 | Dockerfile default      |
-| ----------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
-| `RUST_LOG`                          | No                          | One of `trace,debug,warn,error,info`. 💡 PRO TIP: `RUST_LOG=debug` is very handful for debugging purposes.                                                                                                                                  | `reacher=info`          |
-| `RCH_HTTP_HOST`                     | No                          | The host name to bind the HTTP server to.                                                                                                                                                                                                   | `0.0.0.0`               |
-| `PORT`                              | No                          | The port to bind the HTTP server to, often populated by the cloud provider.                                                                                                                                                                 | `8080`                  |
-| `RCH_SENTRY_DSN`                    | No                          | If set, bug reports will be sent to this [Sentry](https://sentry.io) DSN.                                                                                                                                                                   | not defined             |
-| `RCH_HEADER_SECRET`                 | No                          | If set, then all HTTP requests must have the `x-reacher-secret` header set to this value. This is used to protect the backend against public unwanted HTTP requests.                                                                        | undefined               |
-| `RCH_FROM_EMAIL`                    | No                          | Email to use in the `<MAIL FROM:>` SMTP step. Can be overwritten by each API request's `from_email` field.                                                                                                                                  | reacher.email@gmail.com |
-| `RCH_HELLO_NAME`                    | No                          | Name to use in the `<EHLO>` SMTP step. Can be overwritten by each API request's `hello_name` field.                                                                                                                                         | gmail.com               |
-| `RCH_SMTP_TIMEOUT`                  | No                          | Timeout for each SMTP connection.                                                                                                                                                                                                           | 45s                     |
-| `RCH_WEBDRIVER_ADDR`                | No                          | Set to a running WebDriver process endpoint (e.g. `http://localhost:9515`) to use a headless navigator to password recovery pages to check Yahoo and Hotmail/Outlook addresses. We recommend `chromedriver` as it allows parallel requests. | `http://localhost:9515` |
-| **For Bulk Verification:**          |                             |                                                                                                                                                                                                                                             |
-| `RCH_ENABLE_BULK`                   | No                          | If set to `1`, then bulk verification endpoints will be added to the backend.                                                                                                                                                               | 0                       |
-| `DATABASE_URL`                      | Yes if `RCH_ENABLE_BULK==1` | [Bulk] Database connection string for storing results and task queue                                                                                                                                                                        | not defined             |
-| `RCH_DATABASE_MAX_CONNECTIONS`      | No                          | [Bulk] Connections created for the database pool                                                                                                                                                                                            | 5                       |
-| `RCH_MINIMUM_TASK_CONCURRENCY`      | No                          | [Bulk] Minimum number of concurrent running tasks below which more tasks are fetched                                                                                                                                                        | 10                      |
-| `RCH_MAXIMUM_CONCURRENT_TASK_FETCH` | No                          | [Bulk] Maximum number of tasks fetched at once                                                                                                                                                                                              | 20                      |
+## API Documentation
 
-## REST API Documentation
-
-The API exposes the following endpoint: `POST /v0/check_email` expecting the following body:
-
-```js
-{
-    "to_email": "someone@gmail.com",
-    "from_email": "my@my-server.com", // (optional) email to use in the `FROM` SMTP command, defaults to "user@example.org"
-    "hello_name": "my-server.com",    // (optional) name to use in the `EHLO` SMTP command, defaults to "localhost"
-    "proxy": {                        // (optional) SOCK5 proxy to run the verification through, default is empty
-        "host": "my-proxy.io",
-        "port": 1080,
-        "username": "me",             // (optional) Proxy username
-        "password": "pass"            // (optional) Proxy password
-    },
-    "smtp_port": 587                  // (optional) SMTP port to do the email verification, defaults to 25
-}
-```
-
-For example, you can send the following `curl` request:
-
-```bash
-curl -X POST \
-    -H'Content-Type: application/json' \
-    -d'{"to_email":"someone@gmail.com"}' \
-    http://localhost:8080/v0/check_email
-```
-
-Also check the [OpenAPI documentation](https://docs.reacher.email/advanced/openapi).
+See the full [OpenAPI documentation](https://docs.reacher.email/advanced/openapi).
 
 ## Build From Source
 
@@ -100,13 +54,10 @@ You can build the backend from source to generate a binary, and run the server l
 ```bash
 # Download the code
 $ git clone https://github.com/reacherhq/check-if-email-exists
-$ cd check-if-email-exists
+$ cd check-if-email-exists/backend
 
-# Build the backend binary in release mode (more performant).
-$ cargo build --release --bin reacher_backend
-
-# Run the binary with some useful logs.
-$ RUST_LOG=info ./target/release/reacher_backend
+# Run the backend binary in release mode (slower build, but more performant).
+$ cargo run --release --bin reacher_backend --features worker
 ```
 
 The server will then be listening on `http://127.0.0.1:8080`.

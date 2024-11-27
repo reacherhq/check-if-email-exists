@@ -1,40 +1,63 @@
-# Backend configuration
+# Backend configuration.
 
 # Name to identify the backend.
+#
+# Env variable: RCH__BACKEND_NAME
 backend_name = "backend-dev"
 
 # Host to bind the backend to.
+#
+# Env variable: RCH__HTTP_HOST
 http_host = "127.0.0.1"
 
 # Port for the backend.
+#
+# Env variable: RCH__HTTP_PORT
 http_port = 8080
 
 # Shared secret between a trusted client and the backend, required in the
 # `x-reacher-secret` header of all incoming requests.
+#
+# Env variable: RCH__HEADER_SECRET
 # header_secret = "my-secret"
 
 # Name to use during the EHLO/HELO command in the SMTP conversation.
 # Ideally, this should match the reverse DNS of the server's IP address.
-hello_name = "reacher"
+#
+# Env variable: RCH__HELLO_NAME
+hello_name = "localhost"
 
 # Email to use during the MAIL FROM command in the SMTP conversation.
 # Ideally, the domain of this email should match the "hello_name" above.
-from_email = "reacher@gmail.com"
+#
+# Env variable: RCH__FROM_EMAIL
+from_email = "hello@localhost"
 
 # Address of the Chrome WebDriver server for headless email verifications.
+#
+# Env variable: RCH__WEBDRIVER_ADDR
 webdriver_addr = "http://localhost:9515"
 
 # Timeout for each SMTP connection, in seconds. Leaving it commented out will
 # not set a timeout, i.e. the connection will wait indefinitely.
+#
+# Env variable: RCH__SMTP_TIMEOUT
 # smtp_timeout = 45
 
-# Uncomment the following lines to route all SMTP verification requests through
-# a specified proxy. Note that the proxy must be a SOCKS5 proxy to work with
-# the SMTP protocol. This proxy will not be used for headless verifications.
+# Uncomment the lines below to route all SMTP verification requests
+# through a specified proxy. Note that the proxy must be a SOCKS5 proxy to work
+# with the SMTP protocol. This proxy will not be used for headless
+# verifications.
 #
 # The username and password are optional and only needed if the proxy requires
 # authentication.
-# 
+#
+# Env variables:
+# - RCH__PROXY__HOST
+# - RCH__PROXY__PORT
+# - RCH__PROXY__USERNAME
+# - RCH__PROXY__PASSWORD
+#
 # [proxy]
 # host = "my.proxy.com"
 # port = 1080
@@ -46,8 +69,12 @@ webdriver_addr = "http://localhost:9515"
 # all email providers.
 [verif_method]
 # Gmail currently only supports the "smtp" method.
+#
+# Env variable: RCH__VERIF_METHOD__GMAIL
 gmail = "smtp"
 # Hotmail B2B currently only supports the "smtp" method.
+#
+# Env variable: RCH__VERIF_METHOD__HOTMAILB2B
 hotmailb2b = "smtp"
 # Hotmail B2C supports both "headless" and "smtp" methods. The "headless"
 # method is recommended.
@@ -59,10 +86,13 @@ yahoo = "headless"
 [worker]
 # Enable the worker to consume emails from the RabbitMQ queues. If set, the
 # RabbitMQ configuration below must be set as well.
+#
+# Env variable: RCH__WORKER__ENABLE
 enable = true
 
 # RabbitMQ configuration.
 [worker.rabbitmq]
+# Env variable: RCH__WORKER__RABBITMQ__URL
 url = "amqp://guest:guest@localhost:5672"
 
 # Queues to consume emails from. By default, the worker consumes from all
@@ -78,10 +108,14 @@ url = "amqp://guest:guest@localhost:5672"
 # - "check.yahoo": subscribe exclusively to Yahoo emails.
 # - "check.everything_else": subscribe to all emails that are not Gmail, Yahoo, or Hotmail.
 #
+# Env variable: RCH__WORKER__RABBITMQ__QUEUES
+#
 # queues = ["check.gmail", "check.hotmail.b2b", "check.hotmail.b2c", "check.yahoo", "check.everything_else"]
 queues = "all"
 
 # Number of concurrent emails to verify for this worker across all queues.
+#
+# Env variable: RCH__WORKER__RABBITMQ__CONCURRENCY
 concurrency = 20
 
 # Throttle the maximum number of requests per second, per minute, per hour, and
@@ -91,6 +125,12 @@ concurrency = 20
 # Important: these throttle configurations only apply to /v1/* endpoints, and
 # not to the previous /v0/check_email endpoint. The latter endpoint always
 # executes the verification immediately, regardless of the throttle settings.
+#
+# Env variables:
+# - RCH__WORKER__THROTTLE__MAX_REQUESTS_PER_SECOND
+# - RCH__WORKER__THROTTLE__MAX_REQUESTS_PER_MINUTE
+# - RCH__WORKER__THROTTLE__MAX_REQUESTS_PER_HOUR
+# - RCH__WORKER__THROTTLE__MAX_REQUESTS_PER_DAY
 [worker.throttle]
 # max_requests_per_second = 20
 # max_requests_per_minute = 100
@@ -101,10 +141,10 @@ concurrency = 20
 # the results of the verifications. This might change in the future, allowing
 # for pluggable storage.
 [worker.postgres]
+# Env variable: RCH__WORKER__POSTGRES__DB_URL
 db_url = "postgresql://localhost/reacherdb"
 
-# Optional Sentry configuration. If set, all errors will be sent to Sentry.
-# [sentry]
-# dsn = "<PASTE_YOUR_DSN_NOW>"
-# Identifier sent to Sentry, usually the same as the the top-level backend_name.
-# backend_name = "backend-dev"
+# Optional Sentry DSN. If set, all errors will be sent to Sentry.
+#
+# Env variable: RCH__SENTRY_DSN
+# sentry_dsn = "<PASTE_YOUR_DSN_NOW>"
