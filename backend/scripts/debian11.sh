@@ -26,6 +26,11 @@ RCH__FROM_EMAIL=${RCH__FROM_EMAIL:-"hello@mycompany.com"}
 RCH__HELLO_NAME=${RCH__HELLO_NAME:-"backend1.mycompany.com"}
 # Timeout for SMTP connections in seconds.
 RCH__SMTP_TIMEOUT=${RCH__SMTP_TIMEOUT:-"90"}
+# Proxy settings.
+RCH__PROXY__HOST=${RCH__PROXY__HOST:-}
+RCH__PROXY__PORT=${RCH__PROXY__PORT:-}
+RCH__PROXY__USERNAME=${RCH__PROXY__USERNAME:-}
+RCH__PROXY__PASSWORD=${RCH__PROXY__PASSWORD:-}
 # Logging. Setup to "debug" to show all logs.
 RUST_LOG=${RUST_LOG:-"info"}
 
