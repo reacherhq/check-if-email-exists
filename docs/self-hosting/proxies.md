@@ -1,5 +1,7 @@
 # Proxies
 
+Maintaining a good IP reputation is hard. Reacher integrates seamlessly with SOCKS5 proxies.
+
 ## What is a SOCKS5 Proxy?
 
 A **SOCKS5 proxy** is a flexible proxy protocol that supports various types of traffic, including SMTP. When using it for email verifications, the reputation of the **proxy’s IP** is what matters, not your own IP. The proxy handles requests on your behalf, which helps protect your actual IP while ensuring verifications go through successfully. This is crucial for maintaining deliverability and avoiding issues like blacklisting.

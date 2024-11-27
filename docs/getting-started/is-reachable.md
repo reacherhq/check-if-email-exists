@@ -127,4 +127,4 @@ The full response contains more details about the email verification. It is prov
 
 ```
 
-You can also check the [openapi.md](../advanced/openapi.md "mention")specification.
+You can also check the [openapi](../advanced/openapi/ "mention")specification.

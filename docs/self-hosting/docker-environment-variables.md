@@ -1,4 +1,8 @@
-# Docker Environment Variables
+# Docker Environment Variables (v0.7)
+
+{% hint style="info" %}
+This page only applies to Reacher version 0.7. For the `beta` v0.10 version, see [reacher-configuration-v0.10.md](../advanced/migrations/reacher-configuration-v0.10.md "mention").
+{% endhint %}
 
 Reacher's software is available on [Docker Hub](https://hub.docker.com/r/reacherhq/backend/tags). You can get started using the default parameters:
 
