@@ -33,7 +33,8 @@ async fn main() -> Result<(), anyhow::Error> {
 	// Initialize logging.
 	tracing_subscriber::fmt::init();
 	info!(target: LOG_TARGET, version=?CARGO_PKG_VERSION, "Running Reacher");
-	let config = load_config().await?;
+	let mut config = load_config().await?;
+	config.connect().await?;
 	debug!(target: LOG_TARGET, "{:#?}", config);
 
 	// Setup sentry bug tracking.
