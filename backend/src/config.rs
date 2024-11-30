@@ -107,7 +107,7 @@ impl BackendConfig {
 				postgres: postgres.clone(),
 			}),
 			#[cfg(feature = "worker")]
-			(true, _, _, _, _, _, _) => bail!("Worker configuration is missing"),
+			(true, _, _, _, _, _) => bail!("Worker configuration is missing"),
 			_ => bail!("Calling must_worker_config on a non-worker backend"),
 		}
 	}
@@ -232,19 +232,10 @@ impl ThrottleConfig {
 /// Load the worker configuration from the worker_config.toml file and from the
 /// environment.
 pub async fn load_config() -> Result<BackendConfig, anyhow::Error> {
-	let mut cfg = Config::builder()
+	let cfg = Config::builder()
 		.add_source(config::File::with_name("backend_config"))
 		.add_source(config::Environment::with_prefix("RCH").separator("__"));
 
-	// The RCH__WORKER__RABBITMQ__QUEUES is always read as a str, whereas we
-	// sometimes want to parse it as a list of strings, if it's not "all". We
-	// handle this case separately.
-	if let Ok(queues) = env::var("RCH__WORKER__RABBITMQ__QUEUES") {
-		if queues != "all" {
-			let queues: Vec<String> = queues.split(',').map(String::from).collect();
-			cfg = cfg.set_override("worker.rabbitmq.queues", queues)?;
-		}
-	}
 	let cfg = cfg.build()?.try_deserialize::<BackendConfig>()?;
 
 	if !cfg.worker.enable && (cfg.worker.rabbitmq.is_some() || cfg.worker.throttle.is_some()) {

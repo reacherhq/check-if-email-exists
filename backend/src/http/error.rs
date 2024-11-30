@@ -17,7 +17,6 @@
 use check_if_email_exists::{CheckEmailInputBuilderError, LOG_TARGET};
 use serde::ser::SerializeStruct;
 use serde::Serialize;
-use sqlx::any;
 use std::fmt;
 use std::fmt::Debug;
 use tracing::error;

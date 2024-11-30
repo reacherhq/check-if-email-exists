@@ -76,7 +76,8 @@ async fn http_handler(
 	.map_err(ReacherResponseError::from)?;
 
 	let n = body.input.len();
-	let stream = futures::stream::iter(body.input);
+	let webhook = body.webhook.clone();
+	let stream = futures::stream::iter(body.input.into_iter());
 
 	let properties = BasicProperties::default()
 		.with_content_type("application/json".into())
@@ -95,7 +96,7 @@ async fn http_handler(
 			let task = CheckEmailTask {
 				input,
 				job_id: CheckEmailJobId::Bulk(rec.id),
-				webhook: body.webhook.clone(),
+				webhook: webhook.clone(),
 			};
 
 			publish_task(
@@ -113,7 +114,7 @@ async fn http_handler(
 	info!(
 		target: LOG_TARGET,
 		queue = CHECK_EMAIL_QUEUE,
-		"Added {n} emails to the queue",
+		"Added {n} emails",
 	);
 	Ok(warp::reply::json(&Response { job_id: rec.id }))
 }

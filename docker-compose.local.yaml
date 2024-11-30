@@ -27,39 +27,37 @@ services:
             - ./backend/postgres_data:/var/lib/postgresql/data
         restart: always
 
-    worker_smtp:
+    worker1:
         build:
             context: .
             dockerfile: backend/Dockerfile
-        container_name: worker_smtp
+        container_name: worker1
         ports:
             - "8080:8080"
         depends_on:
             - postgres
             - rabbitmq
         environment:
-            RCH__BACKEND_NAME: worker_smtp
+            RCH__BACKEND_NAME: worker1
             RUST_LOG: reacher=info
-            RCH__HTTP_HOST: 0.0.0.0
             RCH__WORKER__ENABLE: true
             RCH__WORKER__RABBITMQ__URL: amqp://guest:guest@rabbitmq:5672
             RCH__WORKER__POSTGRES__DB_URL: postgres://postgres:postgres@postgres:5432/reacher_db
         restart: always
 
-    worker_headless:
+    worker2:
         build:
             context: .
             dockerfile: backend/Dockerfile
-        container_name: worker_headless
+        container_name: worker2
         ports:
             - "8081:8080"
         depends_on:
             - postgres
             - rabbitmq
         environment:
-            RCH__BACKEND_NAME: worker_headless
+            RCH__BACKEND_NAME: worker2
             RUST_LOG: reacher=info
-            RCH__HTTP_HOST: 0.0.0.0
             RCH__WORKER__ENABLE: true
             RCH__WORKER__RABBITMQ__URL: amqp://guest:guest@rabbitmq:5672
             RCH__WORKER__POSTGRES__DB_URL: postgres://postgres:postgres@postgres:5432/reacher_db
