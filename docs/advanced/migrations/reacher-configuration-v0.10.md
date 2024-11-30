@@ -106,28 +106,10 @@ enable = true
 # Env variable: RCH__WORKER__RABBITMQ__URL
 url = "amqp://guest:guest@localhost:5672"
 
-# Queues to consume emails from. By default, the worker consumes from all
-# queues.
-#
-# To consume from only a subset of queues, uncomment the line `queues = "all"`
-# and specify the queues you want to consume from.
-#
-# Below is the exhaustive list of queue names that the worker can consume from:
-# - "check.gmail": subscribe exclusively to Gmail emails.
-# - "check.hotmailb2b": subscribe exclusively to Hotmail B2B emails.
-# - "check.hotmailb2c": subscribe exclusively to Hotmail B2C emails.
-# - "check.yahoo": subscribe exclusively to Yahoo emails.
-# - "check.everything_else": subscribe to all emails that are not Gmail, Yahoo, or Hotmail.
-#
-# Env variable: RCH__WORKER__RABBITMQ__QUEUES
-#
-# queues = ["check.gmail", "check.hotmail.b2b", "check.hotmail.b2c", "check.yahoo", "check.everything_else"]
-queues = "all"
-
-# Number of concurrent emails to verify for this worker across all queues.
+# Number of concurrent emails to verify for this worker.
 #
 # Env variable: RCH__WORKER__RABBITMQ__CONCURRENCY
-concurrency = 20
+concurrency = 5
 
 # Throttle the maximum number of requests per second, per minute, per hour, and
 # per day for this worker.
@@ -159,6 +141,7 @@ db_url = "postgresql://localhost/reacherdb"
 #
 # Env variable: RCH__SENTRY_DSN
 # sentry_dsn = "<PASTE_YOUR_DSN_NOW>"
+
 ```
 
 ## Usage with Docker
