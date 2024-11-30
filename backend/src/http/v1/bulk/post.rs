@@ -25,20 +25,20 @@ use lapin::Channel;
 use lapin::{options::*, BasicProperties};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
-use tracing::info;
+use tracing::{debug, info};
 use warp::http::StatusCode;
 use warp::Filter;
 
 use crate::config::BackendConfig;
 use crate::http::check_header;
-use crate::http::v1::with_channel;
+use crate::http::v0::check_email::post::with_config;
 use crate::http::with_db;
 use crate::http::CheckEmailRequest;
 use crate::http::ReacherResponseError;
-use crate::worker::check_email::TaskWebhook;
-use crate::worker::preprocess::PreprocessTask;
-
-const PREPROCESS_QUEUE: &str = "preprocess";
+use crate::worker::consume::CHECK_EMAIL_QUEUE;
+use crate::worker::do_work::CheckEmailJobId;
+use crate::worker::do_work::CheckEmailTask;
+use crate::worker::do_work::TaskWebhook;
 
 /// POST v1/bulk endpoint request body.
 #[derive(Debug, Deserialize)]
@@ -54,7 +54,7 @@ struct Response {
 }
 
 async fn http_handler(
-	channel: Arc<Channel>,
+	config: Arc<BackendConfig>,
 	pg_pool: PgPool,
 	body: Request,
 ) -> Result<impl warp::Reply, warp::Rejection> {
@@ -75,64 +75,63 @@ async fn http_handler(
 	.await
 	.map_err(ReacherResponseError::from)?;
 
-	let payloads = body.input.iter().map(|email| {
-		let input = CheckEmailRequest {
-			to_email: email.clone(),
-			from_email: None,
-			hello_name: None,
-			proxy: None,
-			gmail_verif_method: None,
-			hotmailb2b_verif_method: None,
-			hotmailb2c_verif_method: None,
-			yahoo_verif_method: None,
-			smtp_port: None,
-		};
-
-		Ok(PreprocessTask {
-			input,
-			job_id: Some(rec.id),
-			webhook: body.webhook.clone(),
-		})
-	});
-	let payloads = payloads.collect::<Result<Vec<_>, ReacherResponseError>>()?;
-
-	let n = payloads.len();
-	let stream = futures::stream::iter(payloads);
+	let n = body.input.len();
+	let webhook = body.webhook.clone();
+	let stream = futures::stream::iter(body.input.into_iter());
 
 	let properties = BasicProperties::default()
 		.with_content_type("application/json".into())
-		.with_priority(1);
+		.with_priority(1); // Low priority
 
 	stream
 		.map::<Result<_, ReacherResponseError>, _>(Ok)
-		.try_for_each_concurrent(10, |payload| async {
-			publish_task(Arc::clone(&channel), payload, properties.clone()).await
+		// Publish tasks to the queue, 10 at a time.
+		.try_for_each_concurrent(10, |to_email| async {
+			let input = CheckEmailRequest {
+				to_email,
+				..Default::default()
+			}
+			.to_check_email_input(Arc::clone(&config));
+
+			let task = CheckEmailTask {
+				input,
+				job_id: CheckEmailJobId::Bulk(rec.id),
+				webhook: webhook.clone(),
+			};
+
+			publish_task(
+				config
+					.must_worker_config()
+					.map_err(ReacherResponseError::from)?
+					.channel,
+				task,
+				properties.clone(),
+			)
+			.await
 		})
 		.await?;
 
 	info!(
 		target: LOG_TARGET,
-		queue = PREPROCESS_QUEUE,
-		"Added {n} emails to the queue",
+		queue = CHECK_EMAIL_QUEUE,
+		"Added {n} emails",
 	);
 	Ok(warp::reply::json(&Response { job_id: rec.id }))
 }
 
-/// Publish a task to the "preprocess" queue.
+/// Publish a task to the "check_email" queue.
 pub async fn publish_task(
 	channel: Arc<Channel>,
-	payload: PreprocessTask,
+	task: CheckEmailTask,
 	properties: BasicProperties,
 ) -> Result<(), ReacherResponseError> {
-	let channel = Arc::clone(&channel);
-
-	let payload_u8 = serde_json::to_vec(&payload)?;
+	let task_json = serde_json::to_vec(&task)?;
 	channel
 		.basic_publish(
 			"",
-			PREPROCESS_QUEUE,
+			CHECK_EMAIL_QUEUE,
 			BasicPublishOptions::default(),
-			&payload_u8,
+			&task_json,
 			properties,
 		)
 		.await
@@ -140,7 +139,7 @@ pub async fn publish_task(
 		.await
 		.map_err(ReacherResponseError::from)?;
 
-	info!(target: LOG_TARGET, email=?payload.input.to_email, queue=?PREPROCESS_QUEUE, "Published task");
+	debug!(target: LOG_TARGET, email=?task.input.to_email, queue=?CHECK_EMAIL_QUEUE, "Published task");
 
 	Ok(())
 }
@@ -154,7 +153,7 @@ pub fn v1_create_bulk_job(
 	warp::path!("v1" / "bulk")
 		.and(warp::post())
 		.and(check_header(Arc::clone(&config)))
-		.and(with_channel(config.get_preprocess_channel()))
+		.and(with_config(Arc::clone(&config)))
 		.and(with_db(config.get_pg_pool()))
 		// When accepting a body, we want a JSON body (and to reject huge
 		// payloads)...

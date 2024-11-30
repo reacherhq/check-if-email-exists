@@ -33,17 +33,16 @@ use warp::http::StatusCode;
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CheckEmailTask {
 	pub input: CheckEmailInput,
-	// If the task is a part of a job, then this field will be set.
-	pub job_id: Option<i32>,
+	pub job_id: CheckEmailJobId,
 	pub webhook: Option<TaskWebhook>,
 }
 
-impl CheckEmailTask {
-	/// Returns true if the task is a single-shot email verification via the
-	/// /v1/check_email, endpoint, i.e. not a part of a bulk verification job.
-	pub fn is_single_shot(&self) -> bool {
-		self.job_id.is_none()
-	}
+#[derive(Debug, Deserialize, Serialize)]
+pub enum CheckEmailJobId {
+	/// Single-shot email verification, they won't have an actual job id.
+	SingleShot,
+	/// Job id of the bulk verification.
+	Bulk(i32),
 }
 
 /// The errors that can occur when processing a task.
@@ -112,12 +111,12 @@ struct WebhookOutput<'a> {
 
 /// Processes the check email task asynchronously.
 pub(crate) async fn do_check_email_work(
-	payload: &CheckEmailTask,
+	task: &CheckEmailTask,
 	delivery: Delivery,
 	channel: Arc<Channel>,
 	config: Arc<BackendConfig>,
 ) -> Result<(), anyhow::Error> {
-	let worker_output = inner_check_email(payload).await;
+	let worker_output = inner_check_email(task).await;
 
 	match (&worker_output, delivery.redelivered) {
 		(Ok(output), false) if output.is_reachable == Reachable::Unknown => {
@@ -127,14 +126,14 @@ pub(crate) async fn do_check_email_work(
 			delivery
 				.reject(BasicRejectOptions { requeue: true })
 				.await?;
-			info!(target: LOG_TARGET, email=?&payload.input.to_email, is_reachable=?Reachable::Unknown, "Requeued message");
+			info!(target: LOG_TARGET, email=?&task.input.to_email, is_reachable=?Reachable::Unknown, "Requeued message");
 		}
 		(Err(e), false) => {
 			// Same as above, if processing the message failed, we requeue it.
 			delivery
 				.reject(BasicRejectOptions { requeue: true })
 				.await?;
-			info!(target: LOG_TARGET, email=?&payload.input.to_email, err=?e, "Requeued message");
+			info!(target: LOG_TARGET, email=?&task.input.to_email, err=?e, "Requeued message");
 		}
 		_ => {
 			// This is the happy path. We acknowledge the message and:
@@ -142,22 +141,26 @@ pub(crate) async fn do_check_email_work(
 			// - If it's a bulk verification, we save the result to the database.
 			delivery.ack(BasicAckOptions::default()).await?;
 
-			if payload.is_single_shot() {
-				send_single_shot_reply(channel, &delivery, &worker_output).await?;
-			} else {
-				save_to_db(
-					&config.backend_name,
-					config.get_pg_pool(),
-					payload,
-					&worker_output,
-				)
-				.await?;
+			match task.job_id {
+				CheckEmailJobId::SingleShot => {
+					send_single_shot_reply(channel, &delivery, &worker_output).await?;
+				}
+				CheckEmailJobId::Bulk(bulk_job_id) => {
+					save_to_db(
+						&config.backend_name,
+						config.get_pg_pool(),
+						task,
+						bulk_job_id,
+						&worker_output,
+					)
+					.await?;
+				}
 			}
 
 			info!(target: LOG_TARGET,
-				email=payload.input.to_email,
+				email=task.input.to_email,
 				worker_output=?worker_output.map(|o| o.is_reachable),
-				job_id=?payload.job_id,
+				job_id=?task.job_id,
 				"Done check",
 			);
 		}
@@ -166,13 +169,13 @@ pub(crate) async fn do_check_email_work(
 	Ok(())
 }
 
-async fn inner_check_email(payload: &CheckEmailTask) -> Result<CheckEmailOutput, TaskError> {
-	let output = check_email(&payload.input).await;
+async fn inner_check_email(task: &CheckEmailTask) -> Result<CheckEmailOutput, TaskError> {
+	let output = check_email(&task.input).await;
 
 	// Check if we have a webhook to send the output to.
 	if let Some(TaskWebhook {
 		on_each_email: Some(webhook),
-	}) = &payload.webhook
+	}) = &task.webhook
 	{
 		let webhook_output = WebhookOutput {
 			result: &output,
