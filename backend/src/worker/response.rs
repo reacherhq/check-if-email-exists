@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use super::check_email::{CheckEmailTask, TaskError};
+use super::do_work::{CheckEmailTask, TaskError};
 use anyhow::bail;
 use check_if_email_exists::{CheckEmailOutput, LOG_TARGET};
 use lapin::message::Delivery;
@@ -37,13 +37,13 @@ use warp::http::StatusCode;
 pub async fn save_to_db(
 	backend_name: &str,
 	pg_pool: Option<PgPool>,
-	payload: &CheckEmailTask,
+	task: &CheckEmailTask,
+	bulk_job_id: i32,
 	worker_output: &Result<CheckEmailOutput, TaskError>,
 ) -> Result<(), anyhow::Error> {
 	let pg_pool = pg_pool.ok_or_else(|| anyhow::anyhow!("No DB pool provided"))?;
-	let job_id = payload.job_id.unwrap();
 
-	let payload_json = serde_json::to_value(payload)?;
+	let payload_json = serde_json::to_value(task)?;
 
 	match worker_output {
 		Ok(output) => {
@@ -56,7 +56,7 @@ pub async fn save_to_db(
 				RETURNING id
 				"#,
 				payload_json,
-				job_id,
+				bulk_job_id,
 				backend_name,
 				output_json,
 			)
@@ -71,7 +71,7 @@ pub async fn save_to_db(
 				RETURNING id
 				"#,
 				payload_json,
-				job_id,
+				bulk_job_id,
 				backend_name,
 				err.to_string(),
 			)
@@ -80,7 +80,7 @@ pub async fn save_to_db(
 		}
 	}
 
-	debug!(target: LOG_TARGET, email=?payload.input.to_email, "Wrote to DB");
+	debug!(target: LOG_TARGET, email=?task.input.to_email, "Wrote to DB");
 
 	Ok(())
 }

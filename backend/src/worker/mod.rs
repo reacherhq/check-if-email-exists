@@ -17,13 +17,11 @@
 // Each file corresponds to one step in the worker pipeline. The worker pipeline
 // is defined as:
 // - consume from RabbitMQ
-// - preprocess
-// - check email
+// - do the work (i.e. check the email)
 // - send response (either to the reply_to queue or save to the database)
 
-pub mod check_email;
 pub mod consume;
-pub mod preprocess;
+pub mod do_work;
 pub mod response;
 
 pub use consume::{run_worker, setup_rabbit_mq};

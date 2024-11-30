@@ -22,7 +22,7 @@ use lapin::options::{
 	BasicAckOptions, BasicConsumeOptions, BasicRejectOptions, QueueDeclareOptions,
 };
 use lapin::types::FieldTable;
-use lapin::{BasicProperties, Channel};
+use lapin::BasicProperties;
 use std::sync::Arc;
 use warp::http::StatusCode;
 use warp::{http, Filter};
@@ -30,16 +30,14 @@ use warp::{http, Filter};
 use crate::config::BackendConfig;
 use crate::http::v0::check_email::post::{with_config, CheckEmailRequest};
 use crate::http::v1::bulk::post::publish_task;
-use crate::http::v1::with_channel;
 use crate::http::{check_header, ReacherResponseError};
 use crate::worker::consume::MAX_QUEUE_PRIORITY;
-use crate::worker::preprocess::PreprocessTask;
+use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask};
 use crate::worker::response::SingleShotReply;
 
 /// The main endpoint handler that implements the logic of this route.
 async fn http_handler(
 	config: Arc<BackendConfig>,
-	channel: Arc<Channel>,
 	body: CheckEmailRequest,
 ) -> Result<impl warp::Reply, warp::Rejection> {
 	// The to_email field must be present
@@ -61,6 +59,10 @@ async fn http_handler(
 			"application/json",
 		));
 	}
+	let channel = config
+		.must_worker_config()
+		.map_err(ReacherResponseError::from)?
+		.channel;
 
 	// Follow this RPC tutorial:
 	// https://www.rabbitmq.com/tutorials/tutorial-six-javascript#callback-queue
@@ -87,9 +89,9 @@ async fn http_handler(
 
 	publish_task(
 		channel.clone(),
-		PreprocessTask {
-			input: body,
-			job_id: None,
+		CheckEmailTask {
+			input: body.to_check_email_input(config),
+			job_id: CheckEmailJobId::SingleShot,
 			webhook: None,
 		},
 		properties,
@@ -169,7 +171,6 @@ pub fn v1_check_email(
 		.and(warp::post())
 		.and(check_header(Arc::clone(&config)))
 		.and(with_config(config.clone()))
-		.and(with_channel(config.get_preprocess_channel()))
 		// When accepting a body, we want a JSON body (and to reject huge
 		// payloads)...
 		.and(warp::body::content_length_limit(1024 * 16))

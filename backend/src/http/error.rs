@@ -17,6 +17,7 @@
 use check_if_email_exists::{CheckEmailInputBuilderError, LOG_TARGET};
 use serde::ser::SerializeStruct;
 use serde::Serialize;
+use sqlx::any;
 use std::fmt;
 use std::fmt::Debug;
 use tracing::error;
@@ -104,6 +105,12 @@ impl From<csv::IntoInnerError<csv::Writer<Vec<u8>>>> for ReacherResponseError {
 
 impl From<warp::http::status::InvalidStatusCode> for ReacherResponseError {
 	fn from(e: warp::http::status::InvalidStatusCode) -> Self {
+		ReacherResponseError::new(StatusCode::INTERNAL_SERVER_ERROR, e)
+	}
+}
+
+impl From<anyhow::Error> for ReacherResponseError {
+	fn from(e: anyhow::Error) -> Self {
 		ReacherResponseError::new(StatusCode::INTERNAL_SERVER_ERROR, e)
 	}
 }
