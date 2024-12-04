@@ -46,9 +46,7 @@ macro_rules! try_smtp (
 			log::debug!(
 				target: LOG_TARGET,
 				"[email={}] Closing [host={}:{}], because of error '{:?}'.",
-				$to_email,
-				$host,
-				$port,err,
+				$to_email, $host, $port,err,
 			);
 			// Try to close the connection, but ignore if there's an error.
 			let _ = $client.quit().await;
@@ -58,67 +56,65 @@ macro_rules! try_smtp (
     })
 );
 
-/// Attempt to connect to host via SMTP, and return SMTP client on success.
-async fn connect_to_host(
+/// Connect to an SMTP host and return the configured client transport.
+async fn connect_to_smtp_host(
 	host: &str,
 	port: u16,
 	input: &CheckEmailInput,
 ) -> Result<SmtpTransport<BufStream<Box<dyn AsyncReadWrite>>>, SmtpError> {
 	// hostname verification fails if it ends with '.', for example, using
 	// SOCKS5 proxies we can `io: incomplete` error.
-	let host = host.trim_end_matches('.').to_string();
+	let clean_host = host.trim_end_matches('.').to_string();
 	let smtp_client = SmtpClient::new().hello_name(ClientId::Domain(input.hello_name.clone()));
 
 	let stream: BufStream<Box<dyn AsyncReadWrite>> = match &input.proxy {
 		Some(proxy) => {
-			let socks_stream = match (&proxy.username, &proxy.password) {
-				(Some(username), Some(password)) => {
+			let socks_stream =
+				if let (Some(username), Some(password)) = (&proxy.username, &proxy.password) {
 					Socks5Stream::connect_with_password(
 						(proxy.host.as_ref(), proxy.port),
-						host.clone(),
+						clean_host.clone(),
 						port,
 						username.clone(),
 						password.clone(),
 						Config::default(),
 					)
 					.await?
-				}
-				_ => {
+				} else {
 					Socks5Stream::connect(
 						(proxy.host.as_ref(), proxy.port),
-						host.clone(),
+						clean_host.clone(),
 						port,
 						Config::default(),
 					)
 					.await?
-				}
-			};
+				};
 			BufStream::new(Box::new(socks_stream) as Box<dyn AsyncReadWrite>)
 		}
 		None => {
-			let tcp_stream = TcpStream::connect(format!("{}:{}", host, port)).await?;
+			let tcp_stream = TcpStream::connect(format!("{}:{}", clean_host, port)).await?;
 			BufStream::new(Box::new(tcp_stream) as Box<dyn AsyncReadWrite>)
 		}
 	};
 
 	let mut smtp_transport = SmtpTransport::new(smtp_client, stream).await?;
 
-	// "MAIL FROM: user@example.org"
-	let from_email = EmailAddress::from_str(input.from_email.as_ref()).unwrap_or_else(|_| {
+	// Set "MAIL FROM"
+	let from_email = EmailAddress::from_str(&input.from_email).unwrap_or_else(|_| {
 		log::warn!(
-			"Inputted from_email \"{}\" is not a valid email, using \"user@example.org\" instead",
+			"Invalid 'from_email' provided: '{}'. Using default: 'user@example.org'",
 			input.from_email
 		);
-		EmailAddress::from_str("user@example.org").expect("This is a valid email. qed.")
+		EmailAddress::from_str("user@example.org").expect("Default email is valid")
 	});
 	try_smtp!(
 		smtp_transport
 			.get_mut()
-			.command(MailCommand::new(Some(from_email.into_inner()), vec![],))
+			.command(MailCommand::new(Some(from_email.into_inner()), vec![]))
 			.await,
 		smtp_transport,
 		input.to_email,
-		host,
+		clean_host,
 		port
 	);
 
@@ -136,43 +132,39 @@ struct Deliverability {
 	is_disabled: bool,
 }
 
-/// Check if `to_email` exists on host SMTP server. This is the core logic of
-/// this tool.
-async fn email_deliverable<S: AsyncBufRead + AsyncWrite + Unpin + Send>(
+/// Checks deliverability of a target email address using the provided SMTP transport.
+async fn check_email_deliverability<S: AsyncBufRead + AsyncWrite + Unpin + Send>(
 	smtp_transport: &mut SmtpTransport<S>,
 	to_email: &EmailAddress,
 ) -> Result<Deliverability, SmtpError> {
-	// "RCPT TO: <target email>"
 	match smtp_transport
 		.get_mut()
 		.command(RcptCommand::new(to_email.clone().into_inner(), vec![]))
 		.await
 	{
-		Ok(_) => {
-			// According to RFC 5321, `RCPT TO` command succeeds with 250 and
-			// 251 codes only (no 3xx codes at all):
-			// https://tools.ietf.org/html/rfc5321#page-56
-			//
-			// Where the 251 code is used for forwarding, which is not our case,
-			// because we always deliver to the SMTP server hosting the address
-			// itself.
-			//
-			// So, if `response.is_positive()` (which is a condition for
-			// returning `Ok` from the `command()` method above), then delivery
-			// succeeds, accordingly to RFC 5321.
-			Ok(Deliverability {
-				has_full_inbox: false,
-				is_deliverable: true, // response.is_positive()
-				is_disabled: false,
-			})
-		}
+		// According to RFC 5321, `RCPT TO` command succeeds with 250 and
+		// 251 codes only (no 3xx codes at all):
+		// https://tools.ietf.org/html/rfc5321#page-56
+		//
+		// Where the 251 code is used for forwarding, which is not our case,
+		// because we always deliver to the SMTP server hosting the address
+		// itself.
+		//
+		// So, if `response.is_positive()` (which is a condition for
+		// returning `Ok` from the `command()` method above), then delivery
+		// succeeds, accordingly to RFC 5321.
+		Ok(_) => Ok(Deliverability {
+			has_full_inbox: false,
+			is_deliverable: true, // response.is_positive()
+			is_disabled: false,
+		}),
 		Err(err) => {
 			// We cast to lowercase, because our matched strings below are all
 			// lowercase.
 			let err_string = err.to_string().to_lowercase();
 
 			// Check if the email account has been disabled or blocked.
-			if parser::is_disabled_account(err_string.as_str()) {
+			if parser::is_disabled_account(&err_string) {
 				return Ok(Deliverability {
 					has_full_inbox: false,
 					is_deliverable: false,
@@ -181,7 +173,7 @@ async fn email_deliverable<S: AsyncBufRead + AsyncWrite + Unpin + Send>(
 			}
 
 			// Check if the email account has a full inbox.
-			if parser::is_full_inbox(err_string.as_str()) {
+			if parser::is_full_inbox(&err_string) {
 				return Ok(Deliverability {
 					has_full_inbox: true,
 					is_deliverable: false,
@@ -203,7 +195,7 @@ async fn email_deliverable<S: AsyncBufRead + AsyncWrite + Unpin + Send>(
 			}
 
 			// Check that the mailbox doesn't exist.
-			if parser::is_invalid(err_string.as_str(), to_email) {
+			if parser::is_invalid(&err_string, to_email) {
 				return Ok(Deliverability {
 					has_full_inbox: false,
 					is_deliverable: false,
@@ -217,14 +209,13 @@ async fn email_deliverable<S: AsyncBufRead + AsyncWrite + Unpin + Send>(
 	}
 }
 
-/// Verify the existence of a catch-all on the domain.
+/// Checks if the domain has a catch-all email setup.
 async fn smtp_is_catch_all<S: AsyncBufRead + AsyncWrite + Unpin + Send>(
 	smtp_transport: &mut SmtpTransport<S>,
 	domain: &str,
 	host: &str,
 	input: &CheckEmailInput,
 ) -> Result<bool, SmtpError> {
-	// Skip catch-all check for known providers.
 	if has_rule(domain, host, &Rule::SkipCatchAll) {
 		log::debug!(
 			target: LOG_TARGET,
@@ -240,16 +231,14 @@ async fn smtp_is_catch_all<S: AsyncBufRead + AsyncWrite + Unpin + Send>(
 		.map(char::from)
 		.take(15)
 		.collect();
-	let random_email = EmailAddress::new(format!("{random_email}@{domain}"));
+	let random_email = EmailAddress::new(format!("{}@{}", random_email, domain))?;
 
-	email_deliverable(
-		smtp_transport,
-		&random_email.expect("Email is correctly constructed. qed."),
-	)
-	.await
-	.map(|deliverability| deliverability.is_deliverable)
+	check_email_deliverability(smtp_transport, &random_email)
+		.await
+		.map(|result| result.is_deliverable)
 }
 
+/// Creates an SMTP future for email verification.
 async fn create_smtp_future(
 	to_email: &EmailAddress,
 	host: &str,
@@ -259,7 +248,7 @@ async fn create_smtp_future(
 ) -> Result<(bool, Deliverability), SmtpError> {
 	// FIXME If the SMTP is not connectable, we should actually return an
 	// Ok(SmtpDetails { can_connect_smtp: false, ... }).
-	let mut smtp_transport = connect_to_host(host, port, input).await?;
+	let mut smtp_transport = connect_to_smtp_host(host, port, input).await?;
 
 	let is_catch_all = smtp_is_catch_all(&mut smtp_transport, domain, host, input)
 		.await
@@ -271,7 +260,7 @@ async fn create_smtp_future(
 			is_disabled: false,
 		}
 	} else {
-		let mut result = email_deliverable(&mut smtp_transport, to_email).await;
+		let mut result = check_email_deliverability(&mut smtp_transport, to_email).await;
 
 		// Some SMTP servers automatically close the connection after an error,
 		// so we should reconnect to perform a next command.
@@ -288,8 +277,8 @@ async fn create_smtp_future(
 				);
 
 				let _ = smtp_transport.quit().await;
-				smtp_transport = connect_to_host(host, port, input).await?;
-				result = email_deliverable(&mut smtp_transport, to_email).await;
+				smtp_transport = connect_to_smtp_host(host, port, input).await?;
+				result = check_email_deliverability(&mut smtp_transport, to_email).await;
 			}
 		}
 

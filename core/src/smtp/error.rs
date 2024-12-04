@@ -56,6 +56,12 @@ pub enum SmtpError {
 	#[error("SOCKS5 error: {0}")]
 	#[serde(serialize_with = "ser_with_display")]
 	Socks5(fast_socks5::SocksError),
+	/// Anyhow error.
+	/// This is a catch-all error type for any error that can't be categorized
+	/// into the above types.
+	#[error("Anyhow error: {0}")]
+	#[serde(serialize_with = "ser_with_display")]
+	AnyhowError(anyhow::Error),
 }
 
 impl From<YahooError> for SmtpError {
@@ -97,6 +103,12 @@ impl From<std::io::Error> for SmtpError {
 impl From<fast_socks5::SocksError> for SmtpError {
 	fn from(e: fast_socks5::SocksError) -> Self {
 		SmtpError::Socks5(e)
+	}
+}
+
+impl From<anyhow::Error> for SmtpError {
+	fn from(e: anyhow::Error) -> Self {
+		SmtpError::AnyhowError(e)
 	}
 }
 
