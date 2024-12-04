@@ -42,7 +42,13 @@ impl<T: AsyncRead + AsyncWrite + Unpin + Send> AsyncReadWrite for T {}
 macro_rules! try_smtp (
     ($res: expr, $client: ident, $to_email: expr, $host: expr, $port: expr) => ({
 		if let Err(err) = $res {
-			log::debug!(target: LOG_TARGET, "[email={}] Closing [host={}:{}], because of error '{:?}'.", $to_email, $host, $port, err);
+			log::debug!(
+				target: LOG_TARGET,
+				"[email={}] Closing [host={}:{}], because of error '{:?}'.",
+				$to_email,
+				$host,
+				$port,err,
+			);
 			// Try to close the connection, but ignore if there's an error.
 			let _ = $client.quit().await;
 
@@ -63,24 +69,27 @@ async fn connect_to_host(
 
 	let smtp_client = SmtpClient::new().hello_name(ClientId::Domain(input.hello_name.clone()));
 
-	let stream: BufStream<Box<dyn AsyncReadWrite>> = if let Some(proxy) = &input.proxy {
-		let target_addr = format!("{}:{}", host, port);
-		let socks_stream = match (&proxy.username, &proxy.password) {
-			(Some(username), Some(password)) => {
-				Socks5Stream::connect_with_password(
-					(proxy.host.as_ref(), proxy.port),
-					target_addr,
-					username,
-					password,
-				)
-				.await?
-			}
-			_ => Socks5Stream::connect((proxy.host.as_ref(), proxy.port), target_addr).await?,
-		};
-		BufStream::new(Box::new(socks_stream) as Box<dyn AsyncReadWrite>)
-	} else {
-		let tcp_stream = TcpStream::connect(format!("{}:{}", host, port)).await?;
-		BufStream::new(Box::new(tcp_stream) as Box<dyn AsyncReadWrite>)
+	let stream: BufStream<Box<dyn AsyncReadWrite>> = match &input.proxy {
+		Some(proxy) => {
+			let target_addr = format!("{}:{}", host, port);
+			let socks_stream = match (&proxy.username, &proxy.password) {
+				(Some(username), Some(password)) => {
+					Socks5Stream::connect_with_password(
+						(proxy.host.as_ref(), proxy.port),
+						target_addr,
+						username,
+						password,
+					)
+					.await?
+				}
+				_ => Socks5Stream::connect((proxy.host.as_ref(), proxy.port), target_addr).await?,
+			};
+			BufStream::new(Box::new(socks_stream) as Box<dyn AsyncReadWrite>)
+		}
+		None => {
+			let tcp_stream = TcpStream::connect(format!("{}:{}", host, port)).await?;
+			BufStream::new(Box::new(tcp_stream) as Box<dyn AsyncReadWrite>)
+		}
 	};
 
 	let mut smtp_transport = SmtpTransport::new(smtp_client, stream).await?;
@@ -218,8 +227,7 @@ async fn smtp_is_catch_all<S: AsyncBufRead + AsyncWrite + Unpin + Send>(
 
 	// Create a random 15-char alphanumerical string.
 	let mut rng = SmallRng::from_entropy();
-	let random_email: String = iter::repeat(())
-		.map(|()| rng.sample(Alphanumeric))
+	let random_email: String = iter::repeat_with(|| rng.sample(Alphanumeric))
 		.map(char::from)
 		.take(15)
 		.collect();
