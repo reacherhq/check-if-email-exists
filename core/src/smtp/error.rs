@@ -52,10 +52,10 @@ pub enum SmtpError {
 	/// Timeout error.
 	#[error("Timeout error: {0:?}")]
 	Timeout(Duration),
-	/// Socks5 proxy error.
-	#[error("Socks5 error: {0}")]
+	/// SOCKS5 proxy error.
+	#[error("SOCKS5 error: {0}")]
 	#[serde(serialize_with = "ser_with_display")]
-	Socks5(tokio_socks::Error),
+	Socks5(fast_socks5::SocksError),
 }
 
 impl From<YahooError> for SmtpError {
@@ -94,8 +94,8 @@ impl From<std::io::Error> for SmtpError {
 	}
 }
 
-impl From<tokio_socks::Error> for SmtpError {
-	fn from(e: tokio_socks::Error) -> Self {
+impl From<fast_socks5::SocksError> for SmtpError {
+	fn from(e: fast_socks5::SocksError) -> Self {
 		SmtpError::Socks5(e)
 	}
 }

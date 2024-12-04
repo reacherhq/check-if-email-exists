@@ -18,13 +18,14 @@ use async_recursion::async_recursion;
 use async_smtp::commands::{MailCommand, RcptCommand};
 use async_smtp::extension::ClientId;
 use async_smtp::{SmtpClient, SmtpTransport};
+use fast_socks5::client::Config;
+use fast_socks5::{client::Socks5Stream, Result};
 use rand::rngs::SmallRng;
 use rand::{distributions::Alphanumeric, Rng, SeedableRng};
 use std::iter;
 use std::str::FromStr;
 use tokio::io::{AsyncBufRead, AsyncRead, AsyncWrite, BufStream};
 use tokio::net::TcpStream;
-use tokio_socks::tcp::Socks5Stream;
 
 use super::parser;
 use super::{SmtpDetails, SmtpError};
@@ -66,23 +67,31 @@ async fn connect_to_host(
 	// hostname verification fails if it ends with '.', for example, using
 	// SOCKS5 proxies we can `io: incomplete` error.
 	let host = host.trim_end_matches('.').to_string();
-
 	let smtp_client = SmtpClient::new().hello_name(ClientId::Domain(input.hello_name.clone()));
 
 	let stream: BufStream<Box<dyn AsyncReadWrite>> = match &input.proxy {
 		Some(proxy) => {
-			let target_addr = format!("{}:{}", host, port);
 			let socks_stream = match (&proxy.username, &proxy.password) {
 				(Some(username), Some(password)) => {
 					Socks5Stream::connect_with_password(
 						(proxy.host.as_ref(), proxy.port),
-						target_addr,
-						username,
-						password,
+						host.clone(),
+						port,
+						username.clone(),
+						password.clone(),
+						Config::default(),
 					)
 					.await?
 				}
-				_ => Socks5Stream::connect((proxy.host.as_ref(), proxy.port), target_addr).await?,
+				_ => {
+					Socks5Stream::connect(
+						(proxy.host.as_ref(), proxy.port),
+						host.clone(),
+						port,
+						Config::default(),
+					)
+					.await?
+				}
 			};
 			BufStream::new(Box::new(socks_stream) as Box<dyn AsyncReadWrite>)
 		}

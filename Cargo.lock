@@ -559,6 +559,7 @@ dependencies = [
  "config",
  "derive_builder 0.20.2",
  "fantoccini",
+ "fast-socks5",
  "futures",
  "hickory-proto",
  "hickory-resolver",
@@ -576,7 +577,6 @@ dependencies = [
  "serde_json",
  "thiserror",
  "tokio",
- "tokio-socks",
  "tracing",
 ]
 
@@ -1247,6 +1247,20 @@ dependencies = [
  "tokio",
  "url",
  "webdriver",
+]
+
+[[package]]
+name = "fast-socks5"
+version = "0.9.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f89f36d4ee12370d30d57b16c7e190950a1a916e7dbbb5fd5a412f5ef913fe84"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "log",
+ "thiserror",
+ "tokio",
+ "tokio-stream",
 ]
 
 [[package]]
