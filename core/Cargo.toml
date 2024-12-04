@@ -21,7 +21,7 @@ config = "0.14"
 derive_builder = "0.20"
 fast-socks5 = "0.9"
 fantoccini = { version = "0.21.2" }
-futures = { version = "0.3.30" }
+futures = { version = "0.3.31" }
 hickory-proto = "0.24.0"
 hickory-resolver = "0.24.0"
 levenshtein = "1.0.5"
