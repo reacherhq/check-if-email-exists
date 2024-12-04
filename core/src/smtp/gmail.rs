@@ -78,11 +78,9 @@ pub fn is_gmail(host: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
-	use std::str::FromStr;
-
-	use crate::CheckEmailInputBuilder;
-
 	use super::*;
+	use crate::CheckEmailInputBuilder;
+	use std::str::FromStr;
 
 	#[tokio::test]
 	#[ignore] // ref: https://github.com/reacherhq/check-if-email-exists/issues/1431

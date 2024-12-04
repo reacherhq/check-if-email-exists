@@ -467,20 +467,20 @@ mod tests {
 		let res = dummy_response_with_message("blacklist");
 		let actual = serde_json::to_string(&res).unwrap();
 		// Make sure the `description` is present with IpBlacklisted.
-		let expected = r#""smtp":{"error":{"type":"SmtpError","message":"transient: blacklist"},"description":"IpBlacklisted"}"#;
+		let expected = r#""smtp":{"error":{"type":"AsyncSmtpError","message":"transient: blacklist; 8BITMIME; SIZE 42"},"description":"IpBlacklisted"}"#;
 		assert!(actual.contains(expected));
 
 		let res =
 			dummy_response_with_message("Client host rejected: cannot find your reverse hostname");
 		let actual = serde_json::to_string(&res).unwrap();
 		// Make sure the `description` is present with NeedsRDNs.
-		let expected = r#"smtp":{"error":{"type":"SmtpError","message":"transient: Client host rejected: cannot find your reverse hostname"},"description":"NeedsRDNS"}"#;
+		let expected = r#"smtp":{"error":{"type":"AsyncSmtpError","message":"transient: Client host rejected: cannot find your reverse hostname; 8BITMIME; SIZE 42"},"description":"NeedsRDNS"}"#;
 		assert!(actual.contains(expected));
 
 		let res = dummy_response_with_message("foobar");
 		let actual = serde_json::to_string(&res).unwrap();
 		// Make sure the `description` is NOT present.
-		let expected = r#""smtp":{"error":{"type":"SmtpError","message":"transient: foobar"}}"#;
+		let expected = r#""smtp":{"error":{"type":"AsyncSmtpError","message":"transient: foobar; 8BITMIME; SIZE 42"}}"#;
 		assert!(actual.contains(expected));
 	}
 }
