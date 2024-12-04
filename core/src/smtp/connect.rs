@@ -305,7 +305,18 @@ async fn check_smtp_without_retry(
 	input: &CheckEmailInput,
 ) -> Result<SmtpDetails, SmtpError> {
 	let fut = create_smtp_future(to_email, host, port, domain, input);
-	let (is_catch_all, deliverability) = fut.await?;
+
+	let (is_catch_all, deliverability) = match input.smtp_timeout {
+		Some(smtp_timeout) => {
+			let timeout = tokio::time::timeout(smtp_timeout, fut);
+
+			match timeout.await {
+				Ok(result) => result?,
+				Err(_) => return Err(SmtpError::Timeout(smtp_timeout)),
+			}
+		}
+		None => fut.await?,
+	};
 
 	Ok(SmtpDetails {
 		can_connect_smtp: true,

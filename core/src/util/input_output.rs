@@ -226,7 +226,9 @@ pub struct CheckEmailInput {
 	/// Defaults to 25.
 	pub smtp_port: u16,
 	/// Add timeout for the SMTP verification step. Set to None if you don't
-	/// want to use a timeout.
+	/// want to use a timeout. This timeout is per SMTP connection. For
+	/// instance, if you set the number of retries to 2, then the total time
+	/// for the SMTP verification step can be up to 2 * `smtp_timeout`.
 	///
 	/// Defaults to None.
 	pub smtp_timeout: Option<Duration>,

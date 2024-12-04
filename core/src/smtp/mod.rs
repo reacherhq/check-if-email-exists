@@ -162,7 +162,6 @@ mod tests {
 	use super::{check_smtp, SmtpConnection, SmtpError};
 	use crate::CheckEmailInputBuilder;
 	use crate::EmailAddress;
-	use async_smtp::error::Error;
 	use hickory_proto::rr::Name;
 	use std::{str::FromStr, time::Duration};
 	use tokio::runtime::Runtime;
@@ -191,7 +190,7 @@ mod tests {
 			})
 		);
 		match res {
-			Err(SmtpError::AsyncSmtpError(Error::Io(_))) => (), // ErrorKind == Timeout
+			Err(SmtpError::Timeout(_)) => (), // ErrorKind == Timeout
 			_ => panic!("check_smtp did not time out"),
 		}
 	}
