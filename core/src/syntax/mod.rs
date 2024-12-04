@@ -16,7 +16,7 @@
 
 mod normalize;
 
-use async_smtp::EmailAddress;
+use crate::EmailAddress;
 use levenshtein::levenshtein;
 use normalize::normalize_email;
 use serde::{Deserialize, Serialize};

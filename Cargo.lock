@@ -336,18 +336,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "async-native-tls"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d57d4cec3c647232e1094dc013546c0b33ce785d8aeb251e1f20dfaf8a9a13fe"
-dependencies = [
- "native-tls",
- "thiserror",
- "tokio",
- "url",
-]
-
-[[package]]
 name = "async-reactor-trait"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -372,24 +360,17 @@ dependencies = [
 
 [[package]]
 name = "async-smtp"
-version = "0.6.0"
+version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2ade89127f9e0d44f9e83cf574d499060005cd45b7dc76be89c0167487fe8edd"
+checksum = "00d1f1a16e5abad3ada9f1f23dbc2f354b138121b90533381be62dada6cbf40a"
 dependencies = [
- "async-native-tls",
- "async-trait",
+ "anyhow",
  "base64 0.13.1",
- "bufstream",
- "fast-socks5 0.8.2",
  "futures",
  "hostname",
  "log",
  "nom",
  "pin-project",
- "pin-utils",
- "serde",
- "serde_derive",
- "serde_json",
  "thiserror",
  "tokio",
 ]
@@ -529,12 +510,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bufstream"
-version = "0.1.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "40e38929add23cdf8a366df9b0e088953150724bcbe5fc330b0d8eb3b328eec8"
-
-[[package]]
 name = "bumpalo"
 version = "3.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -577,14 +552,14 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 name = "check-if-email-exists"
 version = "0.10.0"
 dependencies = [
- "async-native-tls",
+ "anyhow",
  "async-recursion",
  "async-smtp",
  "chrono",
  "config",
  "derive_builder 0.20.2",
  "fantoccini",
- "fast-socks5 0.9.6",
+ "fast-socks5",
  "futures",
  "hickory-proto",
  "hickory-resolver",
@@ -1272,19 +1247,6 @@ dependencies = [
  "tokio",
  "url",
  "webdriver",
-]
-
-[[package]]
-name = "fast-socks5"
-version = "0.8.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "961ce1761191c157145a8c9f0c3ceabecd3a729d65c9a8d443674eaee3420f7e"
-dependencies = [
- "anyhow",
- "log",
- "thiserror",
- "tokio",
- "tokio-stream",
 ]
 
 [[package]]

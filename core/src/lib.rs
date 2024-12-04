@@ -23,13 +23,13 @@
 //! - Email deliverability: Is an email sent to this address deliverable?
 //! - Syntax validation. Is the address syntactically valid?
 //! - DNS records validation. Does the domain of the email address have valid
-//! MX DNS records?
+//!   MX DNS records?
 //! - Disposable email address (DEA) validation. Is the address provided by a
-//! known disposable email address provider?
+//!   known disposable email address provider?
 //! - SMTP server validation. Can the mail exchanger of the email address
-//! domain be contacted successfully?
+//!   domain be contacted successfully?
 //! - Mailbox disabled. Has this email address been disabled by the email
-//! provider?
+//!   provider?
 //! - Full inbox. Is the inbox of this mailbox full?
 //! - Catch-all address. Is this email address a catch-all address?
 //!

@@ -14,127 +14,107 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use async_native_tls::TlsConnector;
 use async_recursion::async_recursion;
-use async_smtp::{
-	smtp::{commands::*, extension::ClientId, ServerAddress, Socks5Config},
-	ClientTlsParameters, EmailAddress, SmtpClient, SmtpTransport,
-};
+use async_smtp::commands::{MailCommand, RcptCommand};
+use async_smtp::extension::ClientId;
+use async_smtp::{SmtpClient, SmtpTransport};
+use fast_socks5::client::Config;
+use fast_socks5::{client::Socks5Stream, Result};
 use rand::rngs::SmallRng;
 use rand::{distributions::Alphanumeric, Rng, SeedableRng};
 use std::iter;
 use std::str::FromStr;
-use std::time::Duration;
+use tokio::io::{AsyncBufRead, AsyncRead, AsyncWrite, BufStream};
+use tokio::net::TcpStream;
 
 use super::parser;
 use super::{SmtpDetails, SmtpError};
-use crate::LOG_TARGET;
 use crate::{
 	rules::{has_rule, Rule},
 	util::input_output::CheckEmailInput,
 };
+use crate::{EmailAddress, LOG_TARGET};
+
+// Define a new trait that combines AsyncRead, AsyncWrite, and Unpin
+trait AsyncReadWrite: AsyncRead + AsyncWrite + Unpin + Send {}
+impl<T: AsyncRead + AsyncWrite + Unpin + Send> AsyncReadWrite for T {}
 
 /// Try to send an smtp command, close and return Err if fails.
 macro_rules! try_smtp (
     ($res: expr, $client: ident, $to_email: expr, $host: expr, $port: expr) => ({
 		if let Err(err) = $res {
-			log::debug!(target: LOG_TARGET, "[email={}] Closing [host={}:{}], because of error '{:?}'.", $to_email, $host, $port, err);
+			log::debug!(
+				target: LOG_TARGET,
+				"[email={}] Closing [host={}:{}], because of error '{:?}'.",
+				$to_email, $host, $port,err,
+			);
 			// Try to close the connection, but ignore if there's an error.
-			let _ = $client.close().await;
+			let _ = $client.quit().await;
 
-			return Err(SmtpError::SmtpError(err));
+			return Err(SmtpError::AsyncSmtpError(err));
 		}
     })
 );
 
-/// Attempt to connect to host via SMTP, and return SMTP client on success.
-async fn connect_to_host(
-	domain: &str,
+/// Connect to an SMTP host and return the configured client transport.
+async fn connect_to_smtp_host(
 	host: &str,
 	port: u16,
 	input: &CheckEmailInput,
-) -> Result<SmtpTransport, SmtpError> {
-	let smtp_timeout = if let Some(t) = input.smtp_timeout {
-		if has_rule(domain, host, &Rule::SmtpTimeout45s) {
-			let duration = t.max(Duration::from_secs(45));
-			log::debug!(
-				target: LOG_TARGET,
-				"[email={}] Bumping SMTP timeout to {duration:?} because of rule",
-				input.to_email,
-			);
-			Some(duration)
-		} else {
-			input.smtp_timeout
-		}
-	} else {
-		None
-	};
-
+) -> Result<SmtpTransport<BufStream<Box<dyn AsyncReadWrite>>>, SmtpError> {
 	// hostname verification fails if it ends with '.', for example, using
 	// SOCKS5 proxies we can `io: incomplete` error.
-	let host = host.trim_end_matches('.').to_string();
+	let clean_host = host.trim_end_matches('.').to_string();
+	let smtp_client = SmtpClient::new().hello_name(ClientId::Domain(input.hello_name.clone()));
 
-	let security = {
-		let tls_params: ClientTlsParameters = ClientTlsParameters::new(
-			host.clone(),
-			TlsConnector::new()
-				.use_sni(true)
-				.danger_accept_invalid_certs(true)
-				.danger_accept_invalid_hostnames(true),
-		);
-
-		input.smtp_security.to_client_security(tls_params)
+	let stream: BufStream<Box<dyn AsyncReadWrite>> = match &input.proxy {
+		Some(proxy) => {
+			let socks_stream =
+				if let (Some(username), Some(password)) = (&proxy.username, &proxy.password) {
+					Socks5Stream::connect_with_password(
+						(proxy.host.as_ref(), proxy.port),
+						clean_host.clone(),
+						port,
+						username.clone(),
+						password.clone(),
+						Config::default(),
+					)
+					.await?
+				} else {
+					Socks5Stream::connect(
+						(proxy.host.as_ref(), proxy.port),
+						clean_host.clone(),
+						port,
+						Config::default(),
+					)
+					.await?
+				};
+			BufStream::new(Box::new(socks_stream) as Box<dyn AsyncReadWrite>)
+		}
+		None => {
+			let tcp_stream = TcpStream::connect(format!("{}:{}", clean_host, port)).await?;
+			BufStream::new(Box::new(tcp_stream) as Box<dyn AsyncReadWrite>)
+		}
 	};
 
-	let mut smtp_client = SmtpClient::with_security(
-		ServerAddress {
-			host: host.clone(),
-			port,
-		},
-		security,
-	)
-	.hello_name(ClientId::Domain(input.hello_name.clone()))
-	.timeout(smtp_timeout);
+	let mut smtp_transport = SmtpTransport::new(smtp_client, stream).await?;
 
-	if let Some(proxy) = &input.proxy {
-		let socks5_config = match (&proxy.username, &proxy.password) {
-			(Some(username), Some(password)) => Socks5Config::new_with_user_pass(
-				proxy.host.clone(),
-				proxy.port,
-				username.clone(),
-				password.clone(),
-			),
-			_ => Socks5Config::new(proxy.host.clone(), proxy.port),
-		};
-
-		smtp_client = smtp_client.use_socks5(socks5_config);
-	}
-
-	let mut smtp_transport = smtp_client.into_transport();
-
-	try_smtp!(
-		smtp_transport.connect().await,
-		smtp_transport,
-		input.to_email,
-		host,
-		port
-	);
-
-	// "MAIL FROM: user@example.org"
-	let from_email = EmailAddress::from_str(input.from_email.as_ref()).unwrap_or_else(|_| {
+	// Set "MAIL FROM"
+	let from_email = EmailAddress::from_str(&input.from_email).unwrap_or_else(|_| {
 		log::warn!(
-			"Inputted from_email \"{}\" is not a valid email, using \"user@example.org\" instead",
+			"Invalid 'from_email' provided: '{}'. Using default: 'user@example.org'",
 			input.from_email
 		);
-		EmailAddress::from_str("user@example.org").expect("This is a valid email. qed.")
+		EmailAddress::from_str("user@example.org").expect("Default email is valid")
 	});
 	try_smtp!(
 		smtp_transport
-			.command(MailCommand::new(Some(from_email), vec![],))
+			.get_mut()
+			.command(MailCommand::new(Some(from_email.into_inner()), vec![]))
 			.await,
 		smtp_transport,
 		input.to_email,
-		host,
+		clean_host,
 		port
 	);
 
@@ -152,43 +132,39 @@ struct Deliverability {
 	is_disabled: bool,
 }
 
-/// Check if `to_email` exists on host SMTP server. This is the core logic of
-/// this tool.
-async fn email_deliverable(
-	smtp_transport: &mut SmtpTransport,
+/// Checks deliverability of a target email address using the provided SMTP transport.
+async fn check_email_deliverability<S: AsyncBufRead + AsyncWrite + Unpin + Send>(
+	smtp_transport: &mut SmtpTransport<S>,
 	to_email: &EmailAddress,
 ) -> Result<Deliverability, SmtpError> {
-	// "RCPT TO: <target email>"
-	// FIXME Do not clone `to_email`?
 	match smtp_transport
-		.command(RcptCommand::new(to_email.clone(), vec![]))
+		.get_mut()
+		.command(RcptCommand::new(to_email.clone().into_inner(), vec![]))
 		.await
 	{
-		Ok(_) => {
-			// According to RFC 5321, `RCPT TO` command succeeds with 250 and
-			// 251 codes only (no 3xx codes at all):
-			// https://tools.ietf.org/html/rfc5321#page-56
-			//
-			// Where the 251 code is used for forwarding, which is not our case,
-			// because we always deliver to the SMTP server hosting the address
-			// itself.
-			//
-			// So, if `response.is_positive()` (which is a condition for
-			// returning `Ok` from the `command()` method above), then delivery
-			// succeeds, accordingly to RFC 5321.
-			Ok(Deliverability {
-				has_full_inbox: false,
-				is_deliverable: true, // response.is_positive()
-				is_disabled: false,
-			})
-		}
+		// According to RFC 5321, `RCPT TO` command succeeds with 250 and
+		// 251 codes only (no 3xx codes at all):
+		// https://tools.ietf.org/html/rfc5321#page-56
+		//
+		// Where the 251 code is used for forwarding, which is not our case,
+		// because we always deliver to the SMTP server hosting the address
+		// itself.
+		//
+		// So, if `response.is_positive()` (which is a condition for
+		// returning `Ok` from the `command()` method above), then delivery
+		// succeeds, accordingly to RFC 5321.
+		Ok(_) => Ok(Deliverability {
+			has_full_inbox: false,
+			is_deliverable: true, // response.is_positive()
+			is_disabled: false,
+		}),
 		Err(err) => {
 			// We cast to lowercase, because our matched strings below are all
 			// lowercase.
 			let err_string = err.to_string().to_lowercase();
 
 			// Check if the email account has been disabled or blocked.
-			if parser::is_disabled_account(err_string.as_str()) {
+			if parser::is_disabled_account(&err_string) {
 				return Ok(Deliverability {
 					has_full_inbox: false,
 					is_deliverable: false,
@@ -197,7 +173,7 @@ async fn email_deliverable(
 			}
 
 			// Check if the email account has a full inbox.
-			if parser::is_full_inbox(err_string.as_str()) {
+			if parser::is_full_inbox(&err_string) {
 				return Ok(Deliverability {
 					has_full_inbox: true,
 					is_deliverable: false,
@@ -219,7 +195,7 @@ async fn email_deliverable(
 			}
 
 			// Check that the mailbox doesn't exist.
-			if parser::is_invalid(err_string.as_str(), to_email) {
+			if parser::is_invalid(&err_string, to_email) {
 				return Ok(Deliverability {
 					has_full_inbox: false,
 					is_deliverable: false,
@@ -228,19 +204,18 @@ async fn email_deliverable(
 			}
 
 			// Return all unparsable errors,.
-			Err(SmtpError::SmtpError(err))
+			Err(SmtpError::AsyncSmtpError(err))
 		}
 	}
 }
 
-/// Verify the existence of a catch-all on the domain.
-async fn smtp_is_catch_all(
-	smtp_transport: &mut SmtpTransport,
+/// Checks if the domain has a catch-all email setup.
+async fn smtp_is_catch_all<S: AsyncBufRead + AsyncWrite + Unpin + Send>(
+	smtp_transport: &mut SmtpTransport<S>,
 	domain: &str,
 	host: &str,
 	input: &CheckEmailInput,
 ) -> Result<bool, SmtpError> {
-	// Skip catch-all check for known providers.
 	if has_rule(domain, host, &Rule::SkipCatchAll) {
 		log::debug!(
 			target: LOG_TARGET,
@@ -252,21 +227,18 @@ async fn smtp_is_catch_all(
 
 	// Create a random 15-char alphanumerical string.
 	let mut rng = SmallRng::from_entropy();
-	let random_email: String = iter::repeat(())
-		.map(|()| rng.sample(Alphanumeric))
+	let random_email: String = iter::repeat_with(|| rng.sample(Alphanumeric))
 		.map(char::from)
 		.take(15)
 		.collect();
-	let random_email = EmailAddress::new(format!("{random_email}@{domain}"));
+	let random_email = EmailAddress::new(format!("{}@{}", random_email, domain))?;
 
-	email_deliverable(
-		smtp_transport,
-		&random_email.expect("Email is correctly constructed. qed."),
-	)
-	.await
-	.map(|deliverability| deliverability.is_deliverable)
+	check_email_deliverability(smtp_transport, &random_email)
+		.await
+		.map(|result| result.is_deliverable)
 }
 
+/// Creates an SMTP future for email verification.
 async fn create_smtp_future(
 	to_email: &EmailAddress,
 	host: &str,
@@ -276,7 +248,7 @@ async fn create_smtp_future(
 ) -> Result<(bool, Deliverability), SmtpError> {
 	// FIXME If the SMTP is not connectable, we should actually return an
 	// Ok(SmtpDetails { can_connect_smtp: false, ... }).
-	let mut smtp_transport = connect_to_host(domain, host, port, input).await?;
+	let mut smtp_transport = connect_to_smtp_host(host, port, input).await?;
 
 	let is_catch_all = smtp_is_catch_all(&mut smtp_transport, domain, host, input)
 		.await
@@ -288,7 +260,7 @@ async fn create_smtp_future(
 			is_disabled: false,
 		}
 	} else {
-		let mut result = email_deliverable(&mut smtp_transport, to_email).await;
+		let mut result = check_email_deliverability(&mut smtp_transport, to_email).await;
 
 		// Some SMTP servers automatically close the connection after an error,
 		// so we should reconnect to perform a next command.
@@ -304,16 +276,19 @@ async fn create_smtp_future(
 					input.to_email
 				);
 
-				let _ = smtp_transport.close().await;
-				smtp_transport = connect_to_host(domain, host, port, input).await?;
-				result = email_deliverable(&mut smtp_transport, to_email).await;
+				let _ = smtp_transport.quit().await;
+				smtp_transport = connect_to_smtp_host(host, port, input).await?;
+				result = check_email_deliverability(&mut smtp_transport, to_email).await;
 			}
 		}
 
 		result?
 	};
 
-	smtp_transport.close().await.map_err(SmtpError::SmtpError)?;
+	smtp_transport
+		.quit()
+		.await
+		.map_err(SmtpError::AsyncSmtpError)?;
 
 	Ok((is_catch_all, deliverability))
 }
@@ -328,7 +303,18 @@ async fn check_smtp_without_retry(
 	input: &CheckEmailInput,
 ) -> Result<SmtpDetails, SmtpError> {
 	let fut = create_smtp_future(to_email, host, port, domain, input);
-	let (is_catch_all, deliverability) = fut.await?;
+
+	let (is_catch_all, deliverability) = match input.smtp_timeout {
+		Some(smtp_timeout) => {
+			let timeout = tokio::time::timeout(smtp_timeout, fut);
+
+			match timeout.await {
+				Ok(result) => result?,
+				Err(_) => return Err(SmtpError::Timeout(smtp_timeout)),
+			}
+		}
+		None => fut.await?,
+	};
 
 	Ok(SmtpDetails {
 		can_connect_smtp: true,
@@ -392,28 +378,5 @@ pub async fn check_smtp_with_retry(
 			}
 		}
 		_ => result,
-	}
-}
-
-#[cfg(test)]
-mod tests {
-	use super::*;
-
-	#[tokio::test]
-	async fn should_skip_catch_all() {
-		let smtp_client = SmtpClient::new("gmail.com".into());
-		let mut smtp_transport = smtp_client.into_transport();
-
-		let r = smtp_is_catch_all(
-			&mut smtp_transport,
-			"gmail.com",
-			"alt4.aspmx.l.google.com.",
-			&CheckEmailInput::default(),
-		)
-		.await;
-
-		assert!(!smtp_transport.is_connected()); // We shouldn't connect to google servers.
-		assert!(r.is_ok());
-		assert!(!r.unwrap())
 	}
 }

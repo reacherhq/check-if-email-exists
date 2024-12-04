@@ -62,7 +62,9 @@ impl CheckEmailRequest {
 				.or_else(|| config.proxy.as_ref())
 				.cloned(),
 			smtp_timeout: config.smtp_timeout.map(Duration::from_secs),
-			smtp_port: self.smtp_port.unwrap_or_default(),
+			smtp_port: self
+				.smtp_port
+				.unwrap_or_else(|| CheckEmailInput::default().smtp_port),
 			sentry_dsn: config.sentry_dsn.clone(),
 			..Default::default()
 		}

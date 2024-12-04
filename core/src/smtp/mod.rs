@@ -24,23 +24,21 @@ mod outlook;
 mod parser;
 mod yahoo;
 
-use std::default::Default;
-
-use async_smtp::EmailAddress;
-use hickory_proto::rr::Name;
-use serde::{Deserialize, Serialize};
-
+use crate::EmailAddress;
 use crate::{
 	util::input_output::CheckEmailInput, GmailVerifMethod, HotmailB2CVerifMethod, YahooVerifMethod,
 };
 use connect::check_smtp_with_retry;
-pub use error::*;
+use hickory_proto::rr::Name;
+use serde::{Deserialize, Serialize};
+use std::default::Default;
 
 pub use self::{
 	gmail::is_gmail,
 	outlook::{is_hotmail, is_hotmail_b2b, is_hotmail_b2c},
 	yahoo::is_yahoo,
 };
+pub use error::*;
 
 #[derive(Debug, Default, Deserialize, PartialEq, Serialize)]
 pub struct SmtpConnection {
@@ -163,7 +161,7 @@ pub async fn check_smtp(
 mod tests {
 	use super::{check_smtp, SmtpConnection, SmtpError};
 	use crate::CheckEmailInputBuilder;
-	use async_smtp::{smtp::error::Error, EmailAddress};
+	use crate::EmailAddress;
 	use hickory_proto::rr::Name;
 	use std::{str::FromStr, time::Duration};
 	use tokio::runtime::Runtime;
@@ -192,7 +190,7 @@ mod tests {
 			})
 		);
 		match res {
-			Err(SmtpError::SmtpError(Error::Io(_))) => (), // ErrorKind == Timeout
+			Err(SmtpError::Timeout(_)) => (), // ErrorKind == Timeout
 			_ => panic!("check_smtp did not time out"),
 		}
 	}

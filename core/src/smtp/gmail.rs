@@ -15,12 +15,12 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use super::SmtpDetails;
+use crate::EmailAddress;
 use crate::LOG_TARGET;
 use crate::{
 	smtp::http_api::create_client,
 	util::{input_output::CheckEmailInput, ser_with_display::ser_with_display},
 };
-use async_smtp::EmailAddress;
 use reqwest::Error as ReqwestError;
 use serde::Serialize;
 use thiserror::Error;
@@ -78,11 +78,9 @@ pub fn is_gmail(host: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
-	use std::str::FromStr;
-
-	use crate::CheckEmailInputBuilder;
-
 	use super::*;
+	use crate::CheckEmailInputBuilder;
+	use std::str::FromStr;
 
 	#[tokio::test]
 	#[ignore] // ref: https://github.com/reacherhq/check-if-email-exists/issues/1431

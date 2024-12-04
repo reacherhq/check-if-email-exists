@@ -17,7 +17,8 @@
 //! Parse the SMTP responses to get information about the email address.
 
 use super::error::SmtpError;
-use async_smtp::{smtp::error::Error as AsyncSmtpError, EmailAddress};
+use crate::EmailAddress;
+use async_smtp::error::Error as AsyncSmtpError;
 
 /// is_invalid checks for SMTP responses meaning that the email is invalid,
 /// i.e. that the mailbox doesn't exist.
@@ -127,7 +128,7 @@ pub fn is_disabled_account(e: &str) -> bool {
 /// Check if the error is an IO "incomplete" error.
 pub fn is_err_io_errors(e: &SmtpError) -> bool {
 	match e {
-		SmtpError::SmtpError(AsyncSmtpError::Io(err)) => err.to_string() == "incomplete",
+		SmtpError::AsyncSmtpError(AsyncSmtpError::Io(err)) => err.to_string() == "incomplete",
 		_ => false,
 	}
 }
@@ -135,7 +136,7 @@ pub fn is_err_io_errors(e: &SmtpError) -> bool {
 /// Check if the IP is blacklisted.
 pub fn is_err_ip_blacklisted(e: &SmtpError) -> bool {
 	let e = match e {
-		SmtpError::SmtpError(AsyncSmtpError::Transient(r) | AsyncSmtpError::Permanent(r)) => {
+		SmtpError::AsyncSmtpError(AsyncSmtpError::Transient(r) | AsyncSmtpError::Permanent(r)) => {
 			// TODO We can use .to_string() after:
 			// https://github.com/async-email/async-smtp/pull/53
 			r.message.join("; ").to_lowercase()
@@ -205,7 +206,7 @@ pub fn is_err_ip_blacklisted(e: &SmtpError) -> bool {
 /// Check if the IP needs a reverse DNS.
 pub fn is_err_needs_rdns(e: &SmtpError) -> bool {
 	let e = match e {
-		SmtpError::SmtpError(AsyncSmtpError::Transient(r) | AsyncSmtpError::Permanent(r)) => {
+		SmtpError::AsyncSmtpError(AsyncSmtpError::Transient(r) | AsyncSmtpError::Permanent(r)) => {
 			// TODO We can use .to_string() after:
 			// https://github.com/async-email/async-smtp/pull/53
 			r.message.join("; ").to_lowercase()
@@ -227,11 +228,11 @@ pub fn is_err_needs_rdns(e: &SmtpError) -> bool {
 mod tests {
 
 	use super::{is_err_ip_blacklisted, is_invalid};
-	use crate::SmtpError::SmtpError;
+	use crate::EmailAddress;
+	use crate::SmtpError::AsyncSmtpError;
 	use async_smtp::{
-		smtp::error::Error,
-		smtp::response::{Category, Code, Detail, Response, Severity},
-		EmailAddress,
+		error::Error,
+		response::{Category, Code, Detail, Response, Severity},
 	};
 	use std::str::FromStr;
 
@@ -271,6 +272,6 @@ mod tests {
 			],
 		));
 
-		assert!(is_err_ip_blacklisted(&SmtpError(err)))
+		assert!(is_err_ip_blacklisted(&AsyncSmtpError(err)))
 	}
 }
