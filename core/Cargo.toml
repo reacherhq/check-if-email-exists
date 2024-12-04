@@ -13,9 +13,9 @@ readme = "../README.md"
 repository = "https://github.com/reacherhq/check-if-email-exists"
 
 [dependencies]
-async-native-tls = { version = "0.4", default-features = false }
+anyhow = "1.0"
 async-recursion = "1.0.5"
-async-smtp = { version = "0.6.0", features = ["socks5"] }
+async-smtp = { version = "0.9.1", features = ["runtime-tokio"] }
 chrono = { version = "0.4.31", features = ["serde"] }
 config = "0.14"
 derive_builder = "0.20"
@@ -37,7 +37,6 @@ sentry = { version = "0.23", optional = true }
 serde = { version = "1.0.214", features = ["derive"] }
 serde_json = "1.0.133"
 thiserror = "1.0"
-tracing = "0.1.40"
-
-[dev-dependencies]
 tokio = { version = "1.40.0" }
+tokio-socks = "0.5"
+tracing = "0.1.40"

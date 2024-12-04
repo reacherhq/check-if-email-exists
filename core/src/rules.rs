@@ -85,3 +85,21 @@ pub fn has_rule(domain: &str, host: &str, rule: &Rule) -> bool {
 		|| does_mx_have_rule(host, rule)
 		|| does_mx_suffix_have_rule(host, rule)
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn should_skip_catch_all() {
+		assert_eq!(
+			true,
+			has_rule("gmail.com", "alt4.aspmx.l.google.com.", &Rule::SkipCatchAll)
+		);
+
+		assert_eq!(
+			true,
+			has_rule("domain.com", ".antispamcloud.com.", &Rule::SkipCatchAll)
+		)
+	}
+}

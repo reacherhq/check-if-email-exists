@@ -14,18 +14,80 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::str::FromStr;
-use std::time::{Duration, SystemTime};
-
-use async_smtp::{ClientSecurity, ClientTlsParameters};
-use chrono::{DateTime, Utc};
-use derive_builder::Builder;
-use serde::{ser::SerializeMap, Deserialize, Serialize, Serializer};
-
 use crate::misc::{MiscDetails, MiscError};
 use crate::mx::{MxDetails, MxError};
 use crate::smtp::{SmtpDebug, SmtpDetails, SmtpError, SmtpErrorDesc};
 use crate::syntax::SyntaxDetails;
+use crate::util::ser_with_display::ser_with_display;
+use async_smtp::EmailAddress as AsyncSmtpEmailAddress;
+use chrono::{DateTime, Utc};
+use derive_builder::Builder;
+use serde::{ser::SerializeMap, Deserialize, Serialize, Serializer};
+use std::fmt::Display;
+use std::str::FromStr;
+use std::time::{Duration, SystemTime};
+
+/// Wrapper around the `EmailAddress` from `async_smtp` to allow for
+/// serialization and deserialization.
+#[derive(Debug, Eq, PartialEq, Clone)]
+pub struct EmailAddress(AsyncSmtpEmailAddress);
+
+impl Serialize for EmailAddress {
+	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+	where
+		S: Serializer,
+	{
+		ser_with_display(&self.0, serializer)
+	}
+}
+
+impl<'de> Deserialize<'de> for EmailAddress {
+	fn deserialize<D>(deserializer: D) -> Result<EmailAddress, D::Error>
+	where
+		D: serde::Deserializer<'de>,
+	{
+		let s = String::deserialize(deserializer)?;
+		Ok(EmailAddress(
+			AsyncSmtpEmailAddress::from_str(&s).map_err(serde::de::Error::custom)?,
+		))
+	}
+}
+
+impl Display for EmailAddress {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		self.0.fmt(f)
+	}
+}
+
+impl FromStr for EmailAddress {
+	type Err = anyhow::Error;
+
+	fn from_str(s: &str) -> Result<Self, Self::Err> {
+		Ok(EmailAddress(AsyncSmtpEmailAddress::from_str(s)?))
+	}
+}
+
+impl EmailAddress {
+	pub fn new(email: String) -> Result<Self, anyhow::Error> {
+		Ok(EmailAddress(AsyncSmtpEmailAddress::new(email)?))
+	}
+
+	pub fn into_inner(self) -> AsyncSmtpEmailAddress {
+		self.0
+	}
+}
+
+impl AsRef<AsyncSmtpEmailAddress> for EmailAddress {
+	fn as_ref(&self) -> &AsyncSmtpEmailAddress {
+		&self.0
+	}
+}
+
+impl AsRef<str> for EmailAddress {
+	fn as_ref(&self) -> &str {
+		self.0.as_ref()
+	}
+}
 
 /// Perform the email verification via a specified proxy. The usage of a proxy
 /// is optional.
@@ -39,37 +101,6 @@ pub struct CheckEmailInputProxy {
 	pub username: Option<String>,
 	/// Password to pass to proxy authentication.
 	pub password: Option<String>,
-}
-
-/// Define how to apply TLS to a SMTP client connection. Will be converted into
-/// async_smtp::ClientSecurity.
-#[derive(Debug, Clone, Copy, Deserialize, Serialize)]
-pub enum SmtpSecurity {
-	/// Insecure connection only (for testing purposes).
-	None,
-	/// Start with insecure connection and use `STARTTLS` when available.
-	Opportunistic,
-	/// Start with insecure connection and require `STARTTLS`.
-	Required,
-	/// Use TLS wrapped connection.
-	Wrapper,
-}
-
-impl Default for SmtpSecurity {
-	fn default() -> Self {
-		Self::Opportunistic
-	}
-}
-
-impl SmtpSecurity {
-	pub fn to_client_security(self, tls_params: ClientTlsParameters) -> ClientSecurity {
-		match self {
-			Self::None => ClientSecurity::None,
-			Self::Opportunistic => ClientSecurity::Opportunistic(tls_params),
-			Self::Required => ClientSecurity::Required(tls_params),
-			Self::Wrapper => ClientSecurity::Wrapper(tls_params),
-		}
-	}
 }
 
 /// Select how to verify Yahoo emails.
@@ -228,10 +259,6 @@ pub struct CheckEmailInput {
 	///
 	/// Defaults to 1.
 	pub retries: usize,
-	/// How to apply TLS to a SMTP client connection.
-	///
-	/// Defaults to Opportunistic.
-	pub smtp_security: SmtpSecurity,
 	/// The WebDriver address to use for headless verifications.
 	///
 	/// Defaults to http://localhost:9515.
@@ -256,7 +283,6 @@ impl Default for CheckEmailInput {
 			hello_name: "gmail.com".into(),
 			proxy: None,
 			smtp_port: 25,
-			smtp_security: SmtpSecurity::default(),
 			smtp_timeout: None,
 			yahoo_verif_method: YahooVerifMethod::default(),
 			gmail_verif_method: GmailVerifMethod::default(),
@@ -411,7 +437,7 @@ impl Serialize for CheckEmailOutput {
 #[cfg(test)]
 mod tests {
 	use super::{CheckEmailOutput, DebugDetails};
-	use async_smtp::smtp::response::{Category, Code, Detail, Response, Severity};
+	use async_smtp::response::{Category, Code, Detail, Response, Severity};
 
 	#[test]
 	fn should_serialize_correctly() {
@@ -433,7 +459,7 @@ mod tests {
 				misc: Ok(super::MiscDetails::default()),
 				mx: Ok(super::MxDetails::default()),
 				syntax: super::SyntaxDetails::default(),
-				smtp: Err(super::SmtpError::SmtpError(r.into())),
+				smtp: Err(super::SmtpError::AsyncSmtpError(r.into())),
 				debug: DebugDetails::default(),
 			}
 		}
