@@ -27,8 +27,8 @@ use config::Config;
 use lapin::Channel;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
+use std::collections::HashMap;
 use std::sync::Arc;
-use std::{any::Any, collections::HashMap};
 use tracing::warn;
 
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -150,11 +150,16 @@ impl BackendConfig {
 	///
 	/// This is quite hacky, and it will most probably be refactored away in
 	/// future versions. We however need to rethink how to do the `/v1/bulk`
-	/// endpoints first.
+	/// endpoints first. Simply using downcasting should be a warning sign that
+	/// we're doing something wrong.
+	///
+	/// ref: https://github.com/reacherhq/check-if-email-exists/issues/1544
 	pub fn get_pg_pool(&self) -> Option<PgPool> {
-		self.storages
-			.iter()
-			.find_map(|s| <dyn Any>::downcast_ref::<PostgresStorage>(s).map(|s| s.pg_pool.clone()))
+		self.storages.iter().find_map(|s| {
+			s.as_any()
+				.downcast_ref::<PostgresStorage>()
+				.map(|s| s.pg_pool.clone())
+		})
 	}
 }
 

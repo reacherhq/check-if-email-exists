@@ -15,7 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::config::BackendConfig;
-use crate::worker::response::send_single_shot_reply;
+use crate::worker::single_shot::send_single_shot_reply;
 use check_if_email_exists::{
 	check_email, CheckEmailInput, CheckEmailOutput, Reachable, LOG_TARGET,
 };

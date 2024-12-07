@@ -21,6 +21,7 @@ use async_trait::async_trait;
 use check_if_email_exists::{CheckEmailOutput, LOG_TARGET};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
+use std::any::Any;
 use tracing::{debug, info};
 
 #[derive(Debug)]
@@ -103,5 +104,11 @@ impl Storage for PostgresStorage {
 
 	fn get_extra(&self) -> Option<serde_json::Value> {
 		self.extra.clone()
+	}
+
+	// This is a workaround to allow downcasting to Any, and should be removed
+	// ref: https://github.com/reacherhq/check-if-email-exists/issues/1544
+	fn as_any(&self) -> &dyn Any {
+		self
 	}
 }

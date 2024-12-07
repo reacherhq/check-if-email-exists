@@ -21,6 +21,7 @@ use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask, TaskError};
 use async_trait::async_trait;
 use check_if_email_exists::{redact, CheckEmailOutput, LOG_TARGET};
 use serde_json::Value;
+use std::any::Any;
 use tracing::debug;
 
 /// Storage that's baked in the software for users of the Commercial License
@@ -100,6 +101,12 @@ impl Storage for CommercialLicenseTrialStorage {
 
 	fn get_extra(&self) -> Option<serde_json::Value> {
 		self.postgres_storage.get_extra()
+	}
+
+	// This is a workaround to allow downcasting to Any, and should be removed
+	// ref: https://github.com/reacherhq/check-if-email-exists/issues/1544
+	fn as_any(&self) -> &dyn Any {
+		self
 	}
 }
 

@@ -17,7 +17,7 @@
 //! This file implements the `POST /v1/check_email` endpoint.
 
 use check_if_email_exists::{check_email, LOG_TARGET};
-use futures::StreamExt;
+use futures::{StreamExt, TryFutureExt};
 use lapin::options::{
 	BasicAckOptions, BasicConsumeOptions, BasicRejectOptions, QueueDeclareOptions,
 };
@@ -33,7 +33,7 @@ use crate::http::v1::bulk::post::publish_task;
 use crate::http::{check_header, ReacherResponseError};
 use crate::worker::consume::MAX_QUEUE_PRIORITY;
 use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask};
-use crate::worker::response::SingleShotReply;
+use crate::worker::single_shot::SingleShotReply;
 
 /// The main endpoint handler that implements the logic of this route.
 async fn http_handler(
@@ -51,8 +51,28 @@ async fn http_handler(
 
 	// If worker mode is disabled, we do a direct check, and skip rabbitmq.
 	if !config.worker.enable {
-		let result = check_email(&body.to_check_email_input(Arc::clone(&config))).await;
-		let result_bz = serde_json::to_vec(&result).map_err(ReacherResponseError::from)?;
+		let input = body.to_check_email_input(Arc::clone(&config));
+		let result = check_email(&input).await;
+		let value = Ok(result);
+
+		// Also store the result "manually", since we don't have a worker.
+		for storage in config.get_storages() {
+			storage
+				.store(
+					&CheckEmailTask {
+						input: input.clone(),
+						job_id: CheckEmailJobId::SingleShot,
+						webhook: None,
+					},
+					&value,
+					storage.get_extra(),
+				)
+				.map_err(ReacherResponseError::from)
+				.await?;
+		}
+
+		let result_bz = serde_json::to_vec(&value).map_err(ReacherResponseError::from)?;
+
 		return Ok(warp::reply::with_header(
 			result_bz,
 			"Content-Type",

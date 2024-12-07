@@ -35,4 +35,8 @@ pub trait Storage: Debug + Send + Sync + Any {
 	) -> Result<(), StorageError>;
 
 	fn get_extra(&self) -> Option<serde_json::Value>;
+
+	// This is a workaround to allow downcasting to Any, and should be removed
+	// ref: https://github.com/reacherhq/check-if-email-exists/issues/1544
+	fn as_any(&self) -> &dyn Any;
 }

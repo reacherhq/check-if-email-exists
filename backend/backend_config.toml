@@ -151,4 +151,4 @@ concurrency = 5
 # initiated the verification request in a multi-tenant system.
 # 
 # Env variable: RCH__STORAGE__0__POSTGRES__TABLE_NAME
-# extra = {"my_custom_key": "my_custom_value"}
+# extra = { "my_custom_key" = "my_custom_value" }

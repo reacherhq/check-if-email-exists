@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use crate::storage::error::StorageError;
 use check_if_email_exists::{CheckEmailInputBuilderError, LOG_TARGET};
 use serde::ser::SerializeStruct;
 use serde::Serialize;
@@ -24,7 +25,6 @@ use warp::{http::StatusCode, reject};
 
 /// Trait combining Display and Debug.
 pub trait DisplayDebug: fmt::Display + Debug + Sync + Send {}
-
 impl<T: fmt::Display + Debug + Sync + Send> DisplayDebug for T {}
 
 /// Struct describing an error response.
@@ -109,6 +109,12 @@ impl From<warp::http::status::InvalidStatusCode> for ReacherResponseError {
 
 impl From<anyhow::Error> for ReacherResponseError {
 	fn from(e: anyhow::Error) -> Self {
+		ReacherResponseError::new(StatusCode::INTERNAL_SERVER_ERROR, e)
+	}
+}
+
+impl From<StorageError> for ReacherResponseError {
+	fn from(e: StorageError) -> Self {
 		ReacherResponseError::new(StatusCode::INTERNAL_SERVER_ERROR, e)
 	}
 }

@@ -112,7 +112,7 @@ pub fn with_db(
 			pool.ok_or_else(|| {
 				warp::reject::custom(ReacherResponseError::new(
 					StatusCode::SERVICE_UNAVAILABLE,
-					"Please configure a database on Reacher before calling this endpoint",
+					"Please configure a Postgres database on Reacher before calling this endpoint",
 				))
 			})
 		}

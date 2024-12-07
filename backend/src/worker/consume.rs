@@ -15,7 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use super::do_work::{do_check_email_work, CheckEmailTask, TaskError};
-use super::response::send_single_shot_reply;
+use super::single_shot::send_single_shot_reply;
 use crate::config::{BackendConfig, RabbitMQConfig, ThrottleConfig};
 use crate::worker::do_work::CheckEmailJobId;
 use anyhow::Context;
