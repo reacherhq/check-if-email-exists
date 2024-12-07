@@ -140,12 +140,9 @@ pub(crate) async fn do_check_email_work(
 			// - In any case, we store the result.
 			delivery.ack(BasicAckOptions::default()).await?;
 
-			match task.job_id {
-				CheckEmailJobId::SingleShot => {
-					send_single_shot_reply(channel, &delivery, &worker_output).await?;
-				}
-				_ => {}
-			}
+			if let CheckEmailJobId::SingleShot = task.job_id {
+   					send_single_shot_reply(channel, &delivery, &worker_output).await?;
+   				}
 
 			// Store the result.
 			for storage in config.get_storages() {

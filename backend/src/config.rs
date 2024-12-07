@@ -112,7 +112,7 @@ impl BackendConfig {
 			bail!("When worker.enable is true, you must configure at least one storage to store the email verification results.");
 		}
 
-		for (_, storage) in &self.storage {
+		for storage in self.storage.values() {
 			match storage {
 				StorageConfig::Postgres(config) => {
 					let storage = PostgresStorage::new(&config.db_url, config.extra.clone())
