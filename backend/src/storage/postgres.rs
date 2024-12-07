@@ -67,8 +67,8 @@ impl Storage for PostgresStorage {
 					"#,
 					payload_json,
 					match task.job_id {
-						CheckEmailJobId::Bulk(job_id) => job_id,
-						CheckEmailJobId::SingleShot => 0,
+						CheckEmailJobId::Bulk(job_id) => Some(job_id),
+						CheckEmailJobId::SingleShot => None,
 					},
 					extra,
 					output_json,
@@ -85,8 +85,8 @@ impl Storage for PostgresStorage {
 					"#,
 					payload_json,
 					match task.job_id {
-						CheckEmailJobId::Bulk(job_id) => job_id,
-						CheckEmailJobId::SingleShot => 0,
+						CheckEmailJobId::Bulk(job_id) => Some(job_id),
+						CheckEmailJobId::SingleShot => None,
 					},
 					extra,
 					err.to_string(),

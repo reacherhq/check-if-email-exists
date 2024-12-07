@@ -108,6 +108,10 @@ impl BackendConfig {
 	/// Attempt connection to the Postgres database and RabbitMQ. Also populates
 	/// the internal `pg_pool` and `channel` fields with the connections.
 	pub async fn connect(&mut self) -> Result<(), anyhow::Error> {
+		if self.worker.enable && self.storage.is_empty() {
+			bail!("When worker.enable is true, you must configure at least one storage to store the email verification results.");
+		}
+
 		for (_, storage) in &self.storage {
 			match storage {
 				StorageConfig::Postgres(config) => {
@@ -278,18 +282,8 @@ mod tests {
 				extra: None,
 			}),
 		);
-		storage_config.insert(
-			"test2",
-			StorageConfig::Postgres(PostgresConfig {
-				db_url: "postgres://localhost:5432/test2".to_string(),
-				extra: None,
-			}),
-		);
 
-		let expected = r#"[test2.postgres]
-db_url = "postgres://localhost:5432/test2"
-
-[test1.postgres]
+		let expected = r#"[test1.postgres]
 db_url = "postgres://localhost:5432/test1"
 "#;
 

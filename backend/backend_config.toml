@@ -135,8 +135,20 @@ concurrency = 5
 #   multiple storages of the same type. You can use 0, 1, 2, etc. as the
 #   identifier.
 # - <storage_type> is the type of the storage, e.g. "postgres".
+[storage]
 
-# Postgres configuration. 
-[storage.0.postgres]
+# Uncomment the following line to configure the 1st storage to use Postgres.
+# [storage.0.postgres]
+
+# # URL to connect to the Postgres database.
+#
 # Env variable: RCH__STORAGE__0__POSTGRES__DB_URL
-db_url = "postgresql://localhost/reacherdb"
+# db_url = "postgresql://localhost/reacherdb"
+#
+# If you wish to store additional data along with the verification results,
+# you can add a JSON object to the "extra" field. This object will be stored
+# as a JSONB column in the database. This is for example useful to track who
+# initiated the verification request in a multi-tenant system.
+# 
+# Env variable: RCH__STORAGE__0__POSTGRES__TABLE_NAME
+# extra = {"my_custom_key": "my_custom_value"}
