@@ -17,7 +17,6 @@
 pub mod config;
 pub mod http;
 mod storage;
-#[cfg(feature = "worker")]
 pub mod worker;
 
 const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");

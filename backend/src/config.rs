@@ -15,9 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::storage::{postgres::PostgresStorage, Storage};
-#[cfg(feature = "worker")]
 use crate::worker::do_work::TaskWebhook;
-#[cfg(feature = "worker")]
 use crate::worker::setup_rabbit_mq;
 use anyhow::{bail, Context};
 use check_if_email_exists::{
@@ -25,11 +23,9 @@ use check_if_email_exists::{
 	YahooVerifMethod, LOG_TARGET,
 };
 use config::Config;
-#[cfg(feature = "worker")]
 use lapin::Channel;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
-#[cfg(feature = "worker")]
 use std::sync::Arc;
 use std::{any::Any, collections::HashMap};
 use tracing::warn;
@@ -68,7 +64,6 @@ pub struct BackendConfig {
 	pub storage: HashMap<String, StorageConfig>,
 
 	// Internal fields, not part of the configuration.
-	#[cfg(feature = "worker")]
 	#[serde(skip)]
 	channel: Option<Arc<Channel>>,
 
@@ -87,19 +82,16 @@ impl BackendConfig {
 			self.worker.enable,
 			&self.worker.throttle,
 			&self.worker.rabbitmq,
-			#[cfg(feature = "worker")]
 			&self.channel,
 		) {
-			#[cfg(feature = "worker")]
 			(true, Some(throttle), Some(rabbitmq), Some(channel)) => Ok(MustWorkerConfig {
-				#[cfg(feature = "worker")]
 				channel: channel.clone(),
 				throttle: throttle.clone(),
 				rabbitmq: rabbitmq.clone(),
-				#[cfg(feature = "worker")]
+
 				webhook: self.worker.webhook.clone(),
 			}),
-			#[cfg(feature = "worker")]
+
 			(true, _, _, _) => bail!("Worker configuration is missing"),
 			_ => bail!("Calling must_worker_config on a non-worker backend"),
 		}
@@ -123,19 +115,16 @@ impl BackendConfig {
 			}
 		}
 
-		#[cfg(feature = "worker")]
-		{
-			let channel = if self.worker.enable {
-				let rabbitmq_config = self.worker.rabbitmq.as_ref().ok_or_else(|| {
-					anyhow::anyhow!("Worker configuration is missing the rabbitmq configuration")
-				})?;
-				let channel = setup_rabbit_mq(&self.backend_name, rabbitmq_config).await?;
-				Some(Arc::new(channel))
-			} else {
-				None
-			};
-			self.channel = channel;
-		}
+		let channel = if self.worker.enable {
+			let rabbitmq_config = self.worker.rabbitmq.as_ref().ok_or_else(|| {
+				anyhow::anyhow!("Worker configuration is missing the rabbitmq configuration")
+			})?;
+			let channel = setup_rabbit_mq(&self.backend_name, rabbitmq_config).await?;
+			Some(Arc::new(channel))
+		} else {
+			None
+		};
+		self.channel = channel;
 
 		Ok(())
 	}
@@ -179,7 +168,6 @@ pub struct WorkerConfig {
 	pub throttle: Option<ThrottleConfig>,
 	pub rabbitmq: Option<RabbitMQConfig>,
 	/// Optional webhook configuration to send email verification results.
-	#[cfg(feature = "worker")]
 	pub webhook: Option<TaskWebhook>,
 }
 
@@ -187,12 +175,10 @@ pub struct WorkerConfig {
 /// a domain type to ensure that the worker configuration is present.
 #[derive(Debug, Clone)]
 pub struct MustWorkerConfig {
-	#[cfg(feature = "worker")]
 	pub channel: Arc<Channel>,
 
 	pub throttle: ThrottleConfig,
 	pub rabbitmq: RabbitMQConfig,
-	#[cfg(feature = "worker")]
 	pub webhook: Option<TaskWebhook>,
 }
 

@@ -77,7 +77,6 @@ impl From<serde_json::Error> for ReacherResponseError {
 	}
 }
 
-#[cfg(feature = "worker")]
 impl From<lapin::Error> for ReacherResponseError {
 	fn from(e: lapin::Error) -> Self {
 		ReacherResponseError::new(StatusCode::INTERNAL_SERVER_ERROR, e)
