@@ -137,24 +137,22 @@ pub(crate) async fn do_check_email_work(
 		_ => {
 			// This is the happy path. We acknowledge the message and:
 			// - If it's a single-shot email verification, we send a reply to the client.
-			// - If it's a bulk verification, we save the result to the database.
+			// - In any case, we store the result.
 			delivery.ack(BasicAckOptions::default()).await?;
 
-			// match task.job_id {
-			// 	CheckEmailJobId::SingleShot => {
-			// 		send_single_shot_reply(channel, &delivery, &worker_output).await?;
-			// 	}
-			// 	CheckEmailJobId::Bulk(bulk_job_id) => {
-			// 		save_to_db(
-			// 			&config.backend_name,
-			// 			config.get_pg_pool(),
-			// 			task,
-			// 			bulk_job_id,
-			// 			&worker_output,
-			// 		)
-			// 		.await?;
-			// 	}
-			// }
+			match task.job_id {
+				CheckEmailJobId::SingleShot => {
+					send_single_shot_reply(channel, &delivery, &worker_output).await?;
+				}
+				_ => {}
+			}
+
+			// Store the result.
+			for storage in config.get_storages() {
+				storage
+					.store(task, &worker_output, storage.get_extra())
+					.await?;
+			}
 
 			info!(target: LOG_TARGET,
 				email=task.input.to_email,

@@ -17,6 +17,7 @@
 use super::error::StorageError;
 use super::Storage;
 use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask, TaskError};
+use async_trait::async_trait;
 use check_if_email_exists::{CheckEmailOutput, LOG_TARGET};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
@@ -24,11 +25,12 @@ use tracing::{debug, info};
 
 #[derive(Debug)]
 pub struct PostgresStorage {
-	pg_pool: PgPool,
+	pub pg_pool: PgPool,
+	extra: Option<serde_json::Value>,
 }
 
 impl PostgresStorage {
-	pub async fn new(db_url: &str) -> Result<Self, StorageError> {
+	pub async fn new(db_url: &str, extra: Option<serde_json::Value>) -> Result<Self, StorageError> {
 		debug!(target: LOG_TARGET, "Connecting to DB: {}", db_url);
 		// create connection pool with database
 		// connection pool internally the shared db connection
@@ -39,10 +41,11 @@ impl PostgresStorage {
 
 		info!(target: LOG_TARGET, table="v1_task_result", "Connected to DB, Reacher will write verification results to DB");
 
-		Ok(Self { pg_pool })
+		Ok(Self { pg_pool, extra })
 	}
 }
 
+#[async_trait]
 impl Storage for PostgresStorage {
 	async fn store(
 		&self,
@@ -96,5 +99,9 @@ impl Storage for PostgresStorage {
 		debug!(target: LOG_TARGET, email=?task.input.to_email, "Wrote to DB");
 
 		Ok(())
+	}
+
+	fn get_extra(&self) -> Option<serde_json::Value> {
+		self.extra.clone()
 	}
 }

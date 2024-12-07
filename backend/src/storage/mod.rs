@@ -17,16 +17,21 @@
 pub mod error;
 pub mod postgres;
 
-use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask, TaskError};
+use crate::worker::do_work::{CheckEmailTask, TaskError};
+use async_trait::async_trait;
 use check_if_email_exists::CheckEmailOutput;
 use error::StorageError;
+use std::any::Any;
 use std::fmt::Debug;
 
-pub trait Storage: Debug + Send + Sync {
+#[async_trait]
+pub trait Storage: Debug + Send + Sync + Any {
 	async fn store(
 		&self,
 		task: &CheckEmailTask,
 		worker_output: &Result<CheckEmailOutput, TaskError>,
 		extra: Option<serde_json::Value>,
 	) -> Result<(), StorageError>;
+
+	fn get_extra(&self) -> Option<serde_json::Value>;
 }

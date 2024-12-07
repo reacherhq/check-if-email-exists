@@ -31,7 +31,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 #[cfg(feature = "worker")]
 use std::sync::Arc;
-use std::{collections::HashMap, env};
+use std::{any::Any, collections::HashMap};
 use tracing::warn;
 
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -73,7 +73,7 @@ pub struct BackendConfig {
 	channel: Option<Arc<Channel>>,
 
 	#[serde(skip)]
-	storages: Vec<Box<dyn Storage>>,
+	storages: Vec<Arc<dyn Storage>>,
 }
 
 impl BackendConfig {
@@ -111,10 +111,10 @@ impl BackendConfig {
 		for (_, storage) in &self.storage {
 			match storage {
 				StorageConfig::Postgres(config) => {
-					let storage = PostgresStorage::new(&config.db_url)
+					let storage = PostgresStorage::new(&config.db_url, config.extra.clone())
 						.await
 						.with_context(|| format!("Connecting to postgres DB {}", config.db_url))?;
-					self.storages.push(Box::new(storage));
+					self.storages.push(Arc::new(storage));
 				}
 			}
 		}
@@ -136,8 +136,22 @@ impl BackendConfig {
 		Ok(())
 	}
 
+	/// Get all storages as a Vec. We don't really care about the keys in the
+	/// HashMap, except for deserialize purposes.
+	pub fn get_storages(&self) -> Vec<Arc<dyn Storage>> {
+		self.storages.clone()
+	}
+
+	/// Get the Postgres connection pool, if at least one of the storages is a
+	/// Postgres storage.
+	///
+	/// This is quite hacky, and it will most probably be refactored away in
+	/// future versions. We however need to rethink how to do the `/v1/bulk`
+	/// endpoints first.
 	pub fn get_pg_pool(&self) -> Option<PgPool> {
-		self.pg_pool.clone()
+		self.storages
+			.iter()
+			.find_map(|s| <dyn Any>::downcast_ref::<PostgresStorage>(s).map(|s| s.pg_pool.clone()))
 	}
 }
 
@@ -215,6 +229,7 @@ pub enum StorageConfig {
 #[derive(Debug, Deserialize, Clone, PartialEq, Serialize)]
 pub struct PostgresConfig {
 	pub db_url: String,
+	pub extra: Option<serde_json::Value>,
 }
 
 /// Load the worker configuration from the worker_config.toml file and from the
@@ -247,7 +262,8 @@ mod tests {
 		assert_eq!(
 			cfg.storage.get("1").unwrap(),
 			&StorageConfig::Postgres(PostgresConfig {
-				db_url: "test2".to_string()
+				db_url: "test2".to_string(),
+				extra: None,
 			})
 		);
 	}
@@ -259,12 +275,14 @@ mod tests {
 			"test1",
 			StorageConfig::Postgres(PostgresConfig {
 				db_url: "postgres://localhost:5432/test1".to_string(),
+				extra: None,
 			}),
 		);
 		storage_config.insert(
 			"test2",
 			StorageConfig::Postgres(PostgresConfig {
 				db_url: "postgres://localhost:5432/test2".to_string(),
+				extra: None,
 			}),
 		);
 
