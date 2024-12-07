@@ -8,7 +8,7 @@ CREATE TABLE v1_task_result (
     id SERIAL PRIMARY KEY,
     job_id INTEGER NOT NULL REFERENCES v1_bulk_job(id) ON DELETE CASCADE,
     payload JSONB NOT NULL,
-    backend_name TEXT NOT NULL,
+    extra JSONB, -- any extra data that needs to be stored
     result JSONB,
     error TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL

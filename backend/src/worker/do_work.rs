@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use super::response::save_to_db;
 use crate::config::BackendConfig;
 use crate::worker::response::send_single_shot_reply;
 use check_if_email_exists::{
@@ -141,21 +140,21 @@ pub(crate) async fn do_check_email_work(
 			// - If it's a bulk verification, we save the result to the database.
 			delivery.ack(BasicAckOptions::default()).await?;
 
-			match task.job_id {
-				CheckEmailJobId::SingleShot => {
-					send_single_shot_reply(channel, &delivery, &worker_output).await?;
-				}
-				CheckEmailJobId::Bulk(bulk_job_id) => {
-					save_to_db(
-						&config.backend_name,
-						config.get_pg_pool(),
-						task,
-						bulk_job_id,
-						&worker_output,
-					)
-					.await?;
-				}
-			}
+			// match task.job_id {
+			// 	CheckEmailJobId::SingleShot => {
+			// 		send_single_shot_reply(channel, &delivery, &worker_output).await?;
+			// 	}
+			// 	CheckEmailJobId::Bulk(bulk_job_id) => {
+			// 		save_to_db(
+			// 			&config.backend_name,
+			// 			config.get_pg_pool(),
+			// 			task,
+			// 			bulk_job_id,
+			// 			&worker_output,
+			// 		)
+			// 		.await?;
+			// 	}
+			// }
 
 			info!(target: LOG_TARGET,
 				email=task.input.to_email,

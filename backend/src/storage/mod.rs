@@ -14,10 +14,19 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pub mod config;
-pub mod http;
-mod storage;
-#[cfg(feature = "worker")]
-pub mod worker;
+pub mod error;
+pub mod postgres;
 
-const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
+use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask, TaskError};
+use check_if_email_exists::CheckEmailOutput;
+use error::StorageError;
+use std::fmt::Debug;
+
+pub trait Storage: Debug + Send + Sync {
+	async fn store(
+		&self,
+		task: &CheckEmailTask,
+		worker_output: &Result<CheckEmailOutput, TaskError>,
+		extra: Option<serde_json::Value>,
+	) -> Result<(), StorageError>;
+}

@@ -37,6 +37,9 @@ tracing-subscriber = "0.3.18"
 uuid = "1.10"
 warp = "0.3"
 
+[dev-dependencies]
+toml = "0.8"
+
 [features]
 worker = [
     "futures",

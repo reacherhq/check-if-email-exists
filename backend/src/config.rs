@@ -14,12 +14,12 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::create_db;
+use crate::storage::{postgres::PostgresStorage, Storage};
 #[cfg(feature = "worker")]
 use crate::worker::do_work::TaskWebhook;
 #[cfg(feature = "worker")]
 use crate::worker::setup_rabbit_mq;
-use anyhow::bail;
+use anyhow::{bail, Context};
 use check_if_email_exists::{
 	CheckEmailInputProxy, GmailVerifMethod, HotmailB2BVerifMethod, HotmailB2CVerifMethod,
 	YahooVerifMethod, LOG_TARGET,
@@ -29,9 +29,9 @@ use config::Config;
 use lapin::Channel;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
-use std::env;
 #[cfg(feature = "worker")]
 use std::sync::Arc;
+use std::{collections::HashMap, env};
 use tracing::warn;
 
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -64,12 +64,16 @@ pub struct BackendConfig {
 	/// Worker configuration, only present if the backend is a worker.
 	pub worker: WorkerConfig,
 
+	/// Configuration on where to store the email verification results.
+	pub storage: HashMap<String, StorageConfig>,
+
 	// Internal fields, not part of the configuration.
-	#[serde(skip)]
-	pg_pool: Option<PgPool>,
 	#[cfg(feature = "worker")]
 	#[serde(skip)]
 	channel: Option<Arc<Channel>>,
+
+	#[serde(skip)]
+	storages: Vec<Box<dyn Storage>>,
 }
 
 impl BackendConfig {
@@ -83,31 +87,20 @@ impl BackendConfig {
 			self.worker.enable,
 			&self.worker.throttle,
 			&self.worker.rabbitmq,
-			&self.worker.postgres,
-			&self.pg_pool,
 			#[cfg(feature = "worker")]
 			&self.channel,
 		) {
 			#[cfg(feature = "worker")]
-			(
-				true,
-				Some(throttle),
-				Some(rabbitmq),
-				Some(postgres),
-				Some(pg_pool),
-				Some(channel),
-			) => Ok(MustWorkerConfig {
-				pg_pool: pg_pool.clone(),
+			(true, Some(throttle), Some(rabbitmq), Some(channel)) => Ok(MustWorkerConfig {
 				#[cfg(feature = "worker")]
 				channel: channel.clone(),
 				throttle: throttle.clone(),
 				rabbitmq: rabbitmq.clone(),
 				#[cfg(feature = "worker")]
 				webhook: self.worker.webhook.clone(),
-				postgres: postgres.clone(),
 			}),
 			#[cfg(feature = "worker")]
-			(true, _, _, _, _, _) => bail!("Worker configuration is missing"),
+			(true, _, _, _) => bail!("Worker configuration is missing"),
 			_ => bail!("Calling must_worker_config on a non-worker backend"),
 		}
 	}
@@ -115,23 +108,16 @@ impl BackendConfig {
 	/// Attempt connection to the Postgres database and RabbitMQ. Also populates
 	/// the internal `pg_pool` and `channel` fields with the connections.
 	pub async fn connect(&mut self) -> Result<(), anyhow::Error> {
-		let pg_pool = if self.worker.enable {
-			let db_url = self
-				.worker
-				.postgres
-				.as_ref()
-				.map(|c| &c.db_url)
-				.ok_or_else(|| {
-					anyhow::anyhow!("Worker configuration is missing the postgres configuration")
-				})?;
-			Some(create_db(db_url).await?)
-		} else if let Ok(db_url) = env::var("DATABASE_URL") {
-			// For legacy reasons, we also support the DATABASE_URL environment variable:
-			Some(create_db(&db_url).await?)
-		} else {
-			None
-		};
-		self.pg_pool = pg_pool;
+		for (_, storage) in &self.storage {
+			match storage {
+				StorageConfig::Postgres(config) => {
+					let storage = PostgresStorage::new(&config.db_url)
+						.await
+						.with_context(|| format!("Connecting to postgres DB {}", config.db_url))?;
+					self.storages.push(Box::new(storage));
+				}
+			}
+		}
 
 		#[cfg(feature = "worker")]
 		{
@@ -177,16 +163,12 @@ pub struct WorkerConfig {
 	/// Optional webhook configuration to send email verification results.
 	#[cfg(feature = "worker")]
 	pub webhook: Option<TaskWebhook>,
-	/// Postgres database configuration to store email verification
-	/// results.
-	pub postgres: Option<PostgresConfig>,
 }
 
 /// Worker configuration that must be present if worker.enable is true. Used as
 /// a domain type to ensure that the worker configuration is present.
 #[derive(Debug, Clone)]
 pub struct MustWorkerConfig {
-	pub pg_pool: PgPool,
 	#[cfg(feature = "worker")]
 	pub channel: Arc<Channel>,
 
@@ -194,7 +176,6 @@ pub struct MustWorkerConfig {
 	pub rabbitmq: RabbitMQConfig,
 	#[cfg(feature = "worker")]
 	pub webhook: Option<TaskWebhook>,
-	pub postgres: PostgresConfig,
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
@@ -202,11 +183,6 @@ pub struct RabbitMQConfig {
 	pub url: String,
 	/// Total number of concurrent messages that the worker can process.
 	pub concurrency: u16,
-}
-
-#[derive(Debug, Deserialize, Clone, Serialize)]
-pub struct PostgresConfig {
-	pub db_url: String,
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
@@ -229,6 +205,18 @@ impl ThrottleConfig {
 	}
 }
 
+#[derive(Debug, Deserialize, Clone, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum StorageConfig {
+	/// Store the email verification results in the Postgres database.
+	Postgres(PostgresConfig),
+}
+
+#[derive(Debug, Deserialize, Clone, PartialEq, Serialize)]
+pub struct PostgresConfig {
+	pub db_url: String,
+}
+
 /// Load the worker configuration from the worker_config.toml file and from the
 /// environment.
 pub async fn load_config() -> Result<BackendConfig, anyhow::Error> {
@@ -247,13 +235,46 @@ pub async fn load_config() -> Result<BackendConfig, anyhow::Error> {
 
 #[cfg(test)]
 mod tests {
-	use super::load_config;
+	use super::*;
 	use std::env;
 
 	#[tokio::test]
 	async fn test_env_vars() {
 		env::set_var("RCH__BACKEND_NAME", "test-backend");
+		env::set_var("RCH__STORAGE__1__POSTGRES__DB_URL", "test2");
 		let cfg = load_config().await.unwrap();
 		assert_eq!(cfg.backend_name, "test-backend");
+		assert_eq!(
+			cfg.storage.get("1").unwrap(),
+			&StorageConfig::Postgres(PostgresConfig {
+				db_url: "test2".to_string()
+			})
+		);
+	}
+
+	#[tokio::test]
+	async fn test_serialize_storage_config() {
+		let mut storage_config = HashMap::new();
+		storage_config.insert(
+			"test1",
+			StorageConfig::Postgres(PostgresConfig {
+				db_url: "postgres://localhost:5432/test1".to_string(),
+			}),
+		);
+		storage_config.insert(
+			"test2",
+			StorageConfig::Postgres(PostgresConfig {
+				db_url: "postgres://localhost:5432/test2".to_string(),
+			}),
+		);
+
+		let expected = r#"[test2.postgres]
+db_url = "postgres://localhost:5432/test2"
+
+[test1.postgres]
+db_url = "postgres://localhost:5432/test1"
+"#;
+
+		assert_eq!(expected, toml::to_string(&storage_config).unwrap(),);
 	}
 }

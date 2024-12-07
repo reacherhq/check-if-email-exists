@@ -2975,6 +2975,7 @@ dependencies = [
  "tokio",
  "tokio-executor-trait",
  "tokio-reactor-trait",
+ "toml",
  "tracing",
  "tracing-subscriber",
  "uuid 1.10.0",
