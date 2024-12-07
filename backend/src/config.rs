@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use crate::storage::commercial_license_trial::CommercialLicenseTrialStorage;
 use crate::storage::{postgres::PostgresStorage, Storage};
 use crate::worker::do_work::TaskWebhook;
 use crate::worker::setup_rabbit_mq;
@@ -110,6 +111,15 @@ impl BackendConfig {
 					let storage = PostgresStorage::new(&config.db_url, config.extra.clone())
 						.await
 						.with_context(|| format!("Connecting to postgres DB {}", config.db_url))?;
+					self.storages.push(Arc::new(storage));
+				}
+				StorageConfig::CommercialLicenseTrial(config) => {
+					let storage =
+						CommercialLicenseTrialStorage::new(&config.db_url, config.extra.clone())
+							.await
+							.with_context(|| {
+								format!("Connecting to postgres DB {}", config.db_url)
+							})?;
 					self.storages.push(Arc::new(storage));
 				}
 			}
@@ -214,6 +224,10 @@ impl ThrottleConfig {
 pub enum StorageConfig {
 	/// Store the email verification results in the Postgres database.
 	Postgres(PostgresConfig),
+	/// Store the email verification results in Reacher's DB. This storage
+	/// method is baked-in into the software for users of the Commercial
+	/// License trial.
+	CommercialLicenseTrial(PostgresConfig),
 }
 
 #[derive(Debug, Deserialize, Clone, PartialEq, Serialize)]
