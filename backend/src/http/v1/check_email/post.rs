@@ -56,20 +56,19 @@ async fn http_handler(
 		let value = Ok(result);
 
 		// Also store the result "manually", since we don't have a worker.
-		for storage in config.get_storages() {
-			storage
-				.store(
-					&CheckEmailTask {
-						input: input.clone(),
-						job_id: CheckEmailJobId::SingleShot,
-						webhook: None,
-					},
-					&value,
-					storage.get_extra(),
-				)
-				.map_err(ReacherResponseError::from)
-				.await?;
-		}
+		let storage = config.get_storage_adapter();
+		storage
+			.store(
+				&CheckEmailTask {
+					input: input.clone(),
+					job_id: CheckEmailJobId::SingleShot,
+					webhook: None,
+				},
+				&value,
+				storage.get_extra(),
+			)
+			.map_err(ReacherResponseError::from)
+			.await?;
 
 		let result_bz = serde_json::to_vec(&value).map_err(ReacherResponseError::from)?;
 

@@ -2958,7 +2958,6 @@ version = "0.10.0"
 dependencies = [
  "anyhow",
  "async-smtp",
- "async-trait",
  "check-if-email-exists",
  "config",
  "csv",

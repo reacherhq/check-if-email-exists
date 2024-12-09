@@ -128,17 +128,8 @@ concurrency = 5
 # results. We currently support the following storage backends:
 # - Postgres
 #
-# You can configure one or more storages. The format of the configuration is:
-# [storage.<identifier>.<storage_type>]
-# where:
-# - <identifier> is a unique identifier for the storage, in case you have
-#   multiple storages of the same type. You can use 0, 1, 2, etc. as the
-#   identifier.
-# - <storage_type> is the type of the storage, e.g. "postgres".
-[storage]
-
-# Uncomment the following line to configure the 1st storage to use Postgres.
-# [storage.0.postgres]
+# Uncomment the following line to configure the storage to use Postgres.
+# [storage.postgres]
 
 # # URL to connect to the Postgres database.
 #

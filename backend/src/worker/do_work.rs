@@ -145,11 +145,10 @@ pub(crate) async fn do_check_email_work(
 			}
 
 			// Store the result.
-			for storage in config.get_storages() {
-				storage
-					.store(task, &worker_output, storage.get_extra())
-					.await?;
-			}
+			let storage = config.get_storage_adapter();
+			storage
+				.store(task, &worker_output, storage.get_extra())
+				.await?;
 
 			info!(target: LOG_TARGET,
 				email=task.input.to_email,

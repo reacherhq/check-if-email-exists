@@ -15,9 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use super::error::StorageError;
-use super::Storage;
 use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask, TaskError};
-use async_trait::async_trait;
 use check_if_email_exists::{CheckEmailOutput, LOG_TARGET};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
@@ -44,11 +42,8 @@ impl PostgresStorage {
 
 		Ok(Self { pg_pool, extra })
 	}
-}
 
-#[async_trait]
-impl Storage for PostgresStorage {
-	async fn store(
+	pub async fn store(
 		&self,
 		task: &CheckEmailTask,
 		worker_output: &Result<CheckEmailOutput, TaskError>,
@@ -102,13 +97,7 @@ impl Storage for PostgresStorage {
 		Ok(())
 	}
 
-	fn get_extra(&self) -> Option<serde_json::Value> {
+	pub fn get_extra(&self) -> Option<serde_json::Value> {
 		self.extra.clone()
-	}
-
-	// This is a workaround to allow downcasting to Any, and should be removed
-	// ref: https://github.com/reacherhq/check-if-email-exists/issues/1544
-	fn as_any(&self) -> &dyn Any {
-		self
 	}
 }

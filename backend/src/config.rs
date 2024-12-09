@@ -14,8 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::storage::commercial_license_trial::CommercialLicenseTrialStorage;
-use crate::storage::{postgres::PostgresStorage, Storage};
+use crate::storage::{postgres::PostgresStorage, StorageAdapter};
 use crate::worker::do_work::TaskWebhook;
 use crate::worker::setup_rabbit_mq;
 use anyhow::{bail, Context};
@@ -27,7 +26,6 @@ use config::Config;
 use lapin::Channel;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
-use std::collections::HashMap;
 use std::sync::Arc;
 use tracing::warn;
 
@@ -62,14 +60,14 @@ pub struct BackendConfig {
 	pub worker: WorkerConfig,
 
 	/// Configuration on where to store the email verification results.
-	pub storage: HashMap<String, StorageConfig>,
+	pub storage: StorageConfig,
 
 	// Internal fields, not part of the configuration.
 	#[serde(skip)]
 	channel: Option<Arc<Channel>>,
 
 	#[serde(skip)]
-	storages: Vec<Arc<dyn Storage>>,
+	storage_adapter: Arc<StorageAdapter>,
 }
 
 impl BackendConfig {
@@ -101,28 +99,15 @@ impl BackendConfig {
 	/// Attempt connection to the Postgres database and RabbitMQ. Also populates
 	/// the internal `pg_pool` and `channel` fields with the connections.
 	pub async fn connect(&mut self) -> Result<(), anyhow::Error> {
-		if self.worker.enable && self.storage.is_empty() {
-			bail!("When worker.enable is true, you must configure at least one storage to store the email verification results.");
-		}
+		match &self.storage {
+			StorageConfig::Postgres(config) => {
+				let storage = PostgresStorage::new(&config.db_url, config.extra.clone())
+					.await
+					.with_context(|| format!("Connecting to postgres DB {}", config.db_url))?;
 
-		for storage in self.storage.values() {
-			match storage {
-				StorageConfig::Postgres(config) => {
-					let storage = PostgresStorage::new(&config.db_url, config.extra.clone())
-						.await
-						.with_context(|| format!("Connecting to postgres DB {}", config.db_url))?;
-					self.storages.push(Arc::new(storage));
-				}
-				StorageConfig::CommercialLicenseTrial(config) => {
-					let storage =
-						CommercialLicenseTrialStorage::new(&config.db_url, config.extra.clone())
-							.await
-							.with_context(|| {
-								format!("Connecting to postgres DB {}", config.db_url)
-							})?;
-					self.storages.push(Arc::new(storage));
-				}
+				self.storage_adapter = Arc::new(StorageAdapter::Postgres(storage));
 			}
+			StorageConfig::Noop => {}
 		}
 
 		let channel = if self.worker.enable {
@@ -141,25 +126,16 @@ impl BackendConfig {
 
 	/// Get all storages as a Vec. We don't really care about the keys in the
 	/// HashMap, except for deserialize purposes.
-	pub fn get_storages(&self) -> Vec<Arc<dyn Storage>> {
-		self.storages.clone()
+	pub fn get_storage_adapter(&self) -> Arc<StorageAdapter> {
+		self.storage_adapter.clone()
 	}
 
-	/// Get the Postgres connection pool, if at least one of the storages is a
-	/// Postgres storage.
-	///
-	/// This is quite hacky, and it will most probably be refactored away in
-	/// future versions. We however need to rethink how to do the `/v1/bulk`
-	/// endpoints first. Simply using downcasting should be a warning sign that
-	/// we're doing something wrong.
-	///
-	/// ref: https://github.com/reacherhq/check-if-email-exists/issues/1544
+	/// Get the Postgres connection pool, if the storage is Postgres.
 	pub fn get_pg_pool(&self) -> Option<PgPool> {
-		self.storages.iter().find_map(|s| {
-			s.as_any()
-				.downcast_ref::<PostgresStorage>()
-				.map(|s| s.pg_pool.clone())
-		})
+		match self.storage_adapter.as_ref() {
+			StorageAdapter::Postgres(storage) => Some(storage.pg_pool.clone()),
+			StorageAdapter::Noop => None,
+		}
 	}
 }
 
@@ -224,15 +200,14 @@ impl ThrottleConfig {
 	}
 }
 
-#[derive(Debug, Deserialize, Clone, PartialEq, Serialize)]
+#[derive(Debug, Default, Deserialize, Clone, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum StorageConfig {
 	/// Store the email verification results in the Postgres database.
 	Postgres(PostgresConfig),
-	/// Store the email verification results in Reacher's DB. This storage
-	/// method is baked-in into the software for users of the Commercial
-	/// License trial.
-	CommercialLicenseTrial(PostgresConfig),
+	/// Don't store the email verification results.
+	#[default]
+	Noop,
 }
 
 #[derive(Debug, Deserialize, Clone, PartialEq, Serialize)]
@@ -265,12 +240,12 @@ mod tests {
 	#[tokio::test]
 	async fn test_env_vars() {
 		env::set_var("RCH__BACKEND_NAME", "test-backend");
-		env::set_var("RCH__STORAGE__1__POSTGRES__DB_URL", "test2");
+		env::set_var("RCH__STORAGE__POSTGRES__DB_URL", "test2");
 		let cfg = load_config().await.unwrap();
 		assert_eq!(cfg.backend_name, "test-backend");
 		assert_eq!(
-			cfg.storage.get("1").unwrap(),
-			&StorageConfig::Postgres(PostgresConfig {
+			cfg.storage,
+			StorageConfig::Postgres(PostgresConfig {
 				db_url: "test2".to_string(),
 				extra: None,
 			})
@@ -279,16 +254,12 @@ mod tests {
 
 	#[tokio::test]
 	async fn test_serialize_storage_config() {
-		let mut storage_config = HashMap::new();
-		storage_config.insert(
-			"test1",
-			StorageConfig::Postgres(PostgresConfig {
-				db_url: "postgres://localhost:5432/test1".to_string(),
-				extra: None,
-			}),
-		);
+		let storage_config = StorageConfig::Postgres(PostgresConfig {
+			db_url: "postgres://localhost:5432/test1".to_string(),
+			extra: None,
+		});
 
-		let expected = r#"[test1.postgres]
+		let expected = r#"[postgres]
 db_url = "postgres://localhost:5432/test1"
 "#;
 

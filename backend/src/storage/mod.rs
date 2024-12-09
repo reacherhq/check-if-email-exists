@@ -14,29 +14,39 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pub mod commercial_license_trial;
 pub mod error;
 pub mod postgres;
 
 use crate::worker::do_work::{CheckEmailTask, TaskError};
-use async_trait::async_trait;
 use check_if_email_exists::CheckEmailOutput;
 use error::StorageError;
-use std::any::Any;
+use postgres::PostgresStorage;
 use std::fmt::Debug;
 
-#[async_trait]
-pub trait Storage: Debug + Send + Sync + Any {
-	async fn store(
+#[derive(Debug, Default)]
+pub enum StorageAdapter {
+	Postgres(PostgresStorage),
+	#[default]
+	Noop,
+}
+
+impl StorageAdapter {
+	pub async fn store(
 		&self,
 		task: &CheckEmailTask,
 		worker_output: &Result<CheckEmailOutput, TaskError>,
 		extra: Option<serde_json::Value>,
-	) -> Result<(), StorageError>;
+	) -> Result<(), StorageError> {
+		match self {
+			StorageAdapter::Postgres(storage) => storage.store(task, worker_output, extra).await,
+			StorageAdapter::Noop => Ok(()),
+		}
+	}
 
-	fn get_extra(&self) -> Option<serde_json::Value>;
-
-	// This is a workaround to allow downcasting to Any, and should be removed
-	// ref: https://github.com/reacherhq/check-if-email-exists/issues/1544
-	fn as_any(&self) -> &dyn Any;
+	pub fn get_extra(&self) -> Option<serde_json::Value> {
+		match self {
+			StorageAdapter::Postgres(storage) => storage.get_extra().clone(),
+			StorageAdapter::Noop => None,
+		}
+	}
 }
