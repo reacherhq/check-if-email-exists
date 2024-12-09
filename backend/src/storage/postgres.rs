@@ -19,7 +19,6 @@ use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask, TaskError};
 use check_if_email_exists::{CheckEmailOutput, LOG_TARGET};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
-use std::any::Any;
 use tracing::{debug, info};
 
 #[derive(Debug)]
