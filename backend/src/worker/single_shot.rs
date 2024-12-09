@@ -14,76 +14,17 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use super::do_work::{CheckEmailTask, TaskError};
+use super::do_work::TaskError;
 use anyhow::bail;
 use check_if_email_exists::{CheckEmailOutput, LOG_TARGET};
 use lapin::message::Delivery;
 use lapin::options::BasicPublishOptions;
 use lapin::{BasicProperties, Channel};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use std::convert::TryFrom;
 use std::sync::Arc;
 use tracing::debug;
 use warp::http::StatusCode;
-
-/// Save the task result to the database. This only happens if the task is a
-/// part of a bulk verification job. If no pool is provided, the function will
-/// simply return without doing anything.
-///
-/// # Panics
-///
-/// Panics if the task is a single-shot task, i.e. if `payload.job_id` is `None`.
-pub async fn save_to_db(
-	backend_name: &str,
-	pg_pool: Option<PgPool>,
-	task: &CheckEmailTask,
-	bulk_job_id: i32,
-	worker_output: &Result<CheckEmailOutput, TaskError>,
-) -> Result<(), anyhow::Error> {
-	let pg_pool = pg_pool.ok_or_else(|| anyhow::anyhow!("No DB pool provided"))?;
-
-	let payload_json = serde_json::to_value(task)?;
-
-	match worker_output {
-		Ok(output) => {
-			let output_json = serde_json::to_value(output)?;
-
-			sqlx::query!(
-				r#"
-				INSERT INTO v1_task_result (payload, job_id, backend_name, result)
-				VALUES ($1, $2, $3, $4)
-				RETURNING id
-				"#,
-				payload_json,
-				bulk_job_id,
-				backend_name,
-				output_json,
-			)
-			.fetch_one(&pg_pool)
-			.await?;
-		}
-		Err(err) => {
-			sqlx::query!(
-				r#"
-				INSERT INTO v1_task_result (payload, job_id, backend_name, error)
-				VALUES ($1, $2, $3, $4)
-				RETURNING id
-				"#,
-				payload_json,
-				bulk_job_id,
-				backend_name,
-				err.to_string(),
-			)
-			.fetch_one(&pg_pool)
-			.await?;
-		}
-	}
-
-	debug!(target: LOG_TARGET, email=?task.input.to_email, "Wrote to DB");
-
-	Ok(())
-}
 
 /// For single-shot email verifications, the worker will send a reply to the
 /// client with the result of the verification. Since both CheckEmailOutput and

@@ -20,7 +20,6 @@
 use check_if_email_exists::{setup_sentry, LOG_TARGET};
 use reacher_backend::config::load_config;
 use reacher_backend::http::run_warp_server;
-#[cfg(feature = "worker")]
 use reacher_backend::worker::run_worker;
 use std::sync::Arc;
 use tracing::{debug, info};
@@ -45,25 +44,17 @@ async fn main() -> Result<(), anyhow::Error> {
 
 	let config = Arc::new(config);
 
-	#[cfg(feature = "worker")]
-	{
-		let server_future = run_warp_server(Arc::clone(&config));
-		let worker_future = async {
-			if config.worker.enable {
-				run_worker(config).await?;
-			}
-			Ok(())
-		};
+	let server_future = run_warp_server(Arc::clone(&config));
+	let worker_future = async {
+		if config.worker.enable {
+			run_worker(config).await?;
+		}
+		Ok(())
+	};
 
-		tokio::try_join!(server_future, worker_future)?;
+	tokio::try_join!(server_future, worker_future)?;
 
-		info!("Shutting down...");
-	}
-
-	#[cfg(not(feature = "worker"))]
-	{
-		run_warp_server(config).await?;
-	}
+	info!("Shutting down...");
 
 	Ok(())
 }

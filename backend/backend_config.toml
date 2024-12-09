@@ -44,6 +44,11 @@ webdriver_addr = "http://localhost:9515"
 # Env variable: RCH__SMTP_TIMEOUT
 # smtp_timeout = 45
 
+# Optional Sentry DSN. If set, all errors will be sent to Sentry.
+#
+# Env variable: RCH__SENTRY_DSN
+# sentry_dsn = "<PASTE_YOUR_DSN_NOW>"
+
 # Uncomment the lines below to route all SMTP verification requests
 # through a specified proxy. Note that the proxy must be a SOCKS5 proxy to work
 # with the SMTP protocol. This proxy will not be used for headless
@@ -119,14 +124,22 @@ concurrency = 5
 # max_requests_per_hour = 1000
 # max_requests_per_day = 20000
 
-# Postgres configuration. Currently, a Postgres database is required to store
-# the results of the verifications. This might change in the future, allowing
-# for pluggable storage.
-[worker.postgres]
-# Env variable: RCH__WORKER__POSTGRES__DB_URL
-db_url = "postgresql://localhost/reacherdb"
-
-# Optional Sentry DSN. If set, all errors will be sent to Sentry.
+# Below are the configurations for the storage of the email verification
+# results. We currently support the following storage backends:
+# - Postgres
 #
-# Env variable: RCH__SENTRY_DSN
-# sentry_dsn = "<PASTE_YOUR_DSN_NOW>"
+# Uncomment the following line to configure the storage to use Postgres.
+# [storage.postgres]
+
+# # URL to connect to the Postgres database.
+#
+# Env variable: RCH__STORAGE__0__POSTGRES__DB_URL
+# db_url = "postgresql://localhost/reacherdb"
+#
+# If you wish to store additional data along with the verification results,
+# you can add a JSON object to the "extra" field. This object will be stored
+# as a JSONB column in the database. This is for example useful to track who
+# initiated the verification request in a multi-tenant system.
+# 
+# Env variable: RCH__STORAGE__0__POSTGRES__TABLE_NAME
+# extra = { "my_custom_key" = "my_custom_value" }
