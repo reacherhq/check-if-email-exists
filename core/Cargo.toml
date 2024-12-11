@@ -28,7 +28,7 @@ levenshtein = "1.0.5"
 log = "0.4.22"
 mailchecker = "6.0.11"
 md5 = "0.7.0"
-once_cell = "1.19.0"
+once_cell = "1.20.2"
 pwned = "0.5.0"
 rand = { version = "0.8.5", features = ["small_rng"] }
 regex = "1.11.1"
