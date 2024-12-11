@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use super::response::save_to_db;
 use crate::config::BackendConfig;
-use crate::worker::response::send_single_shot_reply;
+use crate::storage::commercial_license_trial::send_to_reacher;
+use crate::worker::single_shot::send_single_shot_reply;
 use check_if_email_exists::{
 	check_email, CheckEmailInput, CheckEmailOutput, Reachable, LOG_TARGET,
 };
@@ -138,24 +138,22 @@ pub(crate) async fn do_check_email_work(
 		_ => {
 			// This is the happy path. We acknowledge the message and:
 			// - If it's a single-shot email verification, we send a reply to the client.
-			// - If it's a bulk verification, we save the result to the database.
+			// - In any case, we store the result.
 			delivery.ack(BasicAckOptions::default()).await?;
 
-			match task.job_id {
-				CheckEmailJobId::SingleShot => {
-					send_single_shot_reply(channel, &delivery, &worker_output).await?;
-				}
-				CheckEmailJobId::Bulk(bulk_job_id) => {
-					save_to_db(
-						&config.backend_name,
-						config.get_pg_pool(),
-						task,
-						bulk_job_id,
-						&worker_output,
-					)
-					.await?;
-				}
+			if let CheckEmailJobId::SingleShot = task.job_id {
+				send_single_shot_reply(channel, &delivery, &worker_output).await?;
 			}
+
+			// Store the result.
+			let storage = config.get_storage_adapter();
+			storage
+				.store(task, &worker_output, storage.get_extra())
+				.await?;
+
+			// If we're in the Commercial License Trial, we also store the
+			// result by sending it to back to Reacher.
+			send_to_reacher(config, &task.input.to_email, &worker_output).await?;
 
 			info!(target: LOG_TARGET,
 				email=task.input.to_email,

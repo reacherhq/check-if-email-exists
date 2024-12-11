@@ -14,9 +14,14 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pub mod config;
-pub mod http;
-mod storage;
-pub mod worker;
+use thiserror::Error;
 
-const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
+#[derive(Error, Debug)]
+pub enum StorageError {
+	#[error("SQLX error: {0}")]
+	SqlxError(#[from] sqlx::error::Error),
+	#[error("SQLX migrate error: {0}")]
+	MigrateError(#[from] sqlx::migrate::MigrateError),
+	#[error("Serde JSON error: {0}")]
+	SerdeJsonError(#[from] serde_json::Error),
+}

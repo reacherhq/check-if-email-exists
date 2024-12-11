@@ -57,7 +57,7 @@ $ git clone https://github.com/reacherhq/check-if-email-exists
 $ cd check-if-email-exists/backend
 
 # Run the backend binary in release mode (slower build, but more performant).
-$ cargo run --release --bin reacher_backend --features worker
+$ cargo run --release --bin reacher_backend
 ```
 
 The server will then be listening on `http://127.0.0.1:8080`.

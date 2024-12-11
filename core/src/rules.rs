@@ -92,14 +92,16 @@ mod tests {
 
 	#[test]
 	fn should_skip_catch_all() {
-		assert_eq!(
-			true,
-			has_rule("gmail.com", "alt4.aspmx.l.google.com.", &Rule::SkipCatchAll)
-		);
+		assert!(has_rule(
+			"gmail.com",
+			"alt4.aspmx.l.google.com.",
+			&Rule::SkipCatchAll
+		));
 
-		assert_eq!(
-			true,
-			has_rule("domain.com", ".antispamcloud.com.", &Rule::SkipCatchAll)
-		)
+		assert!(has_rule(
+			"domain.com",
+			".antispamcloud.com.",
+			&Rule::SkipCatchAll
+		))
 	}
 }

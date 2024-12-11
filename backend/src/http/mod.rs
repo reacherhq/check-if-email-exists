@@ -16,7 +16,6 @@
 
 mod error;
 mod v0;
-#[cfg(feature = "worker")]
 mod v1;
 mod version;
 
@@ -38,7 +37,8 @@ pub fn create_routes(
 	config: Arc<BackendConfig>,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	let pg_pool = config.get_pg_pool();
-	let t = version::get::get_version()
+
+	version::get::get_version()
 		.or(v0::check_email::post::post_check_email(Arc::clone(&config)))
 		// The 3 following routes will 404 if o is None.
 		.or(v0::bulk::post::create_bulk_job(
@@ -46,23 +46,14 @@ pub fn create_routes(
 			pg_pool.clone(),
 		))
 		.or(v0::bulk::get::get_bulk_job_status(pg_pool.clone()))
-		.or(v0::bulk::results::get_bulk_job_result(pg_pool));
-
-	#[cfg(feature = "worker")]
-	{
-		t.or(v1::check_email::post::v1_check_email(Arc::clone(&config)))
-			.or(v1::bulk::post::v1_create_bulk_job(Arc::clone(&config)))
-			.or(v1::bulk::get_progress::v1_get_bulk_job_progress(
-				Arc::clone(&config),
-			))
-			.or(v1::bulk::get_results::v1_get_bulk_job_results(config))
-			.recover(handle_rejection)
-	}
-
-	#[cfg(not(feature = "worker"))]
-	{
-		t.recover(handle_rejection)
-	}
+		.or(v0::bulk::results::get_bulk_job_result(pg_pool))
+		.or(v1::check_email::post::v1_check_email(Arc::clone(&config)))
+		.or(v1::bulk::post::v1_create_bulk_job(Arc::clone(&config)))
+		.or(v1::bulk::get_progress::v1_get_bulk_job_progress(
+			Arc::clone(&config),
+		))
+		.or(v1::bulk::get_results::v1_get_bulk_job_results(config))
+		.recover(handle_rejection)
 }
 
 /// Runs the Warp server.
@@ -121,7 +112,7 @@ pub fn with_db(
 			pool.ok_or_else(|| {
 				warp::reject::custom(ReacherResponseError::new(
 					StatusCode::SERVICE_UNAVAILABLE,
-					"Please configure a database on Reacher before calling this endpoint",
+					"Please configure a Postgres database on Reacher before calling this endpoint",
 				))
 			})
 		}
