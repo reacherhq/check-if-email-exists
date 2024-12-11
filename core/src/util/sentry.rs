@@ -92,7 +92,7 @@ fn error(err: SentryError, result: &CheckEmailOutput, backend_name: &str) {
 
 /// Function to replace all usernames from email, and replace them with
 /// `***@domain.com` for privacy reasons.
-pub fn redact(input: &str, username: &str) -> String {
+fn redact(input: &str, username: &str) -> String {
 	input.replace(username, "***")
 }
 
