@@ -22,6 +22,7 @@ use anyhow::Context;
 use check_if_email_exists::LOG_TARGET;
 use futures::stream::StreamExt;
 use lapin::{options::*, types::FieldTable, Channel, Connection, ConnectionProperties};
+use sentry_anyhow::capture_anyhow;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::Mutex;
@@ -164,6 +165,7 @@ async fn consume_check_email(config: Arc<BackendConfig>) -> Result<(), anyhow::E
 					do_check_email_work(&payload, delivery, channel_clone2, config_clone2).await
 				{
 					error!(target: LOG_TARGET, email=payload.input.to_email, error=?e, "Error processing message");
+					capture_anyhow(&e);
 				}
 			});
 

@@ -2967,6 +2967,7 @@ dependencies = [
  "openssl",
  "reqwest 0.12.5",
  "sentry",
+ "sentry-anyhow",
  "serde",
  "serde_json",
  "sqlx",
@@ -3407,6 +3408,17 @@ dependencies = [
  "sentry-core",
  "sentry-panic",
  "tokio",
+]
+
+[[package]]
+name = "sentry-anyhow"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "338ef04f73ca2fb1130ebab3853dca36041aa219a442ae873627373887660c36"
+dependencies = [
+ "anyhow",
+ "sentry-backtrace",
+ "sentry-core",
 ]
 
 [[package]]

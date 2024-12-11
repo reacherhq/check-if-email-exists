@@ -119,6 +119,12 @@ impl From<StorageError> for ReacherResponseError {
 	}
 }
 
+impl From<reqwest::Error> for ReacherResponseError {
+	fn from(e: reqwest::Error) -> Self {
+		ReacherResponseError::new(StatusCode::INTERNAL_SERVER_ERROR, e)
+	}
+}
+
 /// This function receives a `Rejection` and tries to return a custom value,
 /// otherwise simply passes the rejection along.
 pub async fn handle_rejection(err: warp::Rejection) -> Result<impl warp::Reply, warp::Rejection> {

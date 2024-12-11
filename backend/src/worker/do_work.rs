@@ -15,6 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::config::BackendConfig;
+use crate::storage::commercial_license_trial::send_to_reacher;
 use crate::worker::single_shot::send_single_shot_reply;
 use check_if_email_exists::{
 	check_email, CheckEmailInput, CheckEmailOutput, Reachable, LOG_TARGET,
@@ -149,6 +150,10 @@ pub(crate) async fn do_check_email_work(
 			storage
 				.store(task, &worker_output, storage.get_extra())
 				.await?;
+
+			// If we're in the Commercial License Trial, we also store the
+			// result by sending it to back to Reacher.
+			send_to_reacher(config, &task.input.to_email, &worker_output).await?;
 
 			info!(target: LOG_TARGET,
 				email=task.input.to_email,

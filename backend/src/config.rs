@@ -60,7 +60,10 @@ pub struct BackendConfig {
 	pub worker: WorkerConfig,
 
 	/// Configuration on where to store the email verification results.
-	pub storage: StorageConfig,
+	pub storage: Option<StorageConfig>,
+
+	/// Whether to enable the Commercial License Trial. Setting this to true
+	pub commercial_license_trial: Option<CommercialLicenseTrialConfig>,
 
 	// Internal fields, not part of the configuration.
 	#[serde(skip)]
@@ -100,14 +103,16 @@ impl BackendConfig {
 	/// the internal `pg_pool` and `channel` fields with the connections.
 	pub async fn connect(&mut self) -> Result<(), anyhow::Error> {
 		match &self.storage {
-			StorageConfig::Postgres(config) => {
+			Some(StorageConfig::Postgres(config)) => {
 				let storage = PostgresStorage::new(&config.db_url, config.extra.clone())
 					.await
 					.with_context(|| format!("Connecting to postgres DB {}", config.db_url))?;
 
 				self.storage_adapter = Arc::new(StorageAdapter::Postgres(storage));
 			}
-			StorageConfig::Noop => {}
+			_ => {
+				self.storage_adapter = Arc::new(StorageAdapter::Noop);
+			}
 		}
 
 		let channel = if self.worker.enable {
@@ -216,6 +221,12 @@ pub struct PostgresConfig {
 	pub extra: Option<serde_json::Value>,
 }
 
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct CommercialLicenseTrialConfig {
+	pub api_token: String,
+	pub url: String,
+}
+
 /// Load the worker configuration from the worker_config.toml file and from the
 /// environment.
 pub async fn load_config() -> Result<BackendConfig, anyhow::Error> {
@@ -245,10 +256,10 @@ mod tests {
 		assert_eq!(cfg.backend_name, "test-backend");
 		assert_eq!(
 			cfg.storage,
-			StorageConfig::Postgres(PostgresConfig {
+			Some(StorageConfig::Postgres(PostgresConfig {
 				db_url: "test2".to_string(),
 				extra: None,
-			})
+			}))
 		);
 	}
 

@@ -253,7 +253,7 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 
 	let end_time = SystemTime::now();
 
-	CheckEmailOutput {
+	let output = CheckEmailOutput {
 		input: to_email.to_string(),
 		is_reachable: calculate_reachable(&my_misc, &my_smtp),
 		misc: Ok(my_misc),
@@ -269,5 +269,9 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 			smtp: smtp_debug,
 			backend_name: input.backend_name.clone(),
 		},
-	}
+	};
+
+	log_unknown_errors(&output, &input.backend_name);
+
+	output
 }
