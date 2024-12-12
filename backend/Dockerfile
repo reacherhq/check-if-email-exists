@@ -20,7 +20,7 @@ RUN cargo build --bin reacher_backend --release --target=x86_64-unknown-linux-mu
 # Final Stage
 # ------------------------------------------------------------------------------
 
-FROM zenika/alpine-chrome
+FROM zenika/alpine-chrome:123
 
 WORKDIR /home/reacher/
 
