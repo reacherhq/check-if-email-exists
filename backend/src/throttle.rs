@@ -13,7 +13,23 @@ struct Throttle {
 	last_reset_minute: Instant,
 	last_reset_hour: Instant,
 	last_reset_day: Instant,
-} 
+}
+
+impl Default for Throttle {
+    fn default() -> Self {
+        let now = Instant::now();
+        Self {
+            requests_per_second: 0,
+            requests_per_minute: 0,
+            requests_per_hour: 0,
+            requests_per_day: 0,
+            last_reset_second: now,
+            last_reset_minute: now,
+            last_reset_hour: now,
+            last_reset_day: now,
+        }
+    }
+}
 
 impl Throttle {
 	fn new() -> Self {
@@ -96,7 +112,7 @@ impl Throttle {
 	}
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ThrottleManager {
     inner: Arc<Mutex<Throttle>>,
     config: ThrottleConfig,
