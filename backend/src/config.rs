@@ -264,10 +264,6 @@ pub async fn load_config() -> Result<BackendConfig, anyhow::Error> {
 
 	let cfg = cfg.build()?.try_deserialize::<BackendConfig>()?;
 
-	if !cfg.worker.enable && cfg.worker.rabbitmq.is_some() {
-		warn!(target: LOG_TARGET, "worker.enable is set to false, ignoring concurrency settings.")
-	}
-
 	if cfg.worker.enable {
 		warn!(target: LOG_TARGET, "The worker feature is currently in beta. Please send any feedback to amaury@reacher.email.");
 
