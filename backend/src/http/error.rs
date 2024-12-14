@@ -28,7 +28,7 @@ pub trait DisplayDebug: fmt::Display + Debug + Sync + Send {}
 impl<T: fmt::Display + Debug + Sync + Send> DisplayDebug for T {}
 
 /// Struct describing an error response.
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub struct ReacherResponseError {
 	pub code: StatusCode,
 	pub error: Box<dyn DisplayDebug>,
@@ -121,7 +121,14 @@ impl From<StorageError> for ReacherResponseError {
 
 impl From<reqwest::Error> for ReacherResponseError {
 	fn from(e: reqwest::Error) -> Self {
-		ReacherResponseError::new(StatusCode::INTERNAL_SERVER_ERROR, e)
+		ReacherResponseError::new(
+			e.status()
+				.map(|s| s.as_u16())
+				.map(StatusCode::from_u16)
+				.and_then(Result::ok)
+				.unwrap_or(StatusCode::INTERNAL_SERVER_ERROR),
+			e,
+		)
 	}
 }
 
