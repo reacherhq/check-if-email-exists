@@ -24,6 +24,7 @@ use lapin::options::{
 use lapin::types::FieldTable;
 use lapin::BasicProperties;
 use std::sync::Arc;
+use tracing::info;
 use warp::http::StatusCode;
 use warp::{http, Filter};
 
@@ -36,55 +37,49 @@ use crate::worker::consume::MAX_QUEUE_PRIORITY;
 use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask};
 use crate::worker::single_shot::SingleShotReply;
 
-/// The main endpoint handler that implements the logic of this route.
-async fn http_handler(
+async fn handle_without_worker(
 	config: Arc<BackendConfig>,
-	body: CheckEmailRequest,
-) -> Result<impl warp::Reply, warp::Rejection> {
-	// The to_email field must be present
-	if body.to_email.is_empty() {
-		return Err(ReacherResponseError::new(
-			http::StatusCode::BAD_REQUEST,
-			"to_email field is required.",
+	body: &CheckEmailRequest,
+	throttle_manager: &crate::throttle::ThrottleManager,
+) -> Result<Vec<u8>, warp::Rejection> {
+	info!(target: LOG_TARGET, email=body.to_email, "Starting verification");
+	let input = body.to_check_email_input(Arc::clone(&config));
+	let result = check_email(&input).await;
+	let result_ok = Ok(result);
+
+	// Increment counters after successful verification
+	throttle_manager.increment_counters().await;
+
+	// Store the result regardless of how we got it
+	let storage = Arc::clone(&config).get_storage_adapter();
+	storage
+		.store(
+			&CheckEmailTask {
+				input: body.to_check_email_input(Arc::clone(&config)),
+				job_id: CheckEmailJobId::SingleShot,
+				webhook: None,
+			},
+			&result_ok,
+			storage.get_extra(),
 		)
-		.into());
-	}
+		.map_err(ReacherResponseError::from)
+		.await?;
 
-	// If worker mode is disabled, we do a direct check, and skip rabbitmq.
-	if !config.worker.enable {
-		let input = body.to_check_email_input(Arc::clone(&config));
-		let result = check_email(&input).await;
-		let value = Ok(result);
+	// If we're in the Commercial License Trial, we also store the
+	// result by sending it to back to Reacher.
+	send_to_reacher(Arc::clone(&config), &body.to_email, &result_ok)
+		.await
+		.map_err(ReacherResponseError::from)?;
 
-		// Also store the result "manually", since we don't have a worker.
-		let storage = config.get_storage_adapter();
-		storage
-			.store(
-				&CheckEmailTask {
-					input: input.clone(),
-					job_id: CheckEmailJobId::SingleShot,
-					webhook: None,
-				},
-				&value,
-				storage.get_extra(),
-			)
-			.map_err(ReacherResponseError::from)
-			.await?;
+	let result = result_ok.unwrap();
+	info!(target: LOG_TARGET, email=body.to_email, is_reachable=?result.is_reachable, "Done verification");
+	Ok(serde_json::to_vec(&result).map_err(ReacherResponseError::from)?)
+}
 
-		// If we're in the Commercial License Trial, we also store the
-		// result by sending it to back to Reacher.
-		send_to_reacher(Arc::clone(&config), &input.to_email, &value)
-			.await
-			.map_err(ReacherResponseError::from)?;
-
-		let result_bz = serde_json::to_vec(&value).map_err(ReacherResponseError::from)?;
-
-		return Ok(warp::reply::with_header(
-			result_bz,
-			"Content-Type",
-			"application/json",
-		));
-	}
+async fn handle_with_worker(
+	config: Arc<BackendConfig>,
+	body: &CheckEmailRequest,
+) -> Result<Vec<u8>, warp::Rejection> {
 	let channel = config
 		.must_worker_config()
 		.map_err(ReacherResponseError::from)?
@@ -116,7 +111,7 @@ async fn http_handler(
 	publish_task(
 		channel.clone(),
 		CheckEmailTask {
-			input: body.to_check_email_input(config),
+			input: body.to_check_email_input(config.clone()),
 			job_id: CheckEmailJobId::SingleShot,
 			webhook: None,
 		},
@@ -156,11 +151,7 @@ async fn http_handler(
 
 			match single_shot_response {
 				SingleShotReply::Ok(body) => {
-					return Ok(warp::reply::with_header(
-						body,
-						"Content-Type",
-						"application/json",
-					));
+					return Ok(body);
 				}
 				SingleShotReply::Err((e, code)) => {
 					let status_code =
@@ -187,6 +178,46 @@ async fn http_handler(
 		"Failed to get a reply from the worker.",
 	)
 	.into())
+}
+
+/// The main endpoint handler that implements the logic of this route.
+async fn http_handler(
+	config: Arc<BackendConfig>,
+	body: CheckEmailRequest,
+) -> Result<impl warp::Reply, warp::Rejection> {
+	// The to_email field must be present
+	if body.to_email.is_empty() {
+		return Err(ReacherResponseError::new(
+			http::StatusCode::BAD_REQUEST,
+			"to_email field is required.",
+		)
+		.into());
+	}
+
+	// Check throttle regardless of worker mode
+	let throttle_manager = config.get_throttle_manager();
+	if let Some(throttle_result) = throttle_manager.check_throttle().await {
+		return Err(ReacherResponseError::new(
+			http::StatusCode::TOO_MANY_REQUESTS,
+			format!(
+				"Rate limit {} exceeded, please wait {:?}",
+				throttle_result.limit_type, throttle_result.delay
+			),
+		)
+		.into());
+	}
+
+	let result_bz = if !config.worker.enable {
+		handle_without_worker(Arc::clone(&config), &body, &throttle_manager).await?
+	} else {
+		handle_with_worker(Arc::clone(&config), &body).await?
+	};
+
+	Ok(warp::reply::with_header(
+		result_bz,
+		"Content-Type",
+		"application/json",
+	))
 }
 
 /// Create the `POST /v1/check_email` endpoint.

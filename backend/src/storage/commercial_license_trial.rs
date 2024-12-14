@@ -15,10 +15,12 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::config::{BackendConfig, CommercialLicenseTrialConfig};
+use crate::http::ReacherResponseError;
 use crate::worker::do_work::TaskError;
 use check_if_email_exists::{CheckEmailOutput, LOG_TARGET};
 use std::sync::Arc;
 use tracing::debug;
+use warp::http::StatusCode;
 
 /// If we're in the Commercial License Trial, we also store the
 /// result by sending it to back to Reacher.
@@ -26,7 +28,7 @@ pub async fn send_to_reacher(
 	config: Arc<BackendConfig>,
 	email: &str,
 	worker_output: &Result<CheckEmailOutput, TaskError>,
-) -> Result<(), reqwest::Error> {
+) -> Result<(), ReacherResponseError> {
 	if let Some(CommercialLicenseTrialConfig { api_token, url }) = &config.commercial_license_trial
 	{
 		let res = reqwest::Client::new()
@@ -35,6 +37,19 @@ pub async fn send_to_reacher(
 			.json(worker_output)
 			.send()
 			.await?;
+
+		// Error if not 2xx status code
+		if !res.status().is_success() {
+			let status = StatusCode::from_u16(res.status().as_u16())?;
+			let body: serde_json::Value = res.json().await?;
+
+			// Extract error message from the "error" field, if it exists, or
+			// else just return the whole body.
+			let error_body = body.get("error").unwrap_or(&body).to_owned();
+
+			return Err(ReacherResponseError::new(status, error_body));
+		}
+
 		let res = res.text().await?;
 		debug!(target: LOG_TARGET, email=email, res=res, "Sent result to Reacher Commercial License Trial");
 	}

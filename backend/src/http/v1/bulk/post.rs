@@ -29,10 +29,10 @@ use tracing::{debug, info};
 use warp::http::StatusCode;
 use warp::Filter;
 
+use super::with_worker_db;
 use crate::config::BackendConfig;
 use crate::http::check_header;
 use crate::http::v0::check_email::post::with_config;
-use crate::http::with_db;
 use crate::http::CheckEmailRequest;
 use crate::http::ReacherResponseError;
 use crate::worker::consume::CHECK_EMAIL_QUEUE;
@@ -154,7 +154,7 @@ pub fn v1_create_bulk_job(
 		.and(warp::post())
 		.and(check_header(Arc::clone(&config)))
 		.and(with_config(Arc::clone(&config)))
-		.and(with_db(config.get_pg_pool()))
+		.and(with_worker_db(config))
 		// When accepting a body, we want a JSON body (and to reject huge
 		// payloads)...
 		// TODO: Configure max size limit for a bulk job

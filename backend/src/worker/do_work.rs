@@ -16,11 +16,11 @@
 
 use crate::config::BackendConfig;
 use crate::storage::commercial_license_trial::send_to_reacher;
+use crate::throttle::ThrottleResult;
 use crate::worker::single_shot::send_single_shot_reply;
 use check_if_email_exists::{
 	check_email, CheckEmailInput, CheckEmailOutput, Reachable, LOG_TARGET,
 };
-use core::time;
 use lapin::message::Delivery;
 use lapin::{options::*, Channel};
 use serde::{Deserialize, Serialize};
@@ -53,7 +53,7 @@ pub enum TaskError {
 	/// verification, as for bulk verification tasks the task will simply stay
 	/// in the queue until one worker is ready to process it.
 	#[error("Worker at full capacity, wait {0:?}")]
-	Throttle(time::Duration),
+	Throttle(ThrottleResult),
 	#[error("Lapin error: {0}")]
 	Lapin(lapin::Error),
 	#[error("Reqwest error during webhook: {0}")]

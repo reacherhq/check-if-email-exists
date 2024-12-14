@@ -15,6 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::storage::{postgres::PostgresStorage, StorageAdapter};
+use crate::throttle::ThrottleManager;
 use crate::worker::do_work::TaskWebhook;
 use crate::worker::setup_rabbit_mq;
 use anyhow::{bail, Context};
@@ -29,7 +30,7 @@ use sqlx::PgPool;
 use std::sync::Arc;
 use tracing::warn;
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct BackendConfig {
 	/// Name of the backend.
 	pub backend_name: String,
@@ -65,36 +66,61 @@ pub struct BackendConfig {
 	/// Whether to enable the Commercial License Trial. Setting this to true
 	pub commercial_license_trial: Option<CommercialLicenseTrialConfig>,
 
+	/// Throttle configuration for all requests
+	pub throttle: ThrottleConfig,
+
 	// Internal fields, not part of the configuration.
 	#[serde(skip)]
 	channel: Option<Arc<Channel>>,
 
 	#[serde(skip)]
 	storage_adapter: Arc<StorageAdapter>,
+
+	#[serde(skip)]
+	throttle_manager: Arc<ThrottleManager>,
 }
 
 impl BackendConfig {
+	/// Create an empty BackendConfig. This is useful for testing purposes.
+	pub fn empty() -> Self {
+		Self {
+			backend_name: "".to_string(),
+			from_email: "".to_string(),
+			hello_name: "".to_string(),
+			webdriver_addr: "".to_string(),
+			proxy: None,
+			verif_method: VerifMethodConfig::default(),
+			http_host: "127.0.0.1".to_string(),
+			http_port: 8080,
+			header_secret: None,
+			smtp_timeout: None,
+			sentry_dsn: None,
+			worker: WorkerConfig::default(),
+			storage: Some(StorageConfig::Noop),
+			commercial_license_trial: None,
+			throttle: ThrottleConfig::new_without_throttle(),
+			channel: None,
+			storage_adapter: Arc::new(StorageAdapter::Noop),
+			throttle_manager: Arc::new(
+				ThrottleManager::new(ThrottleConfig::new_without_throttle()),
+			),
+		}
+	}
+
 	/// Get the worker configuration.
 	///
 	/// # Panics
 	///
 	/// Panics if the worker configuration is missing.
 	pub fn must_worker_config(&self) -> Result<MustWorkerConfig, anyhow::Error> {
-		match (
-			self.worker.enable,
-			&self.worker.throttle,
-			&self.worker.rabbitmq,
-			&self.channel,
-		) {
-			(true, Some(throttle), Some(rabbitmq), Some(channel)) => Ok(MustWorkerConfig {
+		match (self.worker.enable, &self.worker.rabbitmq, &self.channel) {
+			(true, Some(rabbitmq), Some(channel)) => Ok(MustWorkerConfig {
 				channel: channel.clone(),
-				throttle: throttle.clone(),
 				rabbitmq: rabbitmq.clone(),
-
 				webhook: self.worker.webhook.clone(),
 			}),
 
-			(true, _, _, _) => bail!("Worker configuration is missing"),
+			(true, _, _) => bail!("Worker configuration is missing"),
 			_ => bail!("Calling must_worker_config on a non-worker backend"),
 		}
 	}
@@ -126,6 +152,9 @@ impl BackendConfig {
 		};
 		self.channel = channel;
 
+		// Initialize throttle manager
+		self.throttle_manager = Arc::new(ThrottleManager::new(self.throttle.clone()));
+
 		Ok(())
 	}
 
@@ -141,6 +170,10 @@ impl BackendConfig {
 			StorageAdapter::Postgres(storage) => Some(storage.pg_pool.clone()),
 			StorageAdapter::Noop => None,
 		}
+	}
+
+	pub fn get_throttle_manager(&self) -> Arc<ThrottleManager> {
+		self.throttle_manager.clone()
 	}
 }
 
@@ -159,9 +192,6 @@ pub struct VerifMethodConfig {
 #[derive(Debug, Default, Deserialize, Clone, Serialize)]
 pub struct WorkerConfig {
 	pub enable: bool,
-
-	/// Throttle configuration for the worker.
-	pub throttle: Option<ThrottleConfig>,
 	pub rabbitmq: Option<RabbitMQConfig>,
 	/// Optional webhook configuration to send email verification results.
 	pub webhook: Option<TaskWebhook>,
@@ -172,8 +202,6 @@ pub struct WorkerConfig {
 #[derive(Debug, Clone)]
 pub struct MustWorkerConfig {
 	pub channel: Arc<Channel>,
-
-	pub throttle: ThrottleConfig,
 	pub rabbitmq: RabbitMQConfig,
 	pub webhook: Option<TaskWebhook>,
 }
@@ -185,7 +213,7 @@ pub struct RabbitMQConfig {
 	pub concurrency: u16,
 }
 
-#[derive(Debug, Deserialize, Clone, Serialize)]
+#[derive(Debug, Default, Deserialize, Clone, Serialize)]
 pub struct ThrottleConfig {
 	pub max_requests_per_second: Option<u32>,
 	pub max_requests_per_minute: Option<u32>,
@@ -236,8 +264,13 @@ pub async fn load_config() -> Result<BackendConfig, anyhow::Error> {
 
 	let cfg = cfg.build()?.try_deserialize::<BackendConfig>()?;
 
-	if !cfg.worker.enable && (cfg.worker.rabbitmq.is_some() || cfg.worker.throttle.is_some()) {
-		warn!(target: LOG_TARGET, "worker.enable is set to false, ignoring throttling and concurrency settings.")
+	if cfg.worker.enable {
+		warn!(target: LOG_TARGET, "The worker feature is currently in beta. Please send any feedback to amaury@reacher.email.");
+
+		match &cfg.storage {
+			Some(StorageConfig::Postgres(_)) => {}
+			_ => bail!("When worker mode is enabled, a Postgres database must be configured."),
+		}
 	}
 
 	Ok(cfg)

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#[cfg(not(feature = "worker"))]
+#[cfg(test)]
 mod tests {
 	use std::sync::Arc;
 
@@ -27,7 +27,7 @@ mod tests {
 	const FOO_BAR_BAZ_RESPONSE: &str = r#"{"input":"foo@bar.baz","is_reachable":"invalid","misc":{"is_disposable":false,"is_role_account":false,"gravatar_url":null,"haveibeenpwned":null},"mx":{"accepts_mail":false,"records":[]},"smtp":{"can_connect_smtp":false,"has_full_inbox":false,"is_catch_all":false,"is_deliverable":false,"is_disabled":false},"syntax":{"address":"foo@bar.baz","domain":"bar.baz","is_valid_syntax":true,"username":"foo","normalized_email":"foo@bar.baz","suggestion":null}"#;
 
 	fn create_backend_config(header_secret: &str) -> Arc<BackendConfig> {
-		let mut config = BackendConfig::default();
+		let mut config = BackendConfig::empty();
 		config.header_secret = Some(header_secret.to_string());
 		Arc::new(config)
 	}
