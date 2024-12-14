@@ -24,6 +24,7 @@ use lapin::options::{
 use lapin::types::FieldTable;
 use lapin::BasicProperties;
 use std::sync::Arc;
+use tracing::info;
 use warp::http::StatusCode;
 use warp::{http, Filter};
 
@@ -41,6 +42,7 @@ async fn handle_without_worker(
 	body: &CheckEmailRequest,
 	throttle_manager: &crate::throttle::ThrottleManager,
 ) -> Result<Vec<u8>, warp::Rejection> {
+	info!(target: LOG_TARGET, email=body.to_email, "Starting verification");
 	let input = body.to_check_email_input(Arc::clone(&config));
 	let result = check_email(&input).await;
 	let result_ok = Ok(result);
@@ -68,8 +70,10 @@ async fn handle_without_worker(
 	send_to_reacher(Arc::clone(&config), &body.to_email, &result_ok)
 		.await
 		.map_err(ReacherResponseError::from)?;
-	
-	Ok(serde_json::to_vec(&result_ok.unwrap()).map_err(ReacherResponseError::from)?)
+
+	let result = result_ok.unwrap();
+	info!(target: LOG_TARGET, email=body.to_email, is_reachable=?result.is_reachable, "Done verification");
+	Ok(serde_json::to_vec(&result).map_err(ReacherResponseError::from)?)
 }
 
 async fn handle_with_worker(
@@ -196,7 +200,8 @@ async fn http_handler(
 		return Err(ReacherResponseError::new(
 			http::StatusCode::TOO_MANY_REQUESTS,
 			format!("Rate limit exceeded, please wait {:?}", wait_time),
-		).into());
+		)
+		.into());
 	}
 
 	let result_bz = if !config.worker.enable {
@@ -228,4 +233,3 @@ pub fn v1_check_email(
 		// View access logs by setting `RUST_LOG=reacher`.
 		.with(warp::log(LOG_TARGET))
 }
-
