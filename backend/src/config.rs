@@ -117,7 +117,6 @@ impl BackendConfig {
 			(true, Some(rabbitmq), Some(channel)) => Ok(MustWorkerConfig {
 				channel: channel.clone(),
 				rabbitmq: rabbitmq.clone(),
-
 				webhook: self.worker.webhook.clone(),
 			}),
 
@@ -203,7 +202,6 @@ pub struct WorkerConfig {
 #[derive(Debug, Clone)]
 pub struct MustWorkerConfig {
 	pub channel: Arc<Channel>,
-
 	pub rabbitmq: RabbitMQConfig,
 	pub webhook: Option<TaskWebhook>,
 }

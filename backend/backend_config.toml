@@ -112,12 +112,23 @@ max_requests_per_minute = 60
 # max_requests_per_hour = 1000
 max_requests_per_day = 10000
 
+# Configuration for a queue-based architecture for Reacher. This feature is
+# currently in **beta**. The queue-based architecture allows Reacher to scale
+# horizontally by running multiple workers that consume emails from a RabbitMQ
+# queue.
+#
+# To enable the queue-based architecture, set the "enable" field to "true" and
+# configure the RabbitMQ connection below. The "concurrency" field specifies
+# the number of concurrent emails to verify for this worker.
+#
+# For more information, see the documentation at:
+# https://docs.reacher.email/self-hosting/scaling-for-production
 [worker]
 # Enable the worker to consume emails from the RabbitMQ queues. If set, the
 # RabbitMQ configuration below must be set as well.
 #
 # Env variable: RCH__WORKER__ENABLE
-enable = true
+enable = false
 
 # RabbitMQ configuration.
 [worker.rabbitmq]
