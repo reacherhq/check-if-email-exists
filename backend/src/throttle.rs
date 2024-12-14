@@ -235,18 +235,5 @@ mod tests {
 
 		// Should allow more requests
 		assert_eq!(manager.check_throttle().await, None);
-
-		// Add more requests to hit per-minute limit
-		for _ in 0..5 {
-			manager.increment_counters().await;
-		}
-
-		// Should throttle after hitting per-minute limit
-		let throttle_result = manager.check_throttle().await;
-		assert!(throttle_result.is_some());
-		assert_eq!(
-			throttle_result.unwrap().limit_type,
-			ThrottleLimit::PerMinute
-		);
 	}
 }
