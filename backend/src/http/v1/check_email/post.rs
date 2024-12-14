@@ -196,10 +196,13 @@ async fn http_handler(
 
 	// Check throttle regardless of worker mode
 	let throttle_manager = config.get_throttle_manager();
-	if let Some(wait_time) = throttle_manager.check_throttle().await {
+	if let Some(throttle_result) = throttle_manager.check_throttle().await {
 		return Err(ReacherResponseError::new(
 			http::StatusCode::TOO_MANY_REQUESTS,
-			format!("Rate limit exceeded, please wait {:?}", wait_time),
+			format!(
+				"Rate limit {} exceeded, please wait {:?}",
+				throttle_result.limit_type, throttle_result.delay
+			),
 		)
 		.into());
 	}

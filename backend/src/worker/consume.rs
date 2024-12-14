@@ -24,7 +24,7 @@ use futures::stream::StreamExt;
 use lapin::{options::*, types::FieldTable, Channel, Connection, ConnectionProperties};
 use sentry_anyhow::capture_anyhow;
 use std::sync::Arc;
-use tracing::{debug, error, info};
+use tracing::{debug, error, info, trace};
 
 /// Our RabbitMQ only has one queue: "check_email".
 pub const CHECK_EMAIL_QUEUE: &str = "check_email";
@@ -113,8 +113,10 @@ async fn consume_check_email(config: Arc<BackendConfig>) -> Result<(), anyhow::E
 			debug!(target: LOG_TARGET, email=?payload.input.to_email, "Consuming message");
 
 			// Check if we should throttle before fetching the next message
-			if let Some(wait_duration) = throttle.check_throttle().await {
-				info!(target: LOG_TARGET, wait=?wait_duration, email=?payload.input.to_email, "Too many requests, throttling");
+			if let Some(throttle_result) = throttle.check_throttle().await {
+				// This line below will log every time the worker fetches from
+				// RabbitMQ. It's noisy
+				trace!(target: LOG_TARGET, wait=?throttle_result.delay, email=?payload.input.to_email, "Too many requests {}, throttling", throttle_result.limit_type);
 
 				// For single-shot tasks, we return an error early, so that the user knows they need to retry.
 				match payload.job_id {
@@ -127,7 +129,7 @@ async fn consume_check_email(config: Arc<BackendConfig>) -> Result<(), anyhow::E
 						send_single_shot_reply(
 							Arc::clone(&channel),
 							&delivery,
-							&Err(TaskError::Throttle(wait_duration)),
+							&Err(TaskError::Throttle(throttle_result)),
 						)
 						.await?;
 					}

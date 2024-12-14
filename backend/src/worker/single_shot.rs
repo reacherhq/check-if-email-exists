@@ -47,7 +47,7 @@ impl TryFrom<&Result<CheckEmailOutput, TaskError>> for SingleShotReply {
 		match result {
 			Ok(output) => Ok(Self::Ok(serde_json::to_vec(output)?)),
 			Err(TaskError::Throttle(e)) => Ok(Self::Err((
-				TaskError::Throttle(*e).to_string(),
+				TaskError::Throttle(e.clone()).to_string(),
 				StatusCode::TOO_MANY_REQUESTS.as_u16(),
 			))),
 			Err(e) => Ok(Self::Err((
