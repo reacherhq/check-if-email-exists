@@ -213,11 +213,11 @@ async fn http_handler(
 		handle_with_worker(Arc::clone(&config), &body).await?
 	};
 
-	return Ok(warp::reply::with_header(
+	Ok(warp::reply::with_header(
 		result_bz,
 		"Content-Type",
 		"application/json",
-	));
+	))
 }
 
 /// Create the `POST /v1/check_email` endpoint.
