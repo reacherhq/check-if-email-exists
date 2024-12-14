@@ -268,6 +268,15 @@ pub async fn load_config() -> Result<BackendConfig, anyhow::Error> {
 		warn!(target: LOG_TARGET, "worker.enable is set to false, ignoring concurrency settings.")
 	}
 
+	if cfg.worker.enable {
+		warn!(target: LOG_TARGET, "The worker feature is currently in beta. Please send any feedback to amaury@reacher.email.");
+
+		match &cfg.storage {
+			Some(StorageConfig::Postgres(_)) => {}
+			_ => bail!("When worker mode is enabled, a Postgres database must be configured."),
+		}
+	}
+
 	Ok(cfg)
 }
 

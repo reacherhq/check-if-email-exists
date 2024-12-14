@@ -23,14 +23,12 @@ use crate::config::BackendConfig;
 use check_if_email_exists::LOG_TARGET;
 use error::handle_rejection;
 pub use error::ReacherResponseError;
-use sqlx::PgPool;
 use sqlxmq::JobRunnerHandle;
 use std::env;
 use std::net::IpAddr;
 use std::sync::Arc;
 use tracing::info;
 pub use v0::check_email::post::CheckEmailRequest;
-use warp::http::StatusCode;
 use warp::Filter;
 
 pub fn create_routes(
@@ -99,24 +97,6 @@ pub async fn run_warp_server(
 
 	// Returning runner, because dropping it would stop the listener.
 	Ok(runner)
-}
-
-/// Warp filter to add the database pool to the handler. If the pool is not
-/// configured, it will return an error.
-pub fn with_db(
-	pg_pool: Option<PgPool>,
-) -> impl Filter<Extract = (PgPool,), Error = warp::Rejection> + Clone {
-	warp::any().and_then(move || {
-		let pool = pg_pool.clone();
-		async move {
-			pool.ok_or_else(|| {
-				warp::reject::custom(ReacherResponseError::new(
-					StatusCode::SERVICE_UNAVAILABLE,
-					"Please configure a Postgres database on Reacher before calling this endpoint",
-				))
-			})
-		}
-	})
 }
 
 /// The header which holds the Reacher backend secret.

@@ -102,10 +102,10 @@ yahoo = "headless"
 # executes the verification immediately, regardless of the throttle settings.
 #
 # Env variables:
-# - RCH__WORKER__THROTTLE__MAX_REQUESTS_PER_SECOND
-# - RCH__WORKER__THROTTLE__MAX_REQUESTS_PER_MINUTE
-# - RCH__WORKER__THROTTLE__MAX_REQUESTS_PER_HOUR
-# - RCH__WORKER__THROTTLE__MAX_REQUESTS_PER_DAY
+# - RCH__THROTTLE__MAX_REQUESTS_PER_SECOND
+# - RCH__THROTTLE__MAX_REQUESTS_PER_MINUTE
+# - RCH__THROTTLE__MAX_REQUESTS_PER_HOUR
+# - RCH__THROTTLE__MAX_REQUESTS_PER_DAY
 [throttle]
 # max_requests_per_second = 20
 max_requests_per_minute = 60
