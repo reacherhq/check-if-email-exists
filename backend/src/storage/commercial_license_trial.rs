@@ -42,7 +42,12 @@ pub async fn send_to_reacher(
 		if !res.status().is_success() {
 			let status = StatusCode::from_u16(res.status().as_u16())?;
 			let body: serde_json::Value = res.json().await?;
-			return Err(ReacherResponseError::new(status, body));
+
+			// Extract error message from the "error" field, if it exists, or
+			// else just return the whole body.
+			let error_body = body.get("error").unwrap_or(&body).to_owned();
+
+			return Err(ReacherResponseError::new(status, error_body));
 		}
 
 		let res = res.text().await?;
