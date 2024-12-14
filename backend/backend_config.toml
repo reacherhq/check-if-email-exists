@@ -88,6 +88,30 @@ hotmailb2c = "headless"
 # recommended.
 yahoo = "headless"
 
+# Throttle the maximum number of requests per second, per minute, per hour, and
+# per day for this worker.
+# All fields are optional; comment them out to disable the limit.
+#
+# We however recommend setting the throttle for at least the per-minute and
+# per-day limits to prevent the IPs from being blocked by the email providers.
+# The default values are set to 60 requests per minute and 10,000 requests per
+# day.
+#
+# Important: these throttle configurations only apply to /v1/* endpoints, and
+# not to the previous /v0/check_email endpoint. The latter endpoint always
+# executes the verification immediately, regardless of the throttle settings.
+#
+# Env variables:
+# - RCH__WORKER__THROTTLE__MAX_REQUESTS_PER_SECOND
+# - RCH__WORKER__THROTTLE__MAX_REQUESTS_PER_MINUTE
+# - RCH__WORKER__THROTTLE__MAX_REQUESTS_PER_HOUR
+# - RCH__WORKER__THROTTLE__MAX_REQUESTS_PER_DAY
+[throttle]
+# max_requests_per_second = 20
+max_requests_per_minute = 60
+# max_requests_per_hour = 1000
+max_requests_per_day = 10000
+
 [worker]
 # Enable the worker to consume emails from the RabbitMQ queues. If set, the
 # RabbitMQ configuration below must be set as well.
@@ -104,25 +128,6 @@ url = "amqp://guest:guest@localhost:5672"
 #
 # Env variable: RCH__WORKER__RABBITMQ__CONCURRENCY
 concurrency = 5
-
-# Throttle the maximum number of requests per second, per minute, per hour, and
-# per day for this worker.
-# All fields are optional; comment them out to disable the limit.
-#
-# Important: these throttle configurations only apply to /v1/* endpoints, and
-# not to the previous /v0/check_email endpoint. The latter endpoint always
-# executes the verification immediately, regardless of the throttle settings.
-#
-# Env variables:
-# - RCH__WORKER__THROTTLE__MAX_REQUESTS_PER_SECOND
-# - RCH__WORKER__THROTTLE__MAX_REQUESTS_PER_MINUTE
-# - RCH__WORKER__THROTTLE__MAX_REQUESTS_PER_HOUR
-# - RCH__WORKER__THROTTLE__MAX_REQUESTS_PER_DAY
-[worker.throttle]
-# max_requests_per_second = 20
-# max_requests_per_minute = 100
-# max_requests_per_hour = 1000
-# max_requests_per_day = 20000
 
 # Below are the configurations for the storage of the email verification
 # results. We currently support the following storage backends:

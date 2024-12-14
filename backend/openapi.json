@@ -702,7 +702,7 @@
 					"duration": {
 						"$ref": "#/components/schemas/Duration"
 					},
-					"server_name": {
+					"backend_name": {
 						"type": "string",
 						"x-stoplight": {
 							"id": "2jrbdecvqh4t5"
@@ -717,7 +717,7 @@
 					"start_time",
 					"end_time",
 					"duration",
-					"server_name",
+					"backend_name",
 					"smtp"
 				]
 			},

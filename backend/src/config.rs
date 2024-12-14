@@ -81,17 +81,39 @@ pub struct BackendConfig {
 }
 
 impl BackendConfig {
+	/// Create an empty BackendConfig. This is useful for testing purposes.
+	pub fn empty() -> Self {
+		Self {
+			backend_name: "".to_string(),
+			from_email: "".to_string(),
+			hello_name: "".to_string(),
+			webdriver_addr: "".to_string(),
+			proxy: None,
+			verif_method: VerifMethodConfig::default(),
+			http_host: "127.0.0.1".to_string(),
+			http_port: 8080,
+			header_secret: None,
+			smtp_timeout: None,
+			sentry_dsn: None,
+			worker: WorkerConfig::default(),
+			storage: Some(StorageConfig::Noop),
+			commercial_license_trial: None,
+			throttle: ThrottleConfig::new_without_throttle(),
+			channel: None,
+			storage_adapter: Arc::new(StorageAdapter::Noop),
+			throttle_manager: Arc::new(
+				ThrottleManager::new(ThrottleConfig::new_without_throttle()),
+			),
+		}
+	}
+
 	/// Get the worker configuration.
 	///
 	/// # Panics
 	///
 	/// Panics if the worker configuration is missing.
 	pub fn must_worker_config(&self) -> Result<MustWorkerConfig, anyhow::Error> {
-		match (
-			self.worker.enable,
-			&self.worker.rabbitmq,
-			&self.channel,
-		) {
+		match (self.worker.enable, &self.worker.rabbitmq, &self.channel) {
 			(true, Some(rabbitmq), Some(channel)) => Ok(MustWorkerConfig {
 				channel: channel.clone(),
 				rabbitmq: rabbitmq.clone(),
