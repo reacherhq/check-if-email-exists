@@ -21,7 +21,7 @@ Once you've purchased a proxy, run the Docker command (see how in [install.md](i
 * `-e RCH__PROXY__USERNAME=<username>`: Optional. A username to authenticate the proxy.
 * `-e RCH__PROXY__PASSWORD=<password>`: Optional. The corresponding password.
 * `-e RCH__HELLO_NAME=<domain>`: The identifier to use during the "HELO/EHLO" step. It should match a domain name owned by the proxy. Ask your proxy provider about this setting.
-* `-e` RCH\_\_FROM\_EMAIL`=<email>`: The email to use during the "MAIL FROM" step. It should be an email from the same domain as the HELLO\_NAME. Ask your proxy provider about this setting.
+* `-e RCH__FROM_EMAIL=<email>`: The email to use during the "MAIL FROM" step. It should be an email from the same domain as the HELLO\_NAME. Ask your proxy provider about this setting.
 
 {% hint style="info" %}
 If you're using the [commercial-license-trial.md](licensing/commercial-license-trial.md "mention"), these fields are already populated with the built-in proxy. However, you can overwrite them by passing these flags again, pointing to a proxy of your own choosing.
