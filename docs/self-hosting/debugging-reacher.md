@@ -1,6 +1,16 @@
 # Debugging Reacher
 
+## How to debug Reacher?&#x20;
+
+The reflex to have when debugging Reacher is to set the `-e RUST_LOG=debug` flag to Docker. This will show all debug logs useful to pinpoint where the error happened.
+
+If you still don't understand the error after setting that flag, send an email to [amaury@reacher.email](https://app.gitbook.com/u/F1LnsqPFtfUEGlcILLswbbp5cgk2 "mention") along with those debug logs.
+
 ## How to check if port 25 is open?
+
+{% hint style="info" %}
+This only concerns users installing Reacher on a server without using [proxies.md](proxies.md "mention").&#x20;
+{% endhint %}
 
 When choosing a server to install Reacher on, you need to make sure that the server itself has port `25` open AND the chosen cloud provider allows outbound port `25` connections on its network.
 
@@ -113,7 +123,7 @@ Here are details about some of the most well-known providers:
 * :warning: Digital Ocean: Your account needs to be 60d old, then you can [apply](https://www.digitalocean.com/community/questions/how-i-can-open-port-25-please?answer=67100) to open port 25 (Mar 2020).
 * ❌ GCP: Port 25 closed, [source](https://cloud.google.com/compute/docs/tutorials/sending-mail).
 * ❌ Heroku: Starting from July 2021, Heroku blocks port 25 intermittently according to [this document](https://help.heroku.com/IR3S6I5X/problem-in-sending-e-mails-through-smtp).
-* :warning: Hetzner: Port 25 open according to [unofficial source](https://www.reddit.com/r/hetzner/comments/lb2o13/does\_hetzner\_block\_port\_25/) (Feb 2021), but seems now that you need to request manually.
+* :warning: Hetzner: Port 25 open according to [unofficial source](https://www.reddit.com/r/hetzner/comments/lb2o13/does_hetzner_block_port_25/) (Feb 2021), but seems now that you need to request manually.
 * :warning: Linode: Port 25 closed for new accounts, but can be opened if reverse DNS is set up correctly, [source](https://www.linode.com/docs/guides/running-a-mail-server/#sending-email-on-linode=) (Apr 2022).
 * :white\_check\_mark: OVH: Port 25 open on new instances, but outbound port 25 traffic is monitored to prevent spam (May 2022).
 * :warning: Vultr: Create support ticket to open port 25, [source](https://www.vultr.com/docs/what-ports-are-blocked/), though [recent reports](https://github.com/LukeSmithxyz/emailwiz/issues/172) (May 2022) show that they won’t do it anymore.
