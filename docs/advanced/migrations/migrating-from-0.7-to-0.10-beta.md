@@ -1,19 +1,15 @@
-# Migrating from 0.7 to 0.10 (beta)
-
-{% hint style="info" %}
-v0.10 is currently still in `beta` phase.
-{% endhint %}
+# Migrating from 0.7 to 0.10
 
 Reacher v0.10 introduces the `/v1/*` endpoints, namely:
 
-* `/v1/check_email`: Performs a single email verification while respecting the optional throttle and concurrency settings set in [reacher-configuration-v0.10.md](reacher-configuration-v0.10.md "mention").
+* `/v1/check_email`: Performs a single email verification while respecting the optional throttle and concurrency settings set in [reacher-configuration-v0.10.md](../../self-hosting/reacher-configuration-v0.10.md "mention").
 * `/v1/bulk`, `/v1/bulk/{job_id}`, `/v1/bulk/{job_id}/results`: Create a bulk verification job, and query its progress and status. Docs coming soon.
 
 The `/v0/check_email` endpoint **DOES NOT** change, neither in API nor in behavior. More specifically, even if you specify throttle and concurrency settings in the newly introduced Reacher Configuration, they will not be taken into account by the `/v0/check_email` endpoint, which will perform email verification as soon as it receives the request.
 
 ## Environment Variables
 
-With the introduction of [reacher-configuration-v0.10.md](reacher-configuration-v0.10.md "mention"), some of the Environment Variables have changed names.
+With the introduction of [reacher-configuration-v0.10.md](../../self-hosting/reacher-configuration-v0.10.md "mention"), some of the Environment Variables have changed names.
 
 <table><thead><tr><th width="220">Old name</th><th width="211">New name</th><th width="264">Description</th></tr></thead><tbody><tr><td><code>RCH_HTTP_HOST</code></td><td><code>RCH__HTTP_HOST</code></td><td>The host name to bind the HTTP server to.</td></tr><tr><td><code>PORT</code></td><td><code>RCH__HTTP_PORT</code></td><td>The port to bind the HTTP server to, often populated by the cloud provider.</td></tr><tr><td><code>RCH_SENTRY_DSN</code></td><td><code>RCH__SENTRY_DSN</code></td><td>If set, bug reports will be sent to this <a href="https://sentry.io">Sentry</a> DSN.</td></tr><tr><td><code>RCH_HEADER_SECRET</code></td><td><code>RCH__HEADER_SECRET</code></td><td>If set, then all HTTP requests must have the <code>x-reacher-secret</code> header set to this value. This is used to protect the backend against public unwanted HTTP requests.</td></tr><tr><td><code>RCH_FROM_EMAIL</code></td><td><code>RCH__FROM_EMAIL</code></td><td>Email to use in the <code>&#x3C;MAIL FROM:></code> SMTP step. Can be overwritten by each API request's <code>from_email</code> field.</td></tr><tr><td><code>RCH_HELLO_NAME</code></td><td><code>RCH__HELLO_NAME</code></td><td>Name to use in the <code>&#x3C;EHLO></code> SMTP step. Can be overwritten by each API request's <code>hello_name</code> field.</td></tr><tr><td><code>RCH_SMTP_TIMEOUT</code></td><td><code>RCH__SMTP_TIMEOUT</code></td><td>Timeout for each SMTP connection.</td></tr><tr><td><code>RCH_WEBDRIVER_ADDR</code></td><td><code>RCH__WEBDRIVER_ADDR</code></td><td>Set to a running WebDriver process endpoint (e.g. <code>http://localhost:9515</code>) to use a headless navigator to password recovery pages to check Yahoo and Hotmail/Outlook addresses. We recommend <code>chromedriver</code> as it allows parallel requests.</td></tr><tr><td><strong>For Bulk Verification:</strong></td><td></td><td></td></tr><tr><td><code>RCH_ENABLE_BULK</code></td><td><code>RCH__WORKER__ENABLE</code></td><td></td></tr><tr><td><code>DATABASE_URL</code></td><td><code>RCH__WORKER__POSTGRES__DB_URL</code></td><td>[Bulk] Database connection string for storing results and task queue</td></tr><tr><td><code>RCH_DATABASE_MAX_CONNECTIONS</code></td><td>Removed</td><td>[Bulk] Connections created for the database pool</td></tr><tr><td><code>RCH_MINIMUM_TASK_CONCURRENCY</code></td><td>Removed</td><td>[Bulk] Minimum number of concurrent running tasks below which more tasks are fetched</td></tr><tr><td><code>RCH_MAXIMUM_CONCURRENT_TASK_FETCH</code></td><td>Removed</td><td>[Bulk] Maximum number of tasks fetched at once</td></tr></tbody></table>
 

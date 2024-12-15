@@ -1,10 +1,10 @@
-# Bulk Verification
+# Bulk Verification (v0.7)
 
 The default Reacher API only exposes one endpoint, `/v0/check_email`, which allows verifying one email at a time. The optional Bulk Verification API allows you to queue up a list of emails in one go.
 
 ## Prerequisites
 
-* A self-hosted setup, see [install.md](install.md "mention").
+* A self-hosted setup, see [install.md](../../self-hosting/install.md "mention").
 * A PostgreSQL database, you can start for free with [Supabase](https://supabase.com/) (no affiliation).
 
 ## Get Started
