@@ -16,3 +16,18 @@ run-with-worker: run
 .PHONY: run-with-commercial-license-trial
 run-with-commercial-license-trial: export RCH__COMMERCIAL_LICENSE_TRIAL__URL=http://localhost:3000/api/v1/commercial_license_trial
 run-with-commercial-license-trial: run
+
+# Generate the changelog using the conventional-changelog tool.
+# As a hack, we delete all tags that are not beta tags, so that the changelog
+# only contains the vX.X.X tags. See:
+# https://github.com/conventional-changelog/standard-version/issues/818
+#
+# To have those tags back locally, run `git fetch --tags`.
+.PHONY: changelog
+changelog:
+	git tag | grep -E '(beta|backend|worker)' | xargs git tag -d
+	echo "# Changelog" > CHANGELOG.md
+	echo "" >> CHANGELOG.md
+	echo "All notable changes to this project will be documented in this file. The changes in this project follow [Convention Commits](https://www.conventionalcommits.org/en/v1.0.0/)" >> CHANGELOG.md
+	echo "" >> CHANGELOG.md
+	conventional-changelog -p angular -r 0 >> CHANGELOG.md
