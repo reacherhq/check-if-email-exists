@@ -20,16 +20,18 @@ Once you've purchased a proxy, run the Docker command (see how in [install.md](i
 * `-e RCH__PROXY__PORT=<port>`: The corresponding port.
 * `-e RCH__PROXY__USERNAME=<username>`: Optional. A username to authenticate the proxy.
 * `-e RCH__PROXY__PASSWORD=<password>`: Optional. The corresponding password.
+* `-e RCH__HELLO_NAME`: The identifier to use during the "HELO/EHLO" step. It should match a domain name owned by the proxy. Ask your proxy about this setting.
+* `-e RCH__MAIL_FROM`: The email to use during the "MAIL FROM" step. It should be an email from the same domain as the HELLO\_NAME. Ask your proxy provider about this setting.
 
 {% hint style="info" %}
-If you're using the [commercial-license-trial.md](licensing/commercial-license-trial.md "mention"), these fields are already populated with the built-in proxy. However, you can still pass these flags manually pointing to a proxy of your own choosing, and they will overwrite the built-in settings.
+If you're using the [commercial-license-trial.md](licensing/commercial-license-trial.md "mention"), these fields are already populated with the built-in proxy. However, you can overwrite them by passing these flags again, pointing to a proxy of your own choosing.
 {% endhint %}
 
 ## Which 3rd-party proxies does Reacher recommend?
 
 Reacher has been working closely with [Proxy4Smtp](https://www.proxy4smtp.com) since early 2024. The service is run by Jon, an email verification expert who has had over 10 years experience in the industry. He understands the complications and challenges that arise from large scale SMTP connections, both with B2C and B2B emails. His proxies integrate seamlessly with Reacher.
 
-Ask [amaury@reacher.email](https://app.gitbook.com/u/F1LnsqPFtfUEGlcILLswbbp5cgk2 "mention")for an introduction to Jon.
+Ask [amaury@reacher.email](https://app.gitbook.com/u/F1LnsqPFtfUEGlcILLswbbp5cgk2 "mention") for an introduction to Jon.
 
 ## Configure Reacher to respect Proxy limits
 

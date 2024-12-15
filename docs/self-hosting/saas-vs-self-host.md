@@ -11,7 +11,7 @@ Reacher SaaS is the cloud-hosted version of the service, accessible at [https://
 Reacher is also available for self-hosting, enabling you to run the service on your own servers. This approach provides full control over the environment and data while leveraging the same verification engine as Reacher SaaS. Reacher is designed to make self-hosting straightforward and efficient.
 
 {% hint style="success" %}
-Reacher's goal is to make Self-Hosting easy. You can [install.md](install.md "mention")as part of your **Commercial License Trial**.
+Reacher's goal is to make Self-Hosting easy. You can [install.md](install.md "mention") as part of your **Commercial License Trial**.
 {% endhint %}
 
 ## Key Differences
