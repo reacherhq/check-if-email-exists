@@ -28,6 +28,6 @@ changelog:
 	git tag | grep -E '(beta|backend|worker)' | xargs git tag -d
 	echo "# Changelog" > CHANGELOG.md
 	echo "" >> CHANGELOG.md
-	echo "All notable changes to this project will be documented in this file. The changes in this project follow [Convention Commits](https://www.conventionalcommits.org/en/v1.0.0/)" >> CHANGELOG.md
+	echo "All notable changes to this project will be documented in this file. The changes in this project follow [Convention Commits](https://www.conventionalcommits.org/en/v1.0.0/)." >> CHANGELOG.md
 	echo "" >> CHANGELOG.md
 	conventional-changelog -p angular -r 0 >> CHANGELOG.md
