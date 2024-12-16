@@ -198,7 +198,7 @@ dependencies = [
  "nom",
  "num-traits",
  "rusticata-macros",
- "thiserror",
+ "thiserror 1.0.69",
  "time",
 ]
 
@@ -371,7 +371,7 @@ dependencies = [
  "log",
  "nom",
  "pin-project",
- "thiserror",
+ "thiserror 1.0.69",
  "tokio",
 ]
 
@@ -575,7 +575,7 @@ dependencies = [
  "sentry",
  "serde",
  "serde_json",
- "thiserror",
+ "thiserror 2.0.7",
  "tokio",
  "tracing",
 ]
@@ -1258,7 +1258,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "log",
- "thiserror",
+ "thiserror 1.0.69",
  "tokio",
  "tokio-stream",
 ]
@@ -1635,7 +1635,7 @@ dependencies = [
  "ipnet",
  "once_cell",
  "rand",
- "thiserror",
+ "thiserror 1.0.69",
  "tinyvec",
  "tokio",
  "tracing",
@@ -1658,7 +1658,7 @@ dependencies = [
  "rand",
  "resolv-conf",
  "smallvec",
- "thiserror",
+ "thiserror 1.0.69",
  "tokio",
  "tracing",
 ]
@@ -2580,7 +2580,7 @@ dependencies = [
  "rc2",
  "sha1 0.10.6",
  "sha2",
- "thiserror",
+ "thiserror 1.0.69",
  "x509-parser",
 ]
 
@@ -2657,7 +2657,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fdbef9d1d47087a895abd220ed25eb4ad973a5e26f6a4367b038c25e28dfc2d9"
 dependencies = [
  "memchr",
- "thiserror",
+ "thiserror 1.0.69",
  "ucd-trie",
 ]
 
@@ -2895,7 +2895,7 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "sha1 0.6.1",
- "thiserror",
+ "thiserror 1.0.69",
 ]
 
 [[package]]
@@ -2972,7 +2972,7 @@ dependencies = [
  "serde_json",
  "sqlx",
  "sqlxmq",
- "thiserror",
+ "thiserror 2.0.7",
  "tokio",
  "tokio-executor-trait",
  "tokio-reactor-trait",
@@ -3482,7 +3482,7 @@ dependencies = [
  "debugid",
  "serde",
  "serde_json",
- "thiserror",
+ "thiserror 1.0.69",
  "url",
  "uuid 0.8.2",
 ]
@@ -3722,7 +3722,7 @@ dependencies = [
  "sha2",
  "smallvec",
  "sqlformat",
- "thiserror",
+ "thiserror 1.0.69",
  "tokio",
  "tokio-stream",
  "tracing",
@@ -3807,7 +3807,7 @@ dependencies = [
  "smallvec",
  "sqlx-core",
  "stringprep",
- "thiserror",
+ "thiserror 1.0.69",
  "tracing",
  "uuid 1.10.0",
  "whoami",
@@ -3847,7 +3847,7 @@ dependencies = [
  "smallvec",
  "sqlx-core",
  "stringprep",
- "thiserror",
+ "thiserror 1.0.69",
  "tracing",
  "uuid 1.10.0",
  "whoami",
@@ -4055,18 +4055,38 @@ checksum = "23d434d3f8967a09480fb04132ebe0a3e088c173e6d0ee7897abbdf4eab0f8b9"
 
 [[package]]
 name = "thiserror"
-version = "1.0.61"
+version = "1.0.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c546c80d6be4bc6a00c0f01730c08df82eaa7a7a61f11d656526506112cc1709"
+checksum = "b6aaf5339b578ea85b50e080feb250a3e8ae8cfcdff9a461c9ec2904bc923f52"
 dependencies = [
- "thiserror-impl",
+ "thiserror-impl 1.0.69",
+]
+
+[[package]]
+name = "thiserror"
+version = "2.0.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "93605438cbd668185516ab499d589afb7ee1859ea3d5fc8f6b0755e1c7443767"
+dependencies = [
+ "thiserror-impl 2.0.7",
 ]
 
 [[package]]
 name = "thiserror-impl"
-version = "1.0.61"
+version = "1.0.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "46c3384250002a6d5af4d114f2845d37b57521033f30d5c3f46c4d70e1197533"
+checksum = "4fee6c4efc90059e10f81e6d42c60a18f76588c3d74cb83a0b242a2b6c7504c1"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.87",
+]
+
+[[package]]
+name = "thiserror-impl"
+version = "2.0.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e1d8749b4531af2117677a5fcd12b1348a3fe2b81e36e61ffeac5c4aa3273e36"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4231,7 +4251,7 @@ checksum = "51165dfa029d2a65969413a6cc96f354b86b464498702f174a4efa13608fd8c0"
 dependencies = [
  "either",
  "futures-util",
- "thiserror",
+ "thiserror 1.0.69",
  "tokio",
 ]
 
@@ -4410,7 +4430,7 @@ dependencies = [
  "log",
  "rand",
  "sha1 0.10.6",
- "thiserror",
+ "thiserror 1.0.69",
  "url",
  "utf-8",
 ]
@@ -4715,7 +4735,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
- "thiserror",
+ "thiserror 1.0.69",
  "time",
  "unicode-segmentation",
  "url",
@@ -4981,7 +5001,7 @@ dependencies = [
  "nom",
  "oid-registry",
  "rusticata-macros",
- "thiserror",
+ "thiserror 1.0.69",
  "time",
 ]
 
