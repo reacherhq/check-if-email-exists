@@ -179,11 +179,11 @@ pub async fn email_verification_task(
 
 		debug!(
 			target: LOG_TARGET,
-			"Got task result [email={}] for [job={}] and [uuid={}] with [is_reachable={:?}]",
-			to_email,
-			task_payload.id,
-			current_job.id(),
-			response.is_reachable,
+			email=to_email,
+			job_id=task_payload.id,
+			uuid=?current_job.id(),
+			is_reachable=?response.is_reachable,
+			"Task result received"
 		);
 
 		let is_reachable = response.is_reachable == Reachable::Unknown;

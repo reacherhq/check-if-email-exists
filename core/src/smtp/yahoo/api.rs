@@ -91,10 +91,10 @@ pub async fn check_api(to_email: &str, input: &CheckEmailInput) -> Result<SmtpDe
 		}
 	};
 
-	log::debug!(
+	tracing::debug!(
 		target: LOG_TARGET,
-		"[email={}] Yahoo succesfully got cookies after response",
-		to_email,
+		email=to_email,
+		"Yahoo succesfully got cookies after response"
 	);
 
 	let body = res.text().await?;
@@ -154,10 +154,10 @@ pub async fn check_api(to_email: &str, input: &CheckEmailInput) -> Result<SmtpDe
 		.json::<FormResponse>()
 		.await?;
 
-	log::debug!(
+	tracing::debug!(
 		target: LOG_TARGET,
-		"[email={}] Yahoo 2nd response: {:?}",
-		to_email,
+		email=to_email,
+		"Yahoo 2nd response: {:?}",
 		res
 	);
 

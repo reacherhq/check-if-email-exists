@@ -149,12 +149,22 @@ async fn consume_check_email(config: Arc<BackendConfig>) -> Result<(), anyhow::E
 			let config_clone2 = Arc::clone(&config_clone);
 			let channel_clone2 = Arc::clone(&channel);
 
-			info!(target: LOG_TARGET, email=payload.input.to_email, job_id=?payload.job_id, "Starting task");
+			info!(
+				target: LOG_TARGET,
+				email=payload.input.to_email,
+				job_id=?payload.job_id,
+				"Starting task"
+			);
 			tokio::spawn(async move {
 				if let Err(e) =
 					do_check_email_work(&payload, delivery, channel_clone2, config_clone2).await
 				{
-					error!(target: LOG_TARGET, email=payload.input.to_email, error=?e, "Error processing message");
+					error!(
+						target: LOG_TARGET,
+						email=payload.input.to_email,
+						error=?e,
+						"Error processing message"
+					);
 					capture_anyhow(&e);
 				}
 			});

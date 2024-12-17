@@ -30,18 +30,18 @@ pub async fn check_haveibeenpwned(to_email: &str, api_key: Option<String>) -> Op
 
 	match pwned.check_email(to_email).await {
 		Ok(answer) => {
-			log::debug!(
+			tracing::debug!(
 				target: LOG_TARGET,
-				"Email found in {} breaches",
-				answer.len()
+				breach_count=answer.len(),
+				"HaveIBeenPwned check completed"
 			);
 			Some(!answer.is_empty())
 		}
 		Err(e) => {
-			log::error!(
+			tracing::error!(
 				target: LOG_TARGET,
-				"Error while checking if email has been pwned: {}",
-				e
+				error=?e,
+				"Error checking HaveIBeenPwned"
 			);
 			match e {
 				pwned::errors::Error::IoError(e) => match e.kind() {
