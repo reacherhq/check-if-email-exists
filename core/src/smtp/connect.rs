@@ -34,7 +34,6 @@ use crate::{
 	util::input_output::CheckEmailInput,
 };
 use crate::{EmailAddress, LOG_TARGET};
-use tracing::{debug, warn};
 
 // Define a new trait that combines AsyncRead, AsyncWrite, and Unpin
 trait AsyncReadWrite: AsyncRead + AsyncWrite + Unpin + Send {}
@@ -44,10 +43,13 @@ impl<T: AsyncRead + AsyncWrite + Unpin + Send> AsyncReadWrite for T {}
 macro_rules! try_smtp (
     ($res: expr, $client: ident, $to_email: expr, $host: expr, $port: expr) => ({
 		if let Err(err) = $res {
-			debug!(
+			tracing::debug!(
 				target: LOG_TARGET,
-				"[email={}] Closing [host={}:{}], because of error '{:?}'.",
-				$to_email, $host, $port,err,
+				email=$to_email,
+				host=$host,
+				port=$port,
+				error=?err,
+				"Closing connection due to error"
 			);
 			// Try to close the connection, but ignore if there's an error.
 			let _ = $client.quit().await;
@@ -102,9 +104,10 @@ async fn connect_to_smtp_host(
 
 	// Set "MAIL FROM"
 	let from_email = EmailAddress::from_str(&input.from_email).unwrap_or_else(|_| {
-		warn!(
-			"Invalid 'from_email' provided: '{}'. Using default: 'user@example.org'",
-			input.from_email
+		tracing::warn!(
+			target: LOG_TARGET,
+			from_email=input.from_email,
+			"Invalid 'from_email' provided, using default: 'user@example.org'"
 		);
 		EmailAddress::from_str("user@example.org").expect("Default email is valid")
 	});
@@ -218,10 +221,11 @@ async fn smtp_is_catch_all<S: AsyncBufRead + AsyncWrite + Unpin + Send>(
 	input: &CheckEmailInput,
 ) -> Result<bool, SmtpError> {
 	if has_rule(domain, host, &Rule::SkipCatchAll) {
-		debug!(
+		tracing::debug!(
 			target: LOG_TARGET,
-			"[email={}] Skipping catch-all check for [domain={domain}]",
-			input.to_email
+			email=input.to_email,
+			domain=domain,
+			"Skipping catch-all check"
 		);
 		return Ok(false);
 	}
@@ -271,10 +275,11 @@ async fn create_smtp_future(
 		// https://github.com/async-email/async-smtp/issues/37
 		if let Err(e) = &result {
 			if parser::is_err_io_errors(e) {
-				debug!(
+				tracing::debug!(
 					target: LOG_TARGET,
-					"[email={}] Got `io: incomplete` error, reconnecting.",
-					input.to_email
+					email=input.to_email,
+					error=?e,
+					"Got `io: incomplete` error, reconnecting"
 				);
 
 				let _ = smtp_transport.quit().await;
@@ -337,7 +342,7 @@ pub async fn check_smtp_with_retry(
 	input: &CheckEmailInput,
 	count: usize,
 ) -> Result<SmtpDetails, SmtpError> {
-	debug!(
+	tracing::debug!(
 		target: LOG_TARGET,
 		email=input.to_email,
 		attempt=input.retries - count + 1,
@@ -348,14 +353,14 @@ pub async fn check_smtp_with_retry(
 
 	let result = check_smtp_without_retry(to_email, host, port, domain, input).await;
 
-	debug!(
+	tracing::debug!(
 		target: LOG_TARGET,
-		"[email={}] Got result for [attempt={}] on [host={}:{}], [result={:?}]",
-		input.to_email,
-		input.retries - count + 1,
-		host,
-		port,
-		result
+		email=input.to_email,
+		attempt=input.retries - count + 1,
+		host=host,
+		port=port,
+		result=?result,
+		"Got SMTP check result"
 	);
 
 	match &result {
@@ -370,10 +375,10 @@ pub async fn check_smtp_with_retry(
 			if count <= 1 {
 				result
 			} else {
-				debug!(
+				tracing::debug!(
 					target: LOG_TARGET,
-					"[email={}] Potential greylisting detected, retrying.",
-					input.to_email,
+					email=input.to_email,
+					"Potential greylisting detected, retrying"
 				);
 				check_smtp_with_retry(to_email, host, port, domain, input, count - 1).await
 			}

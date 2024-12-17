@@ -56,11 +56,11 @@ pub async fn check_gmail_via_api(
 
 	let email_exists = response.headers().contains_key("Set-Cookie");
 
-	log::debug!(
+	tracing::debug!(
 		target: LOG_TARGET,
-		"[email={}] gmail response: {:?}",
-		to_email,
-		response
+		email=to_email.to_string(),
+		response=?response,
+		"Gmail API response"
 	);
 
 	Ok(SmtpDetails {
