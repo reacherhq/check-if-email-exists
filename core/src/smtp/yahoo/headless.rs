@@ -31,10 +31,10 @@ use crate::{smtp::SmtpDetails, LOG_TARGET};
 /// browser. Make sure you have a WebDriver server running locally before
 /// running this, or this will error.
 pub async fn check_headless(to_email: &str, webdriver: &str) -> Result<SmtpDetails, HeadlessError> {
-	log::debug!(
+	tracing::debug!(
 		target: LOG_TARGET,
-		"[email={}] Using Yahoo password recovery in headless navigator",
-		to_email,
+		email=%to_email,
+		"Using Yahoo password recovery in headless navigator"
 	);
 
 	let c = create_headless_client(webdriver).await?;

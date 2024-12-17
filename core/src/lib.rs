@@ -123,11 +123,10 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 	let start_time = SystemTime::now();
 	let to_email = &input.to_email;
 
-	log::debug!(
+	tracing::debug!(
 		target: LOG_TARGET,
-		"[email={}] Checking email \"{}\"",
-		to_email,
-		to_email
+		email=%to_email,
+		"Checking email"
 	);
 	let mut my_syntax = check_syntax(to_email.as_ref());
 	if !my_syntax.is_valid_syntax {
@@ -139,11 +138,11 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		};
 	}
 
-	log::debug!(
+	tracing::debug!(
 		target: LOG_TARGET,
-		"[email={}] Found the following syntax validation: {:?}",
-		to_email,
-		my_syntax
+		email=%to_email,
+		syntax=?my_syntax,
+		"Found syntax validation"
 	);
 
 	let my_mx = match check_mx(&my_syntax).await {
@@ -176,17 +175,19 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		};
 	}
 
-	log::debug!(
+	let mx_hosts: Vec<String> = my_mx
+		.lookup
+		.as_ref()
+		.expect("If lookup is error, we already returned. qed.")
+		.iter()
+		.map(|host| host.to_string())
+		.collect();
+
+	tracing::debug!(
 		target: LOG_TARGET,
-		"[email={}] Found the following MX hosts: {:?}",
-		to_email,
-		my_mx
-			.lookup
-			.as_ref()
-			.expect("If lookup is error, we already returned. qed.")
-			.iter()
-			.map(|host| host.to_string())
-			.collect::<Vec<String>>()
+		email=%to_email,
+		mx_hosts=?mx_hosts,
+		"Found MX hosts"
 	);
 
 	let my_misc = check_misc(
@@ -195,11 +196,12 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		input.haveibeenpwned_api_key.clone(),
 	)
 	.await;
-	log::debug!(
+
+	tracing::debug!(
 		target: LOG_TARGET,
-		"[email={}] Found the following misc details: {:?}",
-		to_email,
-		my_misc
+		email=%to_email,
+		misc=?my_misc,
+		"Found misc details"
 	);
 
 	// From the list of MX records, we only choose one: we don't choose the

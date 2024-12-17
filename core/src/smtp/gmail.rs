@@ -58,8 +58,8 @@ pub async fn check_gmail_via_api(
 
 	tracing::debug!(
 		target: LOG_TARGET,
-		email=to_email.to_string(),
-		response=?response,
+		email = %to_email,
+		response = ?response,
 		"Gmail API response"
 	);
 
