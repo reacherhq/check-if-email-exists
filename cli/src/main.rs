@@ -89,7 +89,7 @@ pub(crate) static CONF: Lazy<Cli> = Lazy::new(Cli::parse);
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
-	env_logger::init();
+	tracing_subscriber::fmt::init();
 
 	let to_email = &CONF.to_email;
 
