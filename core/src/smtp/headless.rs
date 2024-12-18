@@ -26,23 +26,14 @@ use thiserror::Error;
 #[derive(Debug, Error, Serialize)]
 pub enum HeadlessError {
 	#[serde(serialize_with = "ser_with_display")]
+	#[error("Fantoccini error: {0}")]
+	Fantoccini(#[from] std::io::Error),
+	#[serde(serialize_with = "ser_with_display")]
 	#[error("Cmd error: {0}")]
-	Cmd(CmdError),
+	Cmd(#[from] CmdError),
 	#[serde(serialize_with = "ser_with_display")]
 	#[error("New session error: {0}")]
-	NewSession(NewSessionError),
-}
-
-impl From<CmdError> for HeadlessError {
-	fn from(e: CmdError) -> Self {
-		Self::Cmd(e)
-	}
-}
-
-impl From<NewSessionError> for HeadlessError {
-	fn from(e: NewSessionError) -> Self {
-		Self::NewSession(e)
-	}
+	NewSession(#[from] NewSessionError),
 }
 
 pub async fn create_headless_client(webdriver: &str) -> Result<Client, HeadlessError> {
@@ -62,7 +53,7 @@ pub async fn create_headless_client(webdriver: &str) -> Result<Client, HeadlessE
 	caps.insert("goog:chromeOptions".to_string(), opts);
 
 	// Connect to WebDriver instance that is listening on `webdriver`
-	let c = ClientBuilder::native()
+	let c = ClientBuilder::rustls()?
 		.capabilities(caps)
 		.connect(webdriver)
 		.await?;
