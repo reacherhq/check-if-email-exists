@@ -31,6 +31,10 @@ const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
 async fn main() -> Result<(), anyhow::Error> {
 	// Initialize logging.
 	tracing_subscriber::fmt::init();
+	rustls::crypto::ring::default_provider()
+		.install_default()
+		.expect("Failed to install rustls crypto provider");
+
 	info!(target: LOG_TARGET, version=?CARGO_PKG_VERSION, "Running Reacher");
 	let mut config = load_config().await?;
 	config.connect().await?;
