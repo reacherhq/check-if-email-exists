@@ -141,7 +141,7 @@ mod tests {
 	// run chromedriver and remove the "#[ignore]".
 	// Also see: https://github.com/jonhoo/fantoccini
 	#[tokio::test]
-	// #[ignore = "Run a webdriver server on port 9515 locally to test this"]
+	#[ignore = "Run a webdriver server on port 9515 locally to test this"]
 	async fn test_yahoo_address() {
 		initialize_crypto_provider();
 		// Run 5 headless sessions with the below dummy emails.
