@@ -29,7 +29,7 @@ If you're using the [commercial-license-trial.md](licensing/commercial-license-t
 
 ## Which 3rd-party proxies does Reacher recommend?
 
-Reacher has been working closely with [Proxy4Smtp](https://www.proxy4smtp.com) since early 2024. The service is run by Jon, an email verification expert who has had over 10 years experience in the industry. He understands the complications and challenges that arise from large scale SMTP connections, both with B2C and B2B emails. His proxies integrate seamlessly with Reacher.
+Reacher has been working closely with [Proxy4Smtp](https://www.proxy4smtp.com) since early 2024. The service is run by Jon, an email verification expert who has had over 10 years experience in the industry. He understands the complications and challenges that arise from large scale SMTP connections. His proxies integrate seamlessly with Reacher, and are tailored for B2B emails.
 
 Ask [amaury@reacher.email](https://app.gitbook.com/u/F1LnsqPFtfUEGlcILLswbbp5cgk2 "mention") for an introduction to Jon.
 
