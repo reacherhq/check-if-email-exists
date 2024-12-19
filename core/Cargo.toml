@@ -27,6 +27,7 @@ futures = { version = "0.3.30" }
 hickory-proto = "0.24.0"
 hickory-resolver = "0.24.0"
 levenshtein = "1.0.5"
+lettre = { version = "0.11", features = ["smtp-transport"] }
 log = "0.4.22"
 mailchecker = "6.0.11"
 md5 = "0.7.0"
@@ -37,6 +38,7 @@ reqwest = { version = "0.12.5", default-features = false, features = [
     "json",
     "rustls-tls",
 ] }
+rustls = { version = "0.23", features = ["ring"] }
 sentry = { version = "0.32", default-features = false, features = [
     "reqwest",
     "rustls",

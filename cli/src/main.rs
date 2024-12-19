@@ -90,9 +90,6 @@ pub(crate) static CONF: Lazy<Cli> = Lazy::new(Cli::parse);
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
 	tracing_subscriber::fmt::init();
-	rustls::crypto::ring::default_provider()
-		.install_default()
-		.expect("Failed to install rustls crypto provider");
 
 	let to_email = &CONF.to_email;
 

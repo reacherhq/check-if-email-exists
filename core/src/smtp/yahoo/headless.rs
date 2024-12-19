@@ -31,12 +31,37 @@ use crate::{smtp::SmtpDetails, LOG_TARGET};
 /// browser. Make sure you have a WebDriver server running locally before
 /// running this, or this will error.
 pub async fn check_headless(to_email: &str, webdriver: &str) -> Result<SmtpDetails, HeadlessError> {
-	tracing::debug!(
-		target: LOG_TARGET,
-		email=%to_email,
-		"Using Yahoo password recovery in headless navigator"
-	);
+	let mut attempts = 0;
+	let max_attempts = 3;
+	let mut last_error = None;
 
+	while attempts < max_attempts {
+		attempts += 1;
+		tracing::debug!(
+			target: LOG_TARGET,
+			email=%to_email,
+			attempt=%attempts,
+			"Using Yahoo password recovery in headless navigator"
+		);
+
+		match check_headless_inner(to_email, webdriver).await {
+			Ok(result) => return Ok(result),
+			Err(e) => {
+				last_error = Some(e);
+				if attempts < max_attempts {
+					sleep(Duration::from_secs(1));
+				}
+			}
+		}
+	}
+
+	Err(last_error.unwrap())
+}
+
+async fn check_headless_inner(
+	to_email: &str,
+	webdriver: &str,
+) -> Result<SmtpDetails, HeadlessError> {
 	let c = create_headless_client(webdriver).await?;
 
 	// Navigate to Microsoft password recovery page.
@@ -107,6 +132,8 @@ pub async fn check_headless(to_email: &str, webdriver: &str) -> Result<SmtpDetai
 
 #[cfg(test)]
 mod tests {
+	use crate::initialize_crypto_provider;
+
 	use super::check_headless;
 
 	// Ignoring this test as it requires a local process of WebDriver running on
@@ -114,8 +141,9 @@ mod tests {
 	// run chromedriver and remove the "#[ignore]".
 	// Also see: https://github.com/jonhoo/fantoccini
 	#[tokio::test]
-	#[ignore = "Run a webdriver server locally to test this"]
+	// #[ignore = "Run a webdriver server on port 9515 locally to test this"]
 	async fn test_yahoo_address() {
+		initialize_crypto_provider();
 		// Run 5 headless sessions with the below dummy emails.
 		for _ in 0..5 {
 			// Email does not exist.

@@ -75,8 +75,10 @@ use hickory_proto::rr::rdata::MX;
 use misc::{check_misc, MiscDetails};
 use mx::check_mx;
 use rand::Rng;
+use rustls::crypto::ring;
 use smtp::{check_smtp, SmtpDetails, SmtpError};
 pub use smtp::{is_gmail, is_hotmail, is_hotmail_b2b, is_hotmail_b2c, is_yahoo};
+use std::sync::Once;
 use std::time::{Duration, SystemTime};
 use syntax::{check_syntax, get_similar_mail_provider};
 pub use util::input_output::*;
@@ -87,6 +89,16 @@ use crate::rules::{has_rule, Rule};
 
 /// The target where to log check-if-email-exists logs.
 pub const LOG_TARGET: &str = "reacher";
+
+static INIT: Once = Once::new();
+
+/// check-if-email-exists uses rustls for its TLS connections. This function
+/// initializes the default crypto provider for rustls.
+pub fn initialize_crypto_provider() {
+	INIT.call_once(|| {
+		ring::default_provider().install_default().unwrap();
+	});
+}
 
 /// Given an email's misc and smtp details, calculate an estimate of our
 /// confidence on how reachable the email is.
@@ -120,6 +132,7 @@ fn calculate_reachable(misc: &MiscDetails, smtp: &Result<SmtpDetails, SmtpError>
 /// Returns a `CheckEmailOutput` output, whose `is_reachable` field is one of
 /// `Safe`, `Invalid`, `Risky` or `Unknown`.
 pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
+	initialize_crypto_provider();
 	let start_time = SystemTime::now();
 	let to_email = &input.to_email;
 
@@ -273,6 +286,7 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		},
 	};
 
+	#[cfg(feature = "sentry")]
 	log_unknown_errors(&output, &input.backend_name);
 
 	output
