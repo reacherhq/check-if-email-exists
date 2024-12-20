@@ -101,7 +101,8 @@ The output will be a JSON with the below format, the fields should be self-expla
 	"is_reachable": "invalid",
 	"misc": {
 		"is_disposable": false,
-		"is_role_account": false
+		"is_role_account": false,
+		"is_b2c": true
 	},
 	"mx": {
 		"accepts_mail": true,
