@@ -36,10 +36,10 @@ pub async fn check_password_recovery(
 	webdriver: &str,
 ) -> Result<SmtpDetails, HeadlessError> {
 	let to_email = to_email.to_string();
-	log::debug!(
+	tracing::debug!(
 		target: LOG_TARGET,
-		"[email={}] Using Hotmail password recovery in headless navigator",
-		to_email,
+		email=to_email,
+		"Using Hotmail password recovery in headless navigator"
 	);
 
 	let c = create_headless_client(webdriver).await?;
@@ -91,20 +91,29 @@ pub async fn check_password_recovery(
 	let (is_deliverable, _) = select_ok(vec).await?;
 
 	if is_deliverable {
-		log::debug!(
+		tracing::debug!(
 			target: LOG_TARGET,
-			"[email={}] Did not find error message in password recovery, email exists",
-			to_email,
+			email=to_email,
+			exists=is_deliverable,
+			"Did not find error message in password recovery, email exists"
 		);
 	} else {
-		log::debug!(
+		tracing::debug!(
 			target: LOG_TARGET,
-			"[email={}] Found error message in password recovery, email does not exist",
-			to_email,
+			email=to_email,
+			exists=is_deliverable,
+			"Found error message in password recovery, email does not exist"
 		);
 	}
 
 	c.close().await?;
+
+	tracing::debug!(
+		target: LOG_TARGET,
+		email=to_email,
+		exists=is_deliverable,
+		"Password recovery check result"
+	);
 
 	Ok(SmtpDetails {
 		can_connect_smtp: true,

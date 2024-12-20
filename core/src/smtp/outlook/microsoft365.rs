@@ -77,11 +77,11 @@ pub async fn check_microsoft365_api(
 		.send()
 		.await?;
 
-	log::debug!(
+	tracing::debug!(
 		target: LOG_TARGET,
-		"[email={}] microsoft365 response: {:?}",
-		to_email,
-		response
+		email = %to_email,
+		response = ?response,
+		"microsoft365 response"
 	);
 
 	if response.status() == 403 {

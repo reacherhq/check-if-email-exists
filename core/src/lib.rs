@@ -75,8 +75,10 @@ use hickory_proto::rr::rdata::MX;
 use misc::{check_misc, MiscDetails};
 use mx::check_mx;
 use rand::Rng;
+use rustls::crypto::ring;
 use smtp::{check_smtp, SmtpDetails, SmtpError};
 pub use smtp::{is_gmail, is_hotmail, is_hotmail_b2b, is_hotmail_b2c, is_yahoo};
+use std::sync::Once;
 use std::time::{Duration, SystemTime};
 use syntax::{check_syntax, get_similar_mail_provider};
 pub use util::input_output::*;
@@ -87,6 +89,16 @@ use crate::rules::{has_rule, Rule};
 
 /// The target where to log check-if-email-exists logs.
 pub const LOG_TARGET: &str = "reacher";
+
+static INIT: Once = Once::new();
+
+/// check-if-email-exists uses rustls for its TLS connections. This function
+/// initializes the default crypto provider for rustls.
+pub fn initialize_crypto_provider() {
+	INIT.call_once(|| {
+		ring::default_provider().install_default().unwrap();
+	});
+}
 
 /// Given an email's misc and smtp details, calculate an estimate of our
 /// confidence on how reachable the email is.
@@ -120,14 +132,14 @@ fn calculate_reachable(misc: &MiscDetails, smtp: &Result<SmtpDetails, SmtpError>
 /// Returns a `CheckEmailOutput` output, whose `is_reachable` field is one of
 /// `Safe`, `Invalid`, `Risky` or `Unknown`.
 pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
+	initialize_crypto_provider();
 	let start_time = SystemTime::now();
 	let to_email = &input.to_email;
 
-	log::debug!(
+	tracing::debug!(
 		target: LOG_TARGET,
-		"[email={}] Checking email \"{}\"",
-		to_email,
-		to_email
+		email=%to_email,
+		"Checking email"
 	);
 	let mut my_syntax = check_syntax(to_email.as_ref());
 	if !my_syntax.is_valid_syntax {
@@ -139,11 +151,11 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		};
 	}
 
-	log::debug!(
+	tracing::debug!(
 		target: LOG_TARGET,
-		"[email={}] Found the following syntax validation: {:?}",
-		to_email,
-		my_syntax
+		email=%to_email,
+		syntax=?my_syntax,
+		"Found syntax validation"
 	);
 
 	let my_mx = match check_mx(&my_syntax).await {
@@ -176,17 +188,19 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		};
 	}
 
-	log::debug!(
+	let mx_hosts: Vec<String> = my_mx
+		.lookup
+		.as_ref()
+		.expect("If lookup is error, we already returned. qed.")
+		.iter()
+		.map(|host| host.to_string())
+		.collect();
+
+	tracing::debug!(
 		target: LOG_TARGET,
-		"[email={}] Found the following MX hosts: {:?}",
-		to_email,
-		my_mx
-			.lookup
-			.as_ref()
-			.expect("If lookup is error, we already returned. qed.")
-			.iter()
-			.map(|host| host.to_string())
-			.collect::<Vec<String>>()
+		email=%to_email,
+		mx_hosts=?mx_hosts,
+		"Found MX hosts"
 	);
 
 	let my_misc = check_misc(
@@ -195,11 +209,12 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		input.haveibeenpwned_api_key.clone(),
 	)
 	.await;
-	log::debug!(
+
+	tracing::debug!(
 		target: LOG_TARGET,
-		"[email={}] Found the following misc details: {:?}",
-		to_email,
-		my_misc
+		email=%to_email,
+		misc=?my_misc,
+		"Found misc details"
 	);
 
 	// From the list of MX records, we only choose one: we don't choose the
@@ -271,6 +286,7 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		},
 	};
 
+	#[cfg(feature = "sentry")]
 	log_unknown_errors(&output, &input.backend_name);
 
 	output

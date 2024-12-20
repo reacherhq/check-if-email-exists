@@ -26,11 +26,11 @@ pub async fn check_gravatar(to_email: &str) -> Option<String> {
 
 	let url = format!("{API_BASE_URL}{mail_hash:x}");
 
-	log::debug!(
+	tracing::debug!(
 		target: LOG_TARGET,
-		"[email={}] Request Gravatar API with url: {:?}",
-		to_email,
-		url
+		email=to_email,
+		url=url,
+		"Request Gravatar API"
 	);
 
 	let response = client
@@ -41,7 +41,7 @@ pub async fn check_gravatar(to_email: &str) -> Option<String> {
 		.send()
 		.await;
 
-	log::debug!(
+	tracing::debug!(
 		target: LOG_TARGET,
 		"[email={}] Gravatar response: {:?}",
 		to_email,

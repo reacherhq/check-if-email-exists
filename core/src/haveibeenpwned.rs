@@ -15,41 +15,56 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::LOG_TARGET;
-use pwned::api::PwnedBuilder;
+use reqwest::Client;
+
+const MAIN_API_URL: &str = "https://haveibeenpwned.com/api/v3/";
 
 /// Check if the email has been found in any breach or paste using the
 /// HaveIBeenPwned API.
 /// This function will return the number of times the email has been found in
 /// any breach.
 pub async fn check_haveibeenpwned(to_email: &str, api_key: Option<String>) -> Option<bool> {
-	let pwned = PwnedBuilder::default()
-		.user_agent("reacher")
-		.api_key(api_key)
-		.build()
-		.unwrap();
+	let client = Client::new();
+	let url = format!(
+		"{}breachedaccount/{}?truncateResponse=false",
+		MAIN_API_URL, to_email
+	);
 
-	match pwned.check_email(to_email).await {
-		Ok(answer) => {
-			log::debug!(
-				target: LOG_TARGET,
-				"Email found in {} breaches",
-				answer.len()
-			);
-			Some(!answer.is_empty())
+	let request = client
+		.get(&url)
+		.header("User-Agent", "reacher")
+		.header("hibp-api-key", api_key.unwrap_or_default())
+		.send()
+		.await;
+
+	match request {
+		Ok(response) => {
+			if response.status().is_success() {
+				let breaches: Vec<serde_json::Value> = response.json().await.unwrap_or_default();
+				tracing::debug!(
+					target: LOG_TARGET,
+					breach_count=breaches.len(),
+					"HaveIBeenPwned check completed"
+				);
+				Some(!breaches.is_empty())
+			} else if response.status() == reqwest::StatusCode::NOT_FOUND {
+				Some(false)
+			} else {
+				tracing::error!(
+					target: LOG_TARGET,
+					status = %response.status(),
+					"Error checking HaveIBeenPwned"
+				);
+				None
+			}
 		}
 		Err(e) => {
-			log::error!(
+			tracing::error!(
 				target: LOG_TARGET,
-				"Error while checking if email has been pwned: {}",
-				e
+				error=?e,
+				"Error checking HaveIBeenPwned"
 			);
-			match e {
-				pwned::errors::Error::IoError(e) => match e.kind() {
-					std::io::ErrorKind::NotFound => Some(false),
-					_ => None,
-				},
-				_ => None,
-			}
+			None
 		}
 	}
 }

@@ -24,13 +24,13 @@ pub fn create_client(
 	api_name: &str,
 ) -> Result<reqwest::Client, ReqwestError> {
 	if let Some(proxy) = &input.proxy {
-		log::debug!(
+		tracing::debug!(
 			target: LOG_TARGET,
-			"[email={}] Using proxy socks5://{}:{} for {} API",
-			input.to_email,
-			proxy.host,
-			proxy.port,
-			api_name,
+			email=input.to_email,
+			proxy_host=proxy.host,
+			proxy_port=proxy.port,
+			api=api_name,
+			"Using proxy for API request"
 		);
 
 		let proxy = if proxy.username.is_some() && proxy.password.is_some() {

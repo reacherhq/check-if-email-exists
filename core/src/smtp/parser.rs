@@ -100,6 +100,12 @@ pub fn is_invalid(e: &str, email: &EmailAddress) -> bool {
 	|| e.contains("recipient is not exist")
 	// permanent: 5.1.1 <EMAIL>  Recipient not found. (on @4polymer.com)
 	|| e.contains("recipient not found")
+	// permanent: 5.7.1 Email doesn't exist. Please forward it or send it to contact@magency.f; 5.7.1 r - gcdp 38308e7fff4ca-30344241c74si13773751fa.513 - gsmtp"
+	|| e.contains("email doesn't exist")
+	// permanent: verify address failed, User not found ***@salemall.vn (on @salemall.vn)
+	|| e.contains("verify address failed")
+	// transient: unable to verify user (on @computan.net)
+	|| e.contains("unable to verify user")
 }
 
 /// Check that the mailbox has a full inbox.
@@ -112,6 +118,8 @@ pub fn is_full_inbox(e: &str) -> bool {
 	|| e.contains("over quota")
 	// 550 user has too many messages on the server
 	|| e.contains("too many messages")
+	// transient: 4.2.2 The recipient's inbox is out of storage space. Please direct the; 4.2.2 recipient to; 4.2.2  https://support.google.com/mail/?p=OverQuotaTemp 41be03b00d2f7-801d5c00011si4287631a12.311 - gsmtp (on @gmail.com)
+	|| e.contains("out of storage space")
 }
 
 /// Check if the email account has been disabled or blocked by the email
