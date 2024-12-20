@@ -105,7 +105,8 @@ async fn main() -> Result<(), anyhow::Error> {
 		.hotmailb2c_verif_method(CONF.hotmailb2c_verif_method)
 		.check_gravatar(CONF.check_gravatar)
 		.haveibeenpwned_api_key(CONF.haveibeenpwned_api_key.clone())
-		.backend_name("reacher-cli".to_string());
+		.backend_name("reacher-cli".to_string())
+		.retries(2);
 
 	if let Some(proxy_host) = &CONF.proxy_host {
 		input = input.proxy(Some(CheckEmailInputProxy {
