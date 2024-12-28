@@ -12,7 +12,7 @@ COPY . .
 
 # Compile the application for the Lambda runtime (x86_64-unknown-linux-musl)
 RUN rustup target add x86_64-unknown-linux-musl && \
-    cargo build --release --target x86_64-unknown-linux-musl
+    cargo build --bin reacher_sqs --release --target x86_64-unknown-linux-musl
 
 # Create the runtime container
 FROM public.ecr.aws/lambda/provided:al2
