@@ -36,7 +36,7 @@ services:
             RUST_LOG: reacher=info
             RCH__WORKER__ENABLE: true
             RCH__WORKER__RABBITMQ__URL: amqp://guest:guest@rabbitmq:5672
-            RCH__WORKER__POSTGRES__DB_URL: postgres://postgres:postgres@postgres:5432/reacher_db
+            RCH__STORAGE__POSTGRES__DB_URL: postgres://postgres:postgres@postgres:5432/reacher_db
             RCH__WORKER__THROTTLE__MAX_REQUESTS_PER_DAY: 10000 # Recommended limit per IP per day for SMTP requests
         restart: always
 
@@ -53,6 +53,6 @@ services:
             RUST_LOG: reacher=info
             RCH__WORKER__ENABLE: true
             RCH__WORKER__RABBITMQ__URL: amqp://guest:guest@rabbitmq:5672
-            RCH__WORKER__POSTGRES__DB_URL: postgres://postgres:postgres@postgres:5432/reacher_db
+            RCH__STORAGE__POSTGRES__DB_URL: postgres://postgres:postgres@postgres:5432/reacher_db
             RCH__WORKER__THROTTLE__MAX_REQUESTS_PER_MINUTE: 100 # Recommended limit for headless verifications
         restart: always

@@ -83,9 +83,9 @@ pub async fn run_warp_server(
 	// Run v0 bulk job listener.
 	let is_bulk_enabled = env::var("RCH_ENABLE_BULK").unwrap_or_else(|_| "0".into()) == "1";
 	let runner = if is_bulk_enabled {
-		let pg_pool = config
-			.get_pg_pool()
-			.expect("DATABASE_URL is required when RCH_ENABLE_BULK is set");
+		let pg_pool = config.get_pg_pool().expect(
+			"Please set the RCH__STORAGE__POSTGRES__DB_URL environment when RCH_ENABLE_BULK is set",
+		);
 		let runner = v0::bulk::create_job_registry(&pg_pool).await?;
 		Some(runner)
 	} else {
