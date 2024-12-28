@@ -158,8 +158,7 @@ impl BackendConfig {
 		Ok(())
 	}
 
-	/// Get all storages as a Vec. We don't really care about the keys in the
-	/// HashMap, except for deserialize purposes.
+	/// Get the Postgres connection pool, if the storage is Postgres.
 	pub fn get_storage_adapter(&self) -> Arc<StorageAdapter> {
 		self.storage_adapter.clone()
 	}

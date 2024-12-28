@@ -6,20 +6,51 @@ on:
       - "v*.*.*"
 
 jobs:
-  docker-publish:
+  get-tag:
     runs-on: ubuntu-latest
+    outputs:
+      GITHUB_TAG: ${{ steps.vars.outputs.GITHUB_TAG }}
     steps:
       - uses: actions/checkout@master
       - name: Set GITHUB_TAG arg
         id: vars
         run: echo ::set-output name=GITHUB_TAG::${GITHUB_REF:10} # Remove /refs/head/
+
+  docker-publish:
+    runs-on: ubuntu-latest
+    needs: get-tag
+    steps:
+      - uses: actions/checkout@master
       - name: Print version
-        run: echo "Publishing reacherhq/backend:${{ steps.vars.outputs.GITHUB_TAG }}"
-      - name: Publish to Registry
+        run: echo "Publishing reacherhq/backend:${{ needs.get-tag.outputs.GITHUB_TAG }}"
+      - name: Publish to Docker Hub
         uses: elgohr/Publish-Docker-Github-Action@v5
         with:
           name: reacherhq/backend
           dockerfile: backend/Dockerfile
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-          tags: "${{ steps.vars.outputs.GITHUB_TAG }},beta"
+          tags: "${{ needs.get-tag.outputs.GITHUB_TAG }},beta"
+
+  ecr-publish:
+    runs-on: ubuntu-latest
+    needs: get-tag
+    steps:
+      - uses: actions/checkout@master
+      - name: Print version
+        run: echo "Publishing reacherhq/backend:${{ needs.get-tag.outputs.GITHUB_TAG }}"
+      - name: Login to ECR
+        id: ecr
+        uses: elgohr/ecr-login-action@v3
+        with:
+          access_key: ${{ secrets.AWS_ACCESS_KEY }}
+          secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region: ${{ secrets.AWS_REGION }}
+      - name: Publish to AWS ECR
+        uses: elgohr/Publish-Docker-Github-Action@v5
+        with:
+          name: reacherhq/sqs
+          username: ${{ steps.ecr.outputs.username }}
+          password: ${{ steps.ecr.outputs.password }}
+          registry: ${{ steps.ecr.outputs.registry }}
+          tags: "${{ needs.get-tag.outputs.GITHUB_TAG }},beta"
