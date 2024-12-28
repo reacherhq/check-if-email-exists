@@ -1,0 +1,19 @@
+[package]
+name = "reacher_sqs"
+version = "0.10.0"
+edition = "2018"
+license = "AGPL-3.0"
+publish = false
+
+[dependencies]
+anyhow = "1.0"
+aws-sdk-sqs = "1.52.0"
+aws-config = { version = "1.1.7", features = ["behavior-version-latest"] }
+check-if-email-exists = { path = "../core", features = ["sentry"] }
+dotenv = "0.15.0"
+reacher_backend = { path = "../backend" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.40", features = ["macros"] }
+tracing = "0.1.40"
+tracing-subscriber = "0.3.18"
