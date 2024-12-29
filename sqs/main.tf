@@ -1,8 +1,12 @@
 provider "aws" {
-  region = "eu-west-3"
+  region = var.aws_region
 }
 
 # Define variables for reuse
+variable "aws_region" {
+  default = "eu-west-3"
+}
+
 variable "queue_name" {
   default = "check-email-queue"
 }
@@ -97,7 +101,8 @@ resource "aws_lambda_function" "lambda_task_check_email" {
   runtime       = "provided.al2"
 
   # ECR repository image
-  image_uri = "public.ecr.aws/${var.repository_name}"
+  package_type = "Image"
+  image_uri = "${aws_ecr_repository.lambda_ecr_repo.repository_url}:latest"
 
   environment {
     variables = {
@@ -120,7 +125,7 @@ resource "aws_lambda_event_source_mapping" "sqs_trigger" {
 }
 
 # ECR Repository for Lambda image
-resource "aws_ecr_repository" "lambda_repo" {
+resource "aws_ecr_repository" "lambda_ecr_repo" {
   name = var.repository_name
 
   tags = {
