@@ -110,6 +110,8 @@ resource "aws_lambda_function" "lambda_task_check_email" {
     }
   }
 
+  timeout = 120 # Timeout set to 2 minutes, which corresponds to the max time one email verification should run, plus buffer.
+
   tags = {
     Environment = "Production"
     ManagedBy   = "Terraform"
@@ -121,7 +123,7 @@ resource "aws_lambda_event_source_mapping" "sqs_trigger" {
   event_source_arn = aws_sqs_queue.check_email_queue.arn
   function_name    = aws_lambda_function.lambda_task_check_email.arn
 
-  batch_size = 10 # Optional, customize batch size
+  batch_size = 1
 }
 
 # ECR Repository for Lambda image

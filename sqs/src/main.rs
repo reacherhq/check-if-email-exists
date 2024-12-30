@@ -3,6 +3,7 @@ use std::sync::Arc;
 use aws_sdk_sqs::types::Message;
 use aws_sdk_sqs::Client;
 use check_if_email_exists::check_email;
+use lambda_runtime::Error;
 use reacher_backend::config::load_config;
 use reacher_backend::http::CheckEmailRequest;
 use serde::Deserialize;
@@ -15,10 +16,17 @@ struct CheckEmailTask {
 	input: CheckEmailRequest,
 }
 
+async fn function_handler(event: LambdaEvent<Value>) -> Result<Value, Error> {
+	let (event, _context) = event.into_parts();
+	Ok(json!({ "message": "Hello, world!", "input": event }))
+}
+
 #[tokio::main]
-async fn main() -> Result<(), anyhow::Error> {
+async fn main() -> Result<(), Error> {
 	tracing_subscriber::fmt::init();
 	dotenv::dotenv().ok();
+
+	run(service_fn(function_handler)).await
 
 	let shared_config = aws_config::load_from_env().await;
 	let client = Client::new(&shared_config);
