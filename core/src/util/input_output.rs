@@ -256,8 +256,11 @@ pub struct CheckEmailInput {
 	/// Check if a the email address is present in HaveIBeenPwned API.
 	/// If the api_key is filled, HaveIBeenPwned API is checked
 	pub haveibeenpwned_api_key: Option<String>,
-	/// Number of retries of SMTP connections to do. Setting to 2 might bypass
+	/// Number of total SMTP connections to do. Setting to 2 might bypass
 	/// greylisting on some servers, but takes more time.
+	///
+	/// This setting's naming is a bit misleading, as it's not really retries,
+	/// but the total number of SMTP connections to do.
 	///
 	/// Defaults to 1.
 	pub retries: usize,

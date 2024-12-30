@@ -67,6 +67,7 @@ impl CheckEmailRequest {
 				.unwrap_or_else(|| CheckEmailInput::default().smtp_port),
 			sentry_dsn: config.sentry_dsn.clone(),
 			backend_name: config.backend_name.clone(),
+			retries: 2,
 			..Default::default()
 		}
 	}

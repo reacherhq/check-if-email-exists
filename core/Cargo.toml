@@ -27,7 +27,6 @@ futures = { version = "0.3.30" }
 hickory-proto = "0.24.0"
 hickory-resolver = "0.24.0"
 levenshtein = "1.0.5"
-lettre = { version = "0.11", features = ["smtp-transport"] }
 log = "0.4.22"
 mailchecker = "6.0.11"
 md5 = "0.7.0"

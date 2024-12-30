@@ -1,9 +1,12 @@
+###############################################################################
+# Run
+###############################################################################
+
 # Run the backend without worker mode, i.e. only enabling single-shot
 # verifications via the /v1/check_email endpoint.
 .PHONY: run
 run:
 	cd backend && cargo run --bin reacher_backend
-
 
 # Run the backend with worker mode on. This enables the /v1/bulk endpoints.
 # Make sure to have a Postgres DB and a RabbitMQ instance running.
@@ -31,3 +34,22 @@ changelog:
 	echo "All notable changes to this project will be documented in this file. The changes in this project follow [Convention Commits](https://www.conventionalcommits.org/en/v1.0.0/)." >> CHANGELOG.md
 	echo "" >> CHANGELOG.md
 	conventional-changelog -p angular -r 0 >> CHANGELOG.md
+
+###############################################################################
+# Update lists
+###############################################################################
+
+.PHONY: update-role-accounts
+update-role-accounts:
+# License is MIT.
+	curl https://raw.githubusercontent.com/mixmaxhq/role-based-email-addresses/refs/heads/master/index.js -o core/src/misc/roles.txt
+# Remove first line, last line, and all ' and , characters
+	sed -i.bak '1d' core/src/misc/roles.txt && rm core/src/misc/roles.txt.bak
+	sed -i.bak '$$d' core/src/misc/roles.txt && rm core/src/misc/roles.txt.bak
+	sed -i.bak 's/['\'', ]//g' core/src/misc/roles.txt && rm core/src/misc/roles.txt.bak
+
+
+.PHONY: update-free-email-providers
+update-free-email-providers:
+# License is MIT.
+	curl https://raw.githubusercontent.com/ihmpavel/free-email-domains-list/refs/heads/master/data/data.txt -o core/src/misc/b2c.txt

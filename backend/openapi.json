@@ -409,7 +409,8 @@
 						"is_reachable": "invalid",
 						"misc": {
 							"is_disposable": false,
-							"is_role_account": true
+							"is_role_account": true,
+							"is_b2c": true
 						},
 						"mx": {
 							"accepts_mail": true,
@@ -498,12 +499,13 @@
 				"type": "string",
 				"title": "Reachable",
 				"enum": ["invalid", "unknown", "safe", "risky"],
-				"description": "An enumeration describing the confidence level that the recipient address is valid: `safe`, `risky`, `invalid`, or `unknown`. Refer to our FAQ for detailed definitions: https://docs.reacher.email/getting-started/is-reachable."
+				"description": "An enumeration describing the confidence level that the recipient address is valid: `safe`, `risky`, `invalid`, or `unknown`. Refer to our FAQ for detailed definitions: https://help.reacher.email/email-attributes-inside-json."
 			},
 			"MiscDetails": {
 				"title": "MiscDetails",
 				"type": "object",
 				"description": "Additional information about the email account.",
+				"required": ["is_disposable", "is_role_account", "is_b2c"],
 				"properties": {
 					"is_disposable": {
 						"type": "boolean",
@@ -516,9 +518,15 @@
 					"gravatar_url": {
 						"type": "string",
 						"description": "URL to the Gravatar profile picture associated with the email, if available and requested."
+					},
+					"is_b2c": {
+						"type": "boolean",
+						"x-stoplight": {
+							"id": "0cxn26qlxy8r4"
+						},
+						"description": "Is this a B2C email address?"
 					}
-				},
-				"required": ["is_disposable", "is_role_account"]
+				}
 			},
 			"MxDetails": {
 				"title": "MxDetails",
@@ -702,7 +710,7 @@
 					"duration": {
 						"$ref": "#/components/schemas/Duration"
 					},
-					"backend_name": {
+					"server_name": {
 						"type": "string",
 						"x-stoplight": {
 							"id": "2jrbdecvqh4t5"
@@ -717,7 +725,7 @@
 					"start_time",
 					"end_time",
 					"duration",
-					"backend_name",
+					"server_name",
 					"smtp"
 				]
 			},

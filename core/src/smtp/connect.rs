@@ -68,7 +68,11 @@ async fn connect_to_smtp_host(
 	// hostname verification fails if it ends with '.', for example, using
 	// SOCKS5 proxies we can `io: incomplete` error.
 	let clean_host = host.trim_end_matches('.').to_string();
-	let smtp_client = SmtpClient::new().hello_name(ClientId::Domain(input.hello_name.clone()));
+	let smtp_client = SmtpClient::new()
+		.hello_name(ClientId::Domain(input.hello_name.clone()))
+		// Sometimes, using socks5 proxy, we get an `io: incomplete` error
+		// when using pipelining and sending two consecutive RCPT TO commands.
+		.pipelining(false);
 
 	let stream: BufStream<Box<dyn AsyncReadWrite>> = match &input.proxy {
 		Some(proxy) => {
