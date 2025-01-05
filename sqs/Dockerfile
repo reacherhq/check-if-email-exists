@@ -7,7 +7,7 @@ WORKDIR /usr/src/app
 COPY . .
 
 # Build the release binary for the musl target
-RUN cargo build --release --target x86_64-unknown-linux-musl
+RUN cargo build --release --bin reacher_sqs --target x86_64-unknown-linux-musl
 
 # Install dependencies for ChromeDriver
 FROM public.ecr.aws/lambda/provided:al2 AS runtime

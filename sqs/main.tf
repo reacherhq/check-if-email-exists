@@ -127,19 +127,20 @@ resource "aws_lambda_function" "lambda_task_check_email" {
 
   # ECR repository image
   package_type = "Image"
-  image_uri    = "${aws_ecr_repository.lambda_ecr_repo.repository_url}:beta"
+  image_uri    = "${aws_ecr_repository.lambda_ecr_repo.repository_url}:v0.10.2-alpha.2"
 
   memory_size = 1024
 
   environment {
     variables = {
-      RUST_LOG             = "debug"
-      RCH__PROXY__HOST     = var.proxy_host
-      RCH__PROXY__PORT     = var.proxy_port
-      RCH__PROXY__USERNAME = var.proxy_username
-      RCH__PROXY__PASSWORD = var.proxy_password
-      RCH__FROM_EMAIL      = var.from_email
-      RCH__HELLO_NAME      = var.hello_name
+      RUST_LOG               = "debug"
+      RCH__PROXY__HOST       = var.proxy_host
+      RCH__PROXY__PORT       = var.proxy_port
+      RCH__PROXY__USERNAME   = var.proxy_username
+      RCH__PROXY__PASSWORD   = var.proxy_password
+      RCH__FROM_EMAIL        = var.from_email
+      RCH__HELLO_NAME        = var.hello_name
+      RCH__WEBDRIVER__BINARY = "/opt/chrome-linux64/chrome"
     }
   }
 

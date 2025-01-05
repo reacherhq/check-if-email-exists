@@ -62,10 +62,9 @@ pub async fn create_headless_client(
 			"--disable-software-rasterizer",
 			"--disable-dev-shm-usage",
 			"--disable-background-networking",
-			"--cap-add=SYS_PTRAC",
 			"--js-flags=\"--max-old-space-size=256\"",
 		],
-		"binary": webdriver_config.binary,
+		"binary": webdriver_config.binary.clone().unwrap_or("".to_string()),
 	});
 	caps.insert("goog:chromeOptions".to_string(), opts);
 
