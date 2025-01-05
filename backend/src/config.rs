@@ -21,7 +21,7 @@ use crate::worker::setup_rabbit_mq;
 use anyhow::{bail, Context};
 use check_if_email_exists::{
 	CheckEmailInputProxy, GmailVerifMethod, HotmailB2BVerifMethod, HotmailB2CVerifMethod,
-	YahooVerifMethod, LOG_TARGET,
+	WebdriverConfig, YahooVerifMethod, LOG_TARGET,
 };
 use config::Config;
 use lapin::Channel;
@@ -39,6 +39,7 @@ pub struct BackendConfig {
 	pub from_email: String,
 	pub hello_name: String,
 	pub webdriver_addr: String,
+	pub webdriver: WebdriverConfig,
 	pub proxy: Option<CheckEmailInputProxy>,
 
 	/// Verification method configuration.
@@ -88,6 +89,7 @@ impl BackendConfig {
 			from_email: "".to_string(),
 			hello_name: "".to_string(),
 			webdriver_addr: "".to_string(),
+			webdriver: WebdriverConfig::default(),
 			proxy: None,
 			verif_method: VerifMethodConfig::default(),
 			http_host: "127.0.0.1".to_string(),

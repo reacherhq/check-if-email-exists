@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::util::ser_with_display::ser_with_display;
+use crate::{util::ser_with_display::ser_with_display, WebdriverConfig};
 use fantoccini::{
 	error::{CmdError, NewSessionError},
 	Client, ClientBuilder,
@@ -38,7 +38,7 @@ pub enum HeadlessError {
 
 pub async fn create_headless_client(
 	webdriver: &str,
-	// webdriver_binary: Option<&str>,
+	webdriver_config: &WebdriverConfig,
 ) -> Result<Client, HeadlessError> {
 	let mut caps = Map::new();
 	let opts = serde_json::json!({
@@ -63,9 +63,9 @@ pub async fn create_headless_client(
 			"--disable-dev-shm-usage",
 			"--disable-background-networking",
 			"--cap-add=SYS_PTRAC",
-			"--js-flags=\"--max-old-space-size=1024\"",
+			"--js-flags=\"--max-old-space-size=256\"",
 		],
-		"binary": "/opt/chrome-linux64/chrome",
+		"binary": webdriver_config.binary,
 	});
 	caps.insert("goog:chromeOptions".to_string(), opts);
 

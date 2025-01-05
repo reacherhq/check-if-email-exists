@@ -33,11 +33,6 @@ hello_name = "localhost"
 # Env variable: RCH__FROM_EMAIL
 from_email = "hello@localhost"
 
-# Address of the Chrome WebDriver server for headless email verifications.
-#
-# Env variable: RCH__WEBDRIVER_ADDR
-webdriver_addr = "http://localhost:9515"
-
 # Timeout for each SMTP connection, in seconds. Leaving it commented out will
 # not set a timeout, i.e. the connection will wait indefinitely.
 #
@@ -47,7 +42,18 @@ webdriver_addr = "http://localhost:9515"
 # Optional Sentry DSN. If set, all errors will be sent to Sentry.
 #
 # Env variable: RCH__SENTRY_DSN
-# sentry_dsn = "<PASTE_YOUR_DSN_NOW>"
+# sentry_dsn = "<PASTE_YOUR_DSN_HERE>"
+
+# Address of the Chrome WebDriver server for headless email verifications.
+#
+# Env variable: RCH__WEBDRIVER_ADDR
+webdriver_addr = "http://localhost:9515"
+
+[webdriver]
+# Path to the Chrome binary. If not set, the default system Chrome will be used.
+#
+# Env variable: RCH__WEBDRIVER__BINARY
+# binary = "/usr/bin/google-chrome"
 
 # Uncomment the lines below to route all SMTP verification requests
 # through a specified proxy. Note that the proxy must be a SOCKS5 proxy to work
