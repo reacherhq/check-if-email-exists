@@ -133,13 +133,13 @@ resource "aws_lambda_function" "lambda_task_check_email" {
 
   environment {
     variables = {
-      RUST_LOG                                 = "debug"
-      RCH__PROXY__HOST                         = var.proxy_host
-      RCH__PROXY__PORT                         = var.proxy_port
-      RCH__PROXY__USERNAME                     = var.proxy_username
-      RCH__PROXY__PASSWORD                     = var.proxy_password
-      RCH__FROM_EMAIL                          = var.from_email
-      RCH__HELLO_NAME                          = var.hello_name
+      RUST_LOG             = "debug"
+      RCH__PROXY__HOST     = var.proxy_host
+      RCH__PROXY__PORT     = var.proxy_port
+      RCH__PROXY__USERNAME = var.proxy_username
+      RCH__PROXY__PASSWORD = var.proxy_password
+      RCH__FROM_EMAIL      = var.from_email
+      RCH__HELLO_NAME      = var.hello_name
     }
   }
 
