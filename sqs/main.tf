@@ -127,7 +127,7 @@ resource "aws_lambda_function" "lambda_task_check_email" {
 
   # ECR repository image
   package_type = "Image"
-  image_uri    = "${aws_ecr_repository.lambda_ecr_repo.repository_url}:v0.10.2-alpha.2"
+  image_uri    = "${aws_ecr_repository.lambda_ecr_repo.repository_url}:beta"
 
   memory_size = 1024
 
