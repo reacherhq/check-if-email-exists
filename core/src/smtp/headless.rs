@@ -64,7 +64,7 @@ pub async fn create_headless_client(
 			"--disable-background-networking",
 			"--js-flags=\"--max-old-space-size=256\"",
 		],
-		"binary": webdriver_config.binary.clone().unwrap_or("".to_string()),
+		"binary": webdriver_config.binary,
 	});
 	caps.insert("goog:chromeOptions".to_string(), opts);
 
