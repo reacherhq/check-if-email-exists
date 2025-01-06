@@ -43,7 +43,7 @@ jobs:
         id: ecr
         uses: elgohr/ecr-login-action@v3
         with:
-          access_key: ${{ secrets.AWS_ACCESS_KEY }}
+          access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
           secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           region: ${{ secrets.AWS_REGION }}
       - name: Publish to AWS ECR
