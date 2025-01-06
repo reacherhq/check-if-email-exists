@@ -100,9 +100,13 @@ pub async fn check_smtp(
 	if is_hotmail_b2c(&host_str) {
 		if let HotmailB2CVerifMethod::Headless = &input.hotmailb2c_verif_method {
 			return (
-				outlook::headless::check_password_recovery(&to_email_str, &input.webdriver_addr)
-					.await
-					.map_err(Into::into),
+				outlook::headless::check_password_recovery(
+					&to_email_str,
+					&input.webdriver_addr,
+					&input.webdriver_config,
+				)
+				.await
+				.map_err(Into::into),
 				SmtpDebug {
 					verif_method: VerifMethod::Headless,
 				},
@@ -133,9 +137,13 @@ pub async fn check_smtp(
 			}
 			YahooVerifMethod::Headless => {
 				return (
-					yahoo::check_headless(&to_email_str, &input.webdriver_addr)
-						.await
-						.map_err(Into::into),
+					yahoo::check_headless(
+						&to_email_str,
+						&input.webdriver_addr,
+						&input.webdriver_config,
+					)
+					.await
+					.map_err(Into::into),
 					SmtpDebug {
 						verif_method: VerifMethod::Headless,
 					},

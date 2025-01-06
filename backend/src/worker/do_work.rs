@@ -21,9 +21,12 @@ use crate::worker::single_shot::send_single_shot_reply;
 use check_if_email_exists::{
 	check_email, CheckEmailInput, CheckEmailOutput, Reachable, LOG_TARGET,
 };
+use http::HeaderMap;
 use lapin::message::Delivery;
 use lapin::{options::*, Channel};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::convert::TryInto;
 use std::fmt::Debug;
 use std::sync::Arc;
 use thiserror::Error;
@@ -38,6 +41,7 @@ pub struct CheckEmailTask {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum CheckEmailJobId {
 	/// Single-shot email verification, they won't have an actual job id.
 	SingleShot,
@@ -58,6 +62,8 @@ pub enum TaskError {
 	Lapin(lapin::Error),
 	#[error("Reqwest error during webhook: {0}")]
 	Reqwest(reqwest::Error),
+	#[error("Error converting headers: {0}")]
+	Headers(#[from] http::Error),
 }
 
 impl TaskError {
@@ -67,6 +73,7 @@ impl TaskError {
 			Self::Throttle(_) => StatusCode::TOO_MANY_REQUESTS,
 			Self::Lapin(_) => StatusCode::INTERNAL_SERVER_ERROR,
 			Self::Reqwest(_) => StatusCode::INTERNAL_SERVER_ERROR,
+			Self::Headers(_) => StatusCode::INTERNAL_SERVER_ERROR,
 		}
 	}
 }
@@ -100,6 +107,7 @@ pub struct TaskWebhook {
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct Webhook {
 	pub url: String,
+	pub headers: HashMap<String, String>,
 	pub extra: Option<serde_json::Value>,
 }
 
@@ -116,7 +124,7 @@ pub(crate) async fn do_check_email_work(
 	channel: Arc<Channel>,
 	config: Arc<BackendConfig>,
 ) -> Result<(), anyhow::Error> {
-	let worker_output = inner_check_email(task).await;
+	let worker_output = check_email_and_send_result(task).await;
 
 	match (&worker_output, delivery.redelivered) {
 		(Ok(output), false) if output.is_reachable == Reachable::Unknown => {
@@ -167,7 +175,10 @@ pub(crate) async fn do_check_email_work(
 	Ok(())
 }
 
-async fn inner_check_email(task: &CheckEmailTask) -> Result<CheckEmailOutput, TaskError> {
+/// Checks the email and sends the result to the webhook.
+pub async fn check_email_and_send_result(
+	task: &CheckEmailTask,
+) -> Result<CheckEmailOutput, TaskError> {
 	let output = check_email(&task.input).await;
 
 	// Check if we have a webhook to send the output to.
@@ -180,14 +191,13 @@ async fn inner_check_email(task: &CheckEmailTask) -> Result<CheckEmailOutput, Ta
 			extra: &webhook.extra,
 		};
 
+		let headers: HeaderMap = (&webhook.headers).try_into()?;
+
 		let client = reqwest::Client::new();
 		let res = client
 			.post(&webhook.url)
 			.json(&webhook_output)
-			.header(
-				"x-reacher-secret",
-				std::env::var("RCH_HEADER_SECRET").unwrap_or_default(),
-			)
+			.headers(headers)
 			.send()
 			.await?
 			.text()

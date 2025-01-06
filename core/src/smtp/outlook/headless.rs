@@ -24,7 +24,7 @@ use crate::{
 		headless::{create_headless_client, HeadlessError},
 		SmtpDetails,
 	},
-	LOG_TARGET,
+	WebdriverConfig, LOG_TARGET,
 };
 
 /// Check if a Hotmail/Outlook email exists by connecting to the password
@@ -34,6 +34,7 @@ use crate::{
 pub async fn check_password_recovery(
 	to_email: &str,
 	webdriver: &str,
+	webdriver_config: &WebdriverConfig,
 ) -> Result<SmtpDetails, HeadlessError> {
 	let to_email = to_email.to_string();
 	tracing::debug!(
@@ -42,7 +43,7 @@ pub async fn check_password_recovery(
 		"Using Hotmail password recovery in headless navigator"
 	);
 
-	let c = create_headless_client(webdriver).await?;
+	let c = create_headless_client(webdriver, webdriver_config).await?;
 
 	// Navigate to Microsoft password recovery page.
 	c.goto("https://account.live.com/password/reset").await?;
@@ -127,6 +128,7 @@ pub async fn check_password_recovery(
 #[cfg(test)]
 mod tests {
 	use super::check_password_recovery;
+	use crate::WebdriverConfig;
 	use futures::future::join;
 
 	// Ignoring this test as it requires a local process of WebDriver running on
@@ -140,15 +142,23 @@ mod tests {
 		// It should not error.
 		for _ in 0..10 {
 			// This email does not exist.
-			let res = check_password_recovery("test42134@hotmail.com", "http://localhost:9515")
-				.await
-				.unwrap();
+			let res = check_password_recovery(
+				"test42134@hotmail.com",
+				"http://localhost:9515",
+				&WebdriverConfig::default(),
+			)
+			.await
+			.unwrap();
 			assert!(!res.is_deliverable);
 
 			// This email does exist.
-			let res = check_password_recovery("test@hotmail.com", "http://localhost:9515")
-				.await
-				.unwrap();
+			let res = check_password_recovery(
+				"test@hotmail.com",
+				"http://localhost:9515",
+				&WebdriverConfig::default(),
+			)
+			.await
+			.unwrap();
 			assert!(res.is_deliverable);
 		}
 	}
@@ -160,9 +170,10 @@ mod tests {
 	#[tokio::test]
 	#[ignore = "Run a webdriver server locally to test this"]
 	async fn test_parallel() {
+		let webdriver_config = WebdriverConfig::default();
 		// This email does not exist.
-		let f1 = check_password_recovery("foo@bar.baz", "http://localhost:9515");
-		let f2 = check_password_recovery("foo@bar.baz", "http://localhost:9515");
+		let f1 = check_password_recovery("foo@bar.baz", "http://localhost:9515", &webdriver_config);
+		let f2 = check_password_recovery("foo@bar.baz", "http://localhost:9515", &webdriver_config);
 
 		let f = join(f1, f2).await;
 		assert!(f.0.is_ok(), "{:?}", f);

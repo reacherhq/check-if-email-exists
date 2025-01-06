@@ -268,6 +268,10 @@ pub struct CheckEmailInput {
 	///
 	/// Defaults to http://localhost:9515.
 	pub webdriver_addr: String,
+	/// The WebDriver configuration to use for headless verifications.
+	///
+	/// Defaults to the default WebdriverConfig.
+	pub webdriver_config: WebdriverConfig,
 	/// Identifier for the service currently running Reacher. We recommend
 	/// setting this to an unique identifier of the server where Reacher is
 	/// installed on.
@@ -297,6 +301,7 @@ impl Default for CheckEmailInput {
 			haveibeenpwned_api_key: None,
 			retries: 1,
 			webdriver_addr: "http://localhost:9515".into(),
+			webdriver_config: WebdriverConfig::default(),
 			backend_name: "backend-dev".into(),
 			sentry_dsn: None,
 		}
@@ -436,6 +441,17 @@ impl Serialize for CheckEmailOutput {
 		map.serialize_entry("syntax", &self.syntax)?;
 		map.serialize_entry("debug", &self.debug)?;
 		map.end()
+	}
+}
+
+#[derive(Builder, Clone, Debug, Deserialize, Serialize)]
+pub struct WebdriverConfig {
+	pub binary: Option<String>,
+}
+
+impl Default for WebdriverConfig {
+	fn default() -> Self {
+		WebdriverConfig { binary: None }
 	}
 }
 

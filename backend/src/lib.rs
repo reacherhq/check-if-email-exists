@@ -16,7 +16,7 @@
 
 pub mod config;
 pub mod http;
-mod storage;
+pub mod storage;
 pub mod throttle;
 pub mod worker;
 

@@ -68,6 +68,7 @@ impl CheckEmailRequest {
 			sentry_dsn: config.sentry_dsn.clone(),
 			backend_name: config.backend_name.clone(),
 			retries: 2,
+			webdriver_config: config.webdriver.clone(),
 			..Default::default()
 		}
 	}

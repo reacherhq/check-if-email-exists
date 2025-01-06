@@ -24,13 +24,18 @@ use futures::future::select_ok;
 use futures::{Future, TryFutureExt};
 
 use crate::smtp::headless::{create_headless_client, HeadlessError};
+use crate::WebdriverConfig;
 use crate::{smtp::SmtpDetails, LOG_TARGET};
 
 /// Check if a Hotmail/Outlook email exists by connecting to the password
 /// recovery page https://account.live.com/password/reset using a headless
 /// browser. Make sure you have a WebDriver server running locally before
 /// running this, or this will error.
-pub async fn check_headless(to_email: &str, webdriver: &str) -> Result<SmtpDetails, HeadlessError> {
+pub async fn check_headless(
+	to_email: &str,
+	webdriver: &str,
+	webdriver_config: &WebdriverConfig,
+) -> Result<SmtpDetails, HeadlessError> {
 	let mut attempts = 0;
 	let max_attempts = 3;
 	let mut last_error = None;
@@ -44,7 +49,7 @@ pub async fn check_headless(to_email: &str, webdriver: &str) -> Result<SmtpDetai
 			"Using Yahoo password recovery in headless navigator"
 		);
 
-		match check_headless_inner(to_email, webdriver).await {
+		match check_headless_inner(to_email, webdriver, webdriver_config).await {
 			Ok(result) => return Ok(result),
 			Err(e) => {
 				last_error = Some(e);
@@ -61,8 +66,9 @@ pub async fn check_headless(to_email: &str, webdriver: &str) -> Result<SmtpDetai
 async fn check_headless_inner(
 	to_email: &str,
 	webdriver: &str,
+	webdriver_config: &WebdriverConfig,
 ) -> Result<SmtpDetails, HeadlessError> {
-	let c = create_headless_client(webdriver).await?;
+	let c = create_headless_client(webdriver, webdriver_config).await?;
 
 	// Navigate to Microsoft password recovery page.
 	c.goto("https://login.yahoo.com/forgot").await?;
@@ -132,7 +138,7 @@ async fn check_headless_inner(
 
 #[cfg(test)]
 mod tests {
-	use crate::initialize_crypto_provider;
+	use crate::{initialize_crypto_provider, WebdriverConfig};
 
 	use super::check_headless;
 
@@ -147,22 +153,34 @@ mod tests {
 		// Run 5 headless sessions with the below dummy emails.
 		for _ in 0..5 {
 			// Email does not exist.
-			let res = check_headless("test42134@yahoo.com", "http://localhost:9515")
-				.await
-				.unwrap();
+			let res = check_headless(
+				"test42134@yahoo.com",
+				"http://localhost:9515",
+				&WebdriverConfig::default(),
+			)
+			.await
+			.unwrap();
 			assert!(!res.is_deliverable);
 
 			// Disabled email.
-			let res = check_headless("amaury@yahoo.com", "http://localhost:9515")
-				.await
-				.unwrap();
+			let res = check_headless(
+				"amaury@yahoo.com",
+				"http://localhost:9515",
+				&WebdriverConfig::default(),
+			)
+			.await
+			.unwrap();
 			assert!(!res.is_deliverable);
 			assert!(res.is_disabled);
 
 			// OK email.
-			let res = check_headless("test2@yahoo.com", "http://localhost:9515")
-				.await
-				.unwrap();
+			let res = check_headless(
+				"test2@yahoo.com",
+				"http://localhost:9515",
+				&WebdriverConfig::default(),
+			)
+			.await
+			.unwrap();
 			assert!(res.is_deliverable);
 			assert!(!res.is_disabled);
 		}
