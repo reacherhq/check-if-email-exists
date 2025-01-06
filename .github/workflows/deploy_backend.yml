@@ -50,6 +50,7 @@ jobs:
         uses: elgohr/Publish-Docker-Github-Action@v5
         with:
           name: reacherhq/sqs
+          dockerfile: sqs/Dockerfile
           username: ${{ steps.ecr.outputs.username }}
           password: ${{ steps.ecr.outputs.password }}
           registry: ${{ steps.ecr.outputs.registry }}
