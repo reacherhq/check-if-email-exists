@@ -40,8 +40,7 @@ pub async fn create_headless_client(
 	webdriver: &str,
 	webdriver_config: &WebdriverConfig,
 ) -> Result<Client, HeadlessError> {
-	let mut caps = Map::new();
-	let opts = serde_json::json!({
+	let mut opts = serde_json::json!({
 		"args": [
 			"--headless=new", "--disable-gpu", "--disable-dev-shm-usage",
 			// Running in a Docker container, I run into the following error:
@@ -63,9 +62,14 @@ pub async fn create_headless_client(
 			"--disable-dev-shm-usage",
 			"--disable-background-networking",
 			"--js-flags=\"--max-old-space-size=256\"",
-		],
-		"binary": webdriver_config.binary,
+		]
 	});
+
+	if let Some(binary) = &webdriver_config.binary {
+		opts["binary"] = serde_json::json!(binary);
+	}
+
+	let mut caps = Map::new();
 	caps.insert("goog:chromeOptions".to_string(), opts);
 
 	// Connect to WebDriver instance that is listening on `webdriver`
