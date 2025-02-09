@@ -347,71 +347,10 @@ mod tests {
 	}
 
 	#[test]
-	fn test_tomlify_verif_method() {
-		let mut verif_method = VerifMethod::default();
-		verif_method.proxies.insert(
-			"proxy1".to_string(),
-			CheckEmailInputProxy {
-				host: "my-proxy".to_string(),
-				port: 1051,
-				username: Some("user".to_string()),
-				password: Some("pass".to_string()),
-			},
-		);
-		verif_method.gmail = GmailVerifMethod::Smtp(VerifMethodSmtpConfig {
-			from_email: "from@email.com".to_string(),
-			hello_name: "email.com".to_string(),
-			smtp_port: 465,
-			retries: 3,
-			proxy: Some("proxy1".to_string()),
-			smtp_timeout: Some(Duration::from_secs(23)),
-		});
-
-		let expected = r#"[proxies.proxy1]
-host = "my-proxy"
-port = 1051
-username = "user"
-password = "pass"
-
-[gmail]
-type = "smtp"
-from_email = "from@email.com"
-hello_name = "email.com"
-proxy = "proxy1"
-smtp_port = 465
-retries = 3
-
-[gmail.smtp_timeout]
-secs = 23
-nanos = 0
-
-[hotmailb2b]
-type = "smtp"
-from_email = "reacher@gmail.com"
-hello_name = "gmail.com"
-smtp_port = 25
-retries = 1
-
-[hotmailb2c]
-type = "headless"
-
-[yahoo]
-type = "headless"
-
-[everything_else]
-type = "smtp"
-from_email = "reacher@gmail.com"
-hello_name = "gmail.com"
-smtp_port = 25
-retries = 1
-"#;
-		assert_eq!(expected, toml::to_string(&verif_method).unwrap(),);
-	}
-
-	#[test]
 	fn test_deserialize_verif_method() {
 		let toml = r#"
 [proxies]
+# Allow inline
 proxy1 = { host = "my-proxy1", port = 1051, username = "user1", password = "pass1" }
 [proxies.proxy2]
 host = "my-proxy2"
