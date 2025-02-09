@@ -350,6 +350,7 @@ pub async fn check_smtp_with_retry(
 		attempt=verif_method.config.retries - count + 1,
 		mx_host=mx_host,
 		port=verif_method.config.smtp_port,
+		using_proxy=verif_method.proxy.is_some(),
 		"Check SMTP"
 	);
 
