@@ -294,15 +294,9 @@ impl Serialize for CheckEmailOutput {
 	}
 }
 
-#[derive(Builder, Clone, Debug, Deserialize, Serialize)]
+#[derive(Builder, Clone, Debug, Deserialize, Serialize, Default)]
 pub struct WebdriverConfig {
 	pub binary: Option<String>,
-}
-
-impl Default for WebdriverConfig {
-	fn default() -> Self {
-		WebdriverConfig { binary: None }
-	}
 }
 
 #[cfg(test)]

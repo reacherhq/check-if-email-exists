@@ -76,16 +76,15 @@ async fn main() -> Result<(), anyhow::Error> {
 
 	let to_email = &CONF.to_email;
 
-	let proxy = if let Some(proxy_host) = &CONF.proxy_host {
-		Some(CheckEmailInputProxy {
+	let proxy = CONF
+		.proxy_host
+		.as_ref()
+		.map(|proxy_host| CheckEmailInputProxy {
 			host: proxy_host.clone(),
 			port: CONF.proxy_port,
 			username: CONF.proxy_username.clone(),
 			password: CONF.proxy_password.clone(),
-		})
-	} else {
-		None
-	};
+		});
 	let verif_method = VerifMethod::new_with_same_config_for_all(
 		proxy,
 		CONF.from_email.clone(),

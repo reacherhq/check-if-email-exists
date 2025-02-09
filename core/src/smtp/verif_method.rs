@@ -135,8 +135,8 @@ impl VerifMethod {
 			}),
 			everything_else: EverythingElseVerifMethod::Smtp(VerifMethodSmtpConfig {
 				proxy: proxy_id,
-				hello_name: hello_name,
-				from_email: from_email,
+				hello_name,
+				from_email,
 				smtp_port,
 				smtp_timeout,
 				retries,
@@ -146,66 +146,55 @@ impl VerifMethod {
 
 	pub fn validate_proxies(&self) -> Result<(), VerifMethodError> {
 		match &self.gmail {
-			GmailVerifMethod::Smtp(c) => match &c.proxy {
-				Some(proxy_id) => {
+			GmailVerifMethod::Smtp(c) => {
+				if let Some(proxy_id) = &c.proxy {
 					self.proxies.get(proxy_id).ok_or_else(|| {
 						VerifMethodError::InvalidProxies(format!("Invalid Gmail proxy {proxy_id}"))
 					})?;
 				}
-				_ => {}
-			},
+			}
 		};
 
 		match &self.hotmailb2b {
-			HotmailB2BVerifMethod::Smtp(c) => match &c.proxy {
-				Some(proxy_id) => {
+			HotmailB2BVerifMethod::Smtp(c) => {
+				if let Some(proxy_id) = &c.proxy {
 					self.proxies.get(proxy_id).ok_or_else(|| {
 						VerifMethodError::InvalidProxies(format!(
 							"Invalid Hotmail B2B proxy {proxy_id}"
 						))
 					})?;
 				}
-				_ => {}
-			},
+			}
 		};
 
-		match &self.hotmailb2c {
-			HotmailB2CVerifMethod::Smtp(c) => match &c.proxy {
-				Some(proxy_id) => {
-					self.proxies.get(proxy_id).ok_or_else(|| {
-						VerifMethodError::InvalidProxies(format!(
-							"Invalid Hotmail B2C proxy {proxy_id}"
-						))
-					})?;
-				}
-				_ => {}
-			},
-			_ => {}
+		if let HotmailB2CVerifMethod::Smtp(c) = &self.hotmailb2c {
+			if let Some(proxy_id) = &c.proxy {
+				self.proxies.get(proxy_id).ok_or_else(|| {
+					VerifMethodError::InvalidProxies(format!(
+						"Invalid Hotmail B2C proxy {proxy_id}"
+					))
+				})?;
+			}
 		};
 
-		match &self.yahoo {
-			YahooVerifMethod::Smtp(c) => match &c.proxy {
-				Some(proxy_id) => {
-					self.proxies.get(proxy_id).ok_or_else(|| {
-						VerifMethodError::InvalidProxies(format!("Invalid Yahoo proxy {proxy_id}"))
-					})?;
-				}
-				_ => {}
-			},
-			_ => {}
+		if let YahooVerifMethod::Smtp(c) = &self.yahoo {
+			if let Some(proxy_id) = &c.proxy {
+				self.proxies.get(proxy_id).ok_or_else(|| {
+					VerifMethodError::InvalidProxies(format!("Invalid Yahoo proxy {proxy_id}"))
+				})?;
+			}
 		};
 
 		match &self.everything_else {
-			EverythingElseVerifMethod::Smtp(c) => match &c.proxy {
-				Some(proxy_id) => {
+			EverythingElseVerifMethod::Smtp(c) => {
+				if let Some(proxy_id) = &c.proxy {
 					self.proxies.get(proxy_id).ok_or_else(|| {
 						VerifMethodError::InvalidProxies(format!(
 							"Invalid EverythingElse proxy {proxy_id}"
 						))
 					})?;
 				}
-				_ => {}
-			},
+			}
 		};
 
 		Ok(())
@@ -389,6 +378,7 @@ impl VerifMethodSmtp {
 	}
 }
 
+#[cfg(test)]
 mod tests {
 	use super::*;
 

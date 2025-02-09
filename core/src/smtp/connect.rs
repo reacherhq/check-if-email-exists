@@ -256,7 +256,7 @@ async fn create_smtp_future(
 ) -> Result<(bool, Deliverability), SmtpError> {
 	// FIXME If the SMTP is not connectable, we should actually return an
 	// Ok(SmtpDetails { can_connect_smtp: false, ... }).
-	let mut smtp_transport = connect_to_smtp_host(to_email, mx_host, &verif_method).await?;
+	let mut smtp_transport = connect_to_smtp_host(to_email, mx_host, verif_method).await?;
 
 	let is_catch_all = smtp_is_catch_all(&mut smtp_transport, domain, mx_host, to_email)
 		.await
@@ -286,7 +286,7 @@ async fn create_smtp_future(
 				);
 
 				let _ = smtp_transport.quit().await;
-				smtp_transport = connect_to_smtp_host(to_email, mx_host, &verif_method).await?;
+				smtp_transport = connect_to_smtp_host(to_email, mx_host, verif_method).await?;
 				result = check_email_deliverability(&mut smtp_transport, to_email).await;
 			}
 		}
