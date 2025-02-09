@@ -154,7 +154,19 @@ pub async fn check_smtp(
 	}
 
 	(
-		check_smtp_with_retry(to_email, &host_str, port, domain, input, input.retries).await,
+		check_smtp_with_retry(
+			to_email,
+			&input.hello_name,
+			&input.from_email,
+			&host_str,
+			port,
+			domain,
+			&input.proxy,
+			input.smtp_timeout,
+			input.retries,
+			input.retries,
+		)
+		.await,
 		SmtpDebug {
 			verif_method: VerifMethod::Smtp(SmtpConnection {
 				host: host_str,
