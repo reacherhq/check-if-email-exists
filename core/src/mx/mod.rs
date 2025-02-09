@@ -112,8 +112,8 @@ pub async fn check_mx(syntax: &SyntaxDetails) -> Result<MxDetails, MxError> {
 
 /// Check if the MX host is from Google, i.e. either a @gmail.com address, or
 /// a Google Suite email.
-pub fn is_gmail(host: &str) -> bool {
-	host.to_lowercase().ends_with(".google.com.")
+pub fn is_gmail(mx_host: &str) -> bool {
+	mx_host.to_lowercase().ends_with(".google.com.")
 }
 
 /// Check if a MX host is from outlook (includes @hotmail.*, @outlook.* and
@@ -132,34 +132,34 @@ pub fn is_gmail(host: &str) -> bool {
 /// TL;DR:
 /// - B2C emails -> end with ".olc.protection.outlook.com."
 /// - B2B emails -> end with ".mail.protection.outlook.com."
-pub fn is_hotmail(host: &str) -> bool {
-	host.to_lowercase().ends_with(".protection.outlook.com.")
+pub fn is_hotmail(mx_host: &str) -> bool {
+	mx_host.to_lowercase().ends_with(".protection.outlook.com.")
 }
 
 /// Check if an address is a Hotmail B2B email address.
-pub fn is_hotmail_b2b(host: &str) -> bool {
-	is_hotmail(host) && !host.ends_with(".olc.protection.outlook.com.")
+pub fn is_hotmail_b2b(mx_host: &str) -> bool {
+	is_hotmail(mx_host) && !mx_host.ends_with(".olc.protection.outlook.com.")
 }
 
 /// Check if an address is a Hotmail B2C email address.
-pub fn is_hotmail_b2c(host: &str) -> bool {
-	is_hotmail(host) && host.ends_with(".olc.protection.outlook.com.")
+pub fn is_hotmail_b2c(mx_host: &str) -> bool {
+	is_hotmail(mx_host) && mx_host.ends_with(".olc.protection.outlook.com.")
 }
 
 /// Check if the MX host is behind Mimecast.
-pub fn is_mimecast(host: &str) -> bool {
-	host.to_lowercase().ends_with(".mimecast.com.")
+pub fn is_mimecast(mx_host: &str) -> bool {
+	mx_host.to_lowercase().ends_with(".mimecast.com.")
 }
 
 /// Check if the MX host is behind Proofpoint.
-pub fn is_proofpoint(host: &str) -> bool {
-	host.to_lowercase().ends_with(".pphosted.com.")
+pub fn is_proofpoint(mx_host: &str) -> bool {
+	mx_host.to_lowercase().ends_with(".pphosted.com.")
 }
 
 /// Check if the MX host is from Yahoo.
 /// Examples:
 /// - mta7.am0.yahoodns.net.
 /// - mx-eu.mail.am0.yahoodns.net.
-pub fn is_yahoo(host: &str) -> bool {
-	host.to_lowercase().ends_with(".yahoodns.net.")
+pub fn is_yahoo(mx_host: &str) -> bool {
+	mx_host.to_lowercase().ends_with(".yahoodns.net.")
 }
