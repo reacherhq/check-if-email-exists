@@ -153,7 +153,7 @@ pub fn is_mimecast(mx_host: &str) -> bool {
 
 /// Check if the MX host is behind Proofpoint.
 pub fn is_proofpoint(mx_host: &str) -> bool {
-	mx_host.to_lowercase().ends_with(".pphosted.com.")
+	mx_host.to_lowercase().ends_with(".pphosted.com.") || mx_host.ends_with("ppe-hosted.com.")
 }
 
 /// Check if the MX host is from Yahoo.
