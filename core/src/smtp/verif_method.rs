@@ -61,6 +61,7 @@ type ProxyID = String;
 
 /// The verification method to use for each email provider.
 #[derive(Debug, Default, Clone, Deserialize, PartialEq, Serialize)]
+#[serde(default)]
 pub struct VerifMethod {
 	/// Proxies to use for email verification. The key is any unique name for
 	/// the proxy, and the value is the proxy itself. For names, we recommend
@@ -79,6 +80,70 @@ pub struct VerifMethod {
 }
 
 impl VerifMethod {
+	/// Create a new `VerifMethod` with the same configuration for all email
+	/// providers.
+	pub fn new_with_same_config_for_all(
+		proxy: Option<CheckEmailInputProxy>,
+		hello_name: String,
+		from_email: String,
+		smtp_port: u16,
+		smtp_timeout: Option<Duration>,
+		retries: usize,
+	) -> Self {
+		let mut proxies = HashMap::new();
+		let proxy_id = if let Some(proxy) = proxy {
+			let proxy_id = "default".to_string();
+			proxies.insert(proxy_id.clone(), proxy);
+			Some(proxy_id)
+		} else {
+			None
+		};
+
+		Self {
+			proxies,
+			gmail: GmailVerifMethod::Smtp(VerifMethodSmtpConfig {
+				proxy: proxy_id.clone(),
+				hello_name: hello_name.clone(),
+				from_email: from_email.clone(),
+				smtp_port,
+				smtp_timeout,
+				retries,
+			}),
+			hotmailb2b: HotmailB2BVerifMethod::Smtp(VerifMethodSmtpConfig {
+				proxy: proxy_id.clone(),
+				hello_name: hello_name.clone(),
+				from_email: from_email.clone(),
+				smtp_port,
+				smtp_timeout,
+				retries,
+			}),
+			hotmailb2c: HotmailB2CVerifMethod::Smtp(VerifMethodSmtpConfig {
+				proxy: proxy_id.clone(),
+				hello_name: hello_name.clone(),
+				from_email: from_email.clone(),
+				smtp_port,
+				smtp_timeout,
+				retries,
+			}),
+			yahoo: YahooVerifMethod::Smtp(VerifMethodSmtpConfig {
+				proxy: proxy_id.clone(),
+				hello_name: hello_name.clone(),
+				from_email: from_email.clone(),
+				smtp_port,
+				smtp_timeout,
+				retries,
+			}),
+			everything_else: EverythingElseVerifMethod::Smtp(VerifMethodSmtpConfig {
+				proxy: proxy_id,
+				hello_name: hello_name,
+				from_email: from_email,
+				smtp_port,
+				smtp_timeout,
+				retries,
+			}),
+		}
+	}
+
 	pub fn validate_proxies(&self) -> Result<(), VerifMethodError> {
 		match &self.gmail {
 			GmailVerifMethod::Smtp(c) => match &c.proxy {
@@ -188,6 +253,7 @@ impl VerifMethod {
 }
 
 #[derive(Debug, Deserialize, Clone, PartialEq, Serialize)]
+#[serde(tag = "type", rename_all = "lowercase")]
 pub enum GmailVerifMethod {
 	Smtp(VerifMethodSmtpConfig),
 }
@@ -199,6 +265,7 @@ impl Default for GmailVerifMethod {
 }
 
 #[derive(Debug, Deserialize, Clone, PartialEq, Serialize)]
+#[serde(tag = "type", rename_all = "lowercase")]
 pub enum HotmailB2BVerifMethod {
 	/// Use Hotmail's SMTP servers to check if an email exists.
 	Smtp(VerifMethodSmtpConfig),
@@ -211,6 +278,7 @@ impl Default for HotmailB2BVerifMethod {
 }
 
 #[derive(Debug, Default, Deserialize, Clone, PartialEq, Serialize)]
+#[serde(tag = "type", rename_all = "lowercase")]
 pub enum HotmailB2CVerifMethod {
 	/// Use Hotmail's password recovery page to check if an email exists.
 	///
@@ -225,6 +293,7 @@ pub enum HotmailB2CVerifMethod {
 }
 
 #[derive(Debug, Default, Deserialize, Clone, PartialEq, Serialize)]
+#[serde(tag = "type", rename_all = "lowercase")]
 pub enum YahooVerifMethod {
 	/// Use Yahoo's API to check if an email exists.
 	Api,
@@ -241,6 +310,7 @@ pub enum YahooVerifMethod {
 }
 
 #[derive(Debug, Deserialize, Clone, PartialEq, Serialize)]
+#[serde(tag = "type", rename_all = "lowercase")]
 pub enum EverythingElseVerifMethod {
 	/// Use the SMTP server of the email provider to check if an email exists.
 	Smtp(VerifMethodSmtpConfig),
@@ -256,11 +326,13 @@ impl Default for EverythingElseVerifMethod {
 /// serializable struct, to be converted into the domain type
 /// `VerifMethodSmtp`.
 #[derive(Debug, Clone, Deserialize, PartialEq, Serialize)]
+#[serde(default)]
 pub struct VerifMethodSmtpConfig {
 	/// Email to use in the `MAIL FROM:` SMTP command.
 	///
 	/// Defaults to "reacher.email@gmail.com", which is an unused addressed
 	/// owned by Reacher.
+	///
 	pub from_email: String,
 	/// Name to use in the `EHLO:` SMTP command.
 	///

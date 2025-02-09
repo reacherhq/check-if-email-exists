@@ -17,8 +17,10 @@
 //! This file implements the `POST /bulk` endpoint.
 
 use check_if_email_exists::{
-	check_email, CheckEmailInput, CheckEmailInputBuilder, CheckEmailInputProxy, CheckEmailOutput,
-	Reachable, LOG_TARGET,
+	check_email,
+	smtp::verif_method::{VerifMethod, VerifMethodSmtpConfig},
+	CheckEmailInput, CheckEmailInputBuilder, CheckEmailInputProxy, CheckEmailOutput, Reachable,
+	LOG_TARGET,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres};
@@ -63,22 +65,28 @@ impl Iterator for TaskInputIterator {
 
 	fn next(&mut self) -> Option<Self::Item> {
 		if self.index < self.body.smtp_ports.len() {
+			let hello_name = self
+				.body
+				.hello_name
+				.clone()
+				.unwrap_or_else(|| VerifMethodSmtpConfig::default().hello_name);
+			let from_email = self
+				.body
+				.from_email
+				.clone()
+				.unwrap_or_else(|| VerifMethodSmtpConfig::default().from_email);
+
+			let verif_method = VerifMethod::new_with_same_config_for_all(
+				self.body.proxy.clone(),
+				hello_name,
+				from_email,
+				self.body.smtp_ports[self.index],
+				None,
+				1,
+			);
+
 			let mut item = CheckEmailInputBuilder::default();
-			let mut item: &mut CheckEmailInputBuilder = item.to_email(self.body.to_email.clone());
-
-			if let Some(name) = &self.body.hello_name {
-				item = item.hello_name(name.clone());
-			}
-
-			if let Some(email) = &self.body.from_email {
-				item = item.from_email(email.clone());
-			}
-
-			item = item.smtp_port(self.body.smtp_ports[self.index]);
-
-			if let Some(proxy) = &self.body.proxy {
-				item = item.proxy(Some(proxy.clone()));
-			}
+			let item: &mut CheckEmailInputBuilder = item.to_email(self.body.to_email.clone());
 
 			// Currently, for the legacy and deprecated /v0/bulk endpoints, we
 			// don't pass in a BackendConfig to the job. Therefore, we must create
@@ -89,6 +97,7 @@ impl Iterator for TaskInputIterator {
 			let sentry_dsn = env::var("RCH_SENTRY_DSN");
 			let webdriver_addr =
 				env::var("RCH_WEBDRIVER_ADDR").unwrap_or_else(|_| "http://localhost:9515".into());
+			item.verif_method(verif_method);
 			item.backend_name(backend_name);
 			item.sentry_dsn(sentry_dsn.ok());
 			item.webdriver_addr(webdriver_addr);

@@ -16,8 +16,7 @@
 
 //! This file implements the `POST /v0/bulk` endpoint.
 
-use check_if_email_exists::CheckEmailInputProxy;
-use check_if_email_exists::LOG_TARGET;
+use check_if_email_exists::{CheckEmailInputProxy, LOG_TARGET};
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres};
 use std::sync::Arc;
