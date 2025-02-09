@@ -256,7 +256,6 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 			.as_ref()
 			.expect("We already checked that the email has valid format. qed."),
 		host.exchange(),
-		input.smtp_port,
 		my_syntax.domain.as_ref(),
 		input,
 	)

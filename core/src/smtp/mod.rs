@@ -17,21 +17,23 @@
 mod connect;
 mod error;
 mod gmail;
-
 mod headless;
 mod http_api;
 mod outlook;
 mod parser;
+pub mod verif_method;
 mod yahoo;
 
+use crate::util::input_output::CheckEmailInput;
 use crate::EmailAddress;
-use crate::{
-	util::input_output::CheckEmailInput, GmailVerifMethod, HotmailB2CVerifMethod, YahooVerifMethod,
-};
 use connect::check_smtp_with_retry;
 use hickory_proto::rr::Name;
 use serde::{Deserialize, Serialize};
 use std::default::Default;
+use verif_method::{
+	EmailProvider, EverythingElseVerifMethod, GmailVerifMethod, HotmailB2BVerifMethod,
+	HotmailB2CVerifMethod, VerifMethodSmtp, YahooVerifMethod,
+};
 
 pub use self::{
 	gmail::is_gmail,
@@ -40,21 +42,19 @@ pub use self::{
 };
 pub use error::*;
 
-#[derive(Debug, Default, Deserialize, PartialEq, Serialize)]
-pub struct SmtpConnection {
+#[derive(Debug, Deserialize, Serialize)]
+pub struct SmtpDebugVerifMethodSmtp {
 	/// The host we connected to via SMTP.
 	pub host: String,
-	/// The port we connected to via SMTP.
-	pub port: u16,
-	/// Whether we used a proxy for the SMTP connection.
-	pub used_proxy: bool,
+	/// The verification method used for the verification.
+	pub verif_method: VerifMethodSmtp,
 }
 
-#[derive(Debug, Default, Deserialize, PartialEq, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 #[serde(tag = "type")]
-pub enum VerifMethod {
+pub enum SmtpDebugVerifMethod {
 	/// Email verification was done via SMTP.
-	Smtp(SmtpConnection),
+	Smtp(SmtpDebugVerifMethodSmtp),
 	/// Email verification was done via an HTTP API.
 	Api,
 	/// Email verification was done via a headless browser.
@@ -79,10 +79,11 @@ pub struct SmtpDetails {
 	pub is_disabled: bool,
 }
 
+/// Debug information on how the SMTP verification went.
 #[derive(Debug, Default, Deserialize, Serialize)]
 pub struct SmtpDebug {
 	/// The verification method used for the email.
-	pub verif_method: VerifMethod,
+	pub verif_method: SmtpDebugVerifMethod,
 }
 
 /// Get all email details we can from one single `EmailAddress`, without
@@ -90,48 +91,41 @@ pub struct SmtpDebug {
 pub async fn check_smtp(
 	to_email: &EmailAddress,
 	host: &Name,
-	port: u16,
 	domain: &str,
 	input: &CheckEmailInput,
 ) -> (Result<SmtpDetails, SmtpError>, SmtpDebug) {
 	let host_str = host.to_string();
 	let to_email_str = to_email.to_string();
+	let email_provider = EmailProvider::from_mx_host(&host_str);
 
-	if is_hotmail_b2c(&host_str) {
-		if let HotmailB2CVerifMethod::Headless = &input.hotmailb2c_verif_method {
-			return (
-				outlook::headless::check_password_recovery(
-					&to_email_str,
-					&input.webdriver_addr,
-					&input.webdriver_config,
-				)
-				.await
-				.map_err(Into::into),
-				SmtpDebug {
-					verif_method: VerifMethod::Headless,
-				},
-			);
-		}
-	} else if is_gmail(&host_str) {
-		if let GmailVerifMethod::Api = &input.gmail_verif_method {
-			return (
-				gmail::check_gmail_via_api(to_email, input)
+	// Handle all non-SMTP verifications first, and return early. For the rest,
+	// we'll use SMTP, and return the config.
+	let smtp_verif_method_config = match &email_provider {
+		EmailProvider::HotmailB2C => match &input.verif_method.hotmailb2c {
+			HotmailB2CVerifMethod::Headless => {
+				return (
+					outlook::headless::check_password_recovery(
+						&to_email_str,
+						&input.webdriver_addr,
+						&input.webdriver_config,
+					)
 					.await
 					.map_err(Into::into),
-				SmtpDebug {
-					verif_method: VerifMethod::Api,
-				},
-			);
-		}
-	} else if is_yahoo(&host_str) {
-		match &input.yahoo_verif_method {
+					SmtpDebug {
+						verif_method: SmtpDebugVerifMethod::Headless,
+					},
+				);
+			}
+			HotmailB2CVerifMethod::Smtp(c) => c,
+		},
+		EmailProvider::Yahoo => match &input.verif_method.yahoo {
 			YahooVerifMethod::Api => {
 				return (
 					yahoo::check_api(&to_email_str, input)
 						.await
 						.map_err(Into::into),
 					SmtpDebug {
-						verif_method: VerifMethod::Api,
+						verif_method: SmtpDebugVerifMethod::Api,
 					},
 				);
 			}
@@ -145,33 +139,42 @@ pub async fn check_smtp(
 					.await
 					.map_err(Into::into),
 					SmtpDebug {
-						verif_method: VerifMethod::Headless,
+						verif_method: SmtpDebugVerifMethod::Headless,
 					},
 				);
 			}
-			_ => {} // For everything else, we use SMTP
-		}
-	}
+			YahooVerifMethod::Smtp(c) => c,
+		},
+		EmailProvider::Gmail => match &input.verif_method.gmail {
+			GmailVerifMethod::Smtp(c) => c,
+		},
+		EmailProvider::HotmailB2B => match &input.verif_method.hotmailb2b {
+			HotmailB2BVerifMethod::Smtp(c) => c,
+		},
+		EmailProvider::EverythingElse => match &input.verif_method.everything_else {
+			EverythingElseVerifMethod::Smtp(c) => c,
+		},
+	};
+
+	// TODO: There's surely a way to not clone here.
+	let verif_method = VerifMethodSmtp::new(
+		smtp_verif_method_config.clone(),
+		input.verif_method.get_proxy(email_provider).cloned(),
+	);
 
 	(
 		check_smtp_with_retry(
 			to_email,
-			&input.hello_name,
-			&input.from_email,
 			&host_str,
-			port,
 			domain,
-			&input.proxy,
-			input.smtp_timeout,
-			input.retries,
-			input.retries,
+			&verif_method,
+			verif_method.config.retries,
 		)
 		.await,
 		SmtpDebug {
-			verif_method: VerifMethod::Smtp(SmtpConnection {
+			verif_method: SmtpDebugVerifMethod::Smtp(SmtpDebugVerifMethodSmtp {
 				host: host_str,
-				port,
-				used_proxy: input.proxy.is_some(),
+				verif_method,
 			}),
 		},
 	)
@@ -179,7 +182,10 @@ pub async fn check_smtp(
 
 #[cfg(test)]
 mod tests {
-	use super::{check_smtp, SmtpConnection, SmtpError};
+	use super::*;
+	use crate::smtp::verif_method::GmailVerifMethod;
+	use crate::smtp::verif_method::VerifMethod;
+	use crate::smtp::verif_method::VerifMethodSmtpConfig;
 	use crate::CheckEmailInputBuilder;
 	use crate::EmailAddress;
 	use hickory_proto::rr::Name;
@@ -194,21 +200,32 @@ mod tests {
 		let host = Name::from_str("alt4.aspmx.l.google.com.").unwrap();
 		let input = CheckEmailInputBuilder::default()
 			.to_email("foo@gmail.com".into())
-			.gmail_verif_method(crate::GmailVerifMethod::Smtp)
-			.smtp_timeout(Some(Duration::from_millis(1)))
+			.verif_method(VerifMethod {
+				gmail: GmailVerifMethod::Smtp(VerifMethodSmtpConfig {
+					smtp_timeout: Some(Duration::from_millis(1)),
+					retries: 1,
+					..Default::default()
+				}),
+				..Default::default()
+			})
 			.build()
 			.unwrap();
 
-		let (res, smtp_debug) =
-			runtime.block_on(check_smtp(&to_email, &host, 25, "gmail.com", &input));
-		assert_eq!(
-			smtp_debug.verif_method,
-			super::VerifMethod::Smtp(SmtpConnection {
-				host: host.to_string(),
-				port: 25,
-				used_proxy: input.proxy.is_some(),
-			})
-		);
+		let (res, smtp_debug) = runtime.block_on(check_smtp(&to_email, &host, "gmail.com", &input));
+		match smtp_debug.verif_method {
+			SmtpDebugVerifMethod::Smtp(SmtpDebugVerifMethodSmtp { host, verif_method }) => {
+				assert_eq!(host, "alt4.aspmx.l.google.com.");
+				assert_eq!(verif_method.config.smtp_port, 25);
+				assert_eq!(
+					verif_method.config.smtp_timeout,
+					Some(Duration::from_millis(1))
+				);
+				assert_eq!(verif_method.config.retries, 1);
+				assert_eq!(verif_method.proxy, None);
+			}
+			_ => panic!("Expected SmtpDebugVerifMethod::Smtp"),
+		}
+
 		match res {
 			Err(SmtpError::Timeout(_)) => (), // ErrorKind == Timeout
 			_ => panic!("check_smtp did not time out"),

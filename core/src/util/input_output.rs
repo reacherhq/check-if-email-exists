@@ -16,6 +16,7 @@
 
 use crate::misc::{MiscDetails, MiscError};
 use crate::mx::{MxDetails, MxError};
+use crate::smtp::verif_method::VerifMethod;
 use crate::smtp::{SmtpDebug, SmtpDetails, SmtpError, SmtpErrorDesc};
 use crate::syntax::SyntaxDetails;
 use crate::util::ser_with_display::ser_with_display;
@@ -91,7 +92,7 @@ impl AsRef<str> for EmailAddress {
 
 /// Perform the email verification via a specified proxy. The usage of a proxy
 /// is optional.
-#[derive(Debug, Default, Clone, Deserialize, Serialize)]
+#[derive(Debug, Default, Clone, Deserialize, PartialEq, Serialize)]
 pub struct CheckEmailInputProxy {
 	/// Use the specified SOCKS5 proxy host to perform email verification.
 	pub host: String,
@@ -103,104 +104,6 @@ pub struct CheckEmailInputProxy {
 	pub password: Option<String>,
 }
 
-/// Select how to verify Yahoo emails.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Deserialize, Serialize)]
-pub enum YahooVerifMethod {
-	/// Use Yahoo's API to check if an email exists.
-	Api,
-	/// Use Yahoo's password recovery page to check if an email exists.
-	///
-	/// This assumes you have a WebDriver compatible process running, then pass
-	/// its endpoint, usually http://localhost:9515, into the environment
-	/// variable RCH_WEBDRIVER_ADDR. We recommend running chromedriver (and not
-	/// geckodriver) as it allows parallel requests.
-	#[default]
-	Headless,
-	/// Use Yahoo's SMTP servers to check if an email exists.
-	Smtp,
-}
-
-impl FromStr for YahooVerifMethod {
-	type Err = String;
-
-	fn from_str(s: &str) -> Result<Self, Self::Err> {
-		match s {
-			"api" => Ok(Self::Api),
-			"headless" => Ok(Self::Headless),
-			"smtp" => Ok(Self::Smtp),
-			_ => Err(format!("Unknown yahoo verify method: {}", s)),
-		}
-	}
-}
-
-/// Select how to verify Gmail emails.
-#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize)]
-pub enum GmailVerifMethod {
-	/// Use Gmail's API to check if an email exists.
-	Api,
-	/// Use Gmail's SMTP servers to check if an email exists.
-	#[default]
-	Smtp,
-}
-
-impl FromStr for GmailVerifMethod {
-	type Err = String;
-
-	fn from_str(s: &str) -> Result<Self, Self::Err> {
-		match s {
-			"api" => Ok(Self::Api),
-			"smtp" => Ok(Self::Smtp),
-			_ => Err(format!("Unknown gmail verify method: {}", s)),
-		}
-	}
-}
-
-/// Select how to verify Hotmail B2B emails.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Deserialize, Serialize)]
-pub enum HotmailB2BVerifMethod {
-	/// Use Hotmail's SMTP servers to check if an email exists.
-	#[default]
-	Smtp,
-}
-
-impl FromStr for HotmailB2BVerifMethod {
-	type Err = String;
-
-	fn from_str(s: &str) -> Result<Self, Self::Err> {
-		match s {
-			"smtp" => Ok(Self::Smtp),
-			_ => Err(format!("Unknown hotmailb2b verify method: {}", s)),
-		}
-	}
-}
-
-/// Select how to verify Hotmail B2C emails.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Deserialize, Serialize)]
-pub enum HotmailB2CVerifMethod {
-	/// Use Hotmail's password recovery page to check if an email exists.
-	///
-	/// This assumes you have a WebDriver compatible process running, then pass
-	/// its endpoint, usually http://localhost:9515, into the environment
-	/// variable RCH_WEBDRIVER_ADDR. We recommend running chromedriver (and not
-	/// geckodriver) as it allows parallel requests.
-	#[default]
-	Headless,
-	/// Use Hotmail's SMTP servers to check if an email exists.
-	Smtp,
-}
-
-impl FromStr for HotmailB2CVerifMethod {
-	type Err = String;
-
-	fn from_str(s: &str) -> Result<Self, Self::Err> {
-		match s {
-			"headless" => Ok(Self::Headless),
-			"smtp" => Ok(Self::Smtp),
-			_ => Err(format!("Unknown hotmailb2c verify method: {}", s)),
-		}
-	}
-}
-
 /// Builder pattern for the input argument into the main `email_exists`
 /// function.
 #[derive(Builder, Debug, Clone, Deserialize, Serialize)]
@@ -208,46 +111,9 @@ impl FromStr for HotmailB2CVerifMethod {
 pub struct CheckEmailInput {
 	/// The email to validate.
 	pub to_email: String,
-	/// Email to use in the `MAIL FROM:` SMTP command.
-	///
-	/// Defaults to "reacher.email@gmail.com", which is an unused addressed
-	/// owned by Reacher.
-	pub from_email: String,
-	/// Name to use in the `EHLO:` SMTP command.
-	///
-	/// Defaults to "gmail.com" (note: "localhost" is not a FQDN).
-	pub hello_name: String,
-	/// Perform the email verification via the specified SOCK5 proxy. The usage of a
-	/// proxy is optional.
-	pub proxy: Option<CheckEmailInputProxy>,
-	/// SMTP port to use for email validation. Generally, ports 25, 465, 587
-	/// and 2525 are used.
-	///
-	/// Defaults to 25.
-	pub smtp_port: u16,
-	/// Add timeout for the SMTP verification step. Set to None if you don't
-	/// want to use a timeout. This timeout is per SMTP connection. For
-	/// instance, if you set the number of retries to 2, then the total time
-	/// for the SMTP verification step can be up to 2 * `smtp_timeout`.
-	///
-	/// Defaults to None.
-	pub smtp_timeout: Option<Duration>,
-	/// Select how to verify Yahoo emails.
-	///
-	/// Defaults to Headless.
-	pub yahoo_verif_method: YahooVerifMethod,
-	/// Select how to verify Gmail addresses.
-	///
-	/// Defaults to Smtp.
-	pub gmail_verif_method: GmailVerifMethod,
-	/// Select how to verify Hotmail/Outlook/Microsoft email addresses.
-	///
-	/// Defaults to Headless.
-	pub hotmailb2b_verif_method: HotmailB2BVerifMethod,
-	/// Select how to verify Hotmail/Outlook/Microsoft email addresses.
-	///
-	/// Defaults to Headless.
-	pub hotmailb2c_verif_method: HotmailB2CVerifMethod,
+
+	pub verif_method: VerifMethod,
+
 	/// Whether to check if a gravatar image is existing for the given email.
 	/// Adds a bit of latency to the verification process.
 	///
@@ -256,14 +122,7 @@ pub struct CheckEmailInput {
 	/// Check if a the email address is present in HaveIBeenPwned API.
 	/// If the api_key is filled, HaveIBeenPwned API is checked
 	pub haveibeenpwned_api_key: Option<String>,
-	/// Number of total SMTP connections to do. Setting to 2 might bypass
-	/// greylisting on some servers, but takes more time.
-	///
-	/// This setting's naming is a bit misleading, as it's not really retries,
-	/// but the total number of SMTP connections to do.
-	///
-	/// Defaults to 1.
-	pub retries: usize,
+
 	/// The WebDriver address to use for headless verifications.
 	///
 	/// Defaults to http://localhost:9515.
@@ -288,18 +147,9 @@ impl Default for CheckEmailInput {
 	fn default() -> Self {
 		CheckEmailInput {
 			to_email: "".into(),
-			from_email: "reacher.email@gmail.com".into(), // Unused, owned by Reacher
-			hello_name: "gmail.com".into(),
-			proxy: None,
-			smtp_port: 25,
-			smtp_timeout: None,
-			yahoo_verif_method: YahooVerifMethod::default(),
-			gmail_verif_method: GmailVerifMethod::default(),
-			hotmailb2b_verif_method: HotmailB2BVerifMethod::default(),
-			hotmailb2c_verif_method: HotmailB2CVerifMethod::default(),
+			verif_method: VerifMethod::default(),
 			check_gravatar: false,
 			haveibeenpwned_api_key: None,
-			retries: 1,
 			webdriver_addr: "http://localhost:9515".into(),
 			webdriver_config: WebdriverConfig::default(),
 			backend_name: "backend-dev".into(),
