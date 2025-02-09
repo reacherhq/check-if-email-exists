@@ -18,7 +18,10 @@
 
 use std::{collections::HashMap, time::Duration};
 
-use crate::util::input_output::CheckEmailInputProxy;
+use crate::{
+	mx::{is_mimecast, is_proofpoint},
+	util::input_output::CheckEmailInputProxy,
+};
 use serde::{Deserialize, Serialize};
 
 use super::{is_gmail, is_hotmail_b2b, is_hotmail_b2c, is_yahoo};
@@ -36,6 +39,8 @@ pub enum EmailProvider {
 	Gmail,
 	HotmailB2B,
 	HotmailB2C,
+	Proofpoint,
+	Mimecast,
 	Yahoo,
 	EverythingElse,
 }
@@ -51,6 +56,10 @@ impl EmailProvider {
 			EmailProvider::Gmail
 		} else if is_yahoo(host) {
 			EmailProvider::Yahoo
+		} else if is_proofpoint(host) {
+			EmailProvider::Proofpoint
+		} else if is_mimecast(host) {
+			EmailProvider::Mimecast
 		} else {
 			EmailProvider::EverythingElse
 		}
@@ -73,6 +82,10 @@ pub struct VerifMethod {
 	pub hotmailb2b: HotmailB2BVerifMethod,
 	/// Verification method for Hotmail B2C.
 	pub hotmailb2c: HotmailB2CVerifMethod,
+	/// Verification method for Mimecast.
+	pub mimecast: MimecastVerifMethod,
+	/// Verification method for Proofpoint.
+	pub proofpoint: ProofpointVerifMethod,
 	/// Verification method for Yahoo.
 	pub yahoo: YahooVerifMethod,
 	/// Verification method for everything else.
@@ -117,7 +130,7 @@ impl VerifMethod {
 				smtp_timeout,
 				retries,
 			}),
-			hotmailb2c: HotmailB2CVerifMethod::Smtp(VerifMethodSmtpConfig {
+			mimecast: MimecastVerifMethod::Smtp(VerifMethodSmtpConfig {
 				proxy: proxy_id.clone(),
 				hello_name: hello_name.clone(),
 				from_email: from_email.clone(),
@@ -125,7 +138,7 @@ impl VerifMethod {
 				smtp_timeout,
 				retries,
 			}),
-			yahoo: YahooVerifMethod::Smtp(VerifMethodSmtpConfig {
+			proofpoint: ProofpointVerifMethod::Smtp(VerifMethodSmtpConfig {
 				proxy: proxy_id.clone(),
 				hello_name: hello_name.clone(),
 				from_email: from_email.clone(),
@@ -141,6 +154,7 @@ impl VerifMethod {
 				smtp_timeout,
 				retries,
 			}),
+			..Default::default()
 		}
 	}
 
@@ -224,6 +238,18 @@ impl VerifMethod {
 					.and_then(|proxy_id| self.proxies.get(proxy_id)),
 				_ => None,
 			},
+			EmailProvider::Mimecast => match &self.mimecast {
+				MimecastVerifMethod::Smtp(c) => c
+					.proxy
+					.as_ref()
+					.and_then(|proxy_id| self.proxies.get(proxy_id)),
+			},
+			EmailProvider::Proofpoint => match &self.proofpoint {
+				ProofpointVerifMethod::Smtp(c) => c
+					.proxy
+					.as_ref()
+					.and_then(|proxy_id| self.proxies.get(proxy_id)),
+			},
 			EmailProvider::Yahoo => match &self.yahoo {
 				YahooVerifMethod::Smtp(c) => c
 					.proxy
@@ -279,6 +305,32 @@ pub enum HotmailB2CVerifMethod {
 	Headless,
 	/// Use Hotmail's SMTP servers to check if an email exists.
 	Smtp(VerifMethodSmtpConfig),
+}
+
+#[derive(Debug, Deserialize, Clone, PartialEq, Serialize)]
+#[serde(tag = "type", rename_all = "lowercase")]
+pub enum MimecastVerifMethod {
+	/// Use Mimecast's SMTP servers to check if an email exists.
+	Smtp(VerifMethodSmtpConfig),
+}
+
+impl Default for MimecastVerifMethod {
+	fn default() -> Self {
+		MimecastVerifMethod::Smtp(VerifMethodSmtpConfig::default())
+	}
+}
+
+#[derive(Debug, Deserialize, Clone, PartialEq, Serialize)]
+#[serde(tag = "type", rename_all = "lowercase")]
+pub enum ProofpointVerifMethod {
+	/// Use Proofpoint's SMTP servers to check if an email exists.
+	Smtp(VerifMethodSmtpConfig),
+}
+
+impl Default for ProofpointVerifMethod {
+	fn default() -> Self {
+		ProofpointVerifMethod::Smtp(VerifMethodSmtpConfig::default())
+	}
 }
 
 #[derive(Debug, Default, Deserialize, Clone, PartialEq, Serialize)]

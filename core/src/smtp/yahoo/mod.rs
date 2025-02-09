@@ -60,11 +60,3 @@ impl From<SerdeError> for YahooError {
 		YahooError::SerdeError(error)
 	}
 }
-
-/// Check if the MX host is from Yahoo.
-/// Examples:
-/// - mta7.am0.yahoodns.net.
-/// - mx-eu.mail.am0.yahoodns.net.
-pub fn is_yahoo(host: &str) -> bool {
-	host.to_lowercase().ends_with(".yahoodns.net.")
-}

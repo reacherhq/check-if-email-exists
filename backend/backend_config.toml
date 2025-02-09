@@ -152,6 +152,22 @@ type = "smtp"
 # Env variable: RCH__VERIF_METHOD__HOTMAILB2C__TYPE
 type = "headless"
 
+[verif_method.mimecast]
+# Verification method to use for emails behind Mimecast. Mimecast only supports
+# the "smtp" method. You may copy the configuration from the Gmail section above
+# to apply them here.
+#
+# Env variable: RCH__VERIF_METHOD__MIMECAST__TYPE
+type = "smtp"
+
+[verif_method.proofpoint]
+# Verification method to use for emails behind Proofpoint. Proofpoint only supports
+# the "smtp" method. You may copy the configuration from the Gmail section above
+# to apply them here.
+#
+# Env variable: RCH__VERIF_METHOD__PROOFPOINT__TYPE
+type = "smtp"
+
 [verif_method.yahoo]
 # Verification method to use for Yahoo. Yahoo supports both the "headless" and
 # "smtp" methods. The "headless" method is recommended.

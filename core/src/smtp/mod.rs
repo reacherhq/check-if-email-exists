@@ -35,11 +35,7 @@ use verif_method::{
 	HotmailB2CVerifMethod, VerifMethodSmtp, YahooVerifMethod,
 };
 
-pub use self::{
-	gmail::is_gmail,
-	outlook::{is_hotmail, is_hotmail_b2b, is_hotmail_b2c},
-	yahoo::is_yahoo,
-};
+pub use crate::mx::{is_gmail, is_hotmail, is_hotmail_b2b, is_hotmail_b2c, is_yahoo};
 pub use error::*;
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -150,6 +146,12 @@ pub async fn check_smtp(
 		},
 		EmailProvider::HotmailB2B => match &input.verif_method.hotmailb2b {
 			HotmailB2BVerifMethod::Smtp(c) => c,
+		},
+		EmailProvider::Mimecast => match &input.verif_method.mimecast {
+			verif_method::MimecastVerifMethod::Smtp(c) => c,
+		},
+		EmailProvider::Proofpoint => match &input.verif_method.proofpoint {
+			verif_method::ProofpointVerifMethod::Smtp(c) => c,
 		},
 		EmailProvider::EverythingElse => match &input.verif_method.everything_else {
 			EverythingElseVerifMethod::Smtp(c) => c,
