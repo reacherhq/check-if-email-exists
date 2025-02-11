@@ -35,22 +35,37 @@
 //!
 //! ```rust
 //! use check_if_email_exists::{check_email, CheckEmailInputBuilder, CheckEmailInputProxy};
+//! use check_if_email_exists::smtp::verif_method::{VerifMethod, VerifMethodSmtpConfig, GmailVerifMethod};
+//! use std::collections::HashMap;
 //!
 //! async fn check() {
 //!     // Let's say we want to test the deliverability of someone@gmail.com.
+//!
+//!     // We can tweak how we want to verify the email address, though using
+//!     // the default values is usually enough. However, if you want to use a
+//!     // proxy, you can do so like this:
+//!     let mut proxies = HashMap::new();
+//!     proxies.insert("proxy1".to_string(), CheckEmailInputProxy {
+//!         host: "my-proxy.io".to_string(),             // Use a SOCKS5 proxy to verify the email
+//!         port: 1080,
+//!         username: None,                              // You can also set it non-empty
+//!         password: None
+//!     });
+//!     let verif_method = VerifMethod {
+//! 		proxies,
+//!         gmail: GmailVerifMethod::Smtp(VerifMethodSmtpConfig {
+//!            from_email: "me@example.org".to_string(), // Used in the `MAIL FROM:` command
+//!            hello_name: "example.org".to_string(),    // Used in the `EHLO` command
+//!            smtp_port: 587,                           // Use port 587 instead of 25
+//!            proxy: Some("proxy1".to_string()),        // Use the proxy we defined above
+//! 		   ..Default::default()
+//!         }),
+//!         ..Default::default()
+//!     };
+//!
 //!     let input = CheckEmailInputBuilder::default()
 //!         .to_email("someone@gmail.com".into())
-//!         // Optionally, we can also tweak the configuration parameters used in the
-//!         // verification.
-//!         .from_email("me@example.org".into()) // Used in the `MAIL FROM:` command
-//!         .hello_name("example.org".into())    // Used in the `EHLO` command
-//!         .smtp_port(587)                      // Use port 587 instead of 25
-//!         .proxy(Some(CheckEmailInputProxy {   // Use a SOCKS5 proxy to verify the email
-//!             host: "my-proxy.io".into(),
-//!             port: 1080,
-//!             username: None,                  // You can also set it non-empty
-//!             password: None
-//!         }))
+//!         .verif_method(verif_method)
 //!         .build()
 //!         .unwrap();
 //!
@@ -256,7 +271,6 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 			.as_ref()
 			.expect("We already checked that the email has valid format. qed."),
 		host.exchange(),
-		input.smtp_port,
 		my_syntax.domain.as_ref(),
 		input,
 	)

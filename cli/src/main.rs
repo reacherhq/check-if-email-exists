@@ -15,8 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use check_if_email_exists::{
-	check_email, CheckEmailInputBuilder, CheckEmailInputProxy, GmailVerifMethod,
-	HotmailB2BVerifMethod, HotmailB2CVerifMethod, YahooVerifMethod,
+	check_email, smtp::verif_method::VerifMethod, CheckEmailInputBuilder, CheckEmailInputProxy,
 };
 use clap::Parser;
 use once_cell::sync::Lazy;
@@ -56,22 +55,6 @@ pub struct Cli {
 	#[clap(long, env, default_value = "25")]
 	pub smtp_port: u16,
 
-	/// Select how to verify Yahoo email addresses: api, headless or smtp.
-	#[clap(long, env, default_value = "headless", parse(try_from_str))]
-	pub yahoo_verif_method: YahooVerifMethod,
-
-	/// Select how to verify Gmail email addresses: api or smtp.
-	#[clap(long, env, default_value = "smtp", parse(try_from_str))]
-	pub gmail_verif_method: GmailVerifMethod,
-
-	/// Select how to verify Hotmail B2B email addresses: smtp.
-	#[clap(long, env, default_value = "smtp", parse(try_from_str))]
-	pub hotmailb2b_verif_method: HotmailB2BVerifMethod,
-
-	/// Select how to verify Hotmail B2C email addresses: headless or smtp.
-	#[clap(long, env, default_value = "headless", parse(try_from_str))]
-	pub hotmailb2c_verif_method: HotmailB2CVerifMethod,
-
 	/// Whether to check if a gravatar image is existing for the given email.
 	#[clap(long, env, default_value = "false", parse(try_from_str))]
 	pub check_gravatar: bool,
@@ -93,30 +76,32 @@ async fn main() -> Result<(), anyhow::Error> {
 
 	let to_email = &CONF.to_email;
 
-	let mut input = CheckEmailInputBuilder::default();
-	let mut input = input
-		.to_email(to_email.clone())
-		.from_email(CONF.from_email.clone())
-		.hello_name(CONF.hello_name.clone())
-		.smtp_port(CONF.smtp_port)
-		.yahoo_verif_method(CONF.yahoo_verif_method)
-		.gmail_verif_method(CONF.gmail_verif_method)
-		.hotmailb2b_verif_method(CONF.hotmailb2b_verif_method)
-		.hotmailb2c_verif_method(CONF.hotmailb2c_verif_method)
-		.check_gravatar(CONF.check_gravatar)
-		.haveibeenpwned_api_key(CONF.haveibeenpwned_api_key.clone())
-		.backend_name("reacher-cli".to_string())
-		.retries(2);
-
-	if let Some(proxy_host) = &CONF.proxy_host {
-		input = input.proxy(Some(CheckEmailInputProxy {
+	let proxy = CONF
+		.proxy_host
+		.as_ref()
+		.map(|proxy_host| CheckEmailInputProxy {
 			host: proxy_host.clone(),
 			port: CONF.proxy_port,
 			username: CONF.proxy_username.clone(),
 			password: CONF.proxy_password.clone(),
-		}));
-	}
-	let input = input.build()?;
+		});
+	let verif_method = VerifMethod::new_with_same_config_for_all(
+		proxy,
+		CONF.from_email.clone(),
+		CONF.hello_name.clone(),
+		CONF.smtp_port,
+		None,
+		1,
+	);
+
+	let mut input = CheckEmailInputBuilder::default();
+	let input = input
+		.to_email(to_email.clone())
+		.verif_method(verif_method)
+		.check_gravatar(CONF.check_gravatar)
+		.haveibeenpwned_api_key(CONF.haveibeenpwned_api_key.clone())
+		.backend_name("reacher-cli".to_string())
+		.build()?;
 
 	let result = check_email(&input).await;
 

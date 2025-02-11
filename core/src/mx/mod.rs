@@ -109,3 +109,57 @@ pub async fn check_mx(syntax: &SyntaxDetails) -> Result<MxDetails, MxError> {
 		},
 	}
 }
+
+/// Check if the MX host is from Google, i.e. either a @gmail.com address, or
+/// a Google Suite email.
+pub fn is_gmail(mx_host: &str) -> bool {
+	mx_host.to_lowercase().ends_with(".google.com.")
+}
+
+/// Check if a MX host is from outlook (includes @hotmail.*, @outlook.* and
+/// all Microsoft 365 addresses).
+///
+/// After some testing I got:
+/// After some testing, I got:
+/// - *@outlook.com -> `outlook-com.olc.protection.outlook.com.`
+/// - *@outlook.fr -> `eur.olc.protection.outlook.com.`
+/// - *@hotmail.com -> `hotmail-com.olc.protection.outlook.com.`
+/// - *@hotmail.fr -> `eur.olc.protection.outlook.com.`
+/// - *@hotmail.nl -> `eur.olc.protection.outlook.com.`
+///
+/// But Microsoft 365 (B2B) addresses end with "mail.protection.outlook.com."
+///
+/// TL;DR:
+/// - B2C emails -> end with ".olc.protection.outlook.com."
+/// - B2B emails -> end with ".mail.protection.outlook.com."
+pub fn is_hotmail(mx_host: &str) -> bool {
+	mx_host.to_lowercase().ends_with(".protection.outlook.com.")
+}
+
+/// Check if an address is a Hotmail B2B email address.
+pub fn is_hotmail_b2b(mx_host: &str) -> bool {
+	is_hotmail(mx_host) && !mx_host.ends_with(".olc.protection.outlook.com.")
+}
+
+/// Check if an address is a Hotmail B2C email address.
+pub fn is_hotmail_b2c(mx_host: &str) -> bool {
+	is_hotmail(mx_host) && mx_host.ends_with(".olc.protection.outlook.com.")
+}
+
+/// Check if the MX host is behind Mimecast.
+pub fn is_mimecast(mx_host: &str) -> bool {
+	mx_host.to_lowercase().ends_with(".mimecast.com.")
+}
+
+/// Check if the MX host is behind Proofpoint.
+pub fn is_proofpoint(mx_host: &str) -> bool {
+	mx_host.to_lowercase().ends_with(".pphosted.com.") || mx_host.ends_with("ppe-hosted.com.")
+}
+
+/// Check if the MX host is from Yahoo.
+/// Examples:
+/// - mta7.am0.yahoodns.net.
+/// - mx-eu.mail.am0.yahoodns.net.
+pub fn is_yahoo(mx_host: &str) -> bool {
+	mx_host.to_lowercase().ends_with(".yahoodns.net.")
+}

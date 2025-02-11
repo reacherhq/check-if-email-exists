@@ -1,6 +1,6 @@
 [package]
 name = "reacher_sqs"
-version = "0.10.2"
+version = "0.11.0"
 edition = "2018"
 license = "AGPL-3.0"
 publish = false

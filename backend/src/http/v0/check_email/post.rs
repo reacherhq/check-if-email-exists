@@ -16,13 +16,10 @@
 
 //! This file implements the `POST /v0/check_email` endpoint.
 
-use check_if_email_exists::{
-	check_email, CheckEmailInput, CheckEmailInputProxy, GmailVerifMethod, HotmailB2BVerifMethod,
-	HotmailB2CVerifMethod, YahooVerifMethod, LOG_TARGET,
-};
+use check_if_email_exists::smtp::verif_method::VerifMethod;
+use check_if_email_exists::{check_email, CheckEmailInput, LOG_TARGET};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use std::time::Duration;
 use warp::{http, Filter};
 
 use crate::config::BackendConfig;
@@ -32,42 +29,19 @@ use crate::http::{check_header, ReacherResponseError};
 #[derive(Debug, Default, Deserialize, Serialize)]
 pub struct CheckEmailRequest {
 	pub to_email: String,
-	pub from_email: Option<String>,
-	pub hello_name: Option<String>,
-	pub gmail_verif_method: Option<GmailVerifMethod>,
-	pub hotmailb2b_verif_method: Option<HotmailB2BVerifMethod>,
-	pub hotmailb2c_verif_method: Option<HotmailB2CVerifMethod>,
-	pub yahoo_verif_method: Option<YahooVerifMethod>,
-	pub proxy: Option<CheckEmailInputProxy>,
-	pub smtp_port: Option<u16>,
+	pub verif_method: Option<VerifMethod>,
 }
 
 impl CheckEmailRequest {
 	pub fn to_check_email_input(&self, config: Arc<BackendConfig>) -> CheckEmailInput {
 		CheckEmailInput {
 			to_email: self.to_email.clone(),
-			from_email: self.from_email.clone().unwrap_or(config.from_email.clone()),
-			hello_name: self.hello_name.clone().unwrap_or(config.hello_name.clone()),
-			gmail_verif_method: self.gmail_verif_method.unwrap_or(config.verif_method.gmail),
-			hotmailb2b_verif_method: self
-				.hotmailb2b_verif_method
-				.unwrap_or(config.verif_method.hotmailb2b),
-			hotmailb2c_verif_method: self
-				.hotmailb2c_verif_method
-				.unwrap_or(config.verif_method.hotmailb2c),
-			yahoo_verif_method: self.yahoo_verif_method.unwrap_or(config.verif_method.yahoo),
-			proxy: self
-				.proxy
-				.as_ref()
-				.or_else(|| config.proxy.as_ref())
-				.cloned(),
-			smtp_timeout: config.smtp_timeout.map(Duration::from_secs),
-			smtp_port: self
-				.smtp_port
-				.unwrap_or_else(|| CheckEmailInput::default().smtp_port),
+			verif_method: self
+				.verif_method
+				.clone()
+				.unwrap_or(config.verif_method.clone()),
 			sentry_dsn: config.sentry_dsn.clone(),
 			backend_name: config.backend_name.clone(),
-			retries: 2,
 			webdriver_config: config.webdriver.clone(),
 			..Default::default()
 		}

@@ -42,8 +42,13 @@ impl From<ReqwestError> for GmailError {
 	}
 }
 
+#[allow(dead_code)]
 /// Use HTTP request to verify if a Gmail email address exists.
 /// See: <https://blog.0day.rocks/abusing-gmail-to-get-previously-unlisted-e-mail-addresses-41544b62b2>
+///
+/// This method doesn't work anymore, as Google has patched the vulnerability,
+/// but it's kept here for historical reasons.
+#[deprecated]
 pub async fn check_gmail_via_api(
 	to_email: &EmailAddress,
 	input: &CheckEmailInput,
@@ -70,12 +75,6 @@ pub async fn check_gmail_via_api(
 	})
 }
 
-/// Check if the MX host is from Google, i.e. either a @gmail.com address, or
-/// a Google Suite email.
-pub fn is_gmail(host: &str) -> bool {
-	host.to_lowercase().ends_with(".google.com.")
-}
-
 #[cfg(test)]
 mod tests {
 	use super::*;
@@ -91,6 +90,7 @@ mod tests {
 			.build()
 			.unwrap();
 
+		#[allow(deprecated)]
 		let smtp_details = check_gmail_via_api(&to_email, &input).await;
 
 		assert!(smtp_details.is_ok());

@@ -28,11 +28,9 @@ use tokio::io::{AsyncBufRead, AsyncRead, AsyncWrite, BufStream};
 use tokio::net::TcpStream;
 
 use super::parser;
+use super::verif_method::VerifMethodSmtp;
 use super::{SmtpDetails, SmtpError};
-use crate::{
-	rules::{has_rule, Rule},
-	util::input_output::CheckEmailInput,
-};
+use crate::rules::{has_rule, Rule};
 use crate::{EmailAddress, LOG_TARGET};
 
 // Define a new trait that combines AsyncRead, AsyncWrite, and Unpin
@@ -45,8 +43,8 @@ macro_rules! try_smtp (
 		if let Err(err) = $res {
 			tracing::debug!(
 				target: LOG_TARGET,
-				email=$to_email,
-				host=$host,
+				email=$to_email.to_string(),
+				mx_host=$host,
 				port=$port,
 				error=?err,
 				"Closing connection due to error"
@@ -61,27 +59,27 @@ macro_rules! try_smtp (
 
 /// Connect to an SMTP host and return the configured client transport.
 async fn connect_to_smtp_host(
-	host: &str,
-	port: u16,
-	input: &CheckEmailInput,
+	to_email: &EmailAddress,
+	mx_host: &str,
+	verif_method: &VerifMethodSmtp,
 ) -> Result<SmtpTransport<BufStream<Box<dyn AsyncReadWrite>>>, SmtpError> {
 	// hostname verification fails if it ends with '.', for example, using
 	// SOCKS5 proxies we can `io: incomplete` error.
-	let clean_host = host.trim_end_matches('.').to_string();
+	let clean_host = mx_host.trim_end_matches('.').to_string();
 	let smtp_client = SmtpClient::new()
-		.hello_name(ClientId::Domain(input.hello_name.clone()))
+		.hello_name(ClientId::Domain(verif_method.config.hello_name.to_string()))
 		// Sometimes, using socks5 proxy, we get an `io: incomplete` error
 		// when using pipelining and sending two consecutive RCPT TO commands.
 		.pipelining(false);
 
-	let stream: BufStream<Box<dyn AsyncReadWrite>> = match &input.proxy {
+	let stream: BufStream<Box<dyn AsyncReadWrite>> = match &verif_method.proxy {
 		Some(proxy) => {
 			let socks_stream =
 				if let (Some(username), Some(password)) = (&proxy.username, &proxy.password) {
 					Socks5Stream::connect_with_password(
 						(proxy.host.as_ref(), proxy.port),
 						clean_host.clone(),
-						port,
+						verif_method.config.smtp_port,
 						username.clone(),
 						password.clone(),
 						Config::default(),
@@ -91,7 +89,7 @@ async fn connect_to_smtp_host(
 					Socks5Stream::connect(
 						(proxy.host.as_ref(), proxy.port),
 						clean_host.clone(),
-						port,
+						verif_method.config.smtp_port,
 						Config::default(),
 					)
 					.await?
@@ -99,7 +97,9 @@ async fn connect_to_smtp_host(
 			BufStream::new(Box::new(socks_stream) as Box<dyn AsyncReadWrite>)
 		}
 		None => {
-			let tcp_stream = TcpStream::connect(format!("{}:{}", clean_host, port)).await?;
+			let tcp_stream =
+				TcpStream::connect(format!("{}:{}", clean_host, verif_method.config.smtp_port))
+					.await?;
 			BufStream::new(Box::new(tcp_stream) as Box<dyn AsyncReadWrite>)
 		}
 	};
@@ -107,10 +107,10 @@ async fn connect_to_smtp_host(
 	let mut smtp_transport = SmtpTransport::new(smtp_client, stream).await?;
 
 	// Set "MAIL FROM"
-	let from_email = EmailAddress::from_str(&input.from_email).unwrap_or_else(|_| {
+	let from_email = EmailAddress::from_str(&verif_method.config.from_email).unwrap_or_else(|_| {
 		tracing::warn!(
 			target: LOG_TARGET,
-			from_email=input.from_email,
+			from_email=verif_method.config.from_email,
 			"Invalid 'from_email' provided, using default: 'user@example.org'"
 		);
 		EmailAddress::from_str("user@example.org").expect("Default email is valid")
@@ -121,9 +121,9 @@ async fn connect_to_smtp_host(
 			.command(MailCommand::new(Some(from_email.into_inner()), vec![]))
 			.await,
 		smtp_transport,
-		input.to_email,
+		to_email,
 		clean_host,
-		port
+		verif_method.config.smtp_port
 	);
 
 	Ok(smtp_transport)
@@ -222,12 +222,12 @@ async fn smtp_is_catch_all<S: AsyncBufRead + AsyncWrite + Unpin + Send>(
 	smtp_transport: &mut SmtpTransport<S>,
 	domain: &str,
 	host: &str,
-	input: &CheckEmailInput,
+	to_email: &EmailAddress,
 ) -> Result<bool, SmtpError> {
 	if has_rule(domain, host, &Rule::SkipCatchAll) {
 		tracing::debug!(
 			target: LOG_TARGET,
-			email=input.to_email,
+			email=to_email.to_string(),
 			domain=domain,
 			"Skipping catch-all check"
 		);
@@ -250,16 +250,15 @@ async fn smtp_is_catch_all<S: AsyncBufRead + AsyncWrite + Unpin + Send>(
 /// Creates an SMTP future for email verification.
 async fn create_smtp_future(
 	to_email: &EmailAddress,
-	host: &str,
-	port: u16,
+	mx_host: &str,
 	domain: &str,
-	input: &CheckEmailInput,
+	verif_method: &VerifMethodSmtp,
 ) -> Result<(bool, Deliverability), SmtpError> {
 	// FIXME If the SMTP is not connectable, we should actually return an
 	// Ok(SmtpDetails { can_connect_smtp: false, ... }).
-	let mut smtp_transport = connect_to_smtp_host(host, port, input).await?;
+	let mut smtp_transport = connect_to_smtp_host(to_email, mx_host, verif_method).await?;
 
-	let is_catch_all = smtp_is_catch_all(&mut smtp_transport, domain, host, input)
+	let is_catch_all = smtp_is_catch_all(&mut smtp_transport, domain, mx_host, to_email)
 		.await
 		.unwrap_or(false);
 	let deliverability = if is_catch_all {
@@ -281,13 +280,13 @@ async fn create_smtp_future(
 			if parser::is_err_io_errors(e) {
 				tracing::debug!(
 					target: LOG_TARGET,
-					email=input.to_email,
+					email=to_email.to_string(),
 					error=?e,
 					"Got `io: incomplete` error, reconnecting"
 				);
 
 				let _ = smtp_transport.quit().await;
-				smtp_transport = connect_to_smtp_host(host, port, input).await?;
+				smtp_transport = connect_to_smtp_host(to_email, mx_host, verif_method).await?;
 				result = check_email_deliverability(&mut smtp_transport, to_email).await;
 			}
 		}
@@ -307,14 +306,13 @@ async fn create_smtp_future(
 /// retries.
 async fn check_smtp_without_retry(
 	to_email: &EmailAddress,
-	host: &str,
-	port: u16,
+	mx_host: &str,
 	domain: &str,
-	input: &CheckEmailInput,
+	verif_method: &VerifMethodSmtp,
 ) -> Result<SmtpDetails, SmtpError> {
-	let fut = create_smtp_future(to_email, host, port, domain, input);
+	let fut = create_smtp_future(to_email, mx_host, domain, verif_method);
 
-	let (is_catch_all, deliverability) = match input.smtp_timeout {
+	let (is_catch_all, deliverability) = match verif_method.config.smtp_timeout {
 		Some(smtp_timeout) => {
 			let timeout = tokio::time::timeout(smtp_timeout, fut);
 
@@ -340,29 +338,30 @@ async fn check_smtp_without_retry(
 #[async_recursion]
 pub async fn check_smtp_with_retry(
 	to_email: &EmailAddress,
-	host: &str,
-	port: u16,
+	mx_host: &str,
 	domain: &str,
-	input: &CheckEmailInput,
+	verif_method: &VerifMethodSmtp,
+	// Number of remaining retries.
 	count: usize,
 ) -> Result<SmtpDetails, SmtpError> {
 	tracing::debug!(
 		target: LOG_TARGET,
-		email=input.to_email,
-		attempt=input.retries - count + 1,
-		host=host,
-		port=port,
+		email=to_email.to_string(),
+		attempt=verif_method.config.retries - count + 1,
+		mx_host=mx_host,
+		port=verif_method.config.smtp_port,
+		using_proxy=verif_method.proxy.is_some(),
 		"Check SMTP"
 	);
 
-	let result = check_smtp_without_retry(to_email, host, port, domain, input).await;
+	let result = check_smtp_without_retry(to_email, mx_host, domain, verif_method).await;
 
 	tracing::debug!(
 		target: LOG_TARGET,
-		email=input.to_email,
-		attempt=input.retries - count + 1,
-		host=host,
-		port=port,
+		email=to_email.to_string(),
+		attempt=verif_method.config.retries - count + 1,
+		mx_host=mx_host,
+		port=verif_method.config.smtp_port,
 		result=?result,
 		"Got SMTP check result"
 	);
@@ -381,10 +380,10 @@ pub async fn check_smtp_with_retry(
 			} else {
 				tracing::debug!(
 					target: LOG_TARGET,
-					email=input.to_email,
+					email=to_email.to_string(),
 					"Potential greylisting detected, retrying"
 				);
-				check_smtp_with_retry(to_email, host, port, domain, input, count - 1).await
+				check_smtp_with_retry(to_email, mx_host, domain, verif_method, count - 1).await
 			}
 		}
 		_ => result,
