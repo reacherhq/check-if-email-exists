@@ -1,6 +1,6 @@
 [package]
 name = "check-if-email-exists"
-version = "0.10.2"
+version = "0.11.0"
 authors = ["Amaury <amaury@reacher.email>"]
 categories = ["email"]
 description = "Check if an email address exists without sending any email"

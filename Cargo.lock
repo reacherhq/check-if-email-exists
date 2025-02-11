@@ -601,7 +601,7 @@ checksum = "613afe47fcd5fac7ccf1db93babcb082c5994d996f20b8b159f2ad1658eb5724"
 
 [[package]]
 name = "check-if-email-exists"
-version = "0.10.2"
+version = "0.11.0"
 dependencies = [
  "anyhow",
  "async-recursion",
@@ -633,7 +633,7 @@ dependencies = [
 
 [[package]]
 name = "check-if-email-exists-cli"
-version = "0.10.2"
+version = "0.11.0"
 dependencies = [
  "anyhow",
  "check-if-email-exists",
@@ -3062,7 +3062,7 @@ dependencies = [
 
 [[package]]
 name = "reacher_backend"
-version = "0.10.2"
+version = "0.11.0"
 dependencies = [
  "anyhow",
  "async-smtp",
@@ -3095,7 +3095,7 @@ dependencies = [
 
 [[package]]
 name = "reacher_sqs"
-version = "0.10.2"
+version = "0.11.0"
 dependencies = [
  "check-if-email-exists",
  "lambda_runtime",

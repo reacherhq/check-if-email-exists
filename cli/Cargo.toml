@@ -1,6 +1,6 @@
 [package]
 name = "check-if-email-exists-cli"
-version = "0.10.2"
+version = "0.11.0"
 default-run = "check_if_email_exists"
 edition = "2018"
 description = "Check if an email address exists without sending any email."
