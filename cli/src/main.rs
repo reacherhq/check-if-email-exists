@@ -87,8 +87,8 @@ async fn main() -> Result<(), anyhow::Error> {
 		});
 	let verif_method = VerifMethod::new_with_same_config_for_all(
 		proxy,
-		CONF.from_email.clone(),
 		CONF.hello_name.clone(),
+		CONF.from_email.clone(),
 		CONF.smtp_port,
 		None,
 		1,
