@@ -32,7 +32,7 @@ use serde::{Deserialize, Serialize};
 use std::default::Default;
 use verif_method::{
 	EmailProvider, EverythingElseVerifMethod, GmailVerifMethod, HotmailB2BVerifMethod,
-	HotmailB2CVerifMethod, VerifMethodSmtp, YahooVerifMethod,
+	HotmailB2CVerifMethod, VerifMethodSmtp, VerifMethodSmtpConfig, YahooVerifMethod,
 };
 
 pub use crate::mx::{is_gmail, is_hotmail, is_hotmail_b2b, is_hotmail_b2c, is_yahoo};
@@ -42,8 +42,8 @@ pub use error::*;
 pub struct SmtpDebugVerifMethodSmtp {
 	/// The host we connected to via SMTP.
 	pub host: String,
-	/// The verification method used for the verification.
-	pub verif_method: VerifMethodSmtp,
+	/// The proxy used for the SMTP connection.
+	pub verif_method: VerifMethodSmtpConfig,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize)]
@@ -156,7 +156,8 @@ pub async fn check_smtp(
 		EmailProvider::EverythingElse => match &input.verif_method.everything_else {
 			EverythingElseVerifMethod::Smtp(c) => c,
 		},
-	};
+	}
+	.clone();
 
 	// TODO: There's surely a way to not clone here.
 	let verif_method = VerifMethodSmtp::new(
@@ -176,7 +177,7 @@ pub async fn check_smtp(
 		SmtpDebug {
 			verif_method: SmtpDebugVerifMethod::Smtp(SmtpDebugVerifMethodSmtp {
 				host: host_str,
-				verif_method,
+				verif_method: smtp_verif_method_config,
 			}),
 		},
 	)
@@ -217,12 +218,9 @@ mod tests {
 		match smtp_debug.verif_method {
 			SmtpDebugVerifMethod::Smtp(SmtpDebugVerifMethodSmtp { host, verif_method }) => {
 				assert_eq!(host, "alt4.aspmx.l.google.com.");
-				assert_eq!(verif_method.config.smtp_port, 25);
-				assert_eq!(
-					verif_method.config.smtp_timeout,
-					Some(Duration::from_millis(1))
-				);
-				assert_eq!(verif_method.config.retries, 1);
+				assert_eq!(verif_method.smtp_port, 25);
+				assert_eq!(verif_method.smtp_timeout, Some(Duration::from_millis(1)));
+				assert_eq!(verif_method.retries, 1);
 				assert_eq!(verif_method.proxy, None);
 			}
 			_ => panic!("Expected SmtpDebugVerifMethod::Smtp"),
