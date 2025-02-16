@@ -355,8 +355,8 @@ mod tests {
 	#[tokio::test]
 	#[serial]
 	async fn test_proxies() {
-		env::set_var("RCH__VERIF_METHOD__PROXIES__PROXY3__HOST", "test-proxy");
-		env::set_var("RCH__VERIF_METHOD__PROXIES__PROXY3__PORT", "1234");
+		env::set_var("RCH__OVERRIDES__PROXIES__PROXY3__HOST", "test-proxy");
+		env::set_var("RCH__OVERRIDES__PROXIES__PROXY3__PORT", "1234");
 		let cfg = load_config().await.unwrap();
 		// Proxies
 		assert_eq!(cfg.get_verif_method().proxies.len(), 1);
@@ -369,8 +369,8 @@ mod tests {
 			1234
 		);
 
-		env::remove_var("RCH__VERIF_METHOD__PROXIES__PROXY3__HOST");
-		env::remove_var("RCH__VERIF_METHOD__PROXIES__PROXY3__PORT");
+		env::remove_var("RCH__OVERRIDES__PROXIES__PROXY3__HOST");
+		env::remove_var("RCH__OVERRIDES__PROXIES__PROXY3__PORT");
 	}
 
 	#[tokio::test]
