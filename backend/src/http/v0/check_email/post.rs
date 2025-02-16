@@ -39,7 +39,7 @@ impl CheckEmailRequest {
 			verif_method: self
 				.verif_method
 				.clone()
-				.unwrap_or(config.verif_method.clone()),
+				.unwrap_or(config.get_verif_method().clone()),
 			sentry_dsn: config.sentry_dsn.clone(),
 			backend_name: config.backend_name.clone(),
 			webdriver_config: config.webdriver.clone(),

@@ -15,12 +15,29 @@ http_host = "127.0.0.1"
 # Env variable: RCH__HTTP_PORT
 http_port = 8080
 
+# Name to use during the EHLO/HELO command in the SMTP conversation.
+# Ideally, this should match the reverse DNS of the server's IP address.
+#
+# Env variable: RCH__HELLO_NAME
+hello_name = "localhost"
+
+# Email to use during the MAIL FROM command in the SMTP conversation.
+# Ideally, the domain of this email should match the "hello_name" above.
+#
+# Env variable: RCH__FROM_EMAIL
+from_email = "hello@localhost"
+
+# Timeout for each SMTP connection, in seconds. Leaving it commented out will
+# not set a timeout, i.e. the connection will wait indefinitely.
+#
+# Env variable: RCH__SMTP_TIMEOUT
+# smtp_timeout = 45
+
 # Shared secret between a trusted client and the backend, required in the
 # `x-reacher-secret` header of all incoming requests.
 #
 # Env variable: RCH__HEADER_SECRET
 # header_secret = "my-secret"
-
 
 # Optional Sentry DSN. If set, all errors will be sent to Sentry.
 #
@@ -31,6 +48,26 @@ http_port = 8080
 #
 # Env variable: RCH__WEBDRIVER_ADDR
 webdriver_addr = "http://localhost:9515"
+
+# Uncomment the lines below to route all SMTP verification requests
+# through a specified proxy. Note that the proxy must be a SOCKS5 proxy to work
+# with the SMTP protocol. This proxy will not be used for headless
+# verifications.
+#
+# The username and password are optional and only needed if the proxy requires
+# authentication.
+#
+# Env variables:
+# - RCH__PROXY__HOST
+# - RCH__PROXY__PORT
+# - RCH__PROXY__USERNAME
+# - RCH__PROXY__PASSWORD
+#
+# [proxy]
+# host = "my.proxy.com"
+# port = 1080
+# username = "my-username"
+# password = "my-password"
 
 [webdriver]
 # Path to the Chrome binary. If not set, the default system Chrome will be used.
@@ -60,13 +97,14 @@ webdriver_addr = "http://localhost:9515"
 # username = "my-username"
 # password = "my-password"
 
-# Verification method to use for each email provider. Each email provider can
+# Override verification method to use for each email provider. Each email provider can
 # be verified using one of the following methods:
 # - Gmail: smtp
 # - Hotmail B2B: smtp
 # - Hotmail B2C: headless or smtp
 # - Yahoo: headless or smtp
-# - Everything else: smtp
+# - Mimecast: smtp
+# - Proofpoint: smtp
 #
 # For the email providers you choose to verify using the "smtp" method, you
 # may add additional configuration, such as hello_name, from_email, and
@@ -75,112 +113,50 @@ webdriver_addr = "http://localhost:9515"
 # If using proxies, the list of proxies must be defined in the "proxies"
 # section below, with a unique name for each proxy such as "proxy1", "proxy2",
 # etc. Then, in the email provider's SMTP configuration, set the value to the
-# name of the proxy to use.
-[verif_method]
+# name of the proxy to use. To use the proxy defined the the top-level "proxy"
+# section, set the value to "default".
+[overrides]
 # Use the "proxies" configuration below to route SMTP verification requests
 # through a specified proxy.
 #
 # Reacher allows you to configure multiple proxies, each with a unique name.
 # We recommend simply using "proxy1", "proxy2", etc. as the proxy names.
 #
-# In the `verif_method` section below, you can specify which proxy to use for
+# In the `overrides` section below, you can specify which proxy to use for
 # each email provider. For example, to use "proxy1" for Gmail and "proxy2" for
 # Yahoo, set the `gmail` field to "proxy1" and the `yahoo` field to "proxy2".
-[verif_method.proxies]
+[overrides.proxies]
 # Uncomment the lines below to configure a proxy. The username and password are
 # optional and only needed if the proxy requires authentication.
 #
 # Env variables:
-# - RCH__VERIF_METHOD__PROXIES__PROXY1__HOST
-# - RCH__VERIF_METHOD__PROXIES__PROXY1__PORT
-# - RCH__VERIF_METHOD__PROXIES__PROXY1__USERNAME
-# - RCH__VERIF_METHOD__PROXIES__PROXY1__PASSWORD
+# - RCH__OVERRIDES__PROXIES__PROXY1__HOST
+# - RCH__OVERRIDES__PROXIES__PROXY1__PORT
+# - RCH__OVERRIDES__PROXIES__PROXY1__USERNAME
+# - RCH__OVERRIDES__PROXIES__PROXY1__PASSWORD
 # proxy1 = { host = "my.proxy1.com", port = 1080, username = "my-username1", password = "my-password1" }
 # proxy2 = { host = "my.proxy2.com", port = 1081 }
 
-[verif_method.gmail]
-# Verification method to use for Gmail. Gmail only supports the "smtp" method.
-# You can add additional configuration such as hello_name, from_email, and
-# whether to use a proxy or not, by uncommenting the lines below.
-#
-# Env variable: RCH__VERIF_METHOD__GMAIL__TYPE
-type = "smtp"
-# The proxy to use to verify Gmail. If set, it must match one of the names
-# defined in the "proxies" section above.
-#
-# Env variable: RCH__VERIF_METHOD__GMAIL__PROXY
+# Set overrides for Gmail. If uncommented, make sure to uncomment all fields.
+# [overrides.gmail]
+# type = "smtp"
 # proxy = "proxy1"
-
-# Name to use during the EHLO/HELO command in the SMTP conversation.
-# Ideally, this should match the reverse DNS of the server's IP address.
-#
-# Env variable: RCH__VERIF_METHOD__GMAIL__HELLO_NAME
 # hello_name = "my-domain.com"
-
-# Email to use during the MAIL FROM command in the SMTP conversation.
-# Ideally, the domain of this email should match the "hello_name" above.
-#
-# Env variable: RCH__VERIF_METHOD__GMAIL__FROM_EMAIL
 # from_email = "hello@my-domain.com"
 
-# Timeout for each SMTP connection, in seconds. Leaving it commented out will
-# not set a timeout, i.e. the connection will wait indefinitely. Both fields
-# secs and nanos must be set.
-#
-# Env variable: RCH__VERIF_METHOD__GMAIL__SMTP_TIMEOUT
-# smtp_timeout = { secs = 25, nanos = 0 }
+# For each email provider, you can override the verification method and set
+# additional configuration. The available fields are the same as for the
+# "gmail" section above.
 
-# Number of retries for each email verification. Leaving it commented out will
-# default to 1 retry.
-#
-# Env variable: RCH__VERIF_METHOD__GMAIL__RETRIES
-# retries = 2
+# [overrides.hotmailb2b]
 
-[verif_method.hotmailb2b]
-# Verification method to use for Hotmail B2B. Hotmail B2B only supports the
-# "smtp" method. You may copy the configuration from the Gmail section above to
-# apply them here.
-#
-# Env variable: RCH__VERIF_METHOD__HOTMAILB2B__TYPE
-type = "smtp"
-# proxy = "proxy1"
+# [overrides.hotmailb2c]
 
-[verif_method.hotmailb2c]
-# Verification method to use for Hotmail B2C. Hotmail B2C supports both the
-# "headless" and "smtp" methods. The "headless" method is recommended.
-#
-# Env variable: RCH__VERIF_METHOD__HOTMAILB2C__TYPE
-type = "headless"
+# [overrides.mimecast]
 
-[verif_method.mimecast]
-# Verification method to use for emails behind Mimecast. Mimecast only supports
-# the "smtp" method. You may copy the configuration from the Gmail section above
-# to apply them here.
-#
-# Env variable: RCH__VERIF_METHOD__MIMECAST__TYPE
-type = "smtp"
+# [overrides.proofpoint]
 
-[verif_method.proofpoint]
-# Verification method to use for emails behind Proofpoint. Proofpoint only supports
-# the "smtp" method. You may copy the configuration from the Gmail section above
-# to apply them here.
-#
-# Env variable: RCH__VERIF_METHOD__PROOFPOINT__TYPE
-type = "smtp"
-
-[verif_method.yahoo]
-# Verification method to use for Yahoo. Yahoo supports both the "headless" and
-# "smtp" methods. The "headless" method is recommended.
-#
-# Env variable: RCH__VERIF_METHOD__YAHOO__TYPE
-type = "headless"
-
-[verif_method.everything_else]
-# Verification method to use for all other email providers. By default, all
-# other emails will be verified using the "smtp" method. You may copy the
-# configuration from the Gmail section above to apply them here.
-type = "smtp"
-# proxy = "proxy1"
+# [overrides.yahoo]
 
 # Throttle the maximum number of requests per second, per minute, per hour, and
 # per day for this worker.

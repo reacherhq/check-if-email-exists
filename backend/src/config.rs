@@ -19,7 +19,11 @@ use crate::throttle::ThrottleManager;
 use crate::worker::do_work::TaskWebhook;
 use crate::worker::setup_rabbit_mq;
 use anyhow::{bail, Context};
-use check_if_email_exists::smtp::verif_method::VerifMethod;
+use check_if_email_exists::smtp::verif_method::{
+	EverythingElseVerifMethod, GmailVerifMethod, HotmailB2BVerifMethod, HotmailB2CVerifMethod,
+	MimecastVerifMethod, ProofpointVerifMethod, VerifMethod, VerifMethodSmtpConfig,
+	YahooVerifMethod,
+};
 use check_if_email_exists::{CheckEmailInputProxy, WebdriverConfig, LOG_TARGET};
 use config::Config;
 use lapin::Channel;
@@ -35,14 +39,19 @@ pub struct BackendConfig {
 	/// Name of the backend.
 	pub backend_name: String,
 
+	// Fields from VerifMethodSmtpConfig
+	pub from_email: String,
+	pub hello_name: String,
+	/// Timeout for each SMTP connection, in seconds. Leaving it commented out
+	/// will not set a timeout, i.e. the connection will wait indefinitely.
+	pub smtp_timeout: Option<u64>,
 	// This field is deprecated, but kept for backwards compatibility. If set,
 	// it will be moved to the "default" proxy in the `verif_method.proxies`
 	// field.
-	#[deprecated]
 	pub proxy: Option<CheckEmailInputProxy>,
 
-	/// Verification methods per email provider.
-	pub verif_method: VerifMethod,
+	/// Overrides over the default verification method provided above.
+	pub overrides: OverridesConfig,
 
 	/// Webdriver configuration.
 	pub webdriver_addr: String,
@@ -88,9 +97,11 @@ impl BackendConfig {
 			backend_name: "".to_string(),
 			webdriver_addr: "".to_string(),
 			webdriver: WebdriverConfig::default(),
-			#[allow(deprecated)]
+			from_email: "".to_string(),
+			hello_name: "".to_string(),
+			smtp_timeout: None,
 			proxy: None,
-			verif_method: VerifMethod::default(),
+			overrides: OverridesConfig::default(),
 			http_host: "127.0.0.1".to_string(),
 			http_port: 8080,
 			header_secret: None,
@@ -104,6 +115,56 @@ impl BackendConfig {
 			throttle_manager: Arc::new(
 				ThrottleManager::new(ThrottleConfig::new_without_throttle()),
 			),
+		}
+	}
+
+	pub fn get_verif_method(&self) -> VerifMethod {
+		let mut proxies = self.overrides.proxies.clone();
+		if let Some(proxy) = self.proxy.as_ref() {
+			proxies.insert("default".to_string(), proxy.clone());
+		}
+
+		let default_smtp_config = VerifMethodSmtpConfig {
+			from_email: self.from_email.clone(),
+			hello_name: self.hello_name.clone(),
+			proxy: self.proxy.as_ref().map(|_| "default".to_string()),
+			smtp_timeout: self.smtp_timeout.map(Duration::from_secs),
+			..Default::default()
+		};
+
+		VerifMethod {
+			proxies,
+			gmail: self
+				.overrides
+				.gmail
+				.clone()
+				.unwrap_or_else(|| GmailVerifMethod::Smtp(default_smtp_config.clone())),
+			hotmailb2b: self
+				.overrides
+				.hotmailb2b
+				.clone()
+				.unwrap_or_else(|| HotmailB2BVerifMethod::Smtp(default_smtp_config.clone())),
+			hotmailb2c: self
+				.overrides
+				.hotmailb2c
+				.clone()
+				.unwrap_or_else(|| HotmailB2CVerifMethod::Headless),
+			mimecast: self
+				.overrides
+				.mimecast
+				.clone()
+				.unwrap_or_else(|| MimecastVerifMethod::Smtp(default_smtp_config.clone())),
+			proofpoint: self
+				.overrides
+				.proofpoint
+				.clone()
+				.unwrap_or_else(|| ProofpointVerifMethod::Smtp(default_smtp_config.clone())),
+			yahoo: self
+				.overrides
+				.yahoo
+				.clone()
+				.unwrap_or_else(|| YahooVerifMethod::Headless),
+			everything_else: EverythingElseVerifMethod::Smtp(default_smtp_config),
 		}
 	}
 
@@ -177,22 +238,14 @@ impl BackendConfig {
 }
 
 #[derive(Debug, Default, Deserialize, Clone, Serialize)]
-pub struct VerifMethodConfig {
+pub struct OverridesConfig {
 	pub proxies: HashMap<String, CheckEmailInputProxy>,
-	pub gmail: check_if_email_exists::smtp::verif_method::GmailVerifMethod,
-	pub hotmailb2b: check_if_email_exists::smtp::verif_method::HotmailB2BVerifMethod,
-	pub hotmailb2c: check_if_email_exists::smtp::verif_method::HotmailB2CVerifMethod,
-	pub yahoo: check_if_email_exists::smtp::verif_method::YahooVerifMethod,
-	pub everything_else: check_if_email_exists::smtp::verif_method::EverythingElseVerifMethod,
-}
-
-pub struct VerifMethodSmtpConfig {
-	pub from_email: Option<String>,
-	pub hello_name: Option<String>,
-	pub smtp_port: Option<u16>,
-	pub retries: Option<u8>,
-	pub proxy: Option<String>,
-	pub smtp_timeout: Option<Duration>,
+	pub gmail: Option<GmailVerifMethod>,
+	pub hotmailb2b: Option<HotmailB2BVerifMethod>,
+	pub hotmailb2c: Option<HotmailB2CVerifMethod>,
+	pub mimecast: Option<MimecastVerifMethod>,
+	pub proofpoint: Option<ProofpointVerifMethod>,
+	pub yahoo: Option<YahooVerifMethod>,
 }
 
 #[derive(Debug, Default, Deserialize, Clone, Serialize)]
@@ -268,7 +321,7 @@ pub async fn load_config() -> Result<BackendConfig, anyhow::Error> {
 		.add_source(config::File::with_name("backend_config"))
 		.add_source(config::Environment::with_prefix("RCH").separator("__"));
 
-	let mut cfg = cfg.build()?.try_deserialize::<BackendConfig>()?;
+	let cfg = cfg.build()?.try_deserialize::<BackendConfig>()?;
 
 	// Perform additional checks
 
@@ -282,21 +335,10 @@ pub async fn load_config() -> Result<BackendConfig, anyhow::Error> {
 		}
 	}
 
-	// 2. If the `proxy` field is set, move it to the `proxies` field with the
-	// "default" key.
-	#[allow(deprecated)]
-	if let Some(proxy) = cfg.proxy.take() {
-		cfg.verif_method
-			.proxies
-			.insert("default".to_string(), proxy);
-
-		cfg.proxy = None;
-	}
-
-	// 3. Validate the verif_method proxies, meaning that for each email
+	// 2. Validate the verif_method proxies, meaning that for each email
 	// provider's verification method, the proxy (if set) must exist in the
 	// `proxies` field.
-	cfg.verif_method.validate_proxies()?;
+	cfg.get_verif_method().validate_proxies()?;
 
 	Ok(cfg)
 }
@@ -304,28 +346,31 @@ pub async fn load_config() -> Result<BackendConfig, anyhow::Error> {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use check_if_email_exists::smtp::verif_method::{
-		EverythingElseVerifMethod, GmailVerifMethod, HotmailB2BVerifMethod, VerifMethodSmtpConfig,
-	};
 	use serial_test::serial;
 	use std::{env, time::Duration};
+	use {
+		EverythingElseVerifMethod, GmailVerifMethod, HotmailB2BVerifMethod, VerifMethodSmtpConfig,
+	};
 
 	#[tokio::test]
 	#[serial]
 	async fn test_proxies() {
-		env::set_var("RCH__VERIF_METHOD__PROXIES__PROXY3__HOST", "test-proxy");
-		env::set_var("RCH__VERIF_METHOD__PROXIES__PROXY3__PORT", "1234");
+		env::set_var("RCH__OVERRIDES__PROXIES__PROXY3__HOST", "test-proxy");
+		env::set_var("RCH__OVERRIDES__PROXIES__PROXY3__PORT", "1234");
 		let cfg = load_config().await.unwrap();
 		// Proxies
-		assert_eq!(cfg.verif_method.proxies.len(), 1);
+		assert_eq!(cfg.get_verif_method().proxies.len(), 1);
 		assert_eq!(
-			cfg.verif_method.proxies.get("proxy3").unwrap().host,
+			cfg.get_verif_method().proxies.get("proxy3").unwrap().host,
 			"test-proxy"
 		);
-		assert_eq!(cfg.verif_method.proxies.get("proxy3").unwrap().port, 1234);
+		assert_eq!(
+			cfg.get_verif_method().proxies.get("proxy3").unwrap().port,
+			1234
+		);
 
-		env::remove_var("RCH__VERIF_METHOD__PROXIES__PROXY3__HOST");
-		env::remove_var("RCH__VERIF_METHOD__PROXIES__PROXY3__PORT");
+		env::remove_var("RCH__OVERRIDES__PROXIES__PROXY3__HOST");
+		env::remove_var("RCH__OVERRIDES__PROXIES__PROXY3__PORT");
 	}
 
 	#[tokio::test]
@@ -335,12 +380,15 @@ mod tests {
 		env::set_var("RCH__PROXY__PORT", "5678");
 		let cfg = load_config().await.unwrap();
 		// Proxies
-		assert_eq!(cfg.verif_method.proxies.len(), 1);
+		assert_eq!(cfg.get_verif_method().proxies.len(), 1);
 		assert_eq!(
-			cfg.verif_method.proxies.get("default").unwrap().host,
+			cfg.get_verif_method().proxies.get("default").unwrap().host,
 			"test-default-proxy"
 		);
-		assert_eq!(cfg.verif_method.proxies.get("default").unwrap().port, 5678);
+		assert_eq!(
+			cfg.get_verif_method().proxies.get("default").unwrap().port,
+			5678
+		);
 
 		env::remove_var("RCH__PROXY__HOST");
 		env::remove_var("RCH__PROXY__PORT");

@@ -36,6 +36,7 @@ async fn main() -> Result<(), anyhow::Error> {
 	let mut config = load_config().await?;
 	config.connect().await?;
 	debug!(target: LOG_TARGET, "{:#?}", config);
+	debug!(target: LOG_TARGET, "{:#?}", config.get_verif_method());
 
 	// Setup sentry bug tracking.
 	let _guard: sentry::ClientInitGuard;
