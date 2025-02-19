@@ -17,9 +17,10 @@
 //! This file implements the `POST /v0/check_email` endpoint.
 
 use check_if_email_exists::smtp::verif_method::VerifMethod;
-use check_if_email_exists::{check_email, CheckEmailInput, LOG_TARGET};
+use check_if_email_exists::{check_email, CheckEmailInput, CheckEmailInputProxy, LOG_TARGET};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+use std::time::Duration;
 use warp::{http, Filter};
 
 use crate::config::BackendConfig;
@@ -29,17 +30,42 @@ use crate::http::{check_header, ReacherResponseError};
 #[derive(Debug, Default, Deserialize, Serialize)]
 pub struct CheckEmailRequest {
 	pub to_email: String,
-	pub verif_method: Option<VerifMethod>,
+	pub from_email: Option<String>,
+	pub hello_name: Option<String>,
+	pub proxy: Option<CheckEmailInputProxy>,
+	pub smtp_timeout: Option<Duration>,
+	pub smtp_port: Option<u16>,
 }
 
 impl CheckEmailRequest {
 	pub fn to_check_email_input(&self, config: Arc<BackendConfig>) -> CheckEmailInput {
+		// The current behavior is a bit complex. If the proxy field is present,
+		// we force use the proxy for all the verifications. If the proxy field is
+		// not present, we use the default configuration for all the verifications.
+		//
+		// If the proxy field is unset, but one of the other fields (from_email,
+		// hello_name, smtp_timeout, smtp_port) is set, we ignore those fields.
+		let verif_method = if let Some(proxy) = &self.proxy {
+			VerifMethod::new_with_same_config_for_all(
+				Some(proxy.clone()),
+				self.hello_name
+					.clone()
+					.unwrap_or_else(|| config.hello_name.clone()),
+				self.from_email
+					.clone()
+					.unwrap_or_else(|| config.from_email.clone()),
+				self.smtp_port.unwrap_or(25),
+				self.smtp_timeout
+					.or(config.smtp_timeout.map(Duration::from_secs)),
+				1,
+			)
+		} else {
+			config.get_verif_method()
+		};
+
 		CheckEmailInput {
 			to_email: self.to_email.clone(),
-			verif_method: self
-				.verif_method
-				.clone()
-				.unwrap_or(config.get_verif_method().clone()),
+			verif_method,
 			sentry_dsn: config.sentry_dsn.clone(),
 			backend_name: config.backend_name.clone(),
 			webdriver_config: config.webdriver.clone(),
