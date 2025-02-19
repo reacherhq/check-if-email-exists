@@ -9,7 +9,7 @@ If you still don't understand the error after setting that flag, send an email t
 ## How to check if port 25 is open?
 
 {% hint style="info" %}
-This only concerns users installing Reacher on a server without using [proxies.md](proxies.md "mention").&#x20;
+This only concerns users installing Reacher on a server without using [proxies](proxies/ "mention").&#x20;
 {% endhint %}
 
 When choosing a server to install Reacher on, you need to make sure that the server itself has port `25` open AND the chosen cloud provider allows outbound port `25` connections on its network.

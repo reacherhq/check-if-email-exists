@@ -16,11 +16,11 @@ Reacher's goal is to make Self-Hosting easy. You can [install.md](install.md "me
 
 ## Key Differences
 
-| Feature               | SaaS                                   | Self-Hosting                                                                                |
-| --------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------- |
-| **Volume**            | Limited to 10k verifications per month | Unlimited verifications                                                                     |
-| **Cost**              | Monthly subscription                   | Monthly subscription + server costs (lower at scale) + [proxy](proxies.md) costs (optional) |
-| **Setup Time**        | Instant                                | Requires installation and setup                                                             |
-| **Maintenance**       | Fully managed by Reacher               | Managed by your IT team                                                                     |
-| **Data Ownership**    | Data stored on Reacher servers         | Full ownership, no data is sent to Reacher                                                  |
-| **Bulk Verification** | Not supported                          | Supported, see [bulk.md](../advanced/migrations/bulk.md "mention")                          |
+| Feature               | SaaS                                   | Self-Hosting                                                                              |
+| --------------------- | -------------------------------------- | ----------------------------------------------------------------------------------------- |
+| **Volume**            | Limited to 10k verifications per month | Unlimited verifications                                                                   |
+| **Cost**              | Monthly subscription                   | Monthly subscription + server costs (lower at scale) + [proxy](proxies/) costs (optional) |
+| **Setup Time**        | Instant                                | Requires installation and setup                                                           |
+| **Maintenance**       | Fully managed by Reacher               | Managed by your IT team                                                                   |
+| **Data Ownership**    | Data stored on Reacher servers         | Full ownership, no data is sent to Reacher                                                |
+| **Bulk Verification** | Not supported                          | Supported, see [bulk.md](../advanced/migrations/bulk.md "mention")                        |

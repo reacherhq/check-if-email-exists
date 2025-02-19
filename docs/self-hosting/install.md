@@ -19,7 +19,7 @@ The provided Dockerfile includes a pre-configured proxy, resolving the common IS
 
 The Dockerfile provided as part of the Commercial License Trial is designed to enable quick setup for email verifications. Below are its key features and limitations:
 
-* **Built-in Proxy Configuration**: we use [**Proxy4Smtp**](https://www.proxy4smtp.com), a 3rd-party proxy with carefully maintained IPs optimized for SMTP verifications. This ensures reliable email verification even in cloud environments with restricted SMTP access. Learn more in [proxies.md](proxies.md "mention").
+* **Built-in Proxy Configuration**: we use [**Proxy4Smtp**](https://www.proxy4smtp.com), a 3rd-party proxy with carefully maintained IPs optimized for SMTP verifications. This ensures reliable email verification even in cloud environments with restricted SMTP access. Learn more in [proxies](proxies/ "mention").
 * **Daily Verification Limit**: capped at 60 per minute at **10,000 per day**.
 * **Usage Tracking**: verification results are anonymized and sent back to Reacher, and used to monitor daily usage and detect potential abuse.
 

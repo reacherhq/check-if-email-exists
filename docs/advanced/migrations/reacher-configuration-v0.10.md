@@ -1,11 +1,4 @@
-# Reacher Configuration
-
-{% hint style="info" %}
-This configuration is for the current 0.11 version. For the older versions, please see:
-
-* [reacher-configuration-v0.10.md](../advanced/migrations/reacher-configuration-v0.10.md "mention")
-* [docker-environment-variables.md](../advanced/migrations/docker-environment-variables.md "mention").
-{% endhint %}
+# Reacher Configuration (v0.10)
 
 You can find below the exhaustive list of configurable parameters to optimize Reacher.
 
@@ -29,6 +22,12 @@ http_host = "127.0.0.1"
 # Env variable: RCH__HTTP_PORT
 http_port = 8080
 
+# Shared secret between a trusted client and the backend, required in the
+# `x-reacher-secret` header of all incoming requests.
+#
+# Env variable: RCH__HEADER_SECRET
+# header_secret = "my-secret"
+
 # Name to use during the EHLO/HELO command in the SMTP conversation.
 # Ideally, this should match the reverse DNS of the server's IP address.
 #
@@ -41,27 +40,21 @@ hello_name = "localhost"
 # Env variable: RCH__FROM_EMAIL
 from_email = "hello@localhost"
 
+# Address of the Chrome WebDriver server for headless email verifications.
+#
+# Env variable: RCH__WEBDRIVER_ADDR
+webdriver_addr = "http://localhost:9515"
+
 # Timeout for each SMTP connection, in seconds. Leaving it commented out will
 # not set a timeout, i.e. the connection will wait indefinitely.
 #
 # Env variable: RCH__SMTP_TIMEOUT
 # smtp_timeout = 45
 
-# Shared secret between a trusted client and the backend, required in the
-# `x-reacher-secret` header of all incoming requests.
-#
-# Env variable: RCH__HEADER_SECRET
-# header_secret = "my-secret"
-
 # Optional Sentry DSN. If set, all errors will be sent to Sentry.
 #
 # Env variable: RCH__SENTRY_DSN
-# sentry_dsn = "<PASTE_YOUR_DSN_HERE>"
-
-# Address of the Chrome WebDriver server for headless email verifications.
-#
-# Env variable: RCH__WEBDRIVER_ADDR
-webdriver_addr = "http://localhost:9515"
+# sentry_dsn = "<PASTE_YOUR_DSN_NOW>"
 
 # Uncomment the lines below to route all SMTP verification requests
 # through a specified proxy. Note that the proxy must be a SOCKS5 proxy to work
@@ -83,94 +76,24 @@ webdriver_addr = "http://localhost:9515"
 # username = "my-username"
 # password = "my-password"
 
-[webdriver]
-# Path to the Chrome binary. If not set, the default system Chrome will be used.
+# Verification method to use for each email provider. Available methods are:
+# "smtp", "headless", and "api". Note that not all methods are supported by
+# all email providers.
+[verif_method]
+# Gmail currently only supports the "smtp" method.
 #
-# Env variable: RCH__WEBDRIVER__BINARY
-# binary = "/usr/bin/google-chrome"
-
-# Deprecated: use the "proxies" configuration below instead.
+# Env variable: RCH__VERIF_METHOD__GMAIL
+gmail = "smtp"
+# Hotmail B2B currently only supports the "smtp" method.
 #
-# Uncomment the lines below to define a proxy called "default". If you want to
-# use a proxy, you can set the `proxy` field in the `verif_method` section
-# below to "default". Not setting it will NOT apply this default proxy to
-# verifications though.
-#
-# The username and password are optional and only needed if the proxy requires
-# authentication.
-#
-# Env variables:
-# - RCH__PROXY__HOST
-# - RCH__PROXY__PORT
-# - RCH__PROXY__USERNAME
-# - RCH__PROXY__PASSWORD
-#
-# [proxy]
-# host = "my.proxy.com"
-# port = 1080
-# username = "my-username"
-# password = "my-password"
-
-# Override verification method to use for each email provider. Each email provider can
-# be verified using one of the following methods:
-# - Gmail: smtp
-# - Hotmail B2B: smtp
-# - Hotmail B2C: headless or smtp
-# - Yahoo: headless or smtp
-# - Mimecast: smtp
-# - Proofpoint: smtp
-#
-# For the email providers you choose to verify using the "smtp" method, you
-# may add additional configuration, such as hello_name, from_email, and
-# whether to use a proxy or not.
-#
-# If using proxies, the list of proxies must be defined in the "proxies"
-# section below, with a unique name for each proxy such as "proxy1", "proxy2",
-# etc. Then, in the email provider's SMTP configuration, set the value to the
-# name of the proxy to use. To use the proxy defined the the top-level "proxy"
-# section, set the value to "default".
-[overrides]
-# Use the "proxies" configuration below to route SMTP verification requests
-# through a specified proxy.
-#
-# Reacher allows you to configure multiple proxies, each with a unique name.
-# We recommend simply using "proxy1", "proxy2", etc. as the proxy names.
-#
-# In the `overrides` section below, you can specify which proxy to use for
-# each email provider. For example, to use "proxy1" for Gmail and "proxy2" for
-# Yahoo, set the `gmail` field to "proxy1" and the `yahoo` field to "proxy2".
-[overrides.proxies]
-# Uncomment the lines below to configure a proxy. The username and password are
-# optional and only needed if the proxy requires authentication.
-#
-# Env variables:
-# - RCH__OVERRIDES__PROXIES__PROXY1__HOST
-# - RCH__OVERRIDES__PROXIES__PROXY1__PORT
-# - RCH__OVERRIDES__PROXIES__PROXY1__USERNAME
-# - RCH__OVERRIDES__PROXIES__PROXY1__PASSWORD
-# proxy1 = { host = "my.proxy1.com", port = 1080, username = "my-username1", password = "my-password1" }
-# proxy2 = { host = "my.proxy2.com", port = 1081 }
-
-# Set overrides for Gmail. If uncommented, make sure to uncomment all fields.
-# [overrides.gmail]
-# type = "smtp"
-# proxy = "proxy1"
-# hello_name = "my-domain.com"
-# from_email = "hello@my-domain.com"
-
-# For each email provider, you can override the verification method and set
-# additional configuration. The available fields are the same as for the
-# "gmail" section above.
-
-# [overrides.hotmailb2b]
-
-# [overrides.hotmailb2c]
-
-# [overrides.mimecast]
-
-# [overrides.proofpoint]
-
-# [overrides.yahoo]
+# Env variable: RCH__VERIF_METHOD__HOTMAILB2B
+hotmailb2b = "smtp"
+# Hotmail B2C supports both "headless" and "smtp" methods. The "headless"
+# method is recommended.
+hotmailb2c = "headless"
+# Yahoo supports both "headless" and "smtp" methods. The "headless" method is
+# recommended.
+yahoo = "headless"
 
 # Throttle the maximum number of requests per second, per minute, per hour, and
 # per day for this worker.
@@ -233,7 +156,7 @@ concurrency = 5
 
 # # URL to connect to the Postgres database.
 #
-# Env variable: RCH__STORAGE__0__POSTGRES__DB_URL
+# Env variable: RCH__STORAGE__POSTGRES__DB_URL
 # db_url = "postgresql://localhost/reacherdb"
 #
 # If you wish to store additional data along with the verification results,
@@ -259,7 +182,7 @@ To store all email verification results to a Postgres database:
 docker run -e RCH__STORAGE__POSTGRES__DB_URL="postgres://user:pass@mydomain.mycompany.com/my_db_name" -p 8080:8080 reacherhq/backend:beta
 ```
 
-For advanced users, if you prefer to pass in the full [`backend_config.toml`](../../backend/backend_config.toml) file instead of individual environment variable flags, run:
+For advanced users, if you prefer to pass in the full [`backend_config.toml`](../../../backend/backend_config.toml) file instead of individual environment variable flags, run:
 
 ```bash
 docker run -e RUST_LOG=reacher=debug -v /path/to/local/backend_config.toml:./backend_config.toml -p 8080:8080 reacherhq/backend:beta

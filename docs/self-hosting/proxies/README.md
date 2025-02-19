@@ -6,7 +6,7 @@ Maintaining a good IP reputation is hard. Reacher integrates seamlessly with SOC
 
 A **SOCKS5 proxy** is a flexible proxy protocol that supports various types of traffic, including SMTP. When using it for email verifications, the reputation of the **proxy’s IP** is what matters, not your own IP. This is crucial for maintaining deliverability and avoiding issues like blacklisting.
 
-Choosing a reputable 3rd-party proxy will greatly improve the quality of your email verification results. For a list of recommended proxies, see [#which-3rd-party-proxies-does-reacher-recommend](proxies.md#which-3rd-party-proxies-does-reacher-recommend "mention")
+Choosing a reputable 3rd-party proxy will greatly improve the quality of your email verification results. For a list of recommended proxies, see [#which-3rd-party-proxies-does-reacher-recommend](./#which-3rd-party-proxies-does-reacher-recommend "mention")
 
 {% hint style="info" %}
 SMTP email verifications are not possible via a traditional HTTP proxy.
@@ -14,7 +14,7 @@ SMTP email verifications are not possible via a traditional HTTP proxy.
 
 ## Setting up a Proxy
 
-Once you've purchased a proxy, run the Docker command (see how in [install.md](install.md "mention")) and pass the following flags:
+Once you've purchased a proxy, run the Docker command (see how in [install.md](../install.md "mention")) and pass the following flags:
 
 * `-e RCH__PROXY__HOST=<host>`: The IP or hostname of the proxy server.
 * `-e RCH__PROXY__PORT=<port>`: The corresponding port.
@@ -24,7 +24,7 @@ Once you've purchased a proxy, run the Docker command (see how in [install.md](i
 * `-e RCH__FROM_EMAIL=<email>`: The email to use during the "MAIL FROM" step. It should be an email from the same domain as the HELLO\_NAME. Ask your proxy provider about this setting.
 
 {% hint style="info" %}
-If you're using the [commercial-license-trial.md](licensing/commercial-license-trial.md "mention"), these fields are already populated with the built-in proxy. However, you can overwrite them by passing these flags again, pointing to a proxy of your own choosing.
+If you're using the [commercial-license-trial.md](../licensing/commercial-license-trial.md "mention"), these fields are already populated with the built-in proxy. However, you can overwrite them by passing these flags again, pointing to a proxy of your own choosing.
 {% endhint %}
 
 ## Which 3rd-party proxies does Reacher recommend?
@@ -47,4 +47,4 @@ To estimate how many IPs you should buy, we recommend starting from your expecte
 10,000,000 emails per month / 30 = 33,000 emails per day / 10000 = 33 IPs
 ```
 
-The throttling limits of 10000 per day and 60 per minute are already baked in as defaults into Reacher. However, if you're managing scaling yourself ([option-1-manage-scaling-yourself.md](scaling-for-production/option-1-manage-scaling-yourself.md "mention")), make sure that at any time you have as many Reacher instances as IPs you bought. This will make sure that the concurrency of 5 is respected.
+The throttling limits of 10000 per day and 60 per minute are already baked in as defaults into Reacher. However, if you're managing scaling yourself ([option-1-manage-scaling-yourself.md](../scaling-for-production/option-1-manage-scaling-yourself.md "mention")), make sure that at any time you have as many Reacher instances as IPs you bought. This will make sure that the concurrency of 5 is respected.

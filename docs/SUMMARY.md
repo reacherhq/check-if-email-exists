@@ -16,7 +16,8 @@
   * [Option 2: RabbitMQ-based Queue Architecture](self-hosting/scaling-for-production/option-2-rabbitmq-based-queue-architecture.md)
 * [Licensing](self-hosting/licensing/README.md)
   * [Commercial License Trial](self-hosting/licensing/commercial-license-trial.md)
-* [Proxies](self-hosting/proxies.md)
+* [Proxies](self-hosting/proxies/README.md)
+  * [Multiple Proxies](self-hosting/proxies/multiple-proxies.md)
 * [Reacher Configuration](self-hosting/reacher-configuration-v0.10.md)
 * [Debugging Reacher](self-hosting/debugging-reacher.md)
 
@@ -28,6 +29,7 @@
   * [/v1/bulk](advanced/openapi/v1-bulk.md)
 * [Run your own Proxy](advanced/run-your-own-proxy.md)
 * [Migrations](advanced/migrations/README.md)
+  * [Reacher Configuration (v0.10)](advanced/migrations/reacher-configuration-v0.10.md)
   * [Migrating from 0.7 to 0.10](advanced/migrations/migrating-from-0.7-to-0.10-beta.md)
   * [Bulk Verification (v0.7)](advanced/migrations/bulk.md)
   * [Docker Environment Variables (v0.7)](advanced/migrations/docker-environment-variables.md)
