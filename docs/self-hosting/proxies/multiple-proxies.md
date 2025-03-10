@@ -1,5 +1,9 @@
 # Multiple Proxies
 
+{% hint style="info" %}
+This feature is only available starting from Reacher v0.11.0.
+{% endhint %}
+
 For advanced use cases, Reacher supports a routing mechanism to route email verification requests to different proxies depending on the MX host.
 
 The configuration is divided in 2 steps:
