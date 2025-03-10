@@ -626,7 +626,7 @@ dependencies = [
  "sentry",
  "serde",
  "serde_json",
- "thiserror 1.0.69",
+ "thiserror 2.0.8",
  "tokio",
  "tracing",
 ]
@@ -3082,7 +3082,7 @@ dependencies = [
  "serial_test",
  "sqlx",
  "sqlxmq",
- "thiserror 1.0.69",
+ "thiserror 2.0.8",
  "tokio",
  "tokio-executor-trait",
  "tokio-reactor-trait",
