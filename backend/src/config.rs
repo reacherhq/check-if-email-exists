@@ -148,7 +148,7 @@ impl BackendConfig {
 				.overrides
 				.hotmailb2c
 				.clone()
-				.unwrap_or_else(|| HotmailB2CVerifMethod::Headless),
+				.unwrap_or(HotmailB2CVerifMethod::Headless),
 			mimecast: self
 				.overrides
 				.mimecast
@@ -163,7 +163,7 @@ impl BackendConfig {
 				.overrides
 				.yahoo
 				.clone()
-				.unwrap_or_else(|| YahooVerifMethod::Headless),
+				.unwrap_or(YahooVerifMethod::Headless),
 			everything_else: EverythingElseVerifMethod::Smtp(default_smtp_config),
 		}
 	}

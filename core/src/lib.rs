@@ -52,13 +52,13 @@
 //!         password: None
 //!     });
 //!     let verif_method = VerifMethod {
-//! 		proxies,
+//!         proxies,
 //!         gmail: GmailVerifMethod::Smtp(VerifMethodSmtpConfig {
 //!            from_email: "me@example.org".to_string(), // Used in the `MAIL FROM:` command
 //!            hello_name: "example.org".to_string(),    // Used in the `EHLO` command
 //!            smtp_port: 587,                           // Use port 587 instead of 25
 //!            proxy: Some("proxy1".to_string()),        // Use the proxy we defined above
-//! 		   ..Default::default()
+//!            ..Default::default()
 //!         }),
 //!         ..Default::default()
 //!     };
@@ -86,10 +86,8 @@ pub mod smtp;
 pub mod syntax;
 mod util;
 
-use hickory_proto::rr::rdata::MX;
 use misc::{check_misc, MiscDetails};
 use mx::check_mx;
-use rand::Rng;
 use rustls::crypto::ring;
 use smtp::{check_smtp, SmtpDetails, SmtpError};
 pub use smtp::{is_gmail, is_hotmail, is_hotmail_b2b, is_hotmail_b2c, is_yahoo};
@@ -99,8 +97,6 @@ use syntax::{check_syntax, get_similar_mail_provider};
 pub use util::input_output::*;
 #[cfg(feature = "sentry")]
 pub use util::sentry::*;
-
-use crate::rules::{has_rule, Rule};
 
 /// The target where to log check-if-email-exists logs.
 pub const LOG_TARGET: &str = "reacher";
