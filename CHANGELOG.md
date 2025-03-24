@@ -2,7 +2,16 @@
 
 All notable changes to this project will be documented in this file. The changes in this project follow [Convention Commits](https://www.conventionalcommits.org/en/v1.0.0/).
 
-# [](https://github.com/reacherhq/check-if-email-exists/compare/v0.11.0...v) (2025-02-23)
+# [](https://github.com/reacherhq/check-if-email-exists/compare/v0.11.1...v) (2025-03-24)
+
+
+
+## [0.11.1](https://github.com/reacherhq/check-if-email-exists/compare/v0.11.0...v0.11.1) (2025-03-24)
+
+
+### Bug Fixes
+
+* Revert back to using lowest-priority MX record ([#1578](https://github.com/reacherhq/check-if-email-exists/issues/1578)) ([60468b3](https://github.com/reacherhq/check-if-email-exists/commit/60468b3f533491a0dff6a42e7096f34ece19896c))
 
 
 
