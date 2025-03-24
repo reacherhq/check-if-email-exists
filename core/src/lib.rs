@@ -52,13 +52,13 @@
 //!         password: None
 //!     });
 //!     let verif_method = VerifMethod {
-//! 		proxies,
+//!         proxies,
 //!         gmail: GmailVerifMethod::Smtp(VerifMethodSmtpConfig {
 //!            from_email: "me@example.org".to_string(), // Used in the `MAIL FROM:` command
 //!            hello_name: "example.org".to_string(),    // Used in the `EHLO` command
 //!            smtp_port: 587,                           // Use port 587 instead of 25
 //!            proxy: Some("proxy1".to_string()),        // Use the proxy we defined above
-//! 		   ..Default::default()
+//!            ..Default::default()
 //!         }),
 //!         ..Default::default()
 //!     };
@@ -86,10 +86,8 @@ pub mod smtp;
 pub mod syntax;
 mod util;
 
-use hickory_proto::rr::rdata::MX;
 use misc::{check_misc, MiscDetails};
 use mx::check_mx;
-use rand::Rng;
 use rustls::crypto::ring;
 use smtp::{check_smtp, SmtpDetails, SmtpError};
 pub use smtp::{is_gmail, is_hotmail, is_hotmail_b2b, is_hotmail_b2c, is_yahoo};
@@ -99,8 +97,6 @@ use syntax::{check_syntax, get_similar_mail_provider};
 pub use util::input_output::*;
 #[cfg(feature = "sentry")]
 pub use util::sentry::*;
-
-use crate::rules::{has_rule, Rule};
 
 /// The target where to log check-if-email-exists logs.
 pub const LOG_TARGET: &str = "reacher";
@@ -232,38 +228,15 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		"Found misc details"
 	);
 
-	// From the list of MX records, we only choose one: we don't choose the
-	// first or last ones, because some domains put dummy MX records at the
-	// beginning or end of the list (sorted by priority). Instead, we choose a
-	// random one in the middle of the list.
-	//
-	// See here for explanation: https://cwiki.apache.org/confluence/display/SPAMASSASSIN/OtherTricks
-	//
-	// If anyone has a better algorithm, let me know by creating an issue on
-	// Github.
-	// ref: https://github.com/reacherhq/check-if-email-exists/issues/1049
-	let mut mx_records = my_mx
+	// From the list of MX records, we choose the one with the lowest priority.
+	let mx_records = my_mx
 		.lookup
 		.as_ref()
 		.expect("If lookup is error, we already returned. qed.")
 		.iter()
-		// Don't try to connect to honey pot servers.
-		.filter(|a| {
-			!has_rule(
-				&my_syntax.domain,
-				&a.exchange().to_string(),
-				&Rule::HoneyPot,
-			)
-		})
-		.collect::<Vec<&MX>>();
-	mx_records.sort_by_key(|a| a.preference());
-	let host = if mx_records.len() >= 3 {
-		let mut rng = rand::thread_rng();
-		let index = rng.gen_range(1..mx_records.len() - 1);
-		mx_records[index]
-	} else {
-		mx_records[mx_records.len() - 1]
-	};
+		.min_by_key(|a| a.preference())
+		.expect("There should be at least one MX record after filtering.");
+	let host = mx_records;
 
 	let (my_smtp, smtp_debug) = check_smtp(
 		my_syntax

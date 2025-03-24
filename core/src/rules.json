@@ -8,7 +8,6 @@
 		"yahoo.fr": { "rules": ["SkipCatchAll"] }
 	},
 	"by_mx": {
-		"filter30.antispamcloud.com.": { "rules": ["HoneyPot"] },
 		"futuresinitiative.org.": { "rules": ["SmtpTimeout45s"] },
 		"mail.digimarcon.com.": { "rules": ["SmtpTimeout45s"] },
 		"mail.glasasoftball.org.": { "rules": ["SmtpTimeout45s"] },

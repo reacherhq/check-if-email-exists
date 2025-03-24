@@ -30,8 +30,6 @@ pub enum Rule {
 	SkipCatchAll,
 	/// Set the SMTP timeout to 45s.
 	SmtpTimeout45s,
-	/// Honey pot.
-	HoneyPot,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
