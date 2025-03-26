@@ -63,6 +63,7 @@ pub async fn check_gmail_via_api(
 
 	tracing::debug!(
 		target: LOG_TARGET,
+		thread_id=?tokio::task::id(),
 		email = %to_email,
 		response = ?response,
 		"Gmail API response"

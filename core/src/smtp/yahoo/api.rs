@@ -93,6 +93,7 @@ pub async fn check_api(to_email: &str, input: &CheckEmailInput) -> Result<SmtpDe
 
 	tracing::debug!(
 		target: LOG_TARGET,
+		thread_id=?tokio::task::id(),
 		email=to_email,
 		"Yahoo succesfully got cookies after response"
 	);
@@ -156,6 +157,7 @@ pub async fn check_api(to_email: &str, input: &CheckEmailInput) -> Result<SmtpDe
 
 	tracing::debug!(
 		target: LOG_TARGET,
+		thread_id=?tokio::task::id(),
 		email=to_email,
 		"Yahoo 2nd response: {:?}",
 		res
