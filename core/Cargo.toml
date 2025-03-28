@@ -27,7 +27,7 @@ futures = { version = "0.3.30" }
 hickory-proto = "0.24.0"
 hickory-resolver = "0.24.0"
 levenshtein = "1.0.5"
-log = "0.4.22"
+log = "0.4.26"
 mailchecker = "6.0.11"
 md5 = "0.7.0"
 once_cell = "1.21.1"
