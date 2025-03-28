@@ -178,9 +178,9 @@ webdriver_addr = "http://localhost:9515"
 # - RCH__THROTTLE__MAX_REQUESTS_PER_DAY
 [throttle]
 # max_requests_per_second = 20
-max_requests_per_minute = 60
+# max_requests_per_minute = 60
 # max_requests_per_hour = 1000
-max_requests_per_day = 10000
+# max_requests_per_day = 10000
 
 # Configuration for a queue-based architecture for Reacher. This feature is
 # currently in **beta**. The queue-based architecture allows Reacher to scale
