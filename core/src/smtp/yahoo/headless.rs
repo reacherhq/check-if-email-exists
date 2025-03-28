@@ -44,7 +44,6 @@ pub async fn check_headless(
 		attempts += 1;
 		tracing::debug!(
 			target: LOG_TARGET,
-			thread_id=?tokio::task::id(),
 			email=%to_email,
 			attempt=%attempts,
 			"Using Yahoo password recovery in headless navigator"

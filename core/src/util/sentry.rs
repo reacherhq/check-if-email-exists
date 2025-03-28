@@ -37,11 +37,7 @@ pub fn setup_sentry(sentry_dsn: &str) -> sentry::ClientInitGuard {
 	// will just silently ignore.
 	let sentry = sentry::init(sentry_dsn);
 	if sentry.is_enabled() {
-		info!(
-			target: LOG_TARGET,
-			thread_id=?tokio::task::id(),
-			"Sentry is successfully set up."
-		);
+		info!(target: LOG_TARGET, "Sentry is successfully set up.")
 	}
 
 	sentry
@@ -72,12 +68,7 @@ impl<'a> SentryError<'a> {
 /// info before sending to Sentry, by removing all instances of `username`.
 fn error(err: SentryError, result: &CheckEmailOutput, backend_name: &str) {
 	let exception_value = redact(format!("{err:?}").as_str(), &result.syntax.username);
-	debug!(
-		target: LOG_TARGET,
-		thread_id=?tokio::task::id(),
-		"Sending error to Sentry: {}",
-		exception_value,
-	);
+	debug!(target: LOG_TARGET, "Sending error to Sentry: {}", exception_value);
 
 	let exception = Exception {
 		ty: err.get_exception_type(),

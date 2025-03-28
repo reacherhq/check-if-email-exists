@@ -79,7 +79,6 @@ pub async fn check_microsoft365_api(
 
 	tracing::debug!(
 		target: LOG_TARGET,
-		thread_id=?tokio::task::id(),
 		email = %to_email,
 		response = ?response,
 		"microsoft365 response"

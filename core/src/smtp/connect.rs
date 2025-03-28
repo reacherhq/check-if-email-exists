@@ -43,7 +43,6 @@ macro_rules! try_smtp (
 		if let Err(err) = $res {
 			tracing::debug!(
 				target: LOG_TARGET,
-				thread_id=?tokio::task::id(),
 				email=$to_email.to_string(),
 				mx_host=$host,
 				port=$port,
@@ -228,7 +227,6 @@ async fn smtp_is_catch_all<S: AsyncBufRead + AsyncWrite + Unpin + Send>(
 	if has_rule(domain, host, &Rule::SkipCatchAll) {
 		tracing::debug!(
 			target: LOG_TARGET,
-			thread_id=?tokio::task::id(),
 			email=to_email.to_string(),
 			domain=domain,
 			"Skipping catch-all check"
@@ -282,7 +280,6 @@ async fn create_smtp_future(
 			if parser::is_err_io_errors(e) {
 				tracing::debug!(
 					target: LOG_TARGET,
-					thread_id=?tokio::task::id(),
 					email=to_email.to_string(),
 					error=?e,
 					"Got `io: incomplete` error, reconnecting"
@@ -349,7 +346,6 @@ pub async fn check_smtp_with_retry(
 ) -> Result<SmtpDetails, SmtpError> {
 	tracing::debug!(
 		target: LOG_TARGET,
-		thread_id=?tokio::task::id(),
 		email=to_email.to_string(),
 		attempt=verif_method.config.retries - count + 1,
 		mx_host=mx_host,
@@ -362,7 +358,6 @@ pub async fn check_smtp_with_retry(
 
 	tracing::debug!(
 		target: LOG_TARGET,
-		thread_id=?tokio::task::id(),
 		email=to_email.to_string(),
 		attempt=verif_method.config.retries - count + 1,
 		mx_host=mx_host,
@@ -385,7 +380,6 @@ pub async fn check_smtp_with_retry(
 			} else {
 				tracing::debug!(
 					target: LOG_TARGET,
-					thread_id=?tokio::task::id(),
 					email=to_email.to_string(),
 					"Potential greylisting detected, retrying"
 				);

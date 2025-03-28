@@ -43,7 +43,6 @@ pub async fn check_haveibeenpwned(to_email: &str, api_key: Option<String>) -> Op
 				let breaches: Vec<serde_json::Value> = response.json().await.unwrap_or_default();
 				tracing::debug!(
 					target: LOG_TARGET,
-					thread_id=?tokio::task::id(),
 					breach_count=breaches.len(),
 					"HaveIBeenPwned check completed"
 				);

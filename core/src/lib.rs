@@ -149,7 +149,6 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 
 	tracing::debug!(
 		target: LOG_TARGET,
-		thread_id=?tokio::task::id(),
 		email=%to_email,
 		"Checking email"
 	);
@@ -165,7 +164,6 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 
 	tracing::debug!(
 		target: LOG_TARGET,
-		thread_id=?tokio::task::id(),
 		email=%to_email,
 		syntax=?my_syntax,
 		"Found syntax validation"
@@ -211,7 +209,6 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 
 	tracing::debug!(
 		target: LOG_TARGET,
-		thread_id=?tokio::task::id(),
 		email=%to_email,
 		mx_hosts=?mx_hosts,
 		"Found MX hosts"
@@ -226,7 +223,6 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 
 	tracing::debug!(
 		target: LOG_TARGET,
-		thread_id=?tokio::task::id(),
 		email=%to_email,
 		misc=?my_misc,
 		"Found misc details"

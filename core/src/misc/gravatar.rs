@@ -28,7 +28,6 @@ pub async fn check_gravatar(to_email: &str) -> Option<String> {
 
 	tracing::debug!(
 		target: LOG_TARGET,
-		thread_id=?tokio::task::id(),
 		email=to_email,
 		url=url,
 		"Request Gravatar API"
@@ -44,7 +43,6 @@ pub async fn check_gravatar(to_email: &str) -> Option<String> {
 
 	tracing::debug!(
 		target: LOG_TARGET,
-		thread_id=?tokio::task::id(),
 		"[email={}] Gravatar response: {:?}",
 		to_email,
 		response

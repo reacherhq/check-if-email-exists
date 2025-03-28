@@ -39,7 +39,6 @@ pub async fn check_password_recovery(
 	let to_email = to_email.to_string();
 	tracing::debug!(
 		target: LOG_TARGET,
-		thread_id=?tokio::task::id(),
 		email=to_email,
 		"Using Hotmail password recovery in headless navigator"
 	);
@@ -95,7 +94,6 @@ pub async fn check_password_recovery(
 	if is_deliverable {
 		tracing::debug!(
 			target: LOG_TARGET,
-			thread_id=?tokio::task::id(),
 			email=to_email,
 			exists=is_deliverable,
 			"Did not find error message in password recovery, email exists"
@@ -103,7 +101,6 @@ pub async fn check_password_recovery(
 	} else {
 		tracing::debug!(
 			target: LOG_TARGET,
-			thread_id=?tokio::task::id(),
 			email=to_email,
 			exists=is_deliverable,
 			"Found error message in password recovery, email does not exist"
@@ -114,7 +111,6 @@ pub async fn check_password_recovery(
 
 	tracing::debug!(
 		target: LOG_TARGET,
-		thread_id=?tokio::task::id(),
 		email=to_email,
 		exists=is_deliverable,
 		"Password recovery check result"
