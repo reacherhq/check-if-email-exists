@@ -2,7 +2,22 @@
 
 All notable changes to this project will be documented in this file. The changes in this project follow [Convention Commits](https://www.conventionalcommits.org/en/v1.0.0/).
 
-# [](https://github.com/reacherhq/check-if-email-exists/compare/v0.11.1...v) (2025-03-24)
+# [](https://github.com/reacherhq/check-if-email-exists/compare/v0.11.2...v) (2025-03-28)
+
+
+
+## [0.11.2](https://github.com/reacherhq/check-if-email-exists/compare/v0.11.1...v0.11.2) (2025-03-28)
+
+
+### Bug Fixes
+
+* Remove max requests per minute/day ([07a6d96](https://github.com/reacherhq/check-if-email-exists/commit/07a6d96416f52ac0824e7e7ac665fd2169ddc7ec))
+* Show thread ID in logs ([#1579](https://github.com/reacherhq/check-if-email-exists/issues/1579)) ([3388163](https://github.com/reacherhq/check-if-email-exists/commit/3388163d03b66ba92455be8404441e8555a9d53c))
+
+
+### Reverts
+
+* "Show thread ID in logs ([#1579](https://github.com/reacherhq/check-if-email-exists/issues/1579))" ([56e7838](https://github.com/reacherhq/check-if-email-exists/commit/56e7838f28067b05b58f1fcd166368a915aafbbc))
 
 
 
