@@ -2,7 +2,16 @@
 
 All notable changes to this project will be documented in this file. The changes in this project follow [Convention Commits](https://www.conventionalcommits.org/en/v1.0.0/).
 
-# [](https://github.com/reacherhq/check-if-email-exists/compare/v0.11.2...v) (2025-03-28)
+# [](https://github.com/reacherhq/check-if-email-exists/compare/v0.11.3...v) (2025-03-29)
+
+
+
+## [0.11.3](https://github.com/reacherhq/check-if-email-exists/compare/v0.11.2...v0.11.3) (2025-03-29)
+
+
+### Bug Fixes
+
+* Fix version in logs ([fa6be78](https://github.com/reacherhq/check-if-email-exists/commit/fa6be7867abae981b0d82fde24e0310b9759ab1f))
 
 
 
