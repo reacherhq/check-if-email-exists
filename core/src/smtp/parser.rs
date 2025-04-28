@@ -106,6 +106,8 @@ pub fn is_invalid(e: &str, email: &EmailAddress) -> bool {
 	|| e.contains("verify address failed")
 	// transient: unable to verify user (on @computan.net)
 	|| e.contains("unable to verify user")
+	// permanent: 5.1.1 Utilisateur inconnu (on @sante.fr)
+	|| e.contains("utilisateur inconnu")
 }
 
 /// Check that the mailbox has a full inbox.
