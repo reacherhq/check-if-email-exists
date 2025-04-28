@@ -2,7 +2,16 @@
 
 All notable changes to this project will be documented in this file. The changes in this project follow [Convention Commits](https://www.conventionalcommits.org/en/v1.0.0/).
 
-# [](https://github.com/reacherhq/check-if-email-exists/compare/v0.11.3...v) (2025-03-29)
+# [](https://github.com/reacherhq/check-if-email-exists/compare/v0.11.4...v) (2025-04-28)
+
+
+
+## [0.11.4](https://github.com/reacherhq/check-if-email-exists/compare/v0.11.3...v0.11.4) (2025-04-28)
+
+
+### Bug Fixes
+
+* Add "utilisateur inconnu" in invalid parser ([#1594](https://github.com/reacherhq/check-if-email-exists/issues/1594)) ([fb91653](https://github.com/reacherhq/check-if-email-exists/commit/fb9165303e2d7be59ed2fa4f0682e8592bc0c5e7))
 
 
 
