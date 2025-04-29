@@ -217,7 +217,7 @@ concurrency = 5
 
 # # URL to connect to the Postgres database.
 #
-# Env variable: RCH__STORAGE__0__POSTGRES__DB_URL
+# Env variable: RCH__STORAGE__POSTGRES__DB_URL
 # db_url = "postgresql://localhost/reacherdb"
 #
 # If you wish to store additional data along with the verification results,
@@ -225,5 +225,5 @@ concurrency = 5
 # as a JSONB column in the database. This is for example useful to track who
 # initiated the verification request in a multi-tenant system.
 # 
-# Env variable: RCH__STORAGE__0__POSTGRES__TABLE_NAME
+# Env variable: RCH__STORAGE__POSTGRES__EXTRA
 # extra = { "my_custom_key" = "my_custom_value" }
