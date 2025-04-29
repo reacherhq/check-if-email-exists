@@ -74,6 +74,11 @@ async fn connect_to_smtp_host(
 
 	let stream: BufStream<Box<dyn AsyncReadWrite>> = match &verif_method.proxy {
 		Some(proxy) => {
+			let mut config = Config::default();
+			if let Some(timeout_ms) = proxy.timeout_ms {
+				config.set_connect_timeout(timeout_ms / 1000);
+			}
+
 			let socks_stream =
 				if let (Some(username), Some(password)) = (&proxy.username, &proxy.password) {
 					Socks5Stream::connect_with_password(
@@ -82,7 +87,7 @@ async fn connect_to_smtp_host(
 						verif_method.config.smtp_port,
 						username.clone(),
 						password.clone(),
-						Config::default(),
+						config,
 					)
 					.await?
 				} else {
@@ -90,7 +95,7 @@ async fn connect_to_smtp_host(
 						(proxy.host.as_ref(), proxy.port),
 						clean_host.clone(),
 						verif_method.config.smtp_port,
-						Config::default(),
+						config,
 					)
 					.await?
 				};

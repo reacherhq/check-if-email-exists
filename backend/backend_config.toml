@@ -62,40 +62,20 @@ webdriver_addr = "http://localhost:9515"
 # - RCH__PROXY__PORT
 # - RCH__PROXY__USERNAME
 # - RCH__PROXY__PASSWORD
+# - RCH__PROXY__TIMEOUT_MS
 #
 # [proxy]
 # host = "my.proxy.com"
 # port = 1080
 # username = "my-username"
 # password = "my-password"
+# timeout_ms = 30000
 
 [webdriver]
 # Path to the Chrome binary. If not set, the default system Chrome will be used.
 #
 # Env variable: RCH__WEBDRIVER__BINARY
 # binary = "/usr/bin/google-chrome"
-
-# Deprecated: use the "proxies" configuration below instead.
-#
-# Uncomment the lines below to define a proxy called "default". If you want to
-# use a proxy, you can set the `proxy` field in the `verif_method` section
-# below to "default". Not setting it will NOT apply this default proxy to
-# verifications though.
-#
-# The username and password are optional and only needed if the proxy requires
-# authentication.
-#
-# Env variables:
-# - RCH__PROXY__HOST
-# - RCH__PROXY__PORT
-# - RCH__PROXY__USERNAME
-# - RCH__PROXY__PASSWORD
-#
-# [proxy]
-# host = "my.proxy.com"
-# port = 1080
-# username = "my-username"
-# password = "my-password"
 
 # Override verification method to use for each email provider. Each email provider can
 # be verified using one of the following methods:

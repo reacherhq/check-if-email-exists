@@ -49,7 +49,8 @@
 //!         host: "my-proxy.io".to_string(),             // Use a SOCKS5 proxy to verify the email
 //!         port: 1080,
 //!         username: None,                              // You can also set it non-empty
-//!         password: None
+//!         password: None,
+//!         timeout_ms: None,
 //!     });
 //!     let verif_method = VerifMethod {
 //!         proxies,

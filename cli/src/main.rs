@@ -84,6 +84,7 @@ async fn main() -> Result<(), anyhow::Error> {
 			port: CONF.proxy_port,
 			username: CONF.proxy_username.clone(),
 			password: CONF.proxy_password.clone(),
+			timeout_ms: None,
 		});
 	let verif_method = VerifMethod::new_with_same_config_for_all(
 		proxy,
