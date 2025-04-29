@@ -102,6 +102,8 @@ pub struct CheckEmailInputProxy {
 	pub username: Option<String>,
 	/// Password to pass to proxy authentication.
 	pub password: Option<String>,
+	/// The timeout for the connection to the proxy, in ms.
+	pub timeout_ms: Option<u64>,
 }
 
 /// Builder pattern for the input argument into the main `email_exists`
