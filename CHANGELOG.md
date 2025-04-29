@@ -2,7 +2,16 @@
 
 All notable changes to this project will be documented in this file. The changes in this project follow [Convention Commits](https://www.conventionalcommits.org/en/v1.0.0/).
 
-# [](https://github.com/reacherhq/check-if-email-exists/compare/v0.11.4...v) (2025-04-28)
+# [](https://github.com/reacherhq/check-if-email-exists/compare/v0.11.5...v) (2025-04-29)
+
+
+
+## [0.11.5](https://github.com/reacherhq/check-if-email-exists/compare/v0.11.4...v0.11.5) (2025-04-29)
+
+
+### Features
+
+* Add optional timeout on proxy (env var: `RCH__PROXY__TIMEOUT_MS`) ([#1595](https://github.com/reacherhq/check-if-email-exists/issues/1595)) ([0e51eb6](https://github.com/reacherhq/check-if-email-exists/commit/0e51eb686dad6bd2ec827e785bf9c30ccc88cde1))
 
 
 
