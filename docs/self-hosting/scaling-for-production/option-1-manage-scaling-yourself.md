@@ -1,8 +1,8 @@
-# Option 1: Manage scaling yourself
+# Manage scaling yourself
 
 Reacher is stateless by design. This means that you can spawn instances of Reacher concurrently, and they don't need coordinate to perform email verifications.
 
-However, in most cases, some coordination is desired. For example, to avoid IPs being blacklisted, we might want to limit to the number of spawned instances at any time (concurrency) or during a given period of time (throttling). See the last section in [proxies](../proxies/ "mention") for some actual numbers for these settings.
+However, in most cases, some coordination is desired. For example, when using a proxy, you might want to respect the proxy's concurrency and throttling limits to avoid seeing your connection refused.
 
 The best scaling solution for you is the one that fits into your architecture. Below are several scaling solutions, including both traditional and advanced approaches. They are often not mutually exclusive.
 
