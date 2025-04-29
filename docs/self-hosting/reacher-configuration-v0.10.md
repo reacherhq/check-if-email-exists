@@ -42,7 +42,10 @@ hello_name = "localhost"
 from_email = "hello@localhost"
 
 # Timeout for each SMTP connection, in seconds. Leaving it commented out will
-# not set a timeout, i.e. the connection will wait indefinitely.
+# not set a timeout, i.e. the connection will wait indefinitely. If using a
+# proxy, this timeout includes both the time to connect to the proxy and the
+# time to connect to perform the whole SMTP verification. Also see:
+# `proxy.timeout_ms`.
 #
 # Env variable: RCH__SMTP_TIMEOUT
 # smtp_timeout = 45
@@ -63,53 +66,48 @@ from_email = "hello@localhost"
 # Env variable: RCH__WEBDRIVER_ADDR
 webdriver_addr = "http://localhost:9515"
 
-# Uncomment the lines below to route all SMTP verification requests
-# through a specified proxy. Note that the proxy must be a SOCKS5 proxy to work
-# with the SMTP protocol. This proxy will not be used for headless
-# verifications.
-#
-# The username and password are optional and only needed if the proxy requires
-# authentication.
+# Uncomment the line `[proxy]` below to route all SMTP verification requests
+# through a specified proxy.
+# [proxy]
+
+# The proxy host and port. The proxy must be a SOCKS5 proxy to work with the
+# SMTP protocol. This proxy will not be used for headless verifications.
 #
 # Env variables:
 # - RCH__PROXY__HOST
 # - RCH__PROXY__PORT
+#
+# Uncomment the two lines below if the `[proxy]` section is uncommented.
+# host = "my.proxy.com"
+# port = 1080
+
+# Username and password for the proxy. These are optional and only needed if
+# the proxy requires authentication.
+#
+# Env variables:
 # - RCH__PROXY__USERNAME
 # - RCH__PROXY__PASSWORD
 #
-# [proxy]
-# host = "my.proxy.com"
-# port = 1080
+# Uncomment the two lines below if needed.
 # username = "my-username"
 # password = "my-password"
+
+# This is the timeout for the proxy connection, in milliseconds. Please note
+# that this is not the timeout for the SMTP connection itself, but rather the
+# timeout for the connection to the proxy server only. As such, it can be kept
+# quite low, for example 5000-10000ms. For a full timeout of the SMTP
+# connection, please use the `smtp_timeout` field above.
+#
+# Env variable: RCH__PROXY__TIMEOUT_MS
+#
+# Uncomment the line below if needed.
+# timeout_ms = 10000
 
 [webdriver]
 # Path to the Chrome binary. If not set, the default system Chrome will be used.
 #
 # Env variable: RCH__WEBDRIVER__BINARY
 # binary = "/usr/bin/google-chrome"
-
-# Deprecated: use the "proxies" configuration below instead.
-#
-# Uncomment the lines below to define a proxy called "default". If you want to
-# use a proxy, you can set the `proxy` field in the `verif_method` section
-# below to "default". Not setting it will NOT apply this default proxy to
-# verifications though.
-#
-# The username and password are optional and only needed if the proxy requires
-# authentication.
-#
-# Env variables:
-# - RCH__PROXY__HOST
-# - RCH__PROXY__PORT
-# - RCH__PROXY__USERNAME
-# - RCH__PROXY__PASSWORD
-#
-# [proxy]
-# host = "my.proxy.com"
-# port = 1080
-# username = "my-username"
-# password = "my-password"
 
 # Override verification method to use for each email provider. Each email provider can
 # be verified using one of the following methods:
@@ -192,9 +190,9 @@ webdriver_addr = "http://localhost:9515"
 # - RCH__THROTTLE__MAX_REQUESTS_PER_DAY
 [throttle]
 # max_requests_per_second = 20
-max_requests_per_minute = 60
+# max_requests_per_minute = 60
 # max_requests_per_hour = 1000
-max_requests_per_day = 10000
+# max_requests_per_day = 10000
 
 # Configuration for a queue-based architecture for Reacher. This feature is
 # currently in **beta**. The queue-based architecture allows Reacher to scale

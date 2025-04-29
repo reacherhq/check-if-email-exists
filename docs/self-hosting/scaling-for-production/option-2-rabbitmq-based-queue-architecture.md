@@ -30,12 +30,6 @@ Since spawning workers on cloud providers doesn't guarantee a reputable IP assig
 The Dockerfile provided in the Commercial License Trial already has these parameters set up.
 {% endhint %}
 
-**Proxy Recommendation**:
-
-* Use one proxy IP per 10,000 email verifications per day.
-* Purchase additional proxy IPs as needed to scale.
-* Spawn as many workers as IPs you purchased.
-
 #### Concurrency and Throttling Parameters
 
 To prevent IP blacklisting, configure the following parameters:
@@ -49,17 +43,6 @@ To prevent IP blacklisting, configure the following parameters:
 {% hint style="info" %}
 The Dockerfile provided in the Commercial License Trial already has these parameters set up.
 {% endhint %}
-
-#### Scaling Example
-
-For scaling, buy additional proxy IPs and spawn more workers accordingly. The "rule of thumb" is **10,000 verifications per IP per day**.
-
-For example, if your target is 10 million verifications per month:
-
-1. Daily volume = 10,000,000 emails / 30 days = 333,000 emails/day.
-2. Number of required IPs = 333,000 emails/day / 10,000 emails/IP = **33 or 34 IPs**.
-
-We suggest deploying one Reacher instance per purchased IP. The settings outlined above ensure fair email verification usage as perceived by external email providers. For advanced applications, these values can be adjusted to optimize performance.
 
 ## Understanding the architecture with Docker Compose
 
