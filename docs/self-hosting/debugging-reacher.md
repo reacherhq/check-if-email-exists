@@ -137,7 +137,7 @@ In other cases, you can enable the `RUST_LOG=debug` environment variable on your
 *   IP Blacklisted:
 
     `5.7.1 Service unavailable; Client host [<YOUR_IP>] is blacklisted. Visit https://www.sophos.com/en-us/threat-center/ip-lookup.aspx?ip=<YOUR_IP> to request delisting`
-* Your `FROM` field does not match the reverse DNE\
+* Your `FROM` field does not match the reverse DNS\
   `(mxgmx117) Nemesis ESMTP Service not available; No SMTP service;`
 
 ## Contact me

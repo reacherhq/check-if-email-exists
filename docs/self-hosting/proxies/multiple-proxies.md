@@ -8,7 +8,7 @@ For advanced use cases, Reacher supports a routing mechanism to route email veri
 
 The configuration is divided in 2 steps:
 
-1. Define a list of proxies. e.g. `"proxy1"`, `"proxy2"`etc...
+1. Define a list of proxies. e.g. `"proxy1"`, `"proxy2"`etc., each with their configuration data.
 2. Define routing rules, e.g. `route Gmail to "proxy1"`, `route Hotmail B2B to "proxy2"`etc...
 
 ### 1. Define a list of Proxies

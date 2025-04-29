@@ -1,4 +1,4 @@
-# Option 2: RabbitMQ-based Queue Architecture
+# Option 1: RabbitMQ-based Queue Architecture
 
 Reacher includes an optional, opinionated queue-based architecture designed to scale efficiently and handle high email verification volumes. This architecture comprises 4 main components and is highly configurable to meet specific business needs.
 
@@ -8,62 +8,45 @@ Note that Reacher provides the same Docker image `reacherhq/commercial-license-t
 
 <figure><img src="../../.gitbook/assets/Screenshot 2024-11-30 at 15.33.27.png" alt=""><figcaption><p>Reacher queue architecture</p></figcaption></figure>
 
-With this architecture, it's possible to horizontally scale the number of workers. However, to prevent spawning too many workers at once resulting in blacklisted IPs, we need to configure some concurrency and throttling parameters below.
+With this architecture, it's possible to horizontally scale the number of workers.
 
 ### Worker Configuration
 
 #### **Enabling the Architecture**
 
-To enable the worker-based architecture, configure the following parameters in your deployment:
+To enable the worker-based architecture, configure the following parameters in your deployment. The parameters are given in their `backend_config.toml` format (e.g. `worker.enable`) as well as in the environment variable format (e.g. `RCH__WORKER__ENABLE`):
 
-* `worker.enable`: Set to `true` to activate the worker role.
-* `worker.rabbitmq.url`: URL of the RabbitMQ instance for task queuing.
-* `postgres.db_url`: URL of a PostgreSQL database to store verification results.
+* `worker.enable` or `RCH__WORKER__ENABLE`: Set to `true` to activate the worker role.
+* `worker.rabbitmq.url` or `RCH__WORKER__RABBITMQ__URL`: URL of the RabbitMQ instance for task queuing.
+* `postgres.storage.postgres.db_url` or `RCH__STORAGE__POSTGRES__DB_URL`: URL of a PostgreSQL database to store verification results.
 
 #### Using Proxies for Workers
 
 Since spawning workers on cloud providers doesn't guarantee a reputable IP assigned to the worker, we configure all workers to use a proxy.
 
-* `proxy.{host,port}`: Set a proxy to route all SMTP requests through. You can optionally pass in `username` and `password` if required.
+* `proxy.{host,port}` or `RCH__PROXY__{HOST,PORT}`: Set a proxy to route all SMTP requests through. You can optionally pass in `username` and `password` if required.
 
 {% hint style="info" %}
 The Dockerfile provided in the Commercial License Trial already has these parameters set up.
 {% endhint %}
 
-**Proxy Recommendation**:
+#### Optional Concurrency and Throttling Parameters
 
-* Use one proxy IP per 10,000 email verifications per day.
-* Purchase additional proxy IPs as needed to scale.
-* Spawn as many workers as IPs you purchased.
-
-#### Concurrency and Throttling Parameters
-
-To prevent IP blacklisting, configure the following parameters:
+You may also configure the following parameters:
 
 * **Concurrency**:
-  * `worker.rabbitmq.concurrency`: Set to `5`. Each worker processes up to 5 emails concurrently, which means each proxy IP address is perform maximum 5 email verifications at any give time.
+  * `worker.rabbitmq.concurrency`: Set to `5`. Each worker processes up to 5 emails concurrently.
 * **Throttling**:
   * `throttle.max_requests_per_minute`: Set to `60`. Limits request spikes to prevent SMTP server flags.
-  * `throttle.max_requests_per_day`: Set to `10,000`. Aligns with the recommended verifications per proxy IP.
+  * `throttle.max_requests_per_day`: Set to `10,000`.&#x20;
 
 {% hint style="info" %}
 The Dockerfile provided in the Commercial License Trial already has these parameters set up.
 {% endhint %}
-
-#### Scaling Example
-
-For scaling, buy additional proxy IPs and spawn more workers accordingly. The "rule of thumb" is **10,000 verifications per IP per day**.
-
-For example, if your target is 10 million verifications per month:
-
-1. Daily volume = 10,000,000 emails / 30 days = 333,000 emails/day.
-2. Number of required IPs = 333,000 emails/day / 10,000 emails/IP = **33 or 34 IPs**.
-
-We suggest deploying one Reacher instance per purchased IP. The settings outlined above ensure fair email verification usage as perceived by external email providers. For advanced applications, these values can be adjusted to optimize performance.
 
 ## Understanding the architecture with Docker Compose
 
-We do not recommend using Docker Compose for a high-volume production setup. However, for understanding or learning the architecture, this [`docker_compose.yaml`](../../../docker-compose.yaml) file can be useful.
+We do not recommend using Docker Compose for a high-volume production setup. However, for understanding or learning the architecture, this [`docker_compose.yaml`](../../../rabbitmq/docker-compose.yaml) file can be useful.
 
 ## More questions?
 
