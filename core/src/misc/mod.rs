@@ -39,7 +39,7 @@ fn load_str_as_hashset(file_content: &str) -> HashSet<String> {
 		.collect()
 }
 
-/// Miscelleanous details about the email address.
+/// Miscellaneous details about the email address.
 #[derive(Debug, Default, Deserialize, Serialize)]
 pub struct MiscDetails {
 	/// Is this a DEA (disposable email account)?
@@ -55,7 +55,7 @@ pub struct MiscDetails {
 	pub haveibeenpwned: Option<bool>,
 }
 
-/// Error occured connecting to this email server via SMTP. Right now this
+/// Error occurred connecting to this email server via SMTP. Right now this
 /// enum has no variant, as `check_misc` cannot fail. But putting a placeholder
 /// right now to avoid future breaking changes.
 #[derive(Debug, Error, Serialize)]

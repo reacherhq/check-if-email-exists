@@ -25,7 +25,7 @@ use serde::Serialize;
 use std::time::Duration;
 use thiserror::Error;
 
-/// Error occured connecting to this email server via SMTP.
+/// Error occurred connecting to this email server via SMTP.
 #[derive(Debug, Error, Serialize)]
 #[serde(tag = "type", content = "message")]
 pub enum SmtpError {
