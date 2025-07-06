@@ -2,7 +2,7 @@
 	"openapi": "3.0.0",
 	"info": {
 		"title": "Reacher",
-		"version": "0.10.0",
+		"version": "0.11.0",
 		"description": "### What is Reacher?\n\nReacher is a robust, open-source email verification API service available as both a SaaS and self-hosted solution.",
 		"license": {
 			"name": "AGPL-3.0 OR Commercial",
@@ -409,8 +409,7 @@
 						"is_reachable": "invalid",
 						"misc": {
 							"is_disposable": false,
-							"is_role_account": true,
-							"is_b2c": true
+							"is_role_account": true
 						},
 						"mx": {
 							"accepts_mail": true,
@@ -641,7 +640,7 @@
 					"id": "cuc5bj6ra2t0i"
 				},
 				"title": "HotmailB2CVerifMethod",
-				"enum": ["Smtp", "Headless", "Api"],
+				"enum": ["Smtp", "Headless"],
 				"description": "Enumeration describing the method used to verify Hotmail B2C emails."
 			},
 			"GmailVerifMethod": {
@@ -650,7 +649,7 @@
 					"id": "xo5r48yhtxiwr"
 				},
 				"title": "GmailVerifMethod",
-				"enum": ["Api", "Smtp"],
+				"enum": ["Smtp"],
 				"description": "Enumeration describing the method used to verify Gmail emails.",
 				"x-internal": false
 			},
