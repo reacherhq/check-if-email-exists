@@ -31,27 +31,3 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
           tags: "${{ needs.get-tag.outputs.GITHUB_TAG }},beta"
-
-  ecr-publish:
-    runs-on: ubuntu-latest
-    needs: get-tag
-    steps:
-      - uses: actions/checkout@master
-      - name: Print version
-        run: echo "Publishing reacherhq/backend:${{ needs.get-tag.outputs.GITHUB_TAG }}"
-      - name: Login to ECR
-        id: ecr
-        uses: elgohr/ecr-login-action@v3
-        with:
-          access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          region: ${{ secrets.AWS_REGION }}
-      - name: Publish to AWS ECR
-        uses: elgohr/Publish-Docker-Github-Action@v5
-        with:
-          name: reacherhq/sqs
-          dockerfile: sqs/Dockerfile
-          username: ${{ steps.ecr.outputs.username }}
-          password: ${{ steps.ecr.outputs.password }}
-          registry: ${{ steps.ecr.outputs.registry }}
-          tags: "${{ needs.get-tag.outputs.GITHUB_TAG }},beta"
