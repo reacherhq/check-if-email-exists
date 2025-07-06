@@ -23,6 +23,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use warp::{http, Filter};
 
+use super::backwardcompat::{BackwardCompatHotmailB2CVerifMethod, BackwardCompatYahooVerifMethod};
 use crate::config::BackendConfig;
 use crate::http::{check_header, ReacherResponseError};
 
@@ -35,33 +36,68 @@ pub struct CheckEmailRequest {
 	pub proxy: Option<CheckEmailInputProxy>,
 	pub smtp_timeout: Option<Duration>,
 	pub smtp_port: Option<u16>,
+	// The following fields are for backward compatibility.
+	pub yahoo_verif_method: Option<BackwardCompatYahooVerifMethod>,
+	pub hotmailb2c_verif_method: Option<BackwardCompatHotmailB2CVerifMethod>,
 }
 
 impl CheckEmailRequest {
 	pub fn to_check_email_input(&self, config: Arc<BackendConfig>) -> CheckEmailInput {
+		let hello_name = self
+			.hello_name
+			.clone()
+			.unwrap_or_else(|| config.hello_name.clone());
+		let from_email = self
+			.from_email
+			.clone()
+			.unwrap_or_else(|| config.from_email.clone());
+		let smtp_timeout = self
+			.smtp_timeout
+			.or_else(|| config.smtp_timeout.map(Duration::from_secs));
+		let smtp_port = self.smtp_port.unwrap_or(25);
+		let retries = 1;
+
 		// The current behavior is a bit complex. If the proxy field is present,
 		// we force use the proxy for all the verifications. If the proxy field is
 		// not present, we use the default configuration for all the verifications.
 		//
 		// If the proxy field is unset, but one of the other fields (from_email,
 		// hello_name, smtp_timeout, smtp_port) is set, we ignore those fields.
-		let verif_method = if let Some(proxy) = &self.proxy {
+		let mut verif_method = if let Some(proxy) = &self.proxy {
 			VerifMethod::new_with_same_config_for_all(
 				Some(proxy.clone()),
-				self.hello_name
-					.clone()
-					.unwrap_or_else(|| config.hello_name.clone()),
-				self.from_email
-					.clone()
-					.unwrap_or_else(|| config.from_email.clone()),
-				self.smtp_port.unwrap_or(25),
-				self.smtp_timeout
-					.or(config.smtp_timeout.map(Duration::from_secs)),
-				1,
+				hello_name.clone(),
+				from_email.clone(),
+				smtp_port,
+				smtp_timeout.clone(),
+				retries,
 			)
 		} else {
 			config.get_verif_method()
 		};
+
+		// Also support backward compatibility of the *_verif_method fields, which
+		// override the verif_method.
+		if let Some(yahoo_verif_method) = &self.yahoo_verif_method {
+			verif_method.yahoo = yahoo_verif_method.to_yahoo_verif_method(
+				self.proxy.is_some(),
+				hello_name.clone(),
+				from_email.clone(),
+				smtp_timeout.clone(),
+				smtp_port,
+				retries,
+			);
+		}
+		if let Some(hotmailb2c_verif_method) = &self.hotmailb2c_verif_method {
+			verif_method.hotmailb2c = hotmailb2c_verif_method.to_hotmailb2c_verif_method(
+				self.proxy.is_some(),
+				hello_name,
+				from_email,
+				smtp_timeout,
+				smtp_port,
+				retries,
+			);
+		}
 
 		CheckEmailInput {
 			to_email: self.to_email.clone(),

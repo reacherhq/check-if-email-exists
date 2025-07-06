@@ -67,6 +67,10 @@ impl EmailProvider {
 }
 
 type ProxyID = String;
+// This is a convention ID for the proxy in the top-level "proxy" field of the
+// request, which will be added as a key in the `proxies` map of the
+// `VerifMethod` struct.
+pub const DEFAULT_PROXY_ID: &str = "default";
 
 /// The verification method to use for each email provider.
 #[derive(Debug, Default, Clone, Deserialize, PartialEq, Serialize)]
@@ -104,8 +108,8 @@ impl VerifMethod {
 		retries: usize,
 	) -> Self {
 		let mut proxies = HashMap::new();
-		let proxy_id = if let Some(proxy) = proxy {
-			let proxy_id = "default".to_string();
+		let proxy_id: Option<String> = if let Some(proxy) = proxy {
+			let proxy_id = DEFAULT_PROXY_ID.to_string();
 			proxies.insert(proxy_id.clone(), proxy);
 			Some(proxy_id)
 		} else {

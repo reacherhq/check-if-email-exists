@@ -22,7 +22,7 @@ use anyhow::{bail, Context};
 use check_if_email_exists::smtp::verif_method::{
 	EverythingElseVerifMethod, GmailVerifMethod, HotmailB2BVerifMethod, HotmailB2CVerifMethod,
 	MimecastVerifMethod, ProofpointVerifMethod, VerifMethod, VerifMethodSmtpConfig,
-	YahooVerifMethod,
+	YahooVerifMethod, DEFAULT_PROXY_ID,
 };
 use check_if_email_exists::{CheckEmailInputProxy, WebdriverConfig, LOG_TARGET};
 use config::Config;
@@ -121,13 +121,13 @@ impl BackendConfig {
 	pub fn get_verif_method(&self) -> VerifMethod {
 		let mut proxies = self.overrides.proxies.clone();
 		if let Some(proxy) = self.proxy.as_ref() {
-			proxies.insert("default".to_string(), proxy.clone());
+			proxies.insert(DEFAULT_PROXY_ID.to_string(), proxy.clone());
 		}
 
 		let default_smtp_config = VerifMethodSmtpConfig {
 			from_email: self.from_email.clone(),
 			hello_name: self.hello_name.clone(),
-			proxy: self.proxy.as_ref().map(|_| "default".to_string()),
+			proxy: self.proxy.as_ref().map(|_| DEFAULT_PROXY_ID.to_string()),
 			smtp_timeout: self.smtp_timeout.map(Duration::from_secs),
 			..Default::default()
 		};
@@ -382,11 +382,19 @@ mod tests {
 		// Proxies
 		assert_eq!(cfg.get_verif_method().proxies.len(), 1);
 		assert_eq!(
-			cfg.get_verif_method().proxies.get("default").unwrap().host,
+			cfg.get_verif_method()
+				.proxies
+				.get(DEFAULT_PROXY_ID)
+				.unwrap()
+				.host,
 			"test-default-proxy"
 		);
 		assert_eq!(
-			cfg.get_verif_method().proxies.get("default").unwrap().port,
+			cfg.get_verif_method()
+				.proxies
+				.get(DEFAULT_PROXY_ID)
+				.unwrap()
+				.port,
 			5678
 		);
 
