@@ -2,7 +2,17 @@
 
 All notable changes to this project will be documented in this file. The changes in this project follow [Convention Commits](https://www.conventionalcommits.org/en/v1.0.0/).
 
-# [](https://github.com/reacherhq/check-if-email-exists/compare/v0.11.5...v) (2025-04-29)
+# [](https://github.com/reacherhq/check-if-email-exists/compare/v0.11.6...v) (2025-07-06)
+
+
+
+## [0.11.6](https://github.com/reacherhq/check-if-email-exists/compare/v0.11.5...v0.11.6) (2025-07-06)
+
+
+### Bug Fixes
+
+* Bring back `{yahoo,hotmailb2c}_verif_method` ([#1606](https://github.com/reacherhq/check-if-email-exists/issues/1606)) ([3fbe520](https://github.com/reacherhq/check-if-email-exists/commit/3fbe5200a3d8608fbd72c0f2a5917326c1f8ec91))
+* Fix rabbitmq docker compose ([7c3856e](https://github.com/reacherhq/check-if-email-exists/commit/7c3856ebec6089b37b3dd30e3c4f13df9fb4e73a))
 
 
 
