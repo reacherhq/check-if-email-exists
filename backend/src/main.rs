@@ -60,4 +60,4 @@ async fn main() -> Result<(), anyhow::Error> {
 	info!("Shutting down...");
 
 	Ok(())
-}
+} 
