@@ -35,7 +35,8 @@ async fn main() -> Result<(), anyhow::Error> {
 	info!(target: LOG_TARGET, version=?CARGO_PKG_VERSION, "Running Reacher");
 	let mut config = load_config().await?;
 	config.connect().await?;
-	debug!(target: LOG_TARGET, "{:#?}", config);
+	
+    // SECURITY: Don't log full config as it likely contains secrets (DB_URL, etc)
 	debug!(target: LOG_TARGET, "{:#?}", config.get_verif_method());
 
 	// Setup sentry bug tracking.
