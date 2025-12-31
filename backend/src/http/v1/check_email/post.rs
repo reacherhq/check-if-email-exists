@@ -16,7 +16,7 @@
 
 //! This file implements the `POST /v1/check_email` endpoint.
 
-use check_if_email_exists::{check_email, LOG_TARGET};
+use check_if_email_exists::{check_email, LOG_TARGET, Reachable};
 use futures::{StreamExt, TryFutureExt};
 use lapin::options::{
 	BasicAckOptions, BasicConsumeOptions, BasicRejectOptions, QueueDeclareOptions,
@@ -70,8 +70,15 @@ async fn handle_without_worker(
 	send_to_reacher(Arc::clone(&config), &body.to_email, &result_ok)
 		.await
 		.map_err(ReacherResponseError::from)?;
+let mut result = result_ok.unwrap();
+if let Err(smtp_err) = &result.smtp {
+    let msg = smtp_err.to_string().to_lowercase();
 
-	let result = result_ok.unwrap();
+    if msg.contains("permanent: 5.1.1") || msg.contains("permanent: 5.7.1") {
+        result.is_reachable = Reachable::Invalid;
+    }
+}
+
 	info!(target: LOG_TARGET, email=body.to_email, is_reachable=?result.is_reachable, "Done verification");
 	Ok(serde_json::to_vec(&result).map_err(ReacherResponseError::from)?)
 }
