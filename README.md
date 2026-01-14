@@ -41,7 +41,7 @@ Then send a `POST http://localhost:8080/v0/check_email` request with the followi
         "port": 1080,
         "username": "me",             // (optional) Proxy username
         "password": "pass"            // (optional) Proxy password
-    },
+    }
 }
 ```
 
