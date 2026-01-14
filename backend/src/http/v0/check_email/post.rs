@@ -109,31 +109,24 @@ impl CheckEmailRequest {
 		}
 	}
 }
+
+/// The main endpoint handler that implements the logic of this route.
 async fn http_handler(
 	config: Arc<BackendConfig>,
 	body: CheckEmailRequest,
 ) -> Result<impl warp::Reply, warp::Rejection> {
 	// The to_email field must be present
 	if body.to_email.is_empty() {
-		return Err(ReacherResponseError::new(
-			http::StatusCode::BAD_REQUEST,
-			"to_email field is required.",
+		Err(
+			ReacherResponseError::new(http::StatusCode::BAD_REQUEST, "to_email field is required.")
+				.into(),
 		)
-		.into());
+	} else {
+		// Run the future to check an email.
+		Ok(warp::reply::json(
+			&check_email(&body.to_check_email_input(Arc::clone(&config))).await,
+		))
 	}
-
-	// Run the future to check an email
-	let mut result = check_email(&body.to_check_email_input(Arc::clone(&config))).await;
-
-	// 🔽 Handle permanent/blocked SMTP errors (similar to v1)
-	if let Err(smtp_err) = &result.smtp {
-		let msg = smtp_err.to_string().to_lowercase();
-		if msg.contains("permanent: 5.1.1") || msg.contains("permanent: 5.7.1") {
-			result.is_reachable = check_if_email_exists::Reachable::Invalid;
-		}
-	}
-
-	Ok(warp::reply::json(&result))
 }
 
 /// Create the `POST /check_email` endpoint.
