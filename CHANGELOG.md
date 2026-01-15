@@ -1,8 +1,17 @@
-# Changelog
+﻿# Changelog
 
 All notable changes to this project will be documented in this file. The changes in this project follow [Convention Commits](https://www.conventionalcommits.org/en/v1.0.0/).
 
-# [](https://github.com/reacherhq/check-if-email-exists/compare/v0.11.6...v) (2025-07-06)
+# [](https://github.com/reacherhq/check-if-email-exists/compare/v0.11.7...v) (2026-01-15)
+
+
+
+## [0.11.7](https://github.com/reacherhq/check-if-email-exists/compare/v0.11.6...v0.11.7) (2026-01-15)
+
+
+### Bug Fixes
+
+* **smtp:** treat permanent 5.1.1 and 5.7.1 responses as invalid recipients ([#1631](https://github.com/reacherhq/check-if-email-exists/issues/1631)) ([b3d6b07](https://github.com/reacherhq/check-if-email-exists/commit/b3d6b0751ae95c874014d99fb437e4cca4899d14))
 
 
 
@@ -235,7 +244,7 @@ Changing the default behaviour in this PR.
 * **core:** No sandbox in headless Hotmail check ([0590438](https://github.com/reacherhq/check-if-email-exists/commit/0590438310f3c052b2748a8c408e0d8dbfb777b7))
 * **core:** Remove antispam check ([#1337](https://github.com/reacherhq/check-if-email-exists/issues/1337)) ([06f18ed](https://github.com/reacherhq/check-if-email-exists/commit/06f18edf7aee5640b3725feedfa7b7f213da83a8))
 * **core:** Yahoo add back IDENTIFIER_EXISTS ([2b63556](https://github.com/reacherhq/check-if-email-exists/commit/2b635564efb37b0aa891bbba77244e6cf2d611bb))
-* **core:** yahoo api changes: yid is userId now, sessionIndex is required and fo… ([#1314](https://github.com/reacherhq/check-if-email-exists/issues/1314)) ([0209111](https://github.com/reacherhq/check-if-email-exists/commit/02091115026520596fc5b4b2a6757169e91cba15))
+* **core:** yahoo api changes: yid is userId now, sessionIndex is required and foΓÇª ([#1314](https://github.com/reacherhq/check-if-email-exists/issues/1314)) ([0209111](https://github.com/reacherhq/check-if-email-exists/commit/02091115026520596fc5b4b2a6757169e91cba15))
 * Don't auto-fetch Chrome, install in Docker ([84fcc0d](https://github.com/reacherhq/check-if-email-exists/commit/84fcc0de40567126ce3a385934086450c3a89ccf))
 * split Microsoft 365/Hotmail functionality ([#1204](https://github.com/reacherhq/check-if-email-exists/issues/1204)) ([e987b13](https://github.com/reacherhq/check-if-email-exists/commit/e987b13a5ccd98d28fb756f1bf41427c337750c4))
 * Switch back to upstream fast-socks ([#1164](https://github.com/reacherhq/check-if-email-exists/issues/1164)) ([db356f1](https://github.com/reacherhq/check-if-email-exists/commit/db356f19374843ca135de8ebd8a6c34bfeb017a8))
