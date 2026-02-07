@@ -153,7 +153,8 @@ pub fn is_mimecast(mx_host: &str) -> bool {
 
 /// Check if the MX host is behind Proofpoint.
 pub fn is_proofpoint(mx_host: &str) -> bool {
-	mx_host.to_lowercase().ends_with(".pphosted.com.") || mx_host.ends_with("ppe-hosted.com.")
+        let host = mx_host.to_lowercase();
+        host.ends_with(".pphosted.com.") || host.ends_with("ppe-hosted.com.")
 }
 
 /// Check if the MX host is from Yahoo.
@@ -161,5 +162,16 @@ pub fn is_proofpoint(mx_host: &str) -> bool {
 /// - mta7.am0.yahoodns.net.
 /// - mx-eu.mail.am0.yahoodns.net.
 pub fn is_yahoo(mx_host: &str) -> bool {
-	mx_host.to_lowercase().ends_with(".yahoodns.net.")
+        mx_host.to_lowercase().ends_with(".yahoodns.net.")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn proofpoint_detection_is_case_insensitive() {
+        assert!(is_proofpoint("mx1.PPHOSTED.COM."));
+        assert!(is_proofpoint("mx2.ppe-hosted.com."));
+    }
 }
