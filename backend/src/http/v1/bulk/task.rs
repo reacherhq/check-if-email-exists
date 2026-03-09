@@ -12,8 +12,8 @@ pub struct TaskPayload {
 #[job(name = "v1_email_verification_task")]
 pub async fn v1_email_verification_task(
     mut current_job: sqlxmq::CurrentJob,
-    payload: TaskPayload,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+    let payload: TaskPayload = current_job.json()?.ok_or("Got empty task.")?;
     use check_if_email_exists::LOG_TARGET;
     use std::sync::Arc;
     use crate::config::BackendConfig;
