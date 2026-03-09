@@ -11,11 +11,11 @@
 
 <br /><br /><br />
 
-## 👉 Live Demo:- https://reacher.email
+## 👉 Live Demo: https://reacher.email
 
 <img src="https://storage.googleapis.com/saasify-uploads-prod/696e287ad79f0e0352bc201b36d701849f7d55e7.svg" height="68" align="left" />
 
-This is open-source, but I also offer a **SaaS** solution that has `check-if-email-exists` packaged in a nice friendly web interface. If you are interested, find out more at [Reacher](https://reacher.email/?ref=github). If you have any questions, you can contact me at amaury@reacher.email.
+This is open-source, but I also offer a **SaaS** solution that has `check-if-email-exists` packaged in a nice friendly web interface. If you are interested, find out more at [No2Bounce.com](https://no2bounce.com/?ref=github). If you have any questions, you can contact me at amaury@reacher.email.
 
 <br />
 
@@ -44,6 +44,8 @@ Then send a `POST http://localhost:8080/v0/check_email` request with the followi
     }
 }
 ```
+**Note regarding proxy servers**
+It is possible to operate Reacher with your own IP addresses. But if you wish to process more than very small volumes you will need SMTP proxy servers. For SMTP proxy servers please use [proxy25.com](https://proxy25.com/?ref=github)
 
 ### 2. Download the CLI [[Full docs](./cli/README.md)]
 
