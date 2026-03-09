@@ -406,11 +406,74 @@
             }
         }
 
+        async function viewSafeEmails(jobId) {
+            const modal = document.getElementById('safeModal');
+            const content = document.getElementById('modalContent');
+            content.innerHTML = '<div class="flex items-center gap-2 text-slate-500"><i class="fas fa-spinner fa-spin"></i> Loading safe emails...</div>';
+            modal.classList.remove('hidden');
+
+            try {
+                const response = await fetch(`/api/v1/bulk/${jobId}/results?success_only=true&format=txt`);
+                const text = await response.text();
+
+                if (text.trim()) {
+                    content.innerHTML = text.split('\n').map(email => `<div>${email}</div>`).join('');
+                } else {
+                    content.innerHTML = '<div class="text-slate-500 italic">No safe emails found for this job.</div>';
+                }
+            } catch (error) {
+                content.innerHTML = `<div class="text-rose-400">Error loading emails: ${error.message}</div>`;
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('safeModal').classList.add('hidden');
+        }
+
+        function copyToClipboard() {
+            const content = document.getElementById('modalContent');
+            const emails = content.innerText;
+            navigator.clipboard.writeText(emails).then(() => {
+                const btn = event.currentTarget;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                }, 2000);
+            });
+        }
+
         document.getElementById('refreshJobs').onclick = updateDashboard;
 
         // Initial build
         updateDashboard();
     </script>
+    <!-- Safe Emails Modal -->
+    <div id="safeModal"
+        class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
+        <div
+            class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[80vh]">
+            <div class="p-6 border-b border-slate-800 flex justify-between items-center">
+                <h3 class="text-xl font-semibold text-white">Safe Emails</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="modalContent" class="p-6 overflow-y-auto text-slate-300 font-mono text-sm space-y-1">
+                <!-- Emails will be loaded here -->
+            </div>
+            <div class="p-6 border-t border-slate-800 flex justify-end gap-3">
+                <button onclick="copyToClipboard()"
+                    class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-all flex items-center gap-2">
+                    <i class="far fa-copy"></i> Copy All
+                </button>
+                <button onclick="closeModal()"
+                    class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl transition-all">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

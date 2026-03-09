@@ -14,11 +14,11 @@ pub async fn v1_email_verification_task(
     mut current_job: sqlxmq::CurrentJob,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
     let payload: TaskPayload = current_job.json()?.ok_or("Got empty task.")?;
-    use check_if_email_exists::LOG_TARGET;
-    use std::sync::Arc;
-    use crate::config::BackendConfig;
+    let mut config = crate::config::load_config().await?;
+    config.connect().await?;
+    let config = Arc::new(config);
 
-    let config = Arc::new(BackendConfig::empty());
+    info!(target: LOG_TARGET, job_id=payload.job_id, email=?payload.input.to_email, "Starting bulk verification task");
 
     let task = CheckEmailTask {
         input: payload.input.to_check_email_input(Arc::clone(&config)),
