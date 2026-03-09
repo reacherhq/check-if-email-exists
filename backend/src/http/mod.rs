@@ -49,11 +49,11 @@ pub fn create_routes(
 		.or(v0::bulk::get::get_bulk_job_status(pg_pool.clone()))
 		.or(v0::bulk::results::get_bulk_job_result(pg_pool))
 		.or(v1::check_email::post::v1_check_email(Arc::clone(&config)))
-		.or(v1::auth::auth_filter().and(v1::bulk::post::v1_create_bulk_job(Arc::clone(&config))).map(|_, r| r))
-		.or(v1::auth::auth_filter().and(v1::bulk::get_progress::v1_get_bulk_job_progress(
-			Arc::clone(&config),
-		)).map(|_, r| r))
-		.or(v1::auth::auth_filter().and(v1::bulk::get_results::v1_get_bulk_job_results(config)).map(|_, r| r))
+		.or(warp::path("v1").and(warp::path("bulk")).and(v1::auth::auth_filter()).and(
+			warp::path::end().and(v1::bulk::post::v1_create_bulk_job(Arc::clone(&config)))
+			.or(warp::path::param().and(v1::bulk::get_progress::v1_get_bulk_job_progress(Arc::clone(&config))))
+			.or(warp::path::param().and(warp::path("results")).and(v1::bulk::get_results::v1_get_bulk_job_results(config)))
+		).map(|_, r| r))
 		.recover(handle_rejection)
 }
 
