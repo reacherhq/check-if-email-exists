@@ -19,6 +19,7 @@
 use check_if_email_exists::LOG_TARGET;
 use serde::Serialize;
 use sqlx::types::chrono::{DateTime, Utc};
+use sqlx::Row;
 use sqlx::{Pool, Postgres};
 use tracing::error;
 use warp::Filter;
