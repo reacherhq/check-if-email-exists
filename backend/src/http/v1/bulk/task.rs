@@ -1,7 +1,9 @@
 use crate::http::v0::check_email::post::CheckEmailRequest;
 use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask};
 use sqlxmq::job;
-use std::time::Duration;
+use std::sync::Arc;
+use tracing::info;
+use check_if_email_exists::LOG_TARGET;
 
 #[derive(serde::Deserialize, serde::Serialize, Clone)]
 pub struct TaskPayload {
