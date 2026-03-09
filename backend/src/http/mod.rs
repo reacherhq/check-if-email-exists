@@ -38,6 +38,14 @@ pub fn create_routes(
 
 	let auth_routes = v1::auth::routes(pg_pool.clone());
 
+	let v1_bulk_routes = v1::bulk::post::v1_create_bulk_job(Arc::clone(&config))
+		.or(v1::bulk::get_progress::v1_get_bulk_job_progress(Arc::clone(&config)))
+		.or(v1::bulk::get_results::v1_get_bulk_job_results(config.clone()));
+	
+	let v1_bulk_protected = v1::auth::auth_filter()
+		.and(v1_bulk_routes)
+		.map(|_, r| r);
+
 	version::get::get_version()
 		.or(auth_routes)
 		.or(v0::check_email::post::post_check_email(Arc::clone(&config)))
@@ -49,11 +57,7 @@ pub fn create_routes(
 		.or(v0::bulk::get::get_bulk_job_status(pg_pool.clone()))
 		.or(v0::bulk::results::get_bulk_job_result(pg_pool))
 		.or(v1::check_email::post::v1_check_email(Arc::clone(&config)))
-		.or(warp::path("v1").and(warp::path("bulk")).and(v1::auth::auth_filter()).and(
-			warp::path::end().and(v1::bulk::post::v1_create_bulk_job(Arc::clone(&config)))
-			.or(warp::path::param().and(v1::bulk::get_progress::v1_get_bulk_job_progress(Arc::clone(&config))))
-			.or(warp::path::param().and(warp::path("results")).and(v1::bulk::get_results::v1_get_bulk_job_results(config)))
-		).map(|_, r| r))
+		.or(v1_bulk_protected)
 		.recover(handle_rejection)
 }
 
