@@ -73,188 +73,282 @@
 </head>
 
 <body class="p-4 md:p-8">
-    <div class="max-w-5xl mx-auto">
-        <!-- Header -->
-        <header class="text-center mb-12">
-            <h1 class="text-4xl md:text-5xl font-extrabold mb-3 glow-text tracking-tight">Email Intelligence</h1>
-            <p class="text-gray-400 text-lg max-w-2xl mx-auto">Enterprise-grade email validation for growing businesses.
-                Accurate, fast, and throttled for maximum deliverability.</p>
-        </header>
-
-        <!-- Main Content -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-            <!-- Sidebar / Controls -->
-            <div class="lg:col-span-1 space-y-6">
-                <!-- Tabs -->
-                <div class="glass-panel rounded-2xl p-2 flex overflow-hidden">
-                    <button id="singleTab"
-                        class="flex-1 py-3 text-sm font-medium transition-all rounded-xl bg-blue-600 text-white">Single
-                        Verify</button>
-                    <button id="bulkTab"
-                        class="flex-1 py-3 text-sm font-medium transition-all rounded-xl text-gray-400 hover:text-white">Bulk
-                        Verify</button>
+    <!-- Login Modal -->
+    <div id="loginModal"
+        class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-[200] flex items-center justify-center p-4">
+        <div class="glass-panel rounded-2xl p-8 w-full max-w-md shadow-2xl border border-blue-500/20">
+            <div class="text-center mb-8">
+                <div
+                    class="w-16 h-16 bg-blue-600/20 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-blue-500/30">
+                    <i class="fas fa-shield-alt text-2xl text-blue-400"></i>
                 </div>
+                <h2 class="text-2xl font-bold text-white mb-2">System Login</h2>
+                <p class="text-gray-400">Access protected verification systems</p>
+            </div>
+            <form id="loginForm" class="space-y-4">
+                <div class="space-y-1.5">
+                    <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">Email
+                        Address</label>
+                    <input type="email" id="loginEmail" placeholder="your@email.com" required
+                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all">
+                </div>
+                <div class="space-y-1.5">
+                    <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">Password</label>
+                    <input type="password" id="loginPassword" placeholder="••••••••" required
+                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all">
+                </div>
+                <button type="submit" id="loginSubmitBtn"
+                    class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2 mt-4">
+                    <span>Unlock Dashboard</span>
+                    <i class="fas fa-lock-open text-sm opacity-50"></i>
+                </button>
+                <p id="loginError" class="text-rose-400 text-sm text-center font-medium hidden">Invalid credentials</p>
+            </form>
+        </div>
+    </div>
 
-                <!-- Single Form -->
-                <div id="singleSection" class="glass-panel rounded-2xl p-6 space-y-4">
-                    <h2 class="text-xl font-semibold flex items-center gap-2">
-                        <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                        </svg>
-                        Quick Check
-                    </h2>
-                    <form id="verifyForm" class="space-y-3">
-                        <input type="email" id="emailInput" placeholder="Enter email address..." required
-                            class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all">
-                        <button type="submit" id="submitBtn"
-                            class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-all flex items-center justify-center gap-2 group">
-                            <span id="btnText">Verify Now</span>
-                            <div id="btnLoader" class="loader hidden"></div>
-                            <svg id="btnIcon" class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none"
-                                stroke="currentColor" viewBox="0 0 24 24">
+    <!-- Main Content (authenticated) -->
+    <div id="authenticatedContent" class="hidden">
+        <div class="max-w-6xl mx-auto p-4 sm:p-8">
+            <!-- Header -->
+            <header class="text-center mb-12">
+                <h1 class="text-4xl md:text-5xl font-extrabold mb-3 glow-text tracking-tight">Email Intelligence</h1>
+                <p class="text-gray-400 text-lg max-w-2xl mx-auto">Enterprise-grade email validation for growing
+                    businesses.
+                    Accurate, fast, and throttled for maximum deliverability.</p>
+            </header>
+
+            <!-- Main Content -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                <!-- Sidebar / Controls -->
+                <div class="lg:col-span-1 space-y-6">
+                    <!-- Tabs -->
+                    <div class="glass-panel rounded-2xl p-2 flex overflow-hidden">
+                        <button id="singleTab"
+                            class="flex-1 py-3 text-sm font-medium transition-all rounded-xl bg-blue-600 text-white">Single
+                            Verify</button>
+                        <button id="bulkTab"
+                            class="flex-1 py-3 text-sm font-medium transition-all rounded-xl text-gray-400 hover:text-white">Bulk
+                            Verify</button>
+                    </div>
+
+                    <!-- Single Form -->
+                    <div id="singleSection" class="glass-panel rounded-2xl p-6 space-y-4">
+                        <h2 class="text-xl font-semibold flex items-center gap-2">
+                            <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                             </svg>
-                        </button>
-                    </form>
+                            Quick Check
+                        </h2>
+                        <form id="verifyForm" class="space-y-3">
+                            <input type="email" id="emailInput" placeholder="Enter email address..." required
+                                class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all">
+                            <button type="submit" id="submitBtn"
+                                class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-all flex items-center justify-center gap-2 group">
+                                <span id="btnText">Verify Now</span>
+                                <div id="btnLoader" class="loader hidden"></div>
+                                <svg id="btnIcon" class="w-4 h-4 group-hover:translate-x-1 transition-transform"
+                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                                </svg>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Bulk Form -->
+                    <div id="bulkSection" class="glass-panel rounded-2xl p-6 space-y-4 hidden">
+                        <h2 class="text-xl font-semibold flex items-center gap-2">
+                            <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+                                </path>
+                            </svg>
+                            Bulk Processor
+                        </h2>
+                        <div class="space-y-3">
+                            <label class="text-sm text-gray-400">Email List (one per line)</label>
+                            <textarea id="bulkInput" rows="10" placeholder="paste@emails.com\nanother@example.com"
+                                class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all custom-scrollbar resize-none"></textarea>
+
+                            <div class="space-y-2">
+                                <label class="text-sm text-gray-400">Verification Interval</label>
+                                <select id="intervalSelect"
+                                    class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all">
+                                    <option value="0">Instant (No delay)</option>
+                                    <option value="60">1 Minute</option>
+                                    <option value="120" selected>2 Minutes (Recommended)</option>
+                                    <option value="300">5 Minutes</option>
+                                </select>
+                            </div>
+
+                            <button id="bulkSubmitBtn"
+                                class="w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold py-3 rounded-xl transition-all flex items-center justify-center gap-2 group">
+                                Submit Batch
+                                <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none"
+                                    stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Bulk Form -->
-                <div id="bulkSection" class="glass-panel rounded-2xl p-6 space-y-4 hidden">
-                    <h2 class="text-xl font-semibold flex items-center gap-2">
-                        <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
-                            </path>
-                        </svg>
-                        Bulk Processor
-                    </h2>
-                    <div class="space-y-3">
-                        <label class="text-sm text-gray-400">Email List (one per line)</label>
-                        <textarea id="bulkInput" rows="10" placeholder="paste@emails.com\nanother@example.com"
-                            class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all custom-scrollbar resize-none"></textarea>
+                <!-- View Area -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Results Container -->
+                    <div id="resultsContainer" class="hidden space-y-4">
+                        <!-- Results will be injected here -->
+                    </div>
 
-                        <div class="space-y-2">
-                            <label class="text-sm text-gray-400">Verification Interval</label>
-                            <select id="intervalSelect"
-                                class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all">
-                                <option value="0">Instant (No delay)</option>
-                                <option value="60">1 Minute</option>
-                                <option value="120" selected>2 Minutes (Recommended)</option>
-                                <option value="300">5 Minutes</option>
-                            </select>
+                    <!-- Dashboard -->
+                    <div class="glass-panel rounded-2xl p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-xl font-bold flex items-center gap-2">
+                                <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                                    </path>
+                                </svg>
+                                Task Dashboard
+                            </h2>
+                            <button id="refreshJobs"
+                                class="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                                    </path>
+                                </svg>
+                                Refresh
+                            </button>
                         </div>
 
-                        <button id="bulkSubmitBtn"
-                            class="w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold py-3 rounded-xl transition-all flex items-center justify-center gap-2 group">
-                            Submit Batch
-                            <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none"
-                                stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- View Area -->
-            <div class="lg:col-span-2 space-y-6">
-                <!-- Results Container -->
-                <div id="resultsContainer" class="hidden space-y-4">
-                    <!-- Results will be injected here -->
-                </div>
-
-                <!-- Dashboard -->
-                <div class="glass-panel rounded-2xl p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xl font-bold flex items-center gap-2">
-                            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
-                                </path>
-                            </svg>
-                            Task Dashboard
-                        </h2>
-                        <button id="refreshJobs"
-                            class="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
-                                </path>
-                            </svg>
-                            Refresh
-                        </button>
-                    </div>
-
-                    <div id="jobList" class="space-y-4">
-                        <div class="text-center py-12 text-gray-500 italic">No active jobs found in this session.</div>
+                        <div id="jobList" class="space-y-4">
+                            <div class="text-center py-12 text-gray-500 italic">No active jobs found in this session.
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <script>
-        const singleTab = document.getElementById('singleTab');
-        const bulkTab = document.getElementById('bulkTab');
-        const singleSection = document.getElementById('singleSection');
-        const bulkSection = document.getElementById('bulkSection');
-        const verifyForm = document.getElementById('verifyForm');
-        const resultsContainer = document.getElementById('resultsContainer');
-        const jobList = document.getElementById('jobList');
+        <script>
+            const singleTab = document.getElementById('singleTab');
+            const bulkTab = document.getElementById('bulkTab');
+            const singleSection = document.getElementById('singleSection');
+            const bulkSection = document.getElementById('bulkSection');
+            const verifyForm = document.getElementById('verifyForm');
+            const resultsContainer = document.getElementById('resultsContainer');
+            const jobList = document.getElementById('jobList');
+            const loginModal = document.getElementById('loginModal');
+            const authenticatedContent = document.getElementById('authenticatedContent');
+            const loginForm = document.getElementById('loginForm');
+            const loginError = document.getElementById('loginError');
 
-        // State
-        let activeJobs = JSON.parse(localStorage.getItem('activeJobs') || '[]').filter(j => j.id !== undefined && j.id !== null && j.id !== 'undefined');
+            // State
+            let authToken = localStorage.getItem('authToken');
+            let activeJobs = JSON.parse(localStorage.getItem('activeJobs') || '[]').filter(j => j.id !== undefined && j.id !== null && j.id !== 'undefined');
 
-        // Tabs
-        singleTab.onclick = () => {
-            singleSection.classList.remove('hidden');
-            bulkSection.classList.add('hidden');
-            singleTab.className = 'flex-1 py-3 text-sm font-medium transition-all rounded-xl bg-blue-600 text-white';
-            bulkTab.className = 'flex-1 py-3 text-sm font-medium transition-all rounded-xl text-gray-400 hover:text-white';
-        };
+            // Auth Logic
+            function checkAuth() {
+                if (authToken) {
+                    loginModal.classList.add('hidden');
+                    authenticatedContent.classList.remove('hidden');
+                    updateDashboard();
+                } else {
+                    loginModal.classList.remove('hidden');
+                    authenticatedContent.classList.add('hidden');
+                }
+            }
 
-        bulkTab.onclick = () => {
-            bulkSection.classList.remove('hidden');
-            singleSection.classList.add('hidden');
-            bulkTab.className = 'flex-1 py-3 text-sm font-medium transition-all rounded-xl bg-purple-600 text-white';
-            singleTab.className = 'flex-1 py-3 text-sm font-medium transition-all rounded-xl text-gray-400 hover:text-white';
-        };
+            loginForm.onsubmit = async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+                const btn = document.getElementById('loginSubmitBtn');
 
-        // Helpers
-        function createStatusBadge(type, text) {
-            let colors = '';
-            if (type === 'safe') colors = 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
-            else if (type === 'invalid') colors = 'bg-rose-500/20 text-rose-400 border-rose-500/30';
-            else colors = 'bg-slate-500/20 text-slate-400 border-slate-500/30';
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Authenticating...';
+                loginError.classList.add('hidden');
 
-            return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${colors}">${text}</span>`;
-        }
+                try {
+                    const res = await fetch('/api/v1/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                    });
 
-        // Single Verify
-        verifyForm.onsubmit = async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('emailInput').value.trim();
-            const btnText = document.getElementById('btnText');
-            const btnLoader = document.getElementById('btnLoader');
-            const btnIcon = document.getElementById('btnIcon');
+                    if (res.ok) {
+                        const data = await res.json();
+                        authToken = data.token;
+                        localStorage.setItem('authToken', authToken);
+                        checkAuth();
+                    } else {
+                        loginError.classList.remove('hidden');
+                    }
+                } catch (err) {
+                    loginError.innerText = 'Connection error';
+                    loginError.classList.remove('hidden');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>Unlock Dashboard</span><i class="fas fa-lock-open text-sm opacity-50"></i>';
+                }
+            };
 
-            btnText.classList.add('hidden');
-            btnIcon.classList.add('hidden');
-            btnLoader.classList.remove('hidden');
+            function getAuthHeader() {
+                return authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
+            }
 
-            try {
-                const res = await fetch('/api/v0/check_email', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ to_email: email })
-                });
-                const data = await res.json();
+            // Tabs
+            singleTab.onclick = () => {
+                singleSection.classList.remove('hidden');
+                bulkSection.classList.add('hidden');
+                singleTab.className = 'flex-1 py-3 text-sm font-medium transition-all rounded-xl bg-blue-600 text-white';
+                bulkTab.className = 'flex-1 py-3 text-sm font-medium transition-all rounded-xl text-gray-400 hover:text-white';
+            };
 
-                resultsContainer.innerHTML = `
+            bulkTab.onclick = () => {
+                bulkSection.classList.remove('hidden');
+                singleSection.classList.add('hidden');
+                bulkTab.className = 'flex-1 py-3 text-sm font-medium transition-all rounded-xl bg-purple-600 text-white';
+                singleTab.className = 'flex-1 py-3 text-sm font-medium transition-all rounded-xl text-gray-400 hover:text-white';
+            };
+
+            // Helpers
+            function createStatusBadge(type, text) {
+                let colors = '';
+                if (type === 'safe') colors = 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
+                else if (type === 'invalid') colors = 'bg-rose-500/20 text-rose-400 border-rose-500/30';
+                else colors = 'bg-slate-500/20 text-slate-400 border-slate-500/30';
+
+                return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${colors}">${text}</span>`;
+            }
+
+            // Single Verify
+            verifyForm.onsubmit = async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('emailInput').value.trim();
+                const btnText = document.getElementById('btnText');
+                const btnLoader = document.getElementById('btnLoader');
+                const btnIcon = document.getElementById('btnIcon');
+
+                btnText.classList.add('hidden');
+                btnIcon.classList.add('hidden');
+                btnLoader.classList.remove('hidden');
+
+                try {
+                    const res = await fetch('/api/v0/check_email', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ to_email: email })
+                    });
+                    const data = await res.json();
+
+                    resultsContainer.innerHTML = `
                     <div class="glass-panel rounded-2xl p-6 border-l-4 ${data.is_reachable === 'safe' ? 'border-emerald-500' : data.is_reachable === 'invalid' ? 'border-rose-500' : 'border-yellow-500'}">
                         <div class="flex justify-between items-start">
                             <div>
@@ -266,58 +360,61 @@
                         </div>
                     </div>
                 `;
-                resultsContainer.classList.remove('hidden');
-            } catch (err) {
-                alert('Verification failed');
-            } finally {
-                btnText.classList.remove('hidden');
-                btnIcon.classList.remove('hidden');
-                btnLoader.classList.add('hidden');
-            }
-        };
+                    resultsContainer.classList.remove('hidden');
+                } catch (err) {
+                    alert('Verification failed');
+                } finally {
+                    btnText.classList.remove('hidden');
+                    btnIcon.classList.remove('hidden');
+                    btnLoader.classList.add('hidden');
+                }
+            };
 
-        // Bulk Submit
-        document.getElementById('bulkSubmitBtn').onclick = async () => {
-            const listText = document.getElementById('bulkInput').value.trim();
-            const interval = parseInt(document.getElementById('intervalSelect').value);
+            // Bulk Submit
+            document.getElementById('bulkSubmitBtn').onclick = async () => {
+                const listText = document.getElementById('bulkInput').value.trim();
+                const interval = parseInt(document.getElementById('intervalSelect').value);
 
-            if (!listText) return alert('Enter some emails first');
+                if (!listText) return alert('Enter some emails first');
 
-            const emails = listText.split(/[\n\t,]+/).map(e => e.trim()).filter(e => e.includes('@'));
+                const emails = listText.split(/[\n\t,]+/).map(e => e.trim()).filter(e => e.includes('@'));
 
-            if (emails.length === 0) return alert('No valid emails detected');
+                if (emails.length === 0) return alert('No valid emails detected');
 
-            try {
-                const res = await fetch('/api/v1/bulk', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        input: emails,
-                        interval: interval
-                    })
-                });
-                const data = await res.json();
+                try {
+                    const res = await fetch('/api/v1/bulk', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...getAuthHeader()
+                        },
+                        body: JSON.stringify({
+                            input: emails,
+                            interval: interval
+                        })
+                    });
+                    const data = await res.json();
 
-                activeJobs.unshift({ id: data.job_id, time: new Date().toLocaleTimeString(), total: emails.length });
-                localStorage.setItem('activeJobs', JSON.stringify(activeJobs));
-                updateDashboard();
-                document.getElementById('bulkInput').value = '';
-            } catch (err) {
-                alert('Batch submission failed');
-            }
-        };
+                    activeJobs.unshift({ id: data.job_id, time: new Date().toLocaleTimeString(), total: emails.length });
+                    localStorage.setItem('activeJobs', JSON.stringify(activeJobs));
+                    updateDashboard();
+                    document.getElementById('bulkInput').value = '';
+                } catch (err) {
+                    alert('Batch submission failed');
+                }
+            };
 
-        // Dashboard Logic
-        async function updateDashboard() {
-            if (activeJobs.length === 0) return;
+            // Dashboard Logic
+            async function updateDashboard() {
+                if (activeJobs.length === 0) return;
 
-            jobList.innerHTML = '';
+                jobList.innerHTML = '';
 
-            for (let job of activeJobs) {
-                const jobEl = document.createElement('div');
-                jobEl.className = 'glass-panel rounded-xl p-4 space-y-3';
-                jobEl.id = `job-${job.id}`;
-                jobEl.innerHTML = `
+                for (let job of activeJobs) {
+                    const jobEl = document.createElement('div');
+                    jobEl.className = 'glass-panel rounded-xl p-4 space-y-3';
+                    jobEl.id = `job-${job.id}`;
+                    jobEl.innerHTML = `
                     <div class="flex justify-between items-center text-sm">
                         <span class="font-mono text-blue-300">#${job.id} <span class="text-gray-500 ml-2">${job.time}</span></span>
                         <span id="status-${job.id}" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">Polling...</span>
@@ -335,126 +432,127 @@
                         </div>
                     </div>
                 `;
-                jobList.appendChild(jobEl);
-                pollJob(job.id);
+                    jobList.appendChild(jobEl);
+                    pollJob(job.id);
+                }
             }
-        }
 
-        async function pollJob(id) {
-            try {
-                const res = await fetch(`/api/v1/bulk/${id}`);
-                const data = await res.json();
+            async function pollJob(id) {
+                try {
+                    const res = await fetch(`/api/v1/bulk/${id}`, {
+                        headers: getAuthHeader()
+                    });
+                    const data = await res.json();
 
-                const progress = (data.total_processed / data.total_records) * 100;
-                const bar = document.getElementById(`progress-${id}`);
-                const count = document.getElementById(`count-${id}`);
-                const status = document.getElementById(`status-${id}`);
-                const safe = document.getElementById(`safe-${id}`);
-                const risky = document.getElementById(`risky-${id}`);
-                const invalid = document.getElementById(`invalid-${id}`);
-                const unknown = document.getElementById(`unknown-${id}`);
+                    const progress = (data.total_processed / data.total_records) * 100;
+                    const bar = document.getElementById(`progress-${id}`);
+                    const count = document.getElementById(`count-${id}`);
+                    const status = document.getElementById(`status-${id}`);
+                    const safe = document.getElementById(`safe-${id}`);
+                    const risky = document.getElementById(`risky-${id}`);
+                    const invalid = document.getElementById(`invalid-${id}`);
+                    const unknown = document.getElementById(`unknown-${id}`);
 
-                if (bar) bar.style.width = `${progress}%`;
-                if (count) count.innerText = `${data.total_processed} / ${data.total_records} Processed`;
+                    if (bar) bar.style.width = `${progress}%`;
+                    if (count) count.innerText = `${data.total_processed} / ${data.total_records} Processed`;
 
-                if (safe && data.summary) safe.innerText = `${data.summary.total_safe} Safe`;
-                if (risky && data.summary) risky.innerText = `${data.summary.total_risky} Risky`;
-                if (invalid && data.summary) invalid.innerText = `${data.summary.total_invalid} Inv`;
-                if (unknown && data.summary) unknown.innerText = `${data.summary.total_unknown} Unk`;
+                    if (safe && data.summary) safe.innerText = `${data.summary.total_safe} Safe`;
+                    if (risky && data.summary) risky.innerText = `${data.summary.total_risky} Risky`;
+                    if (invalid && data.summary) invalid.innerText = `${data.summary.total_invalid} Inv`;
+                    if (unknown && data.summary) unknown.innerText = `${data.summary.total_unknown} Unk`;
 
-                if (data.job_status === 'Running') {
-                    status.innerText = 'Processing...';
-                    status.className = 'text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 animate-pulse';
-                    setTimeout(() => pollJob(id), 5000);
-                } else {
-                    status.innerText = 'Completed';
-                    status.className = 'text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400';
-                    // Add download buttons
-                    const existingBtn = document.getElementById(`download-container-${id}`);
-                    if (!existingBtn) {
-                        const dlContainer = document.createElement('div');
-                        dlContainer.id = `download-container-${id}`;
-                        dlContainer.className = 'mt-3 flex flex-wrap gap-2';
+                    if (data.job_status === 'Running') {
+                        status.innerText = 'Processing...';
+                        status.className = 'text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 animate-pulse';
+                        setTimeout(() => pollJob(id), 5000);
+                    } else {
+                        status.innerText = 'Completed';
+                        status.className = 'text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400';
+                        // Add download buttons
+                        const existingBtn = document.getElementById(`download-container-${id}`);
+                        if (!existingBtn) {
+                            const dlContainer = document.createElement('div');
+                            dlContainer.id = `download-container-${id}`;
+                            dlContainer.className = 'mt-3 flex flex-wrap gap-2';
 
-                        const createBtn = (format, label, color) => {
-                            const btn = document.createElement('a');
-                            btn.href = `/api/v1/bulk/${id}/results?format=${format}&success_only=true`;
-                            btn.download = `safe_emails_${id}.${format}`;
-                            btn.className = `inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-xs font-semibold transition-all ${color}`;
-                            btn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg> ${label}`;
-                            return btn;
-                        };
+                            const createBtn = (format, label, color) => {
+                                const btn = document.createElement('a');
+                                btn.href = `/api/v1/bulk/${id}/results?format=${format}&success_only=true`;
+                                btn.download = `safe_emails_${id}.${format}`;
+                                btn.className = `inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-xs font-semibold transition-all ${color}`;
+                                btn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg> ${label}`;
+                                return btn;
+                            };
 
-                        dlContainer.appendChild(createBtn('csv', 'Success Only (CSV)', 'bg-emerald-600 hover:bg-emerald-500'));
-                        dlContainer.appendChild(createBtn('json', 'Success Only (JSON)', 'bg-blue-600 hover:bg-blue-500'));
-                        dlContainer.appendChild(createBtn('txt', 'Success Only (TXT)', 'bg-slate-600 hover:bg-slate-500'));
+                            dlContainer.appendChild(createBtn('csv', 'Success Only (CSV)', 'bg-emerald-600 hover:bg-emerald-500'));
+                            dlContainer.appendChild(createBtn('json', 'Success Only (JSON)', 'bg-blue-600 hover:bg-blue-500'));
+                            dlContainer.appendChild(createBtn('txt', 'Success Only (TXT)', 'bg-slate-600 hover:bg-slate-500'));
 
-                        // Keep original download all button just in case
-                        const allCsvBtn = document.createElement('a');
-                        allCsvBtn.href = `/api/v1/bulk/${id}/results?format=csv`;
-                        allCsvBtn.download = `all_results_${id}.csv`;
-                        allCsvBtn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-600 text-slate-300 hover:bg-slate-700 text-xs font-semibold transition-all';
-                        allCsvBtn.innerText = 'All (CSV)';
-                        dlContainer.appendChild(allCsvBtn);
+                            // Keep original download all button just in case
+                            const allCsvBtn = document.createElement('a');
+                            allCsvBtn.href = `/api/v1/bulk/${id}/results?format=csv`;
+                            allCsvBtn.download = `all_results_${id}.csv`;
+                            allCsvBtn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-600 text-slate-300 hover:bg-slate-700 text-xs font-semibold transition-all';
+                            allCsvBtn.innerText = 'All (CSV)';
+                            dlContainer.appendChild(allCsvBtn);
 
-                        const jobEl = document.getElementById(`job-${id}`);
-                        if (jobEl) jobEl.appendChild(dlContainer);
+                            const jobEl = document.getElementById(`job-${id}`);
+                            if (jobEl) jobEl.appendChild(dlContainer);
+                        }
                     }
+                } catch (err) {
+                    console.error('Polling error', err);
                 }
-            } catch (err) {
-                console.error('Polling error', err);
             }
-        }
 
-        async function viewSafeEmails(jobId) {
-            const modal = document.getElementById('safeModal');
-            const content = document.getElementById('modalContent');
-            content.innerHTML = '<div class="flex items-center gap-2 text-slate-500"><i class="fas fa-spinner fa-spin"></i> Loading safe emails...</div>';
-            modal.classList.remove('hidden');
+            async function viewSafeEmails(jobId) {
+                const modal = document.getElementById('safeModal');
+                const content = document.getElementById('modalContent');
+                content.innerHTML = '<div class="flex items-center gap-2 text-slate-500"><i class="fas fa-spinner fa-spin"></i> Loading safe emails...</div>';
+                modal.classList.remove('hidden');
 
-            try {
-                const response = await fetch(`/api/v1/bulk/${jobId}/results?success_only=true&format=txt`);
-                const text = await response.text();
+                try {
+                    const response = await fetch(`/api/v1/bulk/${jobId}/results?success_only=true&format=txt`, {
+                        headers: getAuthHeader()
+                    });
+                    const text = await response.text();
 
-                if (text.trim()) {
-                    content.innerHTML = text.split('\n').map(email => `<div>${email}</div>`).join('');
-                } else {
-                    content.innerHTML = '<div class="text-slate-500 italic">No safe emails found for this job.</div>';
+                    if (text.trim()) {
+                        content.innerHTML = text.split('\n').map(email => `<div>${email}</div>`).join('');
+                    } else {
+                        content.innerHTML = '<div class="text-slate-500 italic">No safe emails found for this job.</div>';
+                    }
+                } catch (error) {
+                    content.innerHTML = `<div class="text-rose-400">Error loading emails: ${error.message}</div>`;
                 }
-            } catch (error) {
-                content.innerHTML = `<div class="text-rose-400">Error loading emails: ${error.message}</div>`;
             }
-        }
 
-        function closeModal() {
-            document.getElementById('safeModal').classList.add('hidden');
-        }
+            function closeModal() {
+                document.getElementById('safeModal').classList.add('hidden');
+            }
 
-        function copyToClipboard() {
-            const content = document.getElementById('modalContent');
-            const emails = content.innerText;
-            navigator.clipboard.writeText(emails).then(() => {
-                const btn = event.currentTarget;
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
-                setTimeout(() => {
-                    btn.innerHTML = originalText;
-                }, 2000);
-            });
-        }
+            function copyToClipboard() {
+                const content = document.getElementById('modalContent');
+                const emails = content.innerText;
+                navigator.clipboard.writeText(emails).then(() => {
+                    const btn = event.currentTarget;
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                    setTimeout(() => {
+                        btn.innerHTML = originalText;
+                    }, 2000);
+                });
+            }
 
-        document.getElementById('refreshJobs').onclick = updateDashboard;
+            document.getElementById('refreshJobs').onclick = updateDashboard;
 
-        // Initial build
-        updateDashboard();
-    </script>
-    <!-- Safe Emails Modal -->
-    <div id="safeModal"
-        class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
-        <div
-            class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[80vh]">
-            <div class="p-6 border-b border-slate-800 flex justify-between items-center">
-                <h3 class="text-xl font-semibold text-white">Safe Emails</h3>
+            // Initial build
+            checkAuth();
+        </script>
+        <!-- Safe Emails Modal -->
+        <div id="safeModal"
+            class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
+            <div <h3 class="text-xl font-semibold text-white">Safe Emails</h3>
                 <button onclick="closeModal()" class="text-gray-400 hover:text-white transition-colors">
                     <i class="fas fa-times text-xl"></i>
                 </button>

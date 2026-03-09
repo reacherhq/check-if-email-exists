@@ -36,7 +36,10 @@ pub fn create_routes(
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	let pg_pool = config.get_pg_pool();
 
+	let auth_routes = v1::auth::routes(pg_pool.clone().unwrap());
+
 	version::get::get_version()
+		.or(auth_routes)
 		.or(v0::check_email::post::post_check_email(Arc::clone(&config)))
 		// The 3 following routes will 404 if o is None.
 		.or(v0::bulk::post::create_bulk_job(
@@ -46,11 +49,11 @@ pub fn create_routes(
 		.or(v0::bulk::get::get_bulk_job_status(pg_pool.clone()))
 		.or(v0::bulk::results::get_bulk_job_result(pg_pool))
 		.or(v1::check_email::post::v1_check_email(Arc::clone(&config)))
-		.or(v1::bulk::post::v1_create_bulk_job(Arc::clone(&config)))
-		.or(v1::bulk::get_progress::v1_get_bulk_job_progress(
+		.or(v1::auth::auth_filter().and(v1::bulk::post::v1_create_bulk_job(Arc::clone(&config))).map(|_, r| r))
+		.or(v1::auth::auth_filter().and(v1::bulk::get_progress::v1_get_bulk_job_progress(
 			Arc::clone(&config),
-		))
-		.or(v1::bulk::get_results::v1_get_bulk_job_results(config))
+		)).map(|_, r| r))
+		.or(v1::auth::auth_filter().and(v1::bulk::get_results::v1_get_bulk_job_results(config)).map(|_, r| r))
 		.recover(handle_rejection)
 }
 
