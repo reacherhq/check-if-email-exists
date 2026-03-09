@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Reachability Checker - Premium Bulk Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: radial-gradient(circle at top right, #1e293b 0%, #0f172a 100%); min-height: 100vh; color: #f1f5f9; }
+        .glass-panel { background: rgba(31, 41, 55, 0.6); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+        .glow-text { background: linear-gradient(to right, #60a5fa, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .tab-active { border-bottom: 2px solid #3b82f6; color: #3b82f6; }
+        .loader { width: 24px; height: 24px; border: 3px solid rgba(255, 255, 255, 0.1); border-top: 3px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+        .progress-bar { transition: width 0.5s ease-in-out; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-5xl mx-auto">
+        <!-- Header -->
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-extrabold mb-3 glow-text tracking-tight">Email Intelligence</h1>
+            <p class="text-gray-400 text-lg max-w-2xl mx-auto">Enterprise-grade email validation for growing businesses. Accurate, fast, and throttled for maximum deliverability.</p>
+        </header>
+
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Sidebar / Controls -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- Tabs -->
+                <div class="glass-panel rounded-2xl p-2 flex overflow-hidden">
+                    <button id="singleTab" class="flex-1 py-3 text-sm font-medium transition-all rounded-xl bg-blue-600 text-white">Single Verify</button>
+                    <button id="bulkTab" class="flex-1 py-3 text-sm font-medium transition-all rounded-xl text-gray-400 hover:text-white">Bulk Verify</button>
+                </div>
+
+                <!-- Single Form -->
+                <div id="singleSection" class="glass-panel rounded-2xl p-6 space-y-4">
+                    <h2 class="text-xl font-semibold flex items-center gap-2">
+                        <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                        Quick Check
+                    </h2>
+                    <form id="verifyForm" class="space-y-3">
+                        <input type="email" id="emailInput" placeholder="Enter email address..." required 
+                            class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all">
+                        <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-all flex items-center justify-center gap-2 group">
+                            <span id="btnText">Verify Now</span>
+                            <div id="btnLoader" class="loader hidden"></div>
+                            <svg id="btnIcon" class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Bulk Form -->
+                <div id="bulkSection" class="glass-panel rounded-2xl p-6 space-y-4 hidden">
+                    <h2 class="text-xl font-semibold flex items-center gap-2">
+                        <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                        Bulk Processor
+                    </h2>
+                    <div class="space-y-3">
+                        <label class="text-sm text-gray-400">Email List (one per line)</label>
+                        <textarea id="bulkInput" rows="10" placeholder="paste@emails.com\nanother@example.com" 
+                            class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all custom-scrollbar resize-none"></textarea>
+                        
+                        <div class="space-y-2">
+                            <label class="text-sm text-gray-400">Verification Interval</label>
+                            <select id="intervalSelect" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all">
+                                <option value="0">Instant (No delay)</option>
+                                <option value="60">1 Minute</option>
+                                <option value="120" selected>2 Minutes (Recommended)</option>
+                                <option value="300">5 Minutes</option>
+                            </select>
+                        </div>
+
+                        <button id="bulkSubmitBtn" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold py-3 rounded-xl transition-all flex items-center justify-center gap-2 group">
+                            Submit Batch
+                            <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View Area -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Results Container -->
+                <div id="resultsContainer" class="hidden space-y-4">
+                    <!-- Results will be injected here -->
+                </div>
+
+                <!-- Dashboard -->
+                <div class="glass-panel rounded-2xl p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold flex items-center gap-2">
+                            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                            Task Dashboard
+                        </h2>
+                        <button id="refreshJobs" class="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                            Refresh
+                        </button>
+                    </div>
+                    
+                    <div id="jobList" class="space-y-4">
+                        <div class="text-center py-12 text-gray-500 italic">No active jobs found in this session.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const singleTab = document.getElementById('singleTab');
+        const bulkTab = document.getElementById('bulkTab');
+        const singleSection = document.getElementById('singleSection');
+        const bulkSection = document.getElementById('bulkSection');
+        const verifyForm = document.getElementById('verifyForm');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const jobList = document.getElementById('jobList');
+
+        // State
+        let activeJobs = JSON.parse(localStorage.getItem('activeJobs') || '[]').filter(j => j.id !== undefined && j.id !== null && j.id !== 'undefined');
+
+        // Tabs
+        singleTab.onclick = () => {
+            singleSection.classList.remove('hidden');
+            bulkSection.classList.add('hidden');
+            singleTab.className = 'flex-1 py-3 text-sm font-medium transition-all rounded-xl bg-blue-600 text-white';
+            bulkTab.className = 'flex-1 py-3 text-sm font-medium transition-all rounded-xl text-gray-400 hover:text-white';
+        };
+
+        bulkTab.onclick = () => {
+            bulkSection.classList.remove('hidden');
+            singleSection.classList.add('hidden');
+            bulkTab.className = 'flex-1 py-3 text-sm font-medium transition-all rounded-xl bg-purple-600 text-white';
+            singleTab.className = 'flex-1 py-3 text-sm font-medium transition-all rounded-xl text-gray-400 hover:text-white';
+        };
+
+        // Helpers
+        function createStatusBadge(type, text) {
+            let colors = '';
+            if(type === 'safe') colors = 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
+            else if(type === 'invalid') colors = 'bg-rose-500/20 text-rose-400 border-rose-500/30';
+            else colors = 'bg-slate-500/20 text-slate-400 border-slate-500/30';
+            
+            return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${colors}">${text}</span>`;
+        }
+
+        // Single Verify
+        verifyForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('emailInput').value.trim();
+            const btnText = document.getElementById('btnText');
+            const btnLoader = document.getElementById('btnLoader');
+            const btnIcon = document.getElementById('btnIcon');
+            
+            btnText.classList.add('hidden');
+            btnIcon.classList.add('hidden');
+            btnLoader.classList.remove('hidden');
+            
+            try {
+                const res = await fetch('/api/v0/check_email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ to_email: email })
+                });
+                const data = await res.json();
+                
+                resultsContainer.innerHTML = `
+                    <div class="glass-panel rounded-2xl p-6 border-l-4 ${data.is_reachable === 'safe' ? 'border-emerald-500' : data.is_reachable === 'invalid' ? 'border-rose-500' : 'border-yellow-500'}">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="text-sm font-medium text-gray-400">Reachability Result</h3>
+                                <p class="text-2xl font-bold uppercase tracking-wide ${data.is_reachable === 'safe' ? 'text-emerald-400' : 'text-rose-400'}">${data.is_reachable}</p>
+                                <p class="text-sm text-blue-300 mt-1 font-mono">${email}</p>
+                            </div>
+                            ${createStatusBadge(data.is_reachable, data.is_reachable)}
+                        </div>
+                    </div>
+                `;
+                resultsContainer.classList.remove('hidden');
+            } catch (err) {
+                alert('Verification failed');
+            } finally {
+                btnText.classList.remove('hidden');
+                btnIcon.classList.remove('hidden');
+                btnLoader.classList.add('hidden');
+            }
+        };
+
+        // Bulk Submit
+        document.getElementById('bulkSubmitBtn').onclick = async () => {
+            const listText = document.getElementById('bulkInput').value.trim();
+            const interval = parseInt(document.getElementById('intervalSelect').value);
+            
+            if(!listText) return alert('Enter some emails first');
+            
+            const emails = listText.split(/[\n\t,]+/).map(e => e.trim()).filter(e => e.includes('@'));
+            
+            if(emails.length === 0) return alert('No valid emails detected');
+
+            try {
+                const res = await fetch('/api/v1/bulk', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        input: emails,
+                        interval: interval
+                    })
+                });
+                const data = await res.json();
+                
+                activeJobs.unshift({ id: data.job_id, time: new Date().toLocaleTimeString(), total: emails.length });
+                localStorage.setItem('activeJobs', JSON.stringify(activeJobs));
+                updateDashboard();
+                document.getElementById('bulkInput').value = '';
+            } catch (err) {
+                alert('Batch submission failed');
+            }
+        };
+
+        // Dashboard Logic
+        async function updateDashboard() {
+            if(activeJobs.length === 0) return;
+            
+            jobList.innerHTML = '';
+            
+            for(let job of activeJobs) {
+                const jobEl = document.createElement('div');
+                jobEl.className = 'glass-panel rounded-xl p-4 space-y-3';
+                jobEl.id = `job-${job.id}`;
+                jobEl.innerHTML = `
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="font-mono text-blue-300">#${job.id} <span class="text-gray-500 ml-2">${job.time}</span></span>
+                        <span id="status-${job.id}" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">Polling...</span>
+                    </div>
+                    <div class="h-2 w-full bg-slate-900 rounded-full overflow-hidden">
+                        <div id="progress-${job.id}" class="progress-bar h-full bg-gradient-to-r from-blue-500 to-purple-500 w-0"></div>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-400">
+                        <span id="count-${job.id}">0 / ${job.total} Processed</span>
+                        <div class="flex gap-2">
+                            <span class="text-emerald-400" id="safe-${job.id}">0</span>
+                            <span class="text-rose-400" id="invalid-${job.id}">0</span>
+                        </div>
+                    </div>
+                `;
+                jobList.appendChild(jobEl);
+                pollJob(job.id);
+            }
+        }
+
+        async function pollJob(id) {
+            try {
+                const res = await fetch(`/api/v1/bulk/${id}`);
+                const data = await res.json();
+                
+                const progress = (data.total_processed / data.total_records) * 100;
+                const bar = document.getElementById(`progress-${id}`);
+                const count = document.getElementById(`count-${id}`);
+                const status = document.getElementById(`status-${id}`);
+                const safe = document.getElementById(`safe-${id}`);
+                const invalid = document.getElementById(`invalid-${id}`);
+
+                if(bar) bar.style.width = `${progress}%`;
+                if(count) count.innerText = `${data.total_processed} / ${data.total_records} Processed`;
+                if(safe) safe.innerText = data.summary.total_safe;
+                if(invalid) invalid.innerText = data.summary.total_invalid;
+                
+                if(data.job_status === 'Running') {
+                    status.innerText = 'Processing...';
+                    status.className = 'text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 animate-pulse';
+                    setTimeout(() => pollJob(id), 5000);
+                } else {
+                    status.innerText = 'Completed';
+                    status.className = 'text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400';
+                    // Add download button
+                    const existingBtn = document.getElementById(`download-${id}`);
+                    if (!existingBtn) {
+                        const dlBtn = document.createElement('a');
+                        dlBtn.id = `download-${id}`;
+                        dlBtn.href = `/api/v1/bulk/${id}/results?format=csv`;
+                        dlBtn.download = `bulk_results_${id}.csv`;
+                        dlBtn.className = 'mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-all';
+                        dlBtn.innerHTML = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg> Download CSV';
+                        const jobEl = document.getElementById(`job-${id}`);
+                        if (jobEl) jobEl.appendChild(dlBtn);
+                    }
+                }
+            } catch (err) {
+                console.error('Polling error', err);
+            }
+        }
+
+        document.getElementById('refreshJobs').onclick = updateDashboard;
+        
+        // Initial build
+        updateDashboard();
+    </script>
+</body>
+</html>

@@ -86,7 +86,7 @@ pub async fn run_warp_server(
 		let pg_pool = config.get_pg_pool().expect(
 			"Please set the RCH__STORAGE__POSTGRES__DB_URL environment when RCH_ENABLE_BULK is set",
 		);
-		let runner = v0::bulk::create_job_registry(&pg_pool).await?;
+		let runner = v0::bulk::create_job_registry(pg_pool).await?;
 		Some(runner)
 	} else {
 		None
