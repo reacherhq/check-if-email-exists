@@ -125,32 +125,21 @@ async fn job_result_as_iter(
 	pg_pool: PgPool,
 ) -> Result<Box<dyn Iterator<Item = serde_json::Value>>, ReacherResponseError> {
 	let rows = if success_only {
-		let query = sqlx::query!(
-			r#"
-			SELECT result FROM v1_task_result
-			WHERE job_id = $1
-			AND (result->>'is_reachable' = 'safe' OR result->>'is_reachable' = 'Safe')
-			ORDER BY id
-			LIMIT $2 OFFSET $3
-			"#,
-			job_id,
-			limit.map(|l| l as i64),
-			offset as i64
-		);
-		pg_pool.fetch_all(query).await.map_err(ReacherResponseError::from)?
+		sqlx::query("SELECT result FROM v1_task_result WHERE job_id = $1 AND (result->>'is_reachable' = 'safe' OR result->>'is_reachable' = 'Safe') ORDER BY id LIMIT $2 OFFSET $3")
+			.bind(job_id)
+			.bind(limit.map(|l| l as i64))
+			.bind(offset as i64)
+			.fetch_all(&pg_pool)
+			.await
+			.map_err(ReacherResponseError::from)?
 	} else {
-		let query = sqlx::query!(
-			r#"
-			SELECT result FROM v1_task_result
-			WHERE job_id = $1
-			ORDER BY id
-			LIMIT $2 OFFSET $3
-			"#,
-			job_id,
-			limit.map(|l| l as i64),
-			offset as i64
-		);
-		pg_pool.fetch_all(query).await.map_err(ReacherResponseError::from)?
+		sqlx::query("SELECT result FROM v1_task_result WHERE job_id = $1 ORDER BY id LIMIT $2 OFFSET $3")
+			.bind(job_id)
+			.bind(limit.map(|l| l as i64))
+			.bind(offset as i64)
+			.fetch_all(&pg_pool)
+			.await
+			.map_err(ReacherResponseError::from)?
 	};
 
 	Ok(Box::new(
