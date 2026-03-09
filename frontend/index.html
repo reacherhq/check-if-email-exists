@@ -277,17 +277,36 @@
                 } else {
                     status.innerText = 'Completed';
                     status.className = 'text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400';
-                    // Add download button
-                    const existingBtn = document.getElementById(`download-${id}`);
+                    // Add download buttons
+                    const existingBtn = document.getElementById(`download-container-${id}`);
                     if (!existingBtn) {
-                        const dlBtn = document.createElement('a');
-                        dlBtn.id = `download-${id}`;
-                        dlBtn.href = `/api/v1/bulk/${id}/results?format=csv`;
-                        dlBtn.download = `bulk_results_${id}.csv`;
-                        dlBtn.className = 'mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-all';
-                        dlBtn.innerHTML = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg> Download CSV';
+                        const dlContainer = document.createElement('div');
+                        dlContainer.id = `download-container-${id}`;
+                        dlContainer.className = 'mt-3 flex flex-wrap gap-2';
+                        
+                        const createBtn = (format, label, color) => {
+                            const btn = document.createElement('a');
+                            btn.href = `/api/v1/bulk/${id}/results?format=${format}&success_only=true`;
+                            btn.download = `safe_emails_${id}.${format}`;
+                            btn.className = `inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-xs font-semibold transition-all ${color}`;
+                            btn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg> ${label}`;
+                            return btn;
+                        };
+                        
+                        dlContainer.appendChild(createBtn('csv', 'Success Only (CSV)', 'bg-emerald-600 hover:bg-emerald-500'));
+                        dlContainer.appendChild(createBtn('json', 'Success Only (JSON)', 'bg-blue-600 hover:bg-blue-500'));
+                        dlContainer.appendChild(createBtn('txt', 'Success Only (TXT)', 'bg-slate-600 hover:bg-slate-500'));
+
+                        // Keep original download all button just in case
+                        const allCsvBtn = document.createElement('a');
+                        allCsvBtn.href = `/api/v1/bulk/${id}/results?format=csv`;
+                        allCsvBtn.download = `all_results_${id}.csv`;
+                        allCsvBtn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-600 text-slate-300 hover:bg-slate-700 text-xs font-semibold transition-all';
+                        allCsvBtn.innerText = 'All (CSV)';
+                        dlContainer.appendChild(allCsvBtn);
+
                         const jobEl = document.getElementById(`job-${id}`);
-                        if (jobEl) jobEl.appendChild(dlBtn);
+                        if (jobEl) jobEl.appendChild(dlContainer);
                     }
                 }
             } catch (err) {
