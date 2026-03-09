@@ -36,7 +36,7 @@ pub fn create_routes(
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	let pg_pool = config.get_pg_pool();
 
-	let auth_routes = v1::auth::routes(pg_pool.clone().unwrap());
+	let auth_routes = v1::auth::routes(pg_pool.clone());
 
 	version::get::get_version()
 		.or(auth_routes)
