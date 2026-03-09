@@ -36,6 +36,11 @@ pub struct CheckEmailRequest {
 	pub proxy: Option<CheckEmailInputProxy>,
 	pub smtp_timeout: Option<Duration>,
 	pub smtp_port: Option<u16>,
+	/// Whether to skip the catch-all domain check.
+	/// When true, skips the additional RCPT TO call that checks for catchall domains.
+	///
+	/// Defaults to false.
+	pub skip_catchall: Option<bool>,
 	// The following fields are for backward compatibility.
 	pub yahoo_verif_method: Option<BackwardCompatYahooVerifMethod>,
 	pub hotmailb2c_verif_method: Option<BackwardCompatHotmailB2CVerifMethod>,
@@ -105,6 +110,7 @@ impl CheckEmailRequest {
 			sentry_dsn: config.sentry_dsn.clone(),
 			backend_name: config.backend_name.clone(),
 			webdriver_config: config.webdriver.clone(),
+			skip_catchall: self.skip_catchall.unwrap_or(false),
 			..Default::default()
 		}
 	}
