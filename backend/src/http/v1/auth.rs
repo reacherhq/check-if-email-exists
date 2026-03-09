@@ -32,7 +32,7 @@ pub async fn login_handler(
     pg_pool: PgPool,
     body: LoginRequest,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    let user = sqlx::query("SELECT password_hash FROM users WHERE email = $1")
+    let user = sqlx::query("SELECT password_hash FROM reacher_users WHERE email = $1")
         .bind(&body.email)
         .fetch_optional(&pg_pool)
         .await
