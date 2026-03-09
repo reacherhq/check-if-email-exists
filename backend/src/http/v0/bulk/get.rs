@@ -19,6 +19,7 @@
 use check_if_email_exists::LOG_TARGET;
 use serde::Serialize;
 use sqlx::types::chrono::{DateTime, Utc};
+use sqlx::Row;
 use sqlx::{Pool, Postgres};
 use tracing::error;
 use warp::Filter;
@@ -92,20 +93,18 @@ async fn job_status(
 		BulkError::from(e)
 	})?;
 
-	let agg_info = sqlx::query!(
-		r#"
+	let agg_info = sqlx::query("
 		SELECT
 			COUNT(*) as total_processed,
-			COUNT(CASE WHEN result ->> 'is_reachable' LIKE 'safe' THEN 1 END) as safe_count,
-			COUNT(CASE WHEN result ->> 'is_reachable' LIKE 'risky' THEN 1 END) as risky_count,
-			COUNT(CASE WHEN result ->> 'is_reachable' LIKE 'invalid' THEN 1 END) as invalid_count,
-			COUNT(CASE WHEN result ->> 'is_reachable' LIKE 'unknown' THEN 1 END) as unknown_count,
+			COUNT(CASE WHEN result ->> 'is_reachable' ILIKE 'safe' THEN 1 END) as safe_count,
+			COUNT(CASE WHEN result ->> 'is_reachable' ILIKE 'risky' THEN 1 END) as risky_count,
+			COUNT(CASE WHEN result ->> 'is_reachable' ILIKE 'invalid' THEN 1 END) as invalid_count,
+			COUNT(CASE WHEN result ->> 'is_reachable' ILIKE 'unknown' THEN 1 END) as unknown_count,
 			(SELECT created_at FROM email_results WHERE job_id = $1 ORDER BY created_at DESC LIMIT 1) as finished_at
 		FROM email_results
 		WHERE job_id = $1
-		"#,
-		job_id
-	)
+	")
+	.bind(job_id)
 	.fetch_one(&conn_pool)
 	.await
 	.map_err(|e| {
@@ -118,21 +117,17 @@ async fn job_status(
 		BulkError::from(e)
 	})?;
 
-	let (job_status, finished_at) = if (agg_info
-		.total_processed
-		.expect("sql COUNT() returns an int. qed.") as i32)
-		< job_rec.total_records
-	{
+	let total_processed: i64 = agg_info.try_get("total_processed").unwrap_or(0);
+	let safe_count: i64 = agg_info.try_get("safe_count").unwrap_or(0);
+	let risky_count: i64 = agg_info.try_get("risky_count").unwrap_or(0);
+	let invalid_count: i64 = agg_info.try_get("invalid_count").unwrap_or(0);
+	let unknown_count: i64 = agg_info.try_get("unknown_count").unwrap_or(0);
+	let fetched_finished_at: Option<DateTime<Utc>> = agg_info.try_get("finished_at").unwrap_or(None);
+
+	let (job_status, finished_at) = if (total_processed as i32) < job_rec.total_records {
 		(ValidStatus::Running, None)
 	} else {
-		(
-			ValidStatus::Completed,
-			Some(
-				agg_info
-					.finished_at
-					.expect("always at least one task in the job. qed."),
-			),
-		)
+		(ValidStatus::Completed, fetched_finished_at)
 	};
 
 	Ok(warp::reply::json(&JobStatusResponseBody {
@@ -140,20 +135,12 @@ async fn job_status(
 		created_at: job_rec.created_at,
 		finished_at,
 		total_records: job_rec.total_records,
-		total_processed: agg_info
-			.total_processed
-			.expect("sql COUNT returns an int. qed.") as i32,
+		total_processed: total_processed as i32,
 		summary: JobStatusSummary {
-			total_safe: agg_info.safe_count.expect("sql COUNT returns an int. qed.") as i32,
-			total_risky: agg_info
-				.risky_count
-				.expect("sql COUNT returns an int. qed.") as i32,
-			total_invalid: agg_info
-				.invalid_count
-				.expect("sql COUNT returns an int. qed.") as i32,
-			total_unknown: agg_info
-				.unknown_count
-				.expect("sql COUNT returns an int. qed.") as i32,
+			total_safe: safe_count as i32,
+			total_risky: risky_count as i32,
+			total_invalid: invalid_count as i32,
+			total_unknown: unknown_count as i32,
 		},
 		job_status,
 	}))

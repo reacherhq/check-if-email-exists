@@ -38,6 +38,7 @@ mod csv_helper;
 enum ResponseFormat {
 	Json,
 	Csv,
+	Txt,
 }
 
 // limit and offset are optional in the request
@@ -47,6 +48,7 @@ struct Request {
 	format: Option<ResponseFormat>,
 	limit: Option<u64>,
 	offset: Option<u64>,
+	success_only: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -88,9 +90,10 @@ async fn http_handler(
 	}
 
 	let format = req.format.unwrap_or(ResponseFormat::Json);
+	let success_only = req.success_only.unwrap_or(false);
 	match format {
 		ResponseFormat::Json => {
-			let data = job_result_json(job_id, req.limit, req.offset.unwrap_or(0), pg_pool).await?;
+			let data = job_result_json(job_id, req.limit, req.offset.unwrap_or(0), success_only, pg_pool).await?;
 
 			let reply = serde_json::to_vec(&Response { results: data })
 				.map_err(ReacherResponseError::from)?;
@@ -102,9 +105,14 @@ async fn http_handler(
 			))
 		}
 		ResponseFormat::Csv => {
-			let data = job_result_csv(job_id, req.limit, req.offset.unwrap_or(0), pg_pool).await?;
+			let data = job_result_csv(job_id, req.limit, req.offset.unwrap_or(0), success_only, pg_pool).await?;
 
 			Ok(warp::reply::with_header(data, "Content-Type", "text/csv"))
+		}
+		ResponseFormat::Txt => {
+			let data = job_result_txt(job_id, req.limit, req.offset.unwrap_or(0), success_only, pg_pool).await?;
+
+			Ok(warp::reply::with_header(data, "Content-Type", "text/plain"))
 		}
 	}
 }
@@ -113,24 +121,26 @@ async fn job_result_as_iter(
 	job_id: i32,
 	limit: Option<u64>,
 	offset: u64,
+	success_only: bool,
 	pg_pool: PgPool,
 ) -> Result<Box<dyn Iterator<Item = serde_json::Value>>, ReacherResponseError> {
-	let query = sqlx::query!(
-		r#"
-		SELECT result FROM v1_task_result
-		WHERE job_id = $1
-		ORDER BY id
-		LIMIT $2 OFFSET $3
-		"#,
-		job_id,
-		limit.map(|l| l as i64),
-		offset as i64
-	);
-
-	let rows = pg_pool
-		.fetch_all(query)
-		.await
-		.map_err(ReacherResponseError::from)?;
+	let rows = if success_only {
+		sqlx::query("SELECT result FROM v1_task_result WHERE job_id = $1 AND (result->>'is_reachable' = 'safe' OR result->>'is_reachable' = 'Safe') ORDER BY id LIMIT $2 OFFSET $3")
+			.bind(job_id)
+			.bind(limit.map(|l| l as i64))
+			.bind(offset as i64)
+			.fetch_all(&pg_pool)
+			.await
+			.map_err(ReacherResponseError::from)?
+	} else {
+		sqlx::query("SELECT result FROM v1_task_result WHERE job_id = $1 ORDER BY id LIMIT $2 OFFSET $3")
+			.bind(job_id)
+			.bind(limit.map(|l| l as i64))
+			.bind(offset as i64)
+			.fetch_all(&pg_pool)
+			.await
+			.map_err(ReacherResponseError::from)?
+	};
 
 	Ok(Box::new(
 		rows.into_iter()
@@ -142,13 +152,14 @@ async fn job_result_json(
 	job_id: i32,
 	limit: Option<u64>,
 	offset: u64,
+	success_only: bool,
 	pg_pool: PgPool,
 ) -> Result<Vec<serde_json::Value>, warp::Rejection> {
 	// For JSON responses, we don't want ot return more than 50 results at a
 	// time, to avoid having a too big payload (unless client specifies a limit)
 
 	Ok(
-		job_result_as_iter(job_id, limit.or(Some(50)), offset, pg_pool)
+		job_result_as_iter(job_id, limit.or(Some(50)), offset, success_only, pg_pool)
 			.await?
 			.collect(),
 	)
@@ -158,9 +169,10 @@ async fn job_result_csv(
 	job_id: i32,
 	limit: Option<u64>,
 	offset: u64,
+	success_only: bool,
 	pg_pool: PgPool,
 ) -> Result<Vec<u8>, warp::Rejection> {
-	let rows = job_result_as_iter(job_id, limit, offset, pg_pool).await?;
+	let rows = job_result_as_iter(job_id, limit, offset, success_only, pg_pool).await?;
 	let mut wtr = WriterBuilder::new().has_headers(true).from_writer(vec![]);
 
 	for json_value in rows {
@@ -174,6 +186,26 @@ async fn job_result_csv(
 	let data = wtr.into_inner().map_err(ReacherResponseError::from)?;
 
 	Ok(data)
+}
+
+async fn job_result_txt(
+	job_id: i32,
+	limit: Option<u64>,
+	offset: u64,
+	success_only: bool,
+	pg_pool: PgPool,
+) -> Result<Vec<u8>, warp::Rejection> {
+	let rows = job_result_as_iter(job_id, limit, offset, success_only, pg_pool).await?;
+	let mut txt = String::new();
+
+	for json_value in rows {
+		if let Some(input) = json_value.get("input").and_then(|v| v.as_str()) {
+			txt.push_str(input);
+			txt.push('\n');
+		}
+	}
+
+	Ok(txt.into_bytes())
 }
 
 pub fn v1_get_bulk_job_results(
