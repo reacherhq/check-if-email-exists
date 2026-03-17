@@ -158,18 +158,4 @@ Many online services (https://hunter.io, https://verify-email.org, https://email
 
 ## License
 
-`check-if-email-exists`'s source code is provided under a **dual license model**.
-
-### Commercial license
-
-If you want to use `check-if-email-exists` to develop commercial sites, tools, and applications, the Commercial License is the appropriate license. With this option, your source code is kept proprietary. Purchase a `check-if-email-exists` Commercial License at https://reacher.email/pricing.
-
-### Open source license
-
-If you are creating an open-source application under a license compatible with the GNU Affero GPL License v3, you may use `check-if-email-exists` under the terms of the [AGPL-3.0](./LICENSE.AGPL).
-
-[➡️ Read more](https://docs.reacher.email/self-hosting/licensing) about Reacher's license.
-
-## 🔨 Build From Source
-
-Build the [CLI from source](./cli/README.md#build-from-source) or the [HTTP backend from source](./backend/README.md#build-from-source).
+`check-if-email-exists`'s source code is provided under the [MIT License](./LICENSE.md).
