@@ -299,10 +299,7 @@ async fn create_smtp_future(
 		result?
 	};
 
-	smtp_transport
-		.quit()
-		.await
-		.map_err(SmtpError::AsyncSmtpError)?;
+	let _ = smtp_transport.quit().await;
 
 	Ok((is_catch_all, deliverability))
 }
