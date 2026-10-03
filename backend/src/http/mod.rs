@@ -36,7 +36,18 @@ pub fn create_routes(
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	let pg_pool = config.get_pg_pool();
 
+	let auth_routes = v1::auth::routes(pg_pool.clone());
+
+	let v1_bulk_routes = v1::bulk::post::v1_create_bulk_job(Arc::clone(&config))
+		.or(v1::bulk::get_progress::v1_get_bulk_job_progress(Arc::clone(&config)))
+		.or(v1::bulk::get_results::v1_get_bulk_job_results(config.clone()));
+	
+	let v1_bulk_protected = v1::auth::auth_filter()
+		.and(v1_bulk_routes)
+		.map(|_, r| r);
+
 	version::get::get_version()
+		.or(auth_routes)
 		.or(v0::check_email::post::post_check_email(Arc::clone(&config)))
 		// The 3 following routes will 404 if o is None.
 		.or(v0::bulk::post::create_bulk_job(
@@ -46,11 +57,7 @@ pub fn create_routes(
 		.or(v0::bulk::get::get_bulk_job_status(pg_pool.clone()))
 		.or(v0::bulk::results::get_bulk_job_result(pg_pool))
 		.or(v1::check_email::post::v1_check_email(Arc::clone(&config)))
-		.or(v1::bulk::post::v1_create_bulk_job(Arc::clone(&config)))
-		.or(v1::bulk::get_progress::v1_get_bulk_job_progress(
-			Arc::clone(&config),
-		))
-		.or(v1::bulk::get_results::v1_get_bulk_job_results(config))
+		.or(v1_bulk_protected)
 		.recover(handle_rejection)
 }
 
@@ -86,7 +93,7 @@ pub async fn run_warp_server(
 		let pg_pool = config.get_pg_pool().expect(
 			"Please set the RCH__STORAGE__POSTGRES__DB_URL environment when RCH_ENABLE_BULK is set",
 		);
-		let runner = v0::bulk::create_job_registry(&pg_pool).await?;
+		let runner = v0::bulk::create_job_registry(pg_pool).await?;
 		Some(runner)
 	} else {
 		None

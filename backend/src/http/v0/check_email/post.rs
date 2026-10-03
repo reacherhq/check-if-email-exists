@@ -28,7 +28,7 @@ use crate::config::BackendConfig;
 use crate::http::{check_header, ReacherResponseError};
 
 /// The request body for the `POST /v0/check_email` endpoint.
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct CheckEmailRequest {
 	pub to_email: String,
 	pub from_email: Option<String>,

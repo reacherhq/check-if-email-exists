@@ -127,7 +127,7 @@ pub async fn submit_job(
 		input: task_input,
 	};
 
-	let uuid = email_verification_task
+	let uuid: uuid::Uuid = email_verification_task
 		.builder()
 		.set_json(&task_payload)
 		.map_err(|e| {
