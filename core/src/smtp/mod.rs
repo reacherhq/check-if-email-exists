@@ -172,6 +172,7 @@ pub async fn check_smtp(
 			domain,
 			&verif_method,
 			verif_method.config.retries,
+			input.skip_catchall,
 		)
 		.await,
 		SmtpDebug {

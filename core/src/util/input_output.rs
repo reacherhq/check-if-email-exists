@@ -143,6 +143,11 @@ pub struct CheckEmailInput {
 	///
 	/// Defaults to None.
 	pub sentry_dsn: Option<String>,
+	/// Whether to skip the catch-all domain check.
+	/// When true, skips the additional RCPT TO call that checks for catchall domains.
+	///
+	/// Defaults to false.
+	pub skip_catchall: bool,
 }
 
 impl Default for CheckEmailInput {
@@ -156,6 +161,7 @@ impl Default for CheckEmailInput {
 			webdriver_config: WebdriverConfig::default(),
 			backend_name: "backend-dev".into(),
 			sentry_dsn: None,
+			skip_catchall: false,
 		}
 	}
 }

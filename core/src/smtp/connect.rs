@@ -228,8 +228,9 @@ async fn smtp_is_catch_all<S: AsyncBufRead + AsyncWrite + Unpin + Send>(
 	domain: &str,
 	host: &str,
 	to_email: &EmailAddress,
+	skip_catchall: bool,
 ) -> Result<bool, SmtpError> {
-	if has_rule(domain, host, &Rule::SkipCatchAll) {
+	if skip_catchall || has_rule(domain, host, &Rule::SkipCatchAll) {
 		tracing::debug!(
 			target: LOG_TARGET,
 			email=to_email.to_string(),
@@ -258,12 +259,13 @@ async fn create_smtp_future(
 	mx_host: &str,
 	domain: &str,
 	verif_method: &VerifMethodSmtp,
+	skip_catchall: bool,
 ) -> Result<(bool, Deliverability), SmtpError> {
 	// FIXME If the SMTP is not connectable, we should actually return an
 	// Ok(SmtpDetails { can_connect_smtp: false, ... }).
 	let mut smtp_transport = connect_to_smtp_host(to_email, mx_host, verif_method).await?;
 
-	let is_catch_all = smtp_is_catch_all(&mut smtp_transport, domain, mx_host, to_email)
+	let is_catch_all = smtp_is_catch_all(&mut smtp_transport, domain, mx_host, to_email, skip_catchall)
 		.await
 		.unwrap_or(false);
 	let deliverability = if is_catch_all {
@@ -314,8 +316,9 @@ async fn check_smtp_without_retry(
 	mx_host: &str,
 	domain: &str,
 	verif_method: &VerifMethodSmtp,
+	skip_catchall: bool,
 ) -> Result<SmtpDetails, SmtpError> {
-	let fut = create_smtp_future(to_email, mx_host, domain, verif_method);
+	let fut = create_smtp_future(to_email, mx_host, domain, verif_method, skip_catchall);
 
 	let (is_catch_all, deliverability) = match verif_method.config.smtp_timeout {
 		Some(smtp_timeout) => {
@@ -348,6 +351,7 @@ pub async fn check_smtp_with_retry(
 	verif_method: &VerifMethodSmtp,
 	// Number of remaining retries.
 	count: usize,
+	skip_catchall: bool,
 ) -> Result<SmtpDetails, SmtpError> {
 	tracing::debug!(
 		target: LOG_TARGET,
@@ -359,7 +363,7 @@ pub async fn check_smtp_with_retry(
 		"Check SMTP"
 	);
 
-	let result = check_smtp_without_retry(to_email, mx_host, domain, verif_method).await;
+	let result = check_smtp_without_retry(to_email, mx_host, domain, verif_method, skip_catchall).await;
 
 	tracing::debug!(
 		target: LOG_TARGET,
@@ -388,7 +392,7 @@ pub async fn check_smtp_with_retry(
 					email=to_email.to_string(),
 					"Potential greylisting detected, retrying"
 				);
-				check_smtp_with_retry(to_email, mx_host, domain, verif_method, count - 1).await
+				check_smtp_with_retry(to_email, mx_host, domain, verif_method, count - 1, skip_catchall).await
 			}
 		}
 		_ => result,
