@@ -268,6 +268,11 @@ mod tests {
 			"permanent: 5.1.1 MXIN501 mailbox foo@bar.baz unknown (on @virginmedia.com)",
 			&email
 		));
+
+		assert!(is_invalid(
+			"550 5.1.1 <***@habitat.org.nz>: Recipient address rejected: User unknown",
+			&email
+		));
 	}
 
 	#[test]
