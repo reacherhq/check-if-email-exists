@@ -5,7 +5,7 @@ default-run = "check_if_email_exists"
 edition = "2018"
 description = "Check if an email address exists without sending any email."
 authors = ["Amaury <amaury@reacher.email>"]
-license = "AGPL-3.0"
+license = "MIT"
 publish = false
 
 [[bin]]

@@ -5,7 +5,7 @@
 		"version": "0.11.0",
 		"description": "### What is Reacher?\n\nReacher is a robust, open-source email verification API service available as both a SaaS and self-hosted solution.",
 		"license": {
-			"name": "AGPL-3.0 OR Commercial",
+			"name": "MIT",
 			"url": "https://github.com/reacherhq/check-if-email-exists/blob/master/LICENSE.md"
 		},
 		"contact": {
