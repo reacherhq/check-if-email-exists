@@ -1,6 +1,6 @@
 [package]
 name = "reacher_backend"
-version = "0.11.7"
+version = "0.11.8"
 edition = "2018"
 license = "MIT"
 publish = false

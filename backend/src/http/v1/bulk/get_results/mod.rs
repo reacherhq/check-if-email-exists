@@ -82,7 +82,7 @@ async fn http_handler(
 	if total_processed < total_records as i64 {
 		return Err(ReacherResponseError::new(
 			StatusCode::BAD_REQUEST,
-			format!("Job {} is still running, please try again later", job_id),
+			format!("Job {job_id} is still running, please try again later"),
 		)
 		.into());
 	}

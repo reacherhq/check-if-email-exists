@@ -67,9 +67,7 @@ async fn handle_without_worker(
 
 	// If we're in the Commercial License Trial, we also store the
 	// result by sending it to back to Reacher.
-	send_to_reacher(Arc::clone(&config), &body.to_email, &result_ok)
-		.await
-		.map_err(ReacherResponseError::from)?;
+	send_to_reacher(Arc::clone(&config), &body.to_email, &result_ok).await?;
 
 	let result = result_ok.unwrap();
 	info!(target: LOG_TARGET, email=body.to_email, is_reachable=?result.is_reachable, "Done verification");
@@ -123,7 +121,7 @@ async fn handle_with_worker(
 	let mut consumer = channel
 		.basic_consume(
 			reply_queue.name().as_str(),
-			format!("rpc.{}", correlation_id).as_str(),
+			format!("rpc.{correlation_id}").as_str(),
 			BasicConsumeOptions::default(),
 			FieldTable::default(),
 		)

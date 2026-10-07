@@ -229,7 +229,7 @@ async fn smtp_is_catch_all<S: AsyncBufRead + AsyncWrite + Unpin + Send>(
 		.map(char::from)
 		.take(15)
 		.collect();
-	let random_email = EmailAddress::new(format!("{}@{}", random_email, domain))?;
+	let random_email = EmailAddress::new(format!("{random_email}@{domain}"))?;
 
 	check_email_deliverability(smtp_transport, &random_email)
 		.await

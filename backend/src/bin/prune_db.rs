@@ -26,8 +26,7 @@ async fn main() -> Result<()> {
             GROUP BY job_id
         ) e ON b.id = e.job_id
         WHERE b.total_records = e.total_processed
-        AND b.created_at <= current_date - interval '{} days'",
-		days_old
+        AND b.created_at <= current_date - interval '{days_old} days'"
 	);
 
 	let job_ids_to_delete: Vec<(i32,)> = sqlx::query_as(&query).fetch_all(&pool).await?;

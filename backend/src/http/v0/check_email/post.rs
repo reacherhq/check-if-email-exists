@@ -69,7 +69,7 @@ impl CheckEmailRequest {
 				hello_name.clone(),
 				from_email.clone(),
 				smtp_port,
-				smtp_timeout.clone(),
+				smtp_timeout,
 				retries,
 			)
 		} else {
@@ -83,7 +83,7 @@ impl CheckEmailRequest {
 				self.proxy.is_some(),
 				hello_name.clone(),
 				from_email.clone(),
-				smtp_timeout.clone(),
+				smtp_timeout,
 				smtp_port,
 				retries,
 			);
