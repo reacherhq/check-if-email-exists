@@ -54,7 +54,7 @@ mod tests {
 		assert_eq!(resp.status(), StatusCode::OK);
 		assert_eq!(
 			resp.body(),
-			format!("{{\"version\":\"{}\"}}", CARGO_PKG_VERSION).as_str()
+			format!("{{\"version\":\"{CARGO_PKG_VERSION}\"}}").as_str()
 		);
 	}
 }

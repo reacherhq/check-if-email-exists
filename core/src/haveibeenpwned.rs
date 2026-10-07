@@ -25,10 +25,7 @@ const MAIN_API_URL: &str = "https://haveibeenpwned.com/api/v3/";
 /// any breach.
 pub async fn check_haveibeenpwned(to_email: &str, api_key: Option<String>) -> Option<bool> {
 	let client = Client::new();
-	let url = format!(
-		"{}breachedaccount/{}?truncateResponse=false",
-		MAIN_API_URL, to_email
-	);
+	let url = format!("{MAIN_API_URL}breachedaccount/{to_email}?truncateResponse=false");
 
 	let request = client
 		.get(&url)
