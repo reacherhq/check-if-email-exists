@@ -67,8 +67,7 @@ async fn handle_without_worker(
 
 	// If we're in the Commercial License Trial, we also store the
 	// result by sending it to back to Reacher.
-	send_to_reacher(Arc::clone(&config), &body.to_email, &result_ok)
-		.await?;
+	send_to_reacher(Arc::clone(&config), &body.to_email, &result_ok).await?;
 
 	let result = result_ok.unwrap();
 	info!(target: LOG_TARGET, email=body.to_email, is_reachable=?result.is_reachable, "Done verification");
