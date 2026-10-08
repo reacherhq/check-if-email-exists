@@ -1,0 +1,49 @@
+version: "3"
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    restart: unless-stopped
+    networks:
+      - default
+
+  frontend:
+    image: nginx:alpine
+    ports:
+      - "8192:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - default
+      - coolify
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8081:8080"
+    environment:
+      - RUST_LOG=reacher=info,reacher_backend=debug
+      - RCH__HTTP_HOST=0.0.0.0
+      - RCH__WORKER__ENABLE=true
+      - RCH_ENABLE_BULK=1
+      - RCH__STORAGE__POSTGRES__DB_URL=postgres://coolify:0hm63JpkSS4I7gOqnl8c2wq%2Fs70Kq8Yn%2B3cZpX5lOd0%3D@coolify-db:5432/coolify
+      - RCH__WORKER__RABBITMQ__URL=amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      - rabbitmq
+    restart: unless-stopped
+    networks:
+      - default
+      - coolify
+
+networks:
+  default:
+  coolify:
+    external: true

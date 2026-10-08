@@ -16,3 +16,4 @@
 
 pub mod bulk;
 pub mod check_email;
+pub mod auth;
