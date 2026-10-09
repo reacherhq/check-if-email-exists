@@ -2,9 +2,9 @@
 
 Reacher includes an optional, opinionated queue-based architecture designed to scale efficiently and handle high email verification volumes. This architecture comprises 4 main components and is highly configurable to meet specific business needs.
 
-<table><thead><tr><th width="183">Component</th><th width="295">Description</th><th>Docker image</th></tr></thead><tbody><tr><td><strong>HTTP server</strong></td><td>Accepts incoming email verification requests, and post them into the queue.</td><td><code>reacherhq/commercial-license-trial</code></td></tr><tr><td><a href="https://rabbitmq.com">RabbitMQ</a></td><td>Reacher uses a reliable, mature and open-source queue implementation.</td><td><code>rabbitmq:4.0-management</code></td></tr><tr><td><strong>Workers</strong></td><td>One or more consumers of the queue, which perform the actual email verification task.</td><td><code>reacherhq/commercial-license-trial</code></td></tr><tr><td><strong>Storage</strong></td><td>A place to store all results, currently only PostgresDB is supported.</td><td><code>postgres:14</code></td></tr></tbody></table>
+<table><thead><tr><th width="183">Component</th><th width="295">Description</th><th>Docker image</th></tr></thead><tbody><tr><td><strong>HTTP server</strong></td><td>Accepts incoming email verification requests, and post them into the queue.</td><td><code>reacherhq/backend</code></td></tr><tr><td><a href="https://rabbitmq.com">RabbitMQ</a></td><td>Reacher uses a reliable, mature and open-source queue implementation.</td><td><code>rabbitmq:4.0-management</code></td></tr><tr><td><strong>Workers</strong></td><td>One or more consumers of the queue, which perform the actual email verification task.</td><td><code>reacherhq/backend</code></td></tr><tr><td><strong>Storage</strong></td><td>A place to store all results, currently only PostgresDB is supported.</td><td><code>postgres:14</code></td></tr></tbody></table>
 
-Note that Reacher provides the same Docker image `reacherhq/commercial-license-trial` which can act as both a **Worker** and a **HTTP server**.
+Note that Reacher provides the same Docker image `reacherhq/backend` which can act as both a **Worker** and a **HTTP server**.
 
 <figure><img src="../../.gitbook/assets/Screenshot 2024-11-30 at 15.33.27.png" alt=""><figcaption><p>Reacher queue architecture</p></figcaption></figure>
 
@@ -26,10 +26,6 @@ Since spawning workers on cloud providers doesn't guarantee a reputable IP assig
 
 * `proxy.{host,port}` or `RCH__PROXY__{HOST,PORT}`: Set a proxy to route all SMTP requests through. You can optionally pass in `username` and `password` if required.
 
-{% hint style="info" %}
-The Dockerfile provided in the Commercial License Trial already has these parameters set up.
-{% endhint %}
-
 #### Optional Concurrency and Throttling Parameters
 
 You may also configure the following parameters:
@@ -39,10 +35,6 @@ You may also configure the following parameters:
 * **Throttling**:
   * `throttle.max_requests_per_minute`: Set to `60`. Limits request spikes to prevent SMTP server flags.
   * `throttle.max_requests_per_day`: Set to `10,000`.&#x20;
-
-{% hint style="info" %}
-The Dockerfile provided in the Commercial License Trial already has these parameters set up.
-{% endhint %}
 
 ## Understanding the architecture with Docker Compose
 

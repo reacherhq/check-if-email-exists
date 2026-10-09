@@ -1,19 +1,3 @@
-// Reacher - Email Verification
-// Copyright (C) 2018-2023 Reacher
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published
-// by the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Affero General Public License for more details.
-
-// You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 use crate::storage::{postgres::PostgresStorage, StorageAdapter};
 use crate::throttle::ThrottleManager;
 use crate::worker::do_work::TaskWebhook;
@@ -73,9 +57,6 @@ pub struct BackendConfig {
 	/// Configuration on where to store the email verification results.
 	pub storage: Option<StorageConfig>,
 
-	/// Whether to enable the Commercial License Trial. Setting this to true
-	pub commercial_license_trial: Option<CommercialLicenseTrialConfig>,
-
 	/// Throttle configuration for all requests
 	pub throttle: ThrottleConfig,
 
@@ -108,7 +89,6 @@ impl BackendConfig {
 			sentry_dsn: None,
 			worker: WorkerConfig::default(),
 			storage: Some(StorageConfig::Noop),
-			commercial_license_trial: None,
 			throttle: ThrottleConfig::new_without_throttle(),
 			channel: None,
 			storage_adapter: Arc::new(StorageAdapter::Noop),
@@ -306,12 +286,6 @@ pub enum StorageConfig {
 pub struct PostgresConfig {
 	pub db_url: String,
 	pub extra: Option<serde_json::Value>,
-}
-
-#[derive(Debug, Deserialize, Clone, Serialize)]
-pub struct CommercialLicenseTrialConfig {
-	pub api_token: String,
-	pub url: String,
 }
 
 /// Load the worker configuration from the worker_config.toml file and from the

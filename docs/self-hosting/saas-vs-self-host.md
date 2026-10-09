@@ -11,7 +11,7 @@ Reacher SaaS is the cloud-hosted version of the service, accessible at [https://
 Reacher is also available for self-hosting, enabling you to run the service on your own servers. This approach provides full control over the environment and data while leveraging the same verification engine as Reacher SaaS. Reacher is designed to make self-hosting straightforward and efficient.
 
 {% hint style="success" %}
-Reacher's goal is to make Self-Hosting easy. You can [install.md](install.md "mention") as part of your **Commercial License Trial**.
+Reacher's goal is to make Self-Hosting easy. You can [install.md](install.md "mention").
 {% endhint %}
 
 ## Key Differences
@@ -19,7 +19,7 @@ Reacher's goal is to make Self-Hosting easy. You can [install.md](install.md "me
 | Feature               | SaaS                                   | Self-Hosting                                                                              |
 | --------------------- | -------------------------------------- | ----------------------------------------------------------------------------------------- |
 | **Volume**            | Limited to 10k verifications per month | Unlimited verifications                                                                   |
-| **Cost**              | Monthly subscription                   | Monthly subscription + server costs (lower at scale) + [proxy](proxies/) costs (optional) |
+| **Cost**              | Monthly subscription                   | Free (MIT License) + server costs + [proxy](proxies/) costs (optional)                    |
 | **Setup Time**        | Instant                                | Requires installation and setup                                                           |
 | **Maintenance**       | Fully managed by Reacher               | Managed by your IT team                                                                   |
 | **Data Ownership**    | Data stored on Reacher servers         | Full ownership, no data is sent to Reacher                                                |
