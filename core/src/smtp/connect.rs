@@ -160,6 +160,13 @@ async fn check_email_deliverability<S: AsyncBufRead + AsyncWrite + Unpin + Send>
 			// lowercase.
 			let err_string = err.to_string().to_lowercase();
 
+			// Greylisting is a temporary deferral, it says nothing about the
+			// mailbox. Return the error as-is so that the check is retried,
+			// and eventually reported as unknown.
+			if parser::is_greylisted(&err_string) {
+				return Err(SmtpError::AsyncSmtpError(err));
+			}
+
 			// Check if the email account has been disabled or blocked.
 			if parser::is_disabled_account(&err_string) {
 				return Ok(Deliverability {

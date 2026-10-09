@@ -20,6 +20,21 @@ use super::error::SmtpError;
 use crate::EmailAddress;
 use async_smtp::error::Error as AsyncSmtpError;
 
+/// is_greylisted checks for SMTP responses meaning that the server
+/// temporarily deferred the recipient because of greylisting. These responses
+/// often also contain "recipient address rejected", so they must be checked
+/// before `is_invalid`, otherwise a valid mailbox would be flagged as invalid.
+pub fn is_greylisted(e: &str) -> bool {
+	// 450 4.2.0 <EMAIL>: Recipient address rejected: Greylisted, see http://postgrey.schweikert.ch/help/creativeconcern.com.html
+	// 450 4.7.1 <EMAIL>: Recipient address rejected: Greylisting in action, please come back later
+	// 450 4.7.1 Greylisted for 38 seconds
+	e.contains("greylist")
+		|| e.contains("graylist")
+		|| e.contains("grey-list")
+		|| e.contains("gray-list")
+		|| e.contains("postgrey")
+}
+
 /// is_invalid checks for SMTP responses meaning that the email is invalid,
 /// i.e. that the mailbox doesn't exist.
 pub fn is_invalid(e: &str, email: &EmailAddress) -> bool {
@@ -241,7 +256,7 @@ pub fn is_err_needs_rdns(e: &SmtpError) -> bool {
 #[cfg(test)]
 mod tests {
 
-	use super::{is_err_ip_blacklisted, is_invalid};
+	use super::{is_err_ip_blacklisted, is_greylisted, is_invalid};
 	use crate::EmailAddress;
 	use crate::SmtpError::AsyncSmtpError;
 	use async_smtp::{
@@ -267,6 +282,27 @@ mod tests {
 		assert!(is_invalid(
 			"permanent: 5.1.1 MXIN501 mailbox foo@bar.baz unknown (on @virginmedia.com)",
 			&email
+		));
+	}
+
+	#[test]
+	fn test_is_greylisted() {
+		let email = EmailAddress::from_str("foo@bar.baz").unwrap();
+
+		// https://github.com/reacherhq/check-if-email-exists/issues/1658
+		for msg in [
+			"transient: 4.2.0 <foo@bar.baz>: recipient address rejected: greylisted, see http://postgrey.schweikert.ch/help/creativeconcern.com.html",
+			"transient: 4.7.1 <foo@bar.baz>: recipient address rejected: greylisting in action, please come back later",
+			"transient: 4.7.1 <foo@bar.baz>: recipient address rejected: greylisted for 38 seconds",
+		] {
+			assert!(is_greylisted(msg), "{}", msg);
+			// Greylisting messages would otherwise be flagged as invalid,
+			// which is why `is_greylisted` must be checked first.
+			assert!(is_invalid(msg, &email), "{}", msg);
+		}
+
+		assert!(!is_greylisted(
+			"permanent: 5.1.1 <foo@bar.baz>: recipient address rejected: user unknown"
 		));
 	}
 
