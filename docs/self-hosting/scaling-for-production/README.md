@@ -8,17 +8,7 @@ Reacher's stateless architecture enables efficient horizontal scaling, allowing 
 
 Alternative scaling solutions were also explored, chat with [amaury@reacher.email](https://app.gitbook.com/u/F1LnsqPFtfUEGlcILLswbbp5cgk2 "mention") if you want to discuss more.
 
-## Scaling beyond the Commercial License Trial
-
-The documentation in this section mentions the Dockerfile provided as part of the [commercial-license-trial.md](../licensing/commercial-license-trial.md "mention"), which:
-
-* has a built-in proxy,
-* &#x20;limits the number of daily verifications to 10000.
-
-The strategies documented in this section apply both to the Commercial License Trial as well as a high-volume setup beyond this limit.  Once you're ready to transition from the former to the latter, you must:
-
-1. **Purchase a Commercial License**. This will grant you access to an unrestricted Dockerfile.
-2. **Purchase 3rd-party proxy IPs**. You will receive configuration details for the proxy to be passed into the unrestricted Dockerfile.
-
-Get in touch with [amaury@reacher.email](https://app.gitbook.com/u/F1LnsqPFtfUEGlcILLswbbp5cgk2 "mention") when you're there.
+{% hint style="info" %}
+For a high-volume setup, you will most likely need to purchase 3rd-party proxy IPs, see [proxies](../proxies/ "mention").
+{% endhint %}
 

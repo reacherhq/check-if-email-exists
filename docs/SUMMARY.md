@@ -15,7 +15,6 @@
   * [Manage scaling yourself](self-hosting/scaling-for-production/option-1-manage-scaling-yourself.md)
   * [Option 1: RabbitMQ-based Queue Architecture](self-hosting/scaling-for-production/option-2-rabbitmq-based-queue-architecture.md)
 * [Licensing](self-hosting/licensing/README.md)
-  * [Commercial License Trial](self-hosting/licensing/commercial-license-trial.md)
 * [Proxies](self-hosting/proxies/README.md)
   * [Multiple Proxies](self-hosting/proxies/multiple-proxies.md)
 * [Reacher Configuration](self-hosting/reacher-configuration-v0.10.md)

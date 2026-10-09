@@ -54,7 +54,7 @@ Below is a [Docker Compose](https://docs.docker.com/compose/) file showcasing:
 ```yaml
 services:
   worker:
-    image: reacherhq/commercial-license-trial:v0.11.0
+    image: reacherhq/backend:v0.11.0
     container_name: test
     ports:
       - "8080:8080"

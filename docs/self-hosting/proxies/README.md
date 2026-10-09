@@ -24,10 +24,6 @@ Once you've purchased a proxy, run the Docker command (see how in [install.md](.
 * `-e RCH__FROM_EMAIL=<email>`: The email to use during the "MAIL FROM" step. It should be an email from the same domain as the HELLO\_NAME. Ask your proxy provider about this setting.
 
 {% hint style="info" %}
-If you're using the [commercial-license-trial.md](../licensing/commercial-license-trial.md "mention"), these fields are already populated with the built-in proxy. However, you can overwrite them by passing these flags again, pointing to a proxy of your own choosing.
-{% endhint %}
-
-{% hint style="info" %}
 For advanced usage, you can configure [multiple-proxies.md](multiple-proxies.md "mention").
 {% endhint %}
 

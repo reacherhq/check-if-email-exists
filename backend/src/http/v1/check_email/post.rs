@@ -1,19 +1,3 @@
-// Reacher - Email Verification
-// Copyright (C) 2018-2023 Reacher
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published
-// by the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Affero General Public License for more details.
-
-// You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 //! This file implements the `POST /v1/check_email` endpoint.
 
 use check_if_email_exists::{check_email, LOG_TARGET};
@@ -32,7 +16,6 @@ use crate::config::BackendConfig;
 use crate::http::v0::check_email::post::{with_config, CheckEmailRequest};
 use crate::http::v1::bulk::post::publish_task;
 use crate::http::{check_header, ReacherResponseError};
-use crate::storage::commercial_license_trial::send_to_reacher;
 use crate::worker::consume::MAX_QUEUE_PRIORITY;
 use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask};
 use crate::worker::single_shot::SingleShotReply;
@@ -64,10 +47,6 @@ async fn handle_without_worker(
 		)
 		.map_err(ReacherResponseError::from)
 		.await?;
-
-	// If we're in the Commercial License Trial, we also store the
-	// result by sending it to back to Reacher.
-	send_to_reacher(Arc::clone(&config), &body.to_email, &result_ok).await?;
 
 	let result = result_ok.unwrap();
 	info!(target: LOG_TARGET, email=body.to_email, is_reachable=?result.is_reachable, "Done verification");

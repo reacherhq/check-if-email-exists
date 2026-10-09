@@ -2,7 +2,6 @@ use check_if_email_exists::CheckEmailOutput;
 use lambda_runtime::{service_fn, Error, LambdaEvent};
 use reacher_backend::config::{load_config, BackendConfig};
 use reacher_backend::http::CheckEmailRequest;
-use reacher_backend::storage::commercial_license_trial::send_to_reacher;
 use reacher_backend::worker::do_work::{
 	check_email_and_send_result, CheckEmailJobId, CheckEmailTask, TaskWebhook,
 };
@@ -95,8 +94,7 @@ async fn handler(event: LambdaEvent<SQSPayload>) -> Result<CheckEmailOutput, Err
 	}
 
 	// TODO:
-	// - Refactor storing the result and sending to Reacher, it's duplicated
-	// code from the backend.
+	// - Refactor storing the result, it's duplicated code from the backend.
 	// - Add throttling, again using backend code.
 
 	// Store the result.
@@ -104,10 +102,6 @@ async fn handler(event: LambdaEvent<SQSPayload>) -> Result<CheckEmailOutput, Err
 	storage
 		.store(task, &worker_output, storage.get_extra())
 		.await?;
-
-	// If we're in the Commercial License Trial, we also store the
-	// result by sending it to back to Reacher.
-	send_to_reacher(backend_config, &task.input.to_email, &worker_output).await?;
 
 	Ok(worker_output?)
 }
