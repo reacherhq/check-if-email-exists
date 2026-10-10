@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. The changes in this project follow [Convention Commits](https://www.conventionalcommits.org/en/v1.0.0/).
 
+# [0.11.9](https://github.com/reacherhq/check-if-email-exists/compare/v0.11.8...v0.11.9) (2026-10-09)
+
+### Bug Fixes
+
+* **core:** treat greylisting responses as unknown instead of invalid ([#1659](https://github.com/reacherhq/check-if-email-exists/pull/1659)) ([5fd3900](https://github.com/reacherhq/check-if-email-exists/commit/5fd3900))
+
+### Changes
+
+* Switch to the MIT license and remove the Commercial License Trial ([#1640](https://github.com/reacherhq/check-if-email-exists/pull/1640), [#1661](https://github.com/reacherhq/check-if-email-exists/pull/1661))
+
 # [0.11.8](https://github.com/reacherhq/check-if-email-exists/compare/v0.11.7...v0.11.8) (2026-10-05)
 
 ### Bug Fixes
@@ -859,6 +869,5 @@ where `is_disabled` checks if the address has been disabled/blocked by the email
 
 
 ## [0.1.1](https://github.com/reacherhq/check-if-email-exists/compare/v0.1.0...v0.1.1) (2018-12-29)
-
 
 
