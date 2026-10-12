@@ -29,7 +29,7 @@ sentry = { version = "0.36", default-features = false, features = [
 sentry-anyhow = "0.32"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-sqlx = { version = "0.7", default-features = false, features = [
+sqlx = { version = "0.8", default-features = false, features = [
     "runtime-tokio-rustls",
     "postgres",
     "uuid",
@@ -37,7 +37,7 @@ sqlx = { version = "0.7", default-features = false, features = [
     "json",
     "migrate",
 ] }
-sqlxmq = "0.5"
+sqlxmq = "0.6"
 thiserror = "2.0"
 tokio = { version = "1.40", features = ["macros"] }
 tracing = "0.1.40"
