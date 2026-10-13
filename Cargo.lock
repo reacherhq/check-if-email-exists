@@ -577,7 +577,7 @@ dependencies = [
 
 [[package]]
 name = "check-if-email-exists"
-version = "0.11.9"
+version = "0.11.10"
 dependencies = [
  "anyhow",
  "async-recursion",
@@ -609,7 +609,7 @@ dependencies = [
 
 [[package]]
 name = "check-if-email-exists-cli"
-version = "0.11.9"
+version = "0.11.10"
 dependencies = [
  "anyhow",
  "check-if-email-exists",
@@ -3058,7 +3058,7 @@ dependencies = [
 
 [[package]]
 name = "reacher_backend"
-version = "0.11.9"
+version = "0.11.10"
 dependencies = [
  "anyhow",
  "async-smtp",
@@ -3091,7 +3091,7 @@ dependencies = [
 
 [[package]]
 name = "reacher_sqs"
-version = "0.11.9"
+version = "0.11.10"
 dependencies = [
  "check-if-email-exists",
  "lambda_runtime",

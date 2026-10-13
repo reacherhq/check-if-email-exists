@@ -171,6 +171,9 @@ pub enum Reachable {
 pub struct DebugDetails {
 	/// Identifier for the service currently running Reacher.
 	pub backend_name: String,
+	/// Version of Reacher that performed the verification.
+	#[serde(default)]
+	pub reacher_version: String,
 	/// The time when the email verification started.
 	pub start_time: DateTime<Utc>,
 	/// The time when the email verification ended.
@@ -189,6 +192,7 @@ impl Default for DebugDetails {
 			duration: Duration::default(),
 			smtp: SmtpDebug::default(),
 			backend_name: "backend-dev".into(),
+			reacher_version: crate::CARGO_PKG_VERSION.into(),
 		}
 	}
 }
@@ -333,5 +337,19 @@ mod tests {
 		// Make sure the `description` is NOT present.
 		let expected = r#""smtp":{"error":{"type":"AsyncSmtpError","message":"transient: foobar; 8BITMIME; SIZE 42"}}"#;
 		assert!(actual.contains(expected));
+	}
+
+	#[test]
+	fn should_serialize_reacher_version() {
+		let actual = serde_json::to_value(DebugDetails::default()).unwrap();
+		assert_eq!(actual["reacher_version"], crate::CARGO_PKG_VERSION);
+	}
+
+	#[test]
+	fn should_deserialize_without_reacher_version() {
+		let mut value = serde_json::to_value(DebugDetails::default()).unwrap();
+		value.as_object_mut().unwrap().remove("reacher_version");
+		let debug: DebugDetails = serde_json::from_value(value).unwrap();
+		assert_eq!(debug.reacher_version, "");
 	}
 }

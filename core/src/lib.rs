@@ -86,6 +86,9 @@ pub use util::sentry::*;
 /// The target where to log check-if-email-exists logs.
 pub const LOG_TARGET: &str = "reacher";
 
+/// The version of Reacher, as defined in Cargo.toml.
+pub const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
+
 static INIT: Once = Once::new();
 
 /// check-if-email-exists uses rustls for its TLS connections. This function
@@ -255,6 +258,7 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 				.unwrap_or(Duration::from_secs(0)),
 			smtp: smtp_debug,
 			backend_name: input.backend_name.clone(),
+			reacher_version: CARGO_PKG_VERSION.into(),
 		},
 	};
 
