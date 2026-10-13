@@ -14,48 +14,9 @@ env:
   SQLX_OFFLINE: true
 
 jobs:
-  # Cargo check.
+  # Cargo fmt, clippy and test, in a single job so they share one Rust cache.
+  # Clippy also covers what `cargo check` used to.
   check:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v2
-
-      - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-
-      - name: Run cargo check
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: --all
-
-  # Cargo test.
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v2
-
-      - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-
-      - name: Run cargo test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --all
-
-  # Cargo fmt and clippy
-  lints:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
@@ -69,6 +30,11 @@ jobs:
           override: true
           components: rustfmt, clippy
 
+      - uses: Swatinem/rust-cache@v2
+        with:
+          # Only save caches from master, so PRs don't evict each other.
+          save-if: ${{ github.ref == 'refs/heads/master' }}
+
       - name: Run cargo fmt
         uses: actions-rs/cargo@v1
         with:
@@ -80,3 +46,9 @@ jobs:
         with:
           command: clippy
           args: --all -- -A deprecated
+
+      - name: Run cargo test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --all
