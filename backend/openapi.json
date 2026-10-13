@@ -716,6 +716,10 @@
 						},
 						"description": "The name of the server that performed the verification."
 					},
+					"reacher_version": {
+						"type": "string",
+						"description": "The version of Reacher that performed the verification, e.g. \"0.11.10\"."
+					},
 					"smtp": {
 						"$ref": "#/components/schemas/DebugDetailsSmtp"
 					}

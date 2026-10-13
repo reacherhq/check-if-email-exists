@@ -7,13 +7,11 @@
 use crate::misc::MiscError;
 use crate::mx::MxError;
 use crate::LOG_TARGET;
-use crate::{smtp::SmtpError, CheckEmailOutput};
+use crate::{smtp::SmtpError, CheckEmailOutput, CARGO_PKG_VERSION};
 use async_smtp::error::Error as AsyncSmtpError;
 use sentry::protocol::{Event, Exception, Level, Values};
 use thiserror::Error;
 use tracing::{debug, info};
-
-const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Setup Sentry.
 pub fn setup_sentry(sentry_dsn: &str) -> sentry::ClientInitGuard {
