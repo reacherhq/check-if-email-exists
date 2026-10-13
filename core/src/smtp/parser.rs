@@ -107,6 +107,8 @@ pub fn is_invalid(e: &str, email: &EmailAddress) -> bool {
 	|| e.contains("unable to verify user")
 	// permanent: 5.1.1 Utilisateur inconnu (on @sante.fr)
 	|| e.contains("utilisateur inconnu")
+	// transient: 4.4.4 Mail received as unauthenticated, incoming to a recipient domain configured in a hosted tenant which has no mail-enabled subscriptions. (on Microsoft 365 tenants without Exchange Online, e.g. @biked.com)
+	|| e.contains("no mail-enabled subscriptions")
 	// permanent: 5.1.1
 	|| e.contains("permanent: 5.1.1")
 	// permanent: 5.7.1
@@ -267,6 +269,11 @@ mod tests {
 			"permanent: 5.1.1 MXIN501 mailbox foo@bar.baz unknown (on @virginmedia.com)",
 			&email
 		));
+
+		// https://github.com/reacherhq/check-if-email-exists/issues/1666
+		let msg = "transient: 4.4.4 mail received as unauthenticated, incoming to a recipient domain configured in a hosted tenant which has no mail-enabled subscriptions. attr5 [sj5pepf000001cc.namprd05.prod.outlook.com 2026-10-13t12:16:22.797z 08df2669f6c8e25d]";
+		assert!(!is_greylisted(msg));
+		assert!(is_invalid(msg, &email));
 	}
 
 	#[test]
