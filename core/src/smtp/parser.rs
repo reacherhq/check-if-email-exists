@@ -119,12 +119,14 @@ pub fn is_full_inbox(e: &str) -> bool {
 	// https://answers.microsoft.com/en-us/outlook_com/forum/all/how-do-i-interpret-the-delivery-failure-message/2f1bf9c0-8b03-4f8f-aacc-5f6ba60a73f3
 	|| e.contains("mailbox full")
 	// https://answers.microsoft.com/en-us/outlook_com/forum/all/how-do-i-interpret-the-delivery-failure-message/2f1bf9c0-8b03-4f8f-aacc-5f6ba60a73f3
-	|| e.contains("quote exceeded")
+	|| e.contains("quota exceeded")
 	|| e.contains("over quota")
 	// 550 user has too many messages on the server
 	|| e.contains("too many messages")
 	// transient: 4.2.2 The recipient's inbox is out of storage space. Please direct the; 4.2.2 recipient to; 4.2.2  https://support.google.com/mail/?p=OverQuotaTemp 41be03b00d2f7-801d5c00011si4287631a12.311 - gsmtp (on @gmail.com)
 	|| e.contains("out of storage space")
+	// permanent: Requested mail action aborted: exceeded storage allocation (on @gmx.de)
+	|| e.contains("exceeded storage allocation")
 }
 
 /// Check if the email account has been disabled or blocked by the email
@@ -240,7 +242,7 @@ pub fn is_err_needs_rdns(e: &SmtpError) -> bool {
 #[cfg(test)]
 mod tests {
 
-	use super::{is_err_ip_blacklisted, is_greylisted, is_invalid};
+	use super::{is_err_ip_blacklisted, is_full_inbox, is_greylisted, is_invalid};
 	use crate::EmailAddress;
 	use crate::SmtpError::AsyncSmtpError;
 	use async_smtp::{
@@ -288,6 +290,15 @@ mod tests {
 		assert!(!is_greylisted(
 			"permanent: 5.1.1 <foo@bar.baz>: recipient address rejected: user unknown"
 		));
+	}
+
+	#[test]
+	fn test_is_full_inbox() {
+		// https://github.com/reacherhq/check-if-email-exists/issues/1464
+		assert!(is_full_inbox(
+			"permanent: requested mail action aborted: exceeded storage allocation"
+		));
+		assert!(is_full_inbox("permanent: 5.2.2 quota exceeded"));
 	}
 
 	#[test]
