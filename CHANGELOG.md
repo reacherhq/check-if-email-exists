@@ -1,6 +1,19 @@
-﻿# Changelog
+# Changelog
 
 All notable changes to this project will be documented in this file. The changes in this project follow [Convention Commits](https://www.conventionalcommits.org/en/v1.0.0/).
+
+# [0.11.10](https://github.com/reacherhq/check-if-email-exists/compare/v0.11.9...v0.11.10) (2026-10-16)
+
+### Features
+
+* Add reacher_version to JSON output, bump to v0.11.10 ([#1667](https://github.com/reacherhq/check-if-email-exists/pull/1667)) ([0b11b6f](https://github.com/reacherhq/check-if-email-exists/commit/0b11b6f39271c2e4afa8f216be7f359485c297f3))
+
+### Bug Fixes
+
+* **core:** detect full inbox on gmx "exceeded storage allocation" ([#1671](https://github.com/reacherhq/check-if-email-exists/pull/1671)) ([c815002](https://github.com/reacherhq/check-if-email-exists/commit/c815002d7438f98ec59dc5338981c0a4a0de916b))
+* **deps:** upgrade dependencies with HIGH security advisories ([#1665](https://github.com/reacherhq/check-if-email-exists/pull/1665)) ([c02d1c0](https://github.com/reacherhq/check-if-email-exists/commit/c02d1c0))
+* **mx:** detect Microsoft consumer domains on mx.microsoft hosts as Hotmail B2C ([#1669](https://github.com/reacherhq/check-if-email-exists/pull/1669)) ([f5282bc](https://github.com/reacherhq/check-if-email-exists/commit/f5282bc))
+* **smtp:** treat Microsoft tenants without mail-enabled subscriptions as invalid ([#1668](https://github.com/reacherhq/check-if-email-exists/pull/1668)) ([8025ae9](https://github.com/reacherhq/check-if-email-exists/commit/8025ae9))
 
 # [0.11.9](https://github.com/reacherhq/check-if-email-exists/compare/v0.11.8...v0.11.9) (2026-10-09)
 
