@@ -3,18 +3,23 @@ use async_smtp::commands::{MailCommand, RcptCommand};
 use async_smtp::extension::ClientId;
 use async_smtp::{SmtpClient, SmtpTransport};
 use fast_socks5::client::Config;
-use fast_socks5::{client::Socks5Stream, Result};
+use fast_socks5::util::stream::{tcp_connect, tcp_connect_with_timeout};
+use fast_socks5::util::target_addr::TargetAddr;
+use fast_socks5::{client::Socks5Stream, AuthenticationMethod, Result, Socks5Command};
 use rand::rngs::SmallRng;
+use rand::seq::SliceRandom;
 use rand::{distributions::Alphanumeric, Rng, SeedableRng};
 use std::iter;
+use std::net::SocketAddr;
 use std::str::FromStr;
 use tokio::io::{AsyncBufRead, AsyncRead, AsyncWrite, BufStream};
-use tokio::net::TcpStream;
+use tokio::net::{lookup_host, TcpStream};
 
 use super::parser;
 use super::verif_method::VerifMethodSmtp;
 use super::{SmtpDetails, SmtpError};
 use crate::rules::{has_rule, Rule};
+use crate::util::input_output::CheckEmailInputProxy;
 use crate::{EmailAddress, LOG_TARGET};
 
 // Define a new trait that combines AsyncRead, AsyncWrite, and Unpin
@@ -41,6 +46,89 @@ macro_rules! try_smtp (
     })
 );
 
+/// Maximum number of resolved proxy addresses to try before giving up.
+const MAX_PROXY_ADDR_ATTEMPTS: usize = 3;
+
+/// Open a TCP connection to the first reachable address, trying at most
+/// `MAX_PROXY_ADDR_ATTEMPTS` addresses in order.
+async fn connect_to_any_addr(
+	addrs: &[SocketAddr],
+	connect_timeout_s: Option<u64>,
+) -> Result<TcpStream, SmtpError> {
+	let mut last_err = None;
+	for addr in addrs.iter().take(MAX_PROXY_ADDR_ATTEMPTS) {
+		let res = match connect_timeout_s {
+			None => tcp_connect(addr).await,
+			Some(timeout_s) => tcp_connect_with_timeout(addr, timeout_s).await,
+		};
+		match res {
+			Ok(socket) => return Ok(socket),
+			Err(err) => {
+				tracing::debug!(
+					target: LOG_TARGET,
+					proxy_addr=%addr,
+					error=?err,
+					"Failed to connect to proxy address, trying next one"
+				);
+				last_err = Some(err);
+			}
+		}
+	}
+
+	Err(match last_err {
+		Some(err) => err.into(),
+		None => std::io::Error::new(
+			std::io::ErrorKind::NotFound,
+			"proxy host resolved to no addresses",
+		)
+		.into(),
+	})
+}
+
+/// Connect to the target host through a SOCKS5 proxy.
+///
+/// The proxy host is resolved here rather than in fast-socks5, which only
+/// ever uses the first resolved address. When the proxy hostname resolves to
+/// multiple addresses, we shuffle them so connections spread across all
+/// endpoints, and fall back to the next address if the TCP connection fails.
+async fn connect_to_socks5_proxy(
+	proxy: &CheckEmailInputProxy,
+	target_host: String,
+	target_port: u16,
+) -> Result<Socks5Stream<TcpStream>, SmtpError> {
+	// Round up, so that timeouts below 1s don't become 0s.
+	let connect_timeout_s = proxy.timeout_ms.map(|ms| ms.div_ceil(1000));
+	let mut config = Config::default();
+	if let Some(timeout_s) = connect_timeout_s {
+		config.set_connect_timeout(timeout_s);
+	}
+
+	let mut addrs: Vec<SocketAddr> = lookup_host((proxy.host.as_str(), proxy.port))
+		.await?
+		.collect();
+	addrs.shuffle(&mut SmallRng::from_entropy());
+
+	let socket = connect_to_any_addr(&addrs, connect_timeout_s).await?;
+
+	let auth = match (&proxy.username, &proxy.password) {
+		(Some(username), Some(password)) => Some(AuthenticationMethod::Password {
+			username: username.clone(),
+			password: password.clone(),
+		}),
+		_ => None,
+	};
+	let mut socks_stream = Socks5Stream::use_stream(socket, auth, config).await?;
+	// Pass the domain to the proxy, DNS will be resolved on the proxy side.
+	socks_stream
+		.request(
+			Socks5Command::TCPConnect,
+			TargetAddr::Domain(target_host, target_port),
+		)
+		.await?;
+
+	Ok(socks_stream)
+}
+
 /// Connect to an SMTP host and return the configured client transport.
 async fn connect_to_smtp_host(
 	to_email: &EmailAddress,
@@ -58,31 +146,9 @@ async fn connect_to_smtp_host(
 
 	let stream: BufStream<Box<dyn AsyncReadWrite>> = match &verif_method.proxy {
 		Some(proxy) => {
-			let mut config = Config::default();
-			if let Some(timeout_ms) = proxy.timeout_ms {
-				config.set_connect_timeout(timeout_ms / 1000);
-			}
-
 			let socks_stream =
-				if let (Some(username), Some(password)) = (&proxy.username, &proxy.password) {
-					Socks5Stream::connect_with_password(
-						(proxy.host.as_ref(), proxy.port),
-						clean_host.clone(),
-						verif_method.config.smtp_port,
-						username.clone(),
-						password.clone(),
-						config,
-					)
-					.await?
-				} else {
-					Socks5Stream::connect(
-						(proxy.host.as_ref(), proxy.port),
-						clean_host.clone(),
-						verif_method.config.smtp_port,
-						config,
-					)
-					.await?
-				};
+				connect_to_socks5_proxy(proxy, clean_host.clone(), verif_method.config.smtp_port)
+					.await?;
 			BufStream::new(Box::new(socks_stream) as Box<dyn AsyncReadWrite>)
 		}
 		None => {
@@ -383,5 +449,86 @@ pub async fn check_smtp_with_retry(
 			}
 		}
 		_ => result,
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use tokio::io::{AsyncReadExt, AsyncWriteExt};
+	use tokio::net::TcpListener;
+
+	/// Returns an address on which nothing is listening.
+	async fn closed_addr() -> SocketAddr {
+		let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+		listener.local_addr().unwrap()
+	}
+
+	#[tokio::test]
+	async fn connect_to_any_addr_falls_back_to_next_address() {
+		let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+		let open = listener.local_addr().unwrap();
+		let closed = closed_addr().await;
+
+		let socket = connect_to_any_addr(&[closed, open], Some(1)).await.unwrap();
+		assert_eq!(socket.peer_addr().unwrap(), open);
+	}
+
+	#[tokio::test]
+	async fn connect_to_any_addr_fails_when_all_unreachable() {
+		let addrs = [closed_addr().await, closed_addr().await];
+		assert!(matches!(
+			connect_to_any_addr(&addrs, Some(1)).await,
+			Err(SmtpError::Socks5(_))
+		));
+	}
+
+	#[tokio::test]
+	async fn connect_to_any_addr_fails_on_empty_addrs() {
+		assert!(matches!(
+			connect_to_any_addr(&[], None).await,
+			Err(SmtpError::IOError(_))
+		));
+	}
+
+	#[tokio::test]
+	async fn connect_to_socks5_proxy_requests_target_domain() {
+		let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+		let proxy_port = listener.local_addr().unwrap().port();
+
+		// Minimal SOCKS5 server: accept "no auth", then read the CONNECT
+		// request and return the requested domain.
+		let server = tokio::spawn(async move {
+			let (mut socket, _) = listener.accept().await.unwrap();
+			let mut greeting = [0u8; 3];
+			socket.read_exact(&mut greeting).await.unwrap();
+			assert_eq!(greeting, [5, 1, 0]);
+			socket.write_all(&[5, 0]).await.unwrap();
+
+			let mut header = [0u8; 5];
+			socket.read_exact(&mut header).await.unwrap();
+			assert_eq!(header[..4], [5, 1, 0, 3]);
+			let mut domain = vec![0u8; header[4] as usize];
+			socket.read_exact(&mut domain).await.unwrap();
+			let mut port = [0u8; 2];
+			socket.read_exact(&mut port).await.unwrap();
+			socket
+				.write_all(&[5, 0, 0, 1, 0, 0, 0, 0, 0, 0])
+				.await
+				.unwrap();
+			(String::from_utf8(domain).unwrap(), u16::from_be_bytes(port))
+		});
+
+		let proxy = CheckEmailInputProxy {
+			host: "127.0.0.1".into(),
+			port: proxy_port,
+			username: None,
+			password: None,
+			timeout_ms: Some(500),
+		};
+		connect_to_socks5_proxy(&proxy, "mx.example.org".into(), 25)
+			.await
+			.unwrap();
+		assert_eq!(server.await.unwrap(), ("mx.example.org".into(), 25));
 	}
 }
