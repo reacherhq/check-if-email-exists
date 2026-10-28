@@ -62,7 +62,14 @@ async fn connect_to_any_addr(
 			Some(timeout_s) => tcp_connect_with_timeout(addr, timeout_s).await,
 		};
 		match res {
-			Ok(socket) => return Ok(socket),
+			Ok(socket) => {
+				tracing::info!(
+					target: LOG_TARGET,
+					proxy_addr=%addr,
+					"Connected to proxy address"
+				);
+				return Ok(socket);
+			}
 			Err(err) => {
 				tracing::debug!(
 					target: LOG_TARGET,
