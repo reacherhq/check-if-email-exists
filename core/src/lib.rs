@@ -174,9 +174,8 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		}
 	};
 
-	// Return if we didn't find any MX records, or if the domain can't receive
-	// mail (null MX, or no MX host resolves).
-	if my_mx.lookup.is_err() || !my_mx.accepts_mail {
+	// Return if we didn't find any MX records.
+	if my_mx.lookup.is_err() {
 		get_similar_mail_provider(&mut my_syntax);
 
 		return CheckEmailOutput {
