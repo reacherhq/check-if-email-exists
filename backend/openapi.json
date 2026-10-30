@@ -533,7 +533,7 @@
 				"properties": {
 					"accepts_mail": {
 						"type": "boolean",
-						"description": "Indicates if the mail server accepts emails."
+						"description": "Indicates if the mail server accepts emails. False if there are no MX records, the domain publishes a null MX (RFC 7505), or none of the MX hosts resolve."
 					},
 					"records": {
 						"type": "array",
