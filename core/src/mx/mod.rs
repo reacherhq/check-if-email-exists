@@ -15,19 +15,27 @@ use thiserror::Error;
 pub struct MxDetails {
 	/// MX lookup of this DNS.
 	pub lookup: Result<MxLookup, ResolveError>,
+	/// Whether the domain can receive mail. This is false if there are no MX
+	/// records, if the domain publishes a null MX (RFC 7505), or if none of
+	/// the MX hosts resolve to an IP address.
+	pub accepts_mail: bool,
 }
 
 impl Default for MxDetails {
 	fn default() -> Self {
 		MxDetails {
 			lookup: Err(ResolveError::from("Skipped")),
+			accepts_mail: false,
 		}
 	}
 }
 
 impl From<MxLookup> for MxDetails {
 	fn from(lookup: MxLookup) -> Self {
-		MxDetails { lookup: Ok(lookup) }
+		MxDetails {
+			lookup: Ok(lookup),
+			accepts_mail: true,
+		}
 	}
 }
 
@@ -48,7 +56,7 @@ impl Serialize for MxDetails {
 			.unwrap_or_else(|_| Vec::new()); // In case of a resolve error, we don't serialize the error.
 
 		let mut map = serializer.serialize_map(Some(2))?;
-		map.serialize_entry("accepts_mail", &!records.is_empty())?;
+		map.serialize_entry("accepts_mail", &(self.accepts_mail && !records.is_empty()))?;
 		map.serialize_entry("records", &records)?;
 		map.end()
 	}
@@ -91,43 +99,43 @@ pub async fn check_mx(syntax: &SyntaxDetails) -> Result<MxDetails, MxError> {
 		Err(err) => {
 			return match err.kind() {
 				// Prefer to return an empty MX lookup if there are no records.
-				ResolveErrorKind::NoRecordsFound { .. } => Ok(MxDetails { lookup: Err(err) }),
+				ResolveErrorKind::NoRecordsFound { .. } => Ok(MxDetails {
+					lookup: Err(err),
+					accepts_mail: false,
+				}),
 				_ => Err(err.into()),
 			};
 		}
 	};
 
-	// A null MX explicitly states that the domain does not accept mail, treat
-	// it like a domain without MX records.
+	// A null MX explicitly states that the domain does not accept mail.
 	if is_null_mx(lookup.iter()) {
 		return Ok(MxDetails {
-			lookup: Err(ResolveError::from("Null MX record (RFC 7505)")),
+			lookup: Ok(lookup),
+			accepts_mail: false,
 		});
 	}
 
 	// If no MX host resolves to an IP address, mail can never be delivered.
 	// We only consider it so when the resolver positively says there are no
 	// records (e.g. NXDOMAIN); other errors such as timeouts are inconclusive.
-	// In that case, treat it like a domain without MX records.
 	let ip_lookups = join_all(
 		lookup
 			.iter()
 			.map(|mx| resolver.lookup_ip(mx.exchange().clone())),
 	)
 	.await;
-	let no_host_resolves = ip_lookups.iter().all(|res| {
+	let accepts_mail = !ip_lookups.iter().all(|res| {
 		matches!(
 			res.as_ref().map_err(|e| e.kind()),
 			Err(ResolveErrorKind::NoRecordsFound { .. })
 		)
 	});
-	if no_host_resolves {
-		return Ok(MxDetails {
-			lookup: Err(ResolveError::from("No MX host resolves to an IP address")),
-		});
-	}
 
-	Ok(MxDetails::from(lookup))
+	Ok(MxDetails {
+		lookup: Ok(lookup),
+		accepts_mail,
+	})
 }
 
 /// Check if the MX records form a null MX (RFC 7505), i.e. records
