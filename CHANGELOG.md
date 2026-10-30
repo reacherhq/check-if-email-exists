@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. The changes in this project follow [Convention Commits](https://www.conventionalcommits.org/en/v1.0.0/).
 
+# [0.11.11](https://github.com/reacherhq/check-if-email-exists/compare/v0.11.10...v0.11.11) (2026-10-30)
+
+### Bug Fixes
+
+* **mx:** mark null MX and unresolvable MX hosts as invalid ([#1680](https://github.com/reacherhq/check-if-email-exists/pull/1680)) ([eb0226f](https://github.com/reacherhq/check-if-email-exists/commit/eb0226f41e932c229c9ac4f56e4be57ef20bd3bb))
+* **smtp:** spread SOCKS5 connections across all resolved proxy addresses ([#1678](https://github.com/reacherhq/check-if-email-exists/pull/1678)) ([7acba98](https://github.com/reacherhq/check-if-email-exists/commit/7acba98af4f13f1453d1b4057d0fe1268a1ca5a1))
+
 # [0.11.10](https://github.com/reacherhq/check-if-email-exists/compare/v0.11.9...v0.11.10) (2026-10-16)
 
 ### Features
