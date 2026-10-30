@@ -1,5 +1,7 @@
 use crate::syntax::SyntaxDetails;
 use crate::util::ser_with_display::ser_with_display;
+use futures::future::join_all;
+use hickory_proto::rr::rdata::MX;
 use hickory_resolver::error::{ResolveError, ResolveErrorKind};
 use hickory_resolver::lookup::MxLookup;
 use hickory_resolver::system_conf::read_system_conf;
@@ -13,19 +15,27 @@ use thiserror::Error;
 pub struct MxDetails {
 	/// MX lookup of this DNS.
 	pub lookup: Result<MxLookup, ResolveError>,
+	/// Whether the domain can receive mail. This is false if there are no MX
+	/// records, if the domain publishes a null MX (RFC 7505), or if none of
+	/// the MX hosts resolve to an IP address.
+	pub accepts_mail: bool,
 }
 
 impl Default for MxDetails {
 	fn default() -> Self {
 		MxDetails {
 			lookup: Err(ResolveError::from("Skipped")),
+			accepts_mail: false,
 		}
 	}
 }
 
 impl From<MxLookup> for MxDetails {
 	fn from(lookup: MxLookup) -> Self {
-		MxDetails { lookup: Ok(lookup) }
+		MxDetails {
+			lookup: Ok(lookup),
+			accepts_mail: true,
+		}
 	}
 }
 
@@ -46,7 +56,7 @@ impl Serialize for MxDetails {
 			.unwrap_or_else(|_| Vec::new()); // In case of a resolve error, we don't serialize the error.
 
 		let mut map = serializer.serialize_map(Some(2))?;
-		map.serialize_entry("accepts_mail", &!records.is_empty())?;
+		map.serialize_entry("accepts_mail", &(self.accepts_mail && !records.is_empty()))?;
 		map.serialize_entry("records", &records)?;
 		map.end()
 	}
@@ -84,14 +94,55 @@ pub async fn check_mx(syntax: &SyntaxDetails) -> Result<MxDetails, MxError> {
 	let (config, opts) = read_system_conf()?;
 	let resolver = TokioAsyncResolver::tokio(config, opts);
 
-	match resolver.mx_lookup(&syntax.domain).await {
-		Ok(lookup) => Ok(MxDetails::from(lookup)),
-		Err(err) => match err.kind() {
-			// Prefer to return an empty MX lookup if there are no records.
-			ResolveErrorKind::NoRecordsFound { .. } => Ok(MxDetails { lookup: Err(err) }),
-			_ => Err(err.into()),
-		},
+	let lookup = match resolver.mx_lookup(&syntax.domain).await {
+		Ok(lookup) => lookup,
+		Err(err) => {
+			return match err.kind() {
+				// Prefer to return an empty MX lookup if there are no records.
+				ResolveErrorKind::NoRecordsFound { .. } => Ok(MxDetails {
+					lookup: Err(err),
+					accepts_mail: false,
+				}),
+				_ => Err(err.into()),
+			};
+		}
+	};
+
+	// A null MX explicitly states that the domain does not accept mail.
+	if is_null_mx(lookup.iter()) {
+		return Ok(MxDetails {
+			lookup: Ok(lookup),
+			accepts_mail: false,
+		});
 	}
+
+	// If no MX host resolves to an IP address, mail can never be delivered.
+	// We only consider it so when the resolver positively says there are no
+	// records (e.g. NXDOMAIN); other errors such as timeouts are inconclusive.
+	let ip_lookups = join_all(
+		lookup
+			.iter()
+			.map(|mx| resolver.lookup_ip(mx.exchange().clone())),
+	)
+	.await;
+	let accepts_mail = !ip_lookups.iter().all(|res| {
+		matches!(
+			res.as_ref().map_err(|e| e.kind()),
+			Err(ResolveErrorKind::NoRecordsFound { .. })
+		)
+	});
+
+	Ok(MxDetails {
+		lookup: Ok(lookup),
+		accepts_mail,
+	})
+}
+
+/// Check if the MX records form a null MX (RFC 7505), i.e. records
+/// whose exchange is only the root domain ".".
+fn is_null_mx<'a>(records: impl Iterator<Item = &'a MX>) -> bool {
+	let mut records = records.peekable();
+	records.peek().is_some() && records.all(|mx| mx.exchange().is_root())
 }
 
 /// Check if the MX host is from Google, i.e. either a @gmail.com address, or
@@ -184,6 +235,20 @@ pub fn is_yahoo(mx_host: &str) -> bool {
 #[cfg(test)]
 mod tests {
 	use super::*;
+	use hickory_proto::rr::Name;
+	use std::str::FromStr;
+
+	#[test]
+	fn null_mx_detection() {
+		// https://github.com/reacherhq/check-if-email-exists/issues/1679
+		let null_mx = MX::new(0, Name::root());
+		let real_mx = MX::new(10, Name::from_str("mx1.example.com.").unwrap());
+
+		assert!(is_null_mx(vec![&null_mx].into_iter()));
+		assert!(!is_null_mx(vec![&real_mx].into_iter()));
+		assert!(!is_null_mx(vec![&null_mx, &real_mx].into_iter()));
+		assert!(!is_null_mx(std::iter::empty()));
+	}
 
 	#[test]
 	fn proofpoint_detection_is_case_insensitive() {
