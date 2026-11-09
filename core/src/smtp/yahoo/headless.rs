@@ -54,62 +54,72 @@ async fn check_headless_inner(
 ) -> Result<SmtpDetails, HeadlessError> {
 	let c = create_headless_client(webdriver, webdriver_config).await?;
 
-	// Navigate to Microsoft password recovery page.
-	c.goto("https://login.yahoo.com/forgot").await?;
+	// Keep the whole navigation inside this block so the `c.close()` below always runs,
+	// even when a step fails. Otherwise an error halfway through leaves the WebDriver
+	// session open and an orphaned Chrome behind, which eventually saturates the container.
+	let result: Result<(bool, bool), HeadlessError> = async {
+		// Navigate to Microsoft password recovery page.
+		c.goto("https://login.yahoo.com/forgot").await?;
 
-	// Wait for network/javascript/dom to make the input-box available
-	// and click it.
-	let input = c.wait().for_element(Locator::Id("username")).await?;
-	// Sometimes I get "input ... is not reachable by keyboard". Addind this
-	// small sleep helps.
-	sleep(Duration::from_millis(200));
-	input.send_keys(to_email).await?;
+		// Wait for network/javascript/dom to make the input-box available
+		// and click it.
+		let input = c.wait().for_element(Locator::Id("username")).await?;
+		// Sometimes I get "input ... is not reachable by keyboard". Addind this
+		// small sleep helps.
+		sleep(Duration::from_millis(200));
+		input.send_keys(to_email).await?;
 
-	// Click on "Continue"
-	c.find(Locator::Css("button[name=\"verifyYid\"]"))
-		.await?
-		.click()
-		.await?;
+		// Click on "Continue"
+		c.find(Locator::Css("button[name=\"verifyYid\"]"))
+			.await?
+			.click()
+			.await?;
 
-	// Depending on what answers we have on the account recovery page, return
-	// the relevant (is_deliverable, is_disabled) tuple.
+		// Depending on what answers we have on the account recovery page, return
+		// the relevant (is_deliverable, is_disabled) tuple.
 
-	// "Sorry, we don't recognise that email address or phone number".
-	let f1 = c
-		.wait()
-		.for_element(Locator::Css(".error-msg"))
-		.and_then(|_| async { Ok((false, false)) });
-	// "This account has been deactivated due to inactivity, but we would love to welcome you back!"
-	let f2 = c
-		.wait()
-		.for_element(Locator::Css(".ctx-account_is_locked"))
-		.and_then(|_| async { Ok((false, true)) });
-	// Recaptcha
-	let f3 = c
-		.wait()
-		.for_element(Locator::Css(".recaptcha-challenge"))
-		.and_then(|_| async { Ok((true, false)) });
-	// "Enter verification code sent to your email address"
-	let f4 = c
-		.wait()
-		.for_element(Locator::Id("email-verify-challenge"))
-		.and_then(|_| async { Ok((true, false)) });
-	// "Select an option to sign in to your account"
-	let f5 = c
-		.wait()
-		.for_element(Locator::Id("challenge-selector-challenge"))
-		.and_then(|_| async { Ok((true, false)) });
+		// "Sorry, we don't recognise that email address or phone number".
+		let f1 = c
+			.wait()
+			.for_element(Locator::Css(".error-msg"))
+			.and_then(|_| async { Ok((false, false)) });
+		// "This account has been deactivated due to inactivity, but we would love to welcome you back!"
+		let f2 = c
+			.wait()
+			.for_element(Locator::Css(".ctx-account_is_locked"))
+			.and_then(|_| async { Ok((false, true)) });
+		// Recaptcha
+		let f3 = c
+			.wait()
+			.for_element(Locator::Css(".recaptcha-challenge"))
+			.and_then(|_| async { Ok((true, false)) });
+		// "Enter verification code sent to your email address"
+		let f4 = c
+			.wait()
+			.for_element(Locator::Id("email-verify-challenge"))
+			.and_then(|_| async { Ok((true, false)) });
+		// "Select an option to sign in to your account"
+		let f5 = c
+			.wait()
+			.for_element(Locator::Id("challenge-selector-challenge"))
+			.and_then(|_| async { Ok((true, false)) });
 
-	let vec = vec![
-		Box::pin(f1) as Pin<Box<dyn Future<Output = Result<(bool, bool), CmdError>> + Send>>,
-		Box::pin(f2),
-		Box::pin(f3),
-		Box::pin(f4),
-		Box::pin(f5),
-	];
-	let ((is_deliverable, is_disabled), _) = select_ok(vec).await?;
+		let vec = vec![
+			Box::pin(f1) as Pin<Box<dyn Future<Output = Result<(bool, bool), CmdError>> + Send>>,
+			Box::pin(f2),
+			Box::pin(f3),
+			Box::pin(f4),
+			Box::pin(f5),
+		];
+		let ((is_deliverable, is_disabled), _) = select_ok(vec).await?;
 
-	c.close().await?;
+		Ok((is_deliverable, is_disabled))
+	}
+	.await;
+
+	let _ = c.close().await;
+
+	let (is_deliverable, is_disabled) = result?;
 
 	Ok(SmtpDetails {
 		can_connect_smtp: true,
