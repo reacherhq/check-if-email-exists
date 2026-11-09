@@ -38,7 +38,7 @@ pub async fn create_headless_client(
 			// TODO Look into security implications...
 			"--no-sandbox",
 			// From https://github.com/chromium-for-lambda/chromium-binaries/tree/b23e11c2f2859b177fd08fe50a0826c17652d846?tab=readme-ov-file#installation-via-a-lambda-layer
-			"--use-gl=angle", "--use-angle=swiftshader", "--single-process", "--no-zygote",
+			"--use-gl=angle", "--use-angle=swiftshader",
 			// Disable anything that might consume memory
 			"--window-size=800x600",
 			"--disable-extensions",
