@@ -111,8 +111,34 @@ pub fn is_invalid(e: &str, email: &EmailAddress) -> bool {
 	|| e.contains("no mail-enabled subscriptions")
 	// permanent: 5.1.1
 	|| e.contains("permanent: 5.1.1")
-	// permanent: 5.7.1
-	|| e.contains("permanent: 5.7.1")
+	// A bare "permanent: 5.7.1" is not matched: 5.7.1 is the generic "delivery
+	// not authorized" policy code, also used to refuse the sending IP. The
+	// 5.7.1 answers that do mean "no such user" are matched above, e.g.
+	// "email doesn't exist".
+}
+
+/// is_sender_blocked checks for SMTP responses meaning that the receiver
+/// refused the sending IP or host (blocklist, reputation, client host
+/// rejected). The same answer is given for every recipient, so it says nothing
+/// about the mailbox: it must be checked before `is_invalid`, otherwise every
+/// address would be flagged as invalid while the IP is listed.
+pub fn is_sender_blocked(e: &str) -> bool {
+	// 550 5.7.1 Service unavailable, Client host [203.0.113.10] blocked using Spamhaus. To request removal from this list see https://www.spamhaus.org/query/ip/203.0.113.10 AS(1440) (on Microsoft 365)
+	e.contains("blocked using")
+		|| e.contains("spamhaus")
+		// 5.7.1 Service unavailable; Client host [192.0.2.1] is blacklisted.
+		|| e.contains("blacklist")
+		// Rejected because 192.0.2.1 is in a black list at b.barracudacentral.org
+		|| e.contains("black list")
+		|| e.contains("blocklist")
+		// 5.7.1 Recipient not authorized, your IP has been found on a block list
+		|| e.contains("block list")
+		// 5.7.606 Access denied, banned sending IP [192.0.2.1]
+		|| e.contains("banned sending ip")
+		// 5.7.1 Mail from 192.0.2.1 has been blocked by Trend Micro Email Reputation Service.
+		|| e.contains("reputation")
+		// 5.7.1 <unknown[192.0.2.1]>: Client host rejected: Access denied
+		|| e.contains("client host rejected")
 }
 
 /// Check that the mailbox has a full inbox.
@@ -244,7 +270,9 @@ pub fn is_err_needs_rdns(e: &SmtpError) -> bool {
 #[cfg(test)]
 mod tests {
 
-	use super::{is_err_ip_blacklisted, is_full_inbox, is_greylisted, is_invalid};
+	use super::{
+		is_err_ip_blacklisted, is_full_inbox, is_greylisted, is_invalid, is_sender_blocked,
+	};
 	use crate::EmailAddress;
 	use crate::SmtpError::AsyncSmtpError;
 	use async_smtp::{
@@ -325,5 +353,50 @@ mod tests {
 		));
 
 		assert!(is_err_ip_blacklisted(&AsyncSmtpError(err)))
+	}
+
+	#[test]
+	fn test_is_sender_blocked() {
+		let email = EmailAddress::from_str("foo@bar.baz").unwrap();
+
+		// https://github.com/reacherhq/check-if-email-exists/issues/1684
+		// Microsoft 365 gives this answer to every recipient, existing or not,
+		// while the sending IP is listed by Spamhaus.
+		let msg = "permanent: 5.7.1 service unavailable, client host [203.0.113.10] blocked using spamhaus. to request removal from this list see https://www.spamhaus.org/query/ip/203.0.113.10 as(1440)";
+		assert!(is_sender_blocked(msg));
+		assert!(!is_invalid(msg, &email));
+
+		// A 5.7.1 policy refusal alone is not a mailbox verdict.
+		assert!(!is_invalid(
+			"permanent: 5.7.1 delivery not authorized, message refused",
+			&email
+		));
+
+		for msg in [
+			"permanent: 5.7.1 recipient not authorized, your ip has been found on a block list",
+			"permanent: 5.7.1 service unavailable; client host [192.0.2.1] is blacklisted",
+			"permanent: 5.7.1 mail from 192.0.2.1 has been blocked by trend micro email reputation service",
+			"permanent: 5.7.1 <unknown[192.0.2.1]>: client host rejected: access denied",
+			"permanent: 5.7.606 access denied, banned sending ip [192.0.2.1]",
+			"permanent: 5.7.1 rejected because 192.0.2.1 is in a blocklist",
+		] {
+			assert!(is_sender_blocked(msg), "{}", msg);
+		}
+	}
+
+	#[test]
+	fn test_mailbox_answers_are_not_sender_blocked() {
+		let email = EmailAddress::from_str("foo@bar.baz").unwrap();
+
+		for msg in [
+			"permanent: 5.1.1 <foo@bar.baz>: recipient address rejected: user unknown in virtual mailbox table",
+			"permanent: 5.1.10 recipient not found by smtp address lookup",
+			// https://github.com/reacherhq/check-if-email-exists/pull/1631
+			"permanent: 5.7.1 email doesn't exist. please forward it or send it to contact@magency.f",
+			"transient: 4.4.4 mail received as unauthenticated, incoming to a recipient domain configured in a hosted tenant which has no mail-enabled subscriptions.",
+		] {
+			assert!(!is_sender_blocked(msg), "{}", msg);
+			assert!(is_invalid(msg, &email), "{}", msg);
+		}
 	}
 }

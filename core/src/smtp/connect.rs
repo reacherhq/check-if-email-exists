@@ -233,6 +233,14 @@ async fn check_email_deliverability<S: AsyncBufRead + AsyncWrite + Unpin + Send>
 			// lowercase.
 			let err_string = err.to_string().to_lowercase();
 
+			// A refusal of the sending IP or host (blocklist, reputation,
+			// client host rejected) is given for every recipient, so it says
+			// nothing about the mailbox. Return the error as-is, so that it is
+			// reported as unknown, before any mailbox check below reads it.
+			if parser::is_sender_blocked(&err_string) {
+				return Err(SmtpError::AsyncSmtpError(err));
+			}
+
 			// Greylisting is a temporary deferral, it says nothing about the
 			// mailbox. Return the error as-is so that the check is retried,
 			// and eventually reported as unknown.
