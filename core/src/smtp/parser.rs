@@ -69,6 +69,10 @@ pub fn is_invalid(e: &str, email: &EmailAddress) -> bool {
 	|| e.contains("no mailbox")
 	// 5.2.0 No such mailbox
 	|| e.contains("no such mailbox")
+	// 550 5.1.0 Not our Customer (on @comcast.net)
+	|| e.contains("not our customer")
+	// 550 5.2.0 <EMAIL> - Account Closed, Please Remove (on @comcast.net)
+	|| e.contains("account closed")
 	// 550 Requested action not taken: mailbox unavailable
 	|| e.contains("mailbox unavailable")
 	// 5.5.0 Requested actions not taken as the mailbox is unavailable (on @etu.uca.fr)
@@ -276,6 +280,34 @@ mod tests {
 		let msg = "transient: 4.4.4 mail received as unauthenticated, incoming to a recipient domain configured in a hosted tenant which has no mail-enabled subscriptions. attr5 [sj5pepf000001cc.namprd05.prod.outlook.com 2026-10-13t12:16:22.797z 08df2669f6c8e25d]";
 		assert!(!is_greylisted(msg));
 		assert!(is_invalid(msg, &email));
+	}
+
+	#[test]
+	fn test_is_invalid_comcast() {
+		let email = EmailAddress::from_str("foo@comcast.net").unwrap();
+
+		// https://github.com/reacherhq/check-if-email-exists/issues/1687
+		for msg in [
+			"550 5.1.0 Not our Customer",
+			"permanent: 5.1.0 Not our Customer",
+			"550 5.2.0 <foo@comcast.net> - Account Closed, Please Remove",
+			"permanent: 5.2.0  - Account Closed, Please Remove",
+		] {
+			assert!(is_invalid(&msg.to_lowercase(), &email), "{}", msg);
+		}
+	}
+
+	#[test]
+	fn test_is_invalid_comcast_controls() {
+		let email = EmailAddress::from_str("foo@comcast.net").unwrap();
+
+		for msg in [
+			"250 2.1.5 <foo@comcast.net> recipient ok",
+			"permanent: 5.1.0 address status unknown",
+			"permanent: 5.2.0 mailbox status unknown",
+		] {
+			assert!(!is_invalid(msg, &email), "{}", msg);
+		}
 	}
 
 	#[test]
