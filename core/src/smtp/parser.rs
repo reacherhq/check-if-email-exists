@@ -19,6 +19,16 @@ pub fn is_greylisted(e: &str) -> bool {
 		|| e.contains("postgrey")
 }
 
+/// is_service_closing checks for a `421` reply, which per RFC 5321 means the
+/// server is closing the transmission channel. Nothing can be learned about
+/// the mailbox, and no further command can be sent on this session. This is
+/// based on the reply code only, because the reply text is free-form and may
+/// contain phrases (e.g. "recipient address rejected") that `is_invalid`
+/// would misinterpret.
+pub fn is_service_closing(e: &AsyncSmtpError) -> bool {
+	matches!(e, AsyncSmtpError::Transient(r) if r.has_code(421))
+}
+
 /// is_invalid checks for SMTP responses meaning that the email is invalid,
 /// i.e. that the mailbox doesn't exist.
 pub fn is_invalid(e: &str, email: &EmailAddress) -> bool {
