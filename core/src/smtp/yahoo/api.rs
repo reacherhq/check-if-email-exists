@@ -5,75 +5,70 @@ use crate::{
 	util::input_output::CheckEmailInput,
 };
 use regex::Regex;
+use reqwest::header::{HeaderMap, SET_COOKIE};
 use serde::{Deserialize, Serialize};
 
-const SIGNUP_PAGE: &str = "https://login.yahoo.com/account/create?specId=yidReg&lang=en-US&src=&done=https%3A%2F%2Fwww.yahoo.com&display=login";
-const SIGNUP_API: &str = "https://login.yahoo.com/account/module/create?validateField=yid";
-const USER_AGENT: &str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36"; // Fake one to use in API requests
+const SPEC_ID: &str = "yidregsimplified";
+const SIGNUP_PAGE: &str = "https://login.yahoo.com/account/create?lang=en-US&src=ym&done=https%3A%2F%2Fmail.yahoo.com%2F&specId=yidregsimplified";
+const VALIDATE_API: &str = "https://login.yahoo.com/account/create/validate?lang=en-US&src=ym&done=https%3A%2F%2Fmail.yahoo.com%2F&specId=yidregsimplified&validateField=userId";
+const USER_AGENT: &str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36";
+/// Session cookie set by the signup page. Without it the validate endpoint
+/// redirects to `/account/challenge/fail`.
+const SESSION_COOKIE: &str = "AS";
 
 /// The form inputs to pass into the HTTP request.
 #[derive(Serialize)]
-struct FormRequest {
-	acrumb: String,
-	#[serde(rename(serialize = "sessionIndex"))]
-	session_index: String,
-	#[serde(rename(serialize = "specId"))]
-	spec_id: String,
-	#[serde(rename(serialize = "userId"))]
-	user_id: String,
+struct FormRequest<'a> {
+	acrumb: &'a str,
+	crumb: &'a str,
+	#[serde(rename = "sessionIndex")]
+	session_index: &'a str,
+	#[serde(rename = "specId")]
+	spec_id: &'a str,
+	#[serde(rename = "userId")]
+	user_id: &'a str,
+	#[serde(rename = "yidDomain")]
+	yid_domain: &'a str,
 }
 
-impl Default for FormRequest {
-	fn default() -> Self {
-		FormRequest {
-			acrumb: "".into(),
-			session_index: "".into(),
-			spec_id: "yidReg".into(),
-			user_id: "".into(),
-		}
-	}
-}
-
-impl FormRequest {
-	fn new(acrumb: String, session_index: String, user_id: String) -> Self {
-		FormRequest {
-			acrumb,
-			session_index,
-			user_id,
-			..Default::default()
-		}
-	}
-}
-
-/// One item in the response of the HTTP form request.
 #[derive(Debug, Deserialize)]
-struct FormResponseItem {
-	error: String,
-	name: String,
+struct FieldError {
+	id: String,
 }
 
-/// The response of the HTTP form request.
 #[derive(Debug, Deserialize)]
-struct FormResponse {
-	errors: Vec<FormResponseItem>,
+struct UserIdField {
+	error: Option<FieldError>,
 }
 
-/// Use well-crafted HTTP requests to verify if a Yahoo email address exists.
-/// Inspired by https://github.com/hbattat/verifyEmail.
+#[derive(Debug, Deserialize)]
+struct Fields {
+	#[serde(rename = "userId")]
+	user_id: UserIdField,
+}
+
+/// The response of the validate endpoint: either the validated form fields,
+/// or a redirect when Yahoo rejects the request (bot challenge, rate limit,
+/// missing session).
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+enum ValidateResponse {
+	Fields { fields: Fields },
+	Redirect { redirect: String },
+}
+
+/// Use well-crafted HTTP requests to verify if a Yahoo email address exists,
+/// by asking the signup form whether the username is already taken.
 pub async fn check_api(to_email: &str, input: &CheckEmailInput) -> Result<SmtpDetails, YahooError> {
-	let res = create_client(input, "yahoo")?
+	let client = create_client(input, "yahoo")?;
+
+	let res = client
 		.get(SIGNUP_PAGE)
 		.header("User-Agent", USER_AGENT)
 		.send()
 		.await?;
 
-	// Get the cookies from the response.
-	let cookies = match res.headers().get("Set-Cookie") {
-		Some(x) => x.to_owned(),
-		_ => {
-			return Err(YahooError::NoCookie);
-		}
-	};
+	let cookies = cookie_header(res.headers()).ok_or(YahooError::NoCookie)?;
 
 	tracing::debug!(
 		target: LOG_TARGET,
@@ -82,60 +77,36 @@ pub async fn check_api(to_email: &str, input: &CheckEmailInput) -> Result<SmtpDe
 	);
 
 	let body = res.text().await?;
+	let session_index = hidden_input(&body, "sessionIndex").ok_or(YahooError::NoSessionIndex)?;
+	let acrumb = hidden_input(&body, "acrumb").ok_or(YahooError::NoAcrumb)?;
+	// Not required by Yahoo at the moment, but sent by the browser.
+	let crumb = hidden_input(&body, "crumb").unwrap_or_default();
 
 	let username = to_email
 		.split('@')
 		.next()
 		.expect("The email is well-formed. qed.");
 
-	// From the cookies, fetch the "acrumb" field.
-	let acrumb = match cookies.to_str() {
-		Ok(x) => x,
-		_ => {
-			return Err(YahooError::NoAcrumb);
-		}
-	};
-	let re = Regex::new(r"s=(?P<acrumb>[^;]*)&d").expect("Correct regex. qed.");
-	let acrumb = match re.captures(acrumb) {
-		Some(x) => x,
-		_ => {
-			return Err(YahooError::NoAcrumb);
-		}
-	};
-
-	let re =
-		Regex::new(r#"<input type="hidden" value="(?P<sessionIndex>.*)" name="sessionIndex">"#)
-			.expect("Correct regex. qed");
-	let session_index = match re.captures(&body) {
-		Some(y) => y,
-		_ => {
-			return Err(YahooError::NoSessionIndex);
-		}
-	};
-
-	// Mimic a real HTTP request.
-	let res = create_client(input, "yahoo")?
-		.post(SIGNUP_API)
+	let res = client
+		.post(VALIDATE_API)
 		.header("Origin", "https://login.yahoo.com")
+		.header("Referer", SIGNUP_PAGE)
 		.header("X-Requested-With", "XMLHttpRequest")
 		.header("User-Agent", USER_AGENT)
-		.header(
-			"Content-type",
-			"application/x-www-form-urlencoded; charset=UTF-8",
-		)
 		.header("Accept", "*/*")
-		.header("Referer", SIGNUP_PAGE)
-		.header("Accept-Encoding", "gzip, deflate, br")
-		.header("Accept-Language", "en-US,en;q=0.8,ar;q=0.6")
+		.header("Accept-Language", "en-US,en;q=0.9")
 		.header("Cookie", &cookies)
-		.json(&FormRequest::new(
-			acrumb["acrumb"].to_string(),
-			session_index["sessionIndex"].to_string(),
-			username.into(),
-		))
+		.form(&FormRequest {
+			acrumb: &acrumb,
+			crumb: &crumb,
+			session_index: &session_index,
+			spec_id: SPEC_ID,
+			user_id: username,
+			yid_domain: "yahoo.com",
+		})
 		.send()
 		.await?
-		.json::<FormResponse>()
+		.json::<ValidateResponse>()
 		.await?;
 
 	tracing::debug!(
@@ -145,14 +116,152 @@ pub async fn check_api(to_email: &str, input: &CheckEmailInput) -> Result<SmtpDe
 		res
 	);
 
-	let username_exists = res.errors.iter().any(|item| {
-		item.name == "userId"
-			&& (item.error == "IDENTIFIER_NOT_AVAILABLE" || item.error == "IDENTIFIER_EXISTS")
-	});
-
 	Ok(SmtpDetails {
 		can_connect_smtp: true,
-		is_deliverable: username_exists,
+		is_deliverable: username_exists(res)?,
 		..Default::default()
 	})
+}
+
+/// Build a `Cookie` request header from the `Set-Cookie` response headers.
+/// Returns `None` if Yahoo did not set the session cookie.
+fn cookie_header(headers: &HeaderMap) -> Option<String> {
+	let pairs: Vec<&str> = headers
+		.get_all(SET_COOKIE)
+		.iter()
+		.filter_map(|v| v.to_str().ok())
+		.filter_map(|v| v.split(';').next())
+		.map(str::trim)
+		.collect();
+
+	let has_session = pairs
+		.iter()
+		.any(|pair| pair.split('=').next() == Some(SESSION_COOKIE));
+
+	has_session.then(|| pairs.join("; "))
+}
+
+/// Extract the value of `<input type="hidden" name="{name}" value="...">`,
+/// whatever the attribute order.
+fn hidden_input(body: &str, name: &str) -> Option<String> {
+	let tag = Regex::new(&format!(
+		r#"<input[^>]*\bname="{}"[^>]*>"#,
+		regex::escape(name)
+	))
+	.expect("Correct regex. qed.");
+	let value = Regex::new(r#"\bvalue="(?P<value>[^"]*)""#).expect("Correct regex. qed.");
+
+	let tag = tag.find(body)?.as_str();
+	value.captures(tag).map(|c| c["value"].to_string())
+}
+
+/// Interpret the `userId` validation result.
+fn username_exists(res: ValidateResponse) -> Result<bool, YahooError> {
+	let fields = match res {
+		ValidateResponse::Fields { fields } => fields,
+		ValidateResponse::Redirect { redirect } => {
+			return Err(YahooError::Rejected(redirect));
+		}
+	};
+
+	match fields.user_id.error {
+		None => Ok(false),
+		Some(e) if e.id == "IDENTIFIER_EXISTS" || e.id == "IDENTIFIER_NOT_AVAILABLE" => Ok(true),
+		// Signup rules (length, allowed characters...) are stricter than for
+		// legacy accounts, so a rule violation says nothing about existence.
+		Some(e) => Err(YahooError::UnexpectedUserIdError(e.id)),
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use reqwest::header::HeaderValue;
+
+	#[test]
+	fn hidden_input_name_before_value() {
+		let body = r#"<input type="hidden" name="sessionIndex" value="QQ--"/><input type="hidden" name="acrumb" value="m95sRVXY"/><input type="hidden" name="crumb" value="Pwf0Fl9eovX821o/0RFFyw"/>"#;
+		assert_eq!(hidden_input(body, "sessionIndex").as_deref(), Some("QQ--"));
+		assert_eq!(hidden_input(body, "acrumb").as_deref(), Some("m95sRVXY"));
+		assert_eq!(
+			hidden_input(body, "crumb").as_deref(),
+			Some("Pwf0Fl9eovX821o/0RFFyw")
+		);
+	}
+
+	#[test]
+	fn hidden_input_value_before_name() {
+		let body = r#"<input type="hidden" value="Qg--" name="sessionIndex">"#;
+		assert_eq!(hidden_input(body, "sessionIndex").as_deref(), Some("Qg--"));
+	}
+
+	#[test]
+	fn hidden_input_missing() {
+		assert_eq!(hidden_input("<html></html>", "sessionIndex"), None);
+	}
+
+	#[test]
+	fn cookie_header_requires_session_cookie() {
+		let mut headers = HeaderMap::new();
+		headers.append(SET_COOKIE, HeaderValue::from_static("B=abc; Path=/"));
+		assert_eq!(cookie_header(&headers), None);
+
+		headers.append(
+			SET_COOKIE,
+			HeaderValue::from_static("AS=v=1&s=m95sRVXY&d=A6b; Domain=login.yahoo.com; Secure"),
+		);
+		assert_eq!(
+			cookie_header(&headers).as_deref(),
+			Some("B=abc; AS=v=1&s=m95sRVXY&d=A6b")
+		);
+	}
+
+	fn parse(json: &str) -> ValidateResponse {
+		serde_json::from_str(json).expect("valid fixture")
+	}
+
+	#[test]
+	fn existing_username() {
+		let res = parse(
+			r#"{"specId":"yidregsimplified","fields":{"userId":{"value":"vitalik","error":{"id":"IDENTIFIER_EXISTS"}},"password":{"error":{"id":"ERROR_MISSING_PASSWORD"}}}}"#,
+		);
+		assert!(username_exists(res).unwrap());
+	}
+
+	#[test]
+	fn available_username() {
+		let res = parse(r#"{"fields":{"userId":{"value":"qp7zk2mxw9vrt4"}}}"#);
+		assert!(!username_exists(res).unwrap());
+	}
+
+	#[test]
+	fn rule_violation_is_inconclusive() {
+		let res =
+			parse(r#"{"fields":{"userId":{"value":"ab","error":{"id":"LENGTH_TOO_SHORT"}}}}"#);
+		assert!(matches!(
+			username_exists(res),
+			Err(YahooError::UnexpectedUserIdError(id)) if id == "LENGTH_TOO_SHORT"
+		));
+	}
+
+	#[test]
+	fn challenge_redirect_is_an_error() {
+		let res = parse(r#"{"redirect":"/account/challenge/fail?specId=yidregsimplified"}"#);
+		assert!(matches!(username_exists(res), Err(YahooError::Rejected(_))));
+	}
+
+	// Hits the live Yahoo signup form. Yahoo rate-limits bursts of requests
+	// per IP, so this stays out of the default test run.
+	#[tokio::test]
+	#[ignore = "Calls the live Yahoo signup API"]
+	async fn test_yahoo_address() {
+		crate::initialize_crypto_provider();
+		let input = CheckEmailInput::default();
+
+		let res = check_api("johnsmith@yahoo.com", &input).await.unwrap();
+		assert!(res.is_deliverable);
+
+		let res = check_api("qp7zk2mxw9vrt4@yahoo.com", &input).await.unwrap();
+		assert!(!res.is_deliverable);
+	}
 }
