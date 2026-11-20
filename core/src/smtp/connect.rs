@@ -193,6 +193,7 @@ async fn connect_to_smtp_host(
 
 /// Description of the deliverability information we can gather from
 /// communicating with the SMTP server.
+#[derive(Debug)]
 struct Deliverability {
 	/// Is this email account's inbox full?
 	has_full_inbox: bool,
@@ -229,6 +230,13 @@ async fn check_email_deliverability<S: AsyncBufRead + AsyncWrite + Unpin + Send>
 			is_disabled: false,
 		}),
 		Err(err) => {
+			// A 421 means the server is closing the session: the reply says
+			// nothing about the mailbox, whatever its text. Check the code
+			// before any text-based classification.
+			if parser::is_service_closing(&err) {
+				return Err(SmtpError::AsyncSmtpError(err));
+			}
+
 			// We cast to lowercase, because our matched strings below are all
 			// lowercase.
 			let err_string = err.to_string().to_lowercase();
@@ -327,9 +335,29 @@ async fn create_smtp_future(
 	// Ok(SmtpDetails { can_connect_smtp: false, ... }).
 	let mut smtp_transport = connect_to_smtp_host(to_email, mx_host, verif_method).await?;
 
-	let is_catch_all = smtp_is_catch_all(&mut smtp_transport, domain, mx_host, to_email)
-		.await
-		.unwrap_or(false);
+	let is_catch_all = match smtp_is_catch_all(&mut smtp_transport, domain, mx_host, to_email).await
+	{
+		Ok(is_catch_all) => is_catch_all,
+		// The server closed the session on the catch-all probe. Sending the
+		// real RCPT TO on it would only fail with `io: incomplete` and hide
+		// this reply, so return it now. Any retry happens on a new session.
+		//
+		// Don't send QUIT: the session is already closed, and waiting for a
+		// reply that may never come would replace this error with a timeout,
+		// or hang if no timeout is set. Dropping the transport closes it.
+		Err(SmtpError::AsyncSmtpError(err)) if parser::is_service_closing(&err) => {
+			return Err(SmtpError::AsyncSmtpError(err));
+		}
+		Err(err) => {
+			tracing::debug!(
+				target: LOG_TARGET,
+				email=to_email.to_string(),
+				error=?err,
+				"Catch-all check failed, assuming not catch-all"
+			);
+			false
+		}
+	};
 	let deliverability = if is_catch_all {
 		Deliverability {
 			has_full_inbox: false,
@@ -355,8 +383,27 @@ async fn create_smtp_future(
 				);
 
 				let _ = smtp_transport.quit().await;
-				smtp_transport = connect_to_smtp_host(to_email, mx_host, verif_method).await?;
-				result = check_email_deliverability(&mut smtp_transport, to_email).await;
+				result = match connect_to_smtp_host(to_email, mx_host, verif_method).await {
+					Ok(new_transport) => {
+						smtp_transport = new_transport;
+						check_email_deliverability(&mut smtp_transport, to_email).await
+					}
+					// The server replied while setting up the new session (e.g.
+					// "550 IP blacklisted" to MAIL FROM): that reply is the
+					// actionable error.
+					Err(reconnect_err) if has_smtp_reply(&reconnect_err) => Err(reconnect_err),
+					// Otherwise keep the original error: a reconnect that got
+					// no reply is secondary and would otherwise mask it.
+					Err(reconnect_err) => {
+						tracing::debug!(
+							target: LOG_TARGET,
+							email=to_email.to_string(),
+							error=?reconnect_err,
+							"Reconnect failed, keeping original error"
+						);
+						result
+					}
+				};
 			}
 		}
 
@@ -452,11 +499,42 @@ pub async fn check_smtp_with_retry(
 					email=to_email.to_string(),
 					"Potential greylisting detected, retrying"
 				);
-				check_smtp_with_retry(to_email, mx_host, domain, verif_method, count - 1).await
+				let retry_result =
+					check_smtp_with_retry(to_email, mx_host, domain, verif_method, count - 1).await;
+				match retry_result {
+					// The retry got no reply from the SMTP server (proxy or
+					// connection failure, EOF before the greeting, timeout...),
+					// so the server's reply from this attempt is the more
+					// useful error to report.
+					Err(retry_err)
+						if matches!(&result, Err(err) if has_smtp_reply(err))
+							&& !has_smtp_reply(&retry_err) =>
+					{
+						tracing::debug!(
+							target: LOG_TARGET,
+							email=to_email.to_string(),
+							error=?retry_err,
+							"Retry got no SMTP reply, keeping original SMTP error"
+						);
+						result
+					}
+					_ => retry_result,
+				}
 			}
 		}
 		_ => result,
 	}
+}
+
+/// Whether the error carries an actual 4xx/5xx reply from the SMTP server, as
+/// opposed to a failure to talk to it (connection, proxy, I/O, timeout...).
+fn has_smtp_reply(err: &SmtpError) -> bool {
+	matches!(
+		err,
+		SmtpError::AsyncSmtpError(
+			async_smtp::error::Error::Transient(_) | async_smtp::error::Error::Permanent(_)
+		)
+	)
 }
 
 #[cfg(test)]
@@ -496,6 +574,284 @@ mod tests {
 			connect_to_any_addr(&[], None).await,
 			Err(SmtpError::IOError(_))
 		));
+	}
+
+	/// Scripted behavior of one session of the mock SMTP server.
+	enum MockSession {
+		/// Accept the TCP connection, then close it before the 220 greeting.
+		CloseBeforeGreeting,
+		/// MAIL FROM gets `mail_reply`. Each RCPT TO gets the next reply from
+		/// `rcpt_replies`; once they're exhausted, the connection is closed
+		/// without a reply. After a 421, the connection is closed, unless
+		/// `hang_after_421` is set: then it stays open, unanswered.
+		Smtp {
+			mail_reply: &'static str,
+			rcpt_replies: Vec<&'static str>,
+			hang_after_421: bool,
+		},
+	}
+
+	fn smtp_session(rcpt_replies: Vec<&'static str>) -> MockSession {
+		MockSession::Smtp {
+			mail_reply: "250 OK",
+			rcpt_replies,
+			hang_after_421: false,
+		}
+	}
+
+	/// Spawn a mock SMTP server that plays `sessions` on successive
+	/// connections, then refuses further connections. Returns the port and,
+	/// for each session, the commands received.
+	async fn mock_smtp_server(
+		sessions: Vec<MockSession>,
+	) -> (u16, tokio::task::JoinHandle<Vec<Vec<String>>>) {
+		use tokio::io::AsyncBufReadExt;
+
+		let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+		let port = listener.local_addr().unwrap().port();
+		let handle = tokio::spawn(async move {
+			let mut all_received = vec![];
+			for session in sessions {
+				let (socket, _) = listener.accept().await.unwrap();
+				let (mail_reply, rcpt_replies, hang_after_421) = match session {
+					MockSession::CloseBeforeGreeting => {
+						drop(socket);
+						all_received.push(vec![]);
+						continue;
+					}
+					MockSession::Smtp {
+						mail_reply,
+						rcpt_replies,
+						hang_after_421,
+					} => (mail_reply, rcpt_replies, hang_after_421),
+				};
+				let mut socket = tokio::io::BufStream::new(socket);
+				let mut replies = rcpt_replies.into_iter();
+				let mut received = vec![];
+				let mut hanging = false;
+
+				socket.write_all(b"220 mock ESMTP\r\n").await.unwrap();
+				socket.flush().await.unwrap();
+				loop {
+					let mut line = String::new();
+					match socket.read_line(&mut line).await {
+						Ok(0) | Err(_) => break,
+						Ok(_) => {}
+					}
+					let line = line.trim_end().to_string();
+					let cmd = line.to_uppercase();
+					received.push(line);
+					if hanging {
+						continue;
+					}
+					let reply = if cmd.starts_with("EHLO") {
+						"250 OK"
+					} else if cmd.starts_with("MAIL") {
+						mail_reply
+					} else if cmd.starts_with("RCPT") {
+						match replies.next() {
+							Some(reply) => reply,
+							None => break,
+						}
+					} else if cmd.starts_with("QUIT") {
+						let _ = socket.write_all(b"221 Bye\r\n").await;
+						let _ = socket.flush().await;
+						break;
+					} else {
+						"500 Unknown command"
+					};
+					socket
+						.write_all(format!("{reply}\r\n").as_bytes())
+						.await
+						.unwrap();
+					socket.flush().await.unwrap();
+					if reply.starts_with("421") {
+						if hang_after_421 {
+							hanging = true;
+						} else {
+							break;
+						}
+					}
+				}
+				all_received.push(received);
+			}
+			all_received
+		});
+		(port, handle)
+	}
+
+	fn mock_verif_method(port: u16, retries: usize) -> VerifMethodSmtp {
+		VerifMethodSmtp::new(
+			super::super::verif_method::VerifMethodSmtpConfig {
+				smtp_port: port,
+				retries,
+				..Default::default()
+			},
+			None,
+		)
+	}
+
+	fn count_rcpt(received: &[String]) -> usize {
+		received
+			.iter()
+			.filter(|l| l.to_uppercase().starts_with("RCPT"))
+			.count()
+	}
+
+	fn assert_is_421(res: Result<impl std::fmt::Debug, SmtpError>, context: &str) {
+		match res {
+			Err(SmtpError::AsyncSmtpError(err)) => {
+				assert!(parser::is_service_closing(&err), "{}: {:?}", context, err)
+			}
+			other => panic!("{}: expected 421 error, got {:?}", context, other),
+		}
+	}
+
+	// The second reply text would match `parser::is_invalid` if it were
+	// classified by text, so this also checks we rely on the 421 code.
+	const REPLIES_421: [&str; 2] = [
+		"421 4.4.1 Service temporarily unavailable",
+		"421 4.7.0 Recipient address rejected: try again later",
+	];
+
+	#[tokio::test]
+	async fn catch_all_421_is_returned_without_sending_real_rcpt() {
+		for reply in REPLIES_421 {
+			let (port, server) = mock_smtp_server(vec![smtp_session(vec![reply])]).await;
+			let to_email = EmailAddress::from_str("real@example.org").unwrap();
+
+			let res = create_smtp_future(
+				&to_email,
+				"127.0.0.1",
+				"example.org",
+				&mock_verif_method(port, 1),
+			)
+			.await;
+
+			assert_is_421(res, reply);
+			let received = server.await.unwrap().remove(0);
+			assert_eq!(count_rcpt(&received), 1, "{reply}: {received:?}");
+			assert!(!received.iter().any(|l| l.contains("real@example.org")));
+		}
+	}
+
+	#[tokio::test]
+	async fn catch_all_421_is_returned_when_server_keeps_socket_open() {
+		// The server answers 421 but never closes the socket nor answers
+		// further commands. No SMTP timeout is set, so waiting for any reply
+		// would hang.
+		let (port, server) = mock_smtp_server(vec![MockSession::Smtp {
+			mail_reply: "250 OK",
+			rcpt_replies: vec![REPLIES_421[0]],
+			hang_after_421: true,
+		}])
+		.await;
+		let to_email = EmailAddress::from_str("real@example.org").unwrap();
+
+		let res = tokio::time::timeout(
+			std::time::Duration::from_secs(5),
+			create_smtp_future(
+				&to_email,
+				"127.0.0.1",
+				"example.org",
+				&mock_verif_method(port, 1),
+			),
+		)
+		.await
+		.expect("should return the 421 without waiting on the server");
+
+		assert_is_421(res, REPLIES_421[0]);
+		let received = server.await.unwrap().remove(0);
+		assert_eq!(count_rcpt(&received), 1, "{received:?}");
+	}
+
+	#[tokio::test]
+	async fn catch_all_421_survives_failed_retry() {
+		for reply in REPLIES_421 {
+			// Retry is refused at TCP level, or accepted and closed before the
+			// SMTP greeting.
+			for close_before_greeting in [false, true] {
+				let mut sessions = vec![smtp_session(vec![reply])];
+				if close_before_greeting {
+					sessions.push(MockSession::CloseBeforeGreeting);
+				}
+				let (port, server) = mock_smtp_server(sessions).await;
+				let to_email = EmailAddress::from_str("real@example.org").unwrap();
+
+				let res = check_smtp_with_retry(
+					&to_email,
+					"127.0.0.1",
+					"example.org",
+					&mock_verif_method(port, 2),
+					2,
+				)
+				.await;
+
+				let context = format!("{reply} (close_before_greeting={close_before_greeting})");
+				assert_is_421(res, &context);
+				server.await.unwrap();
+			}
+		}
+	}
+
+	#[tokio::test]
+	async fn failed_reconnect_keeps_original_error() {
+		// Catch-all probe is rejected, then the server drops the connection on
+		// the real RCPT TO, and refuses the reconnect.
+		let (port, server) =
+			mock_smtp_server(vec![smtp_session(vec!["550 5.1.1 User unknown"])]).await;
+		let to_email = EmailAddress::from_str("real@example.org").unwrap();
+
+		let res = create_smtp_future(
+			&to_email,
+			"127.0.0.1",
+			"example.org",
+			&mock_verif_method(port, 1),
+		)
+		.await;
+
+		match res {
+			Err(err) => assert!(parser::is_err_io_errors(&err), "{:?}", err),
+			other => panic!("expected `io: incomplete` error, got {:?}", other),
+		}
+		server.await.unwrap();
+	}
+
+	#[tokio::test]
+	async fn reconnect_returns_server_reply() {
+		// Same as above, but the reconnect reaches the server, which rejects
+		// MAIL FROM because our IP is blacklisted: that reply must win.
+		let (port, server) = mock_smtp_server(vec![
+			smtp_session(vec!["550 5.1.1 User unknown"]),
+			MockSession::Smtp {
+				mail_reply: "550 5.7.1 Client host [127.0.0.1] blacklisted",
+				rcpt_replies: vec![],
+				hang_after_421: false,
+			},
+		])
+		.await;
+		let to_email = EmailAddress::from_str("real@example.org").unwrap();
+
+		let res = create_smtp_future(
+			&to_email,
+			"127.0.0.1",
+			"example.org",
+			&mock_verif_method(port, 1),
+		)
+		.await;
+
+		match res {
+			Err(err) => assert!(
+				matches!(
+					err.get_description(),
+					Some(super::super::SmtpErrorDesc::IpBlacklisted)
+				),
+				"{:?}",
+				err
+			),
+			other => panic!("expected IP blacklisted error, got {:?}", other),
+		}
+		server.await.unwrap();
 	}
 
 	#[tokio::test]
