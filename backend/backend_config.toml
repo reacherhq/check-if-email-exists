@@ -42,6 +42,13 @@ from_email = "hello@localhost"
 # Env variable: RCH__HEADER_SECRET
 # header_secret = "my-secret"
 
+# Origins allowed to call the backend from a browser, as a comma-separated list
+# (e.g. "https://app.example.com,https://admin.example.com"), or "*" to allow
+# any origin. CORS is disabled when unset.
+#
+# Env variable: RCH__CORS_ALLOWED_ORIGINS
+# cors_allowed_origins = "https://app.example.com"
+
 # Optional Sentry DSN. If set, all errors will be sent to Sentry.
 #
 # Env variable: RCH__SENTRY_DSN

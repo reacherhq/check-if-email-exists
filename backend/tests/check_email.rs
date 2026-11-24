@@ -107,4 +107,95 @@ mod tests {
 		assert_eq!(resp.status(), StatusCode::BAD_REQUEST, "{:?}", resp.body());
 		assert_eq!(resp.body(), r#"{"error":"to_email field is required."}"#);
 	}
+
+	fn create_cors_backend_config(cors_allowed_origins: &str) -> Arc<BackendConfig> {
+		let mut config = BackendConfig::empty();
+		config.cors_allowed_origins = Some(cors_allowed_origins.to_string());
+		Arc::new(config)
+	}
+
+	fn cors_preflight_request(origin: &str) -> warp::test::RequestBuilder {
+		request()
+			.path("/v0/check_email")
+			.method("OPTIONS")
+			.header("origin", origin)
+			.header("access-control-request-method", "POST")
+			.header(
+				"access-control-request-headers",
+				format!("content-type,{}", REACHER_SECRET_HEADER),
+			)
+	}
+
+	#[tokio::test]
+	async fn test_cors_disabled_by_default() {
+		let resp = cors_preflight_request("https://example.com")
+			.reply(&create_routes(Arc::new(BackendConfig::empty())))
+			.await;
+
+		assert_eq!(resp.status(), StatusCode::METHOD_NOT_ALLOWED);
+		assert!(resp.headers().get("access-control-allow-origin").is_none());
+	}
+
+	#[tokio::test]
+	async fn test_cors_preflight_allowed_origin() {
+		let resp = cors_preflight_request("https://example.com")
+			.reply(&create_routes(create_cors_backend_config(
+				"https://foo.com, https://example.com",
+			)))
+			.await;
+
+		assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
+		assert_eq!(
+			resp.headers().get("access-control-allow-origin").unwrap(),
+			"https://example.com"
+		);
+	}
+
+	#[tokio::test]
+	async fn test_cors_preflight_any_origin() {
+		let resp = cors_preflight_request("https://example.com")
+			.reply(&create_routes(create_cors_backend_config("*")))
+			.await;
+
+		assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
+		assert_eq!(
+			resp.headers().get("access-control-allow-origin").unwrap(),
+			"https://example.com"
+		);
+	}
+
+	#[tokio::test]
+	async fn test_cors_preflight_other_origin() {
+		let resp = cors_preflight_request("https://other.com")
+			.reply(&create_routes(create_cors_backend_config(
+				"https://example.com",
+			)))
+			.await;
+
+		assert_eq!(resp.status(), StatusCode::FORBIDDEN);
+		assert!(resp.headers().get("access-control-allow-origin").is_none());
+	}
+
+	#[tokio::test]
+	async fn test_cors_post_allowed_origin() {
+		let mut config = BackendConfig::empty();
+		config.header_secret = Some("foobar".to_string());
+		config.cors_allowed_origins = Some("https://example.com".to_string());
+
+		let resp = request()
+			.path("/v0/check_email")
+			.method("POST")
+			.header("origin", "https://example.com")
+			.header(REACHER_SECRET_HEADER, "foobar")
+			.json(&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar"}"#).unwrap())
+			.reply(&create_routes(Arc::new(config)))
+			.await;
+
+		assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
+		assert_eq!(
+			resp.headers().get("access-control-allow-origin").unwrap(),
+			"https://example.com"
+		);
+		assert!(resp.body().starts_with(FOO_BAR_RESPONSE.as_bytes()));
+	}
 }
