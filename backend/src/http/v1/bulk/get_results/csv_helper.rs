@@ -81,9 +81,9 @@ impl TryFrom<CsvWrapper> for CsvResponse {
 			.and_then(|v| v.as_object())
 			.ok_or("mx field should be an object")?;
 		let mx_accepts_mail = mx
-			.get("accepts_email")
+			.get("accepts_mail")
 			.and_then(|v| v.as_bool())
-			.ok_or("accepts_email should be a boolean")?;
+			.ok_or("accepts_mail should be a boolean")?;
 
 		let smtp = top_level
 			.get("smtp")
