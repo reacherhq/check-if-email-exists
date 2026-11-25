@@ -131,6 +131,11 @@ pub fn is_invalid(e: &str, email: &EmailAddress) -> bool {
 
 /// Check that the mailbox has a full inbox.
 pub fn is_full_inbox(e: &str) -> bool {
+	// SMTP 452 can report a server-wide resource shortage.
+	if e.contains("insufficient system") {
+		return false;
+	}
+
 	e.contains("insufficient")
 	// https://answers.microsoft.com/en-us/outlook_com/forum/all/how-do-i-interpret-the-delivery-failure-message/2f1bf9c0-8b03-4f8f-aacc-5f6ba60a73f3
 	|| e.contains("mailbox full")
@@ -348,6 +353,22 @@ mod tests {
 			"permanent: requested mail action aborted: exceeded storage allocation"
 		));
 		assert!(is_full_inbox("permanent: 5.2.2 quota exceeded"));
+	}
+
+	#[test]
+	fn test_is_full_inbox_system_storage() {
+		assert!(!is_full_inbox(
+			"transient: 4.3.1 requested action not taken: insufficient system storage"
+		));
+		assert!(!is_full_inbox(
+			"transient: requested action not taken: insufficient system storage"
+		));
+		assert!(!is_full_inbox(
+			"transient: 4.3.1 insufficient system resources"
+		));
+		assert!(is_full_inbox(
+			"transient: 4.2.2 insufficient mailbox storage"
+		));
 	}
 
 	#[test]
