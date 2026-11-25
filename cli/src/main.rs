@@ -56,7 +56,11 @@ pub(crate) static CONF: Lazy<Cli> = Lazy::new(Cli::parse);
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
-	tracing_subscriber::fmt::init();
+	// Logs go to stderr so that stdout only contains the JSON result.
+	tracing_subscriber::fmt()
+		.with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+		.with_writer(std::io::stderr)
+		.init();
 
 	let to_email = &CONF.to_email;
 
