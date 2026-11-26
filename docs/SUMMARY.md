@@ -11,6 +11,7 @@
 
 * [SaaS vs Self-Host](self-hosting/saas-vs-self-host.md)
 * [Install Reacher in 20min](self-hosting/install.md)
+* [Auto-héberger Reacher avec Docker (français)](self-hosting/installer-reacher.md)
 * [Scaling for Production](self-hosting/scaling-for-production/README.md)
   * [Manage scaling yourself](self-hosting/scaling-for-production/option-1-manage-scaling-yourself.md)
   * [Option 1: RabbitMQ-based Queue Architecture](self-hosting/scaling-for-production/option-2-rabbitmq-based-queue-architecture.md)

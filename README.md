@@ -6,7 +6,7 @@
 <br /><br />
 
 <p align="center"><img align="center" src="https://storage.googleapis.com/saasify-uploads-prod/696e287ad79f0e0352bc201b36d701849f7d55e7.svg" height="96" alt="reacher" /></p>
-<h1 align="center">check-if-email-exists</h1>
+<h1 align="center">Reacher — open-source email verification API</h1>
 <h4 align="center">Check if an email address exists without sending any email.<br/>Comes with a <a href="./backend">⚙️ HTTP backend</a>.</h4>
 
 <br /><br /><br />
@@ -18,6 +18,8 @@
 This is open-source, but I also offer a **SaaS** solution that has `check-if-email-exists` packaged in a nice friendly web interface. If you are interested, find out more at [No2Bounce.com](https://no2bounce.com/?ref=github). If you have any questions, you can contact me at amaury@reacher.email.
 
 <br />
+
+The Reacher source repository is [reacherhq/check-if-email-exists](https://github.com/reacherhq/check-if-email-exists). Pour installer l’API en français, consultez le [guide d’auto-hébergement de Reacher](./docs/self-hosting/installer-reacher.md).
 
 ## Get Started
 
