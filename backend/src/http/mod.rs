@@ -19,8 +19,9 @@ pub fn create_routes(
 	config: Arc<BackendConfig>,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	let pg_pool = config.get_pg_pool();
+	let cors = create_cors(&config);
 
-	version::get::get_version()
+	let routes = version::get::get_version()
 		.or(v0::check_email::post::post_check_email(Arc::clone(&config)))
 		// The 3 following routes will 404 if o is None.
 		.or(v0::bulk::post::create_bulk_job(
@@ -35,7 +36,42 @@ pub fn create_routes(
 			Arc::clone(&config),
 		))
 		.or(v1::bulk::get_results::v1_get_bulk_job_results(config))
-		.recover(handle_rejection)
+		.recover(handle_rejection);
+
+	match cors {
+		Some(cors) => routes
+			.with(cors)
+			.map(|reply| Box::new(reply) as Box<dyn warp::Reply>)
+			.boxed(),
+		None => routes
+			.map(|reply| Box::new(reply) as Box<dyn warp::Reply>)
+			.boxed(),
+	}
+}
+
+/// Build the CORS filter from `cors_allowed_origins`. CORS is disabled (and
+/// `None` returned) when the setting is unset or empty.
+fn create_cors(config: &BackendConfig) -> Option<warp::cors::Builder> {
+	let origins: Vec<&str> = config
+		.cors_allowed_origins
+		.as_deref()?
+		.split(',')
+		.map(str::trim)
+		.filter(|origin| !origin.is_empty())
+		.collect();
+	if origins.is_empty() {
+		return None;
+	}
+
+	let cors = warp::cors()
+		.allow_methods(["GET", "POST"])
+		.allow_headers(["content-type", REACHER_SECRET_HEADER]);
+
+	Some(if origins.contains(&"*") {
+		cors.allow_any_origin()
+	} else {
+		cors.allow_origins(origins)
+	})
 }
 
 /// Runs the Warp server.

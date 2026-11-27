@@ -48,6 +48,9 @@ pub struct BackendConfig {
 	pub http_port: u16,
 	/// Shared secret between a trusted client and the backend.
 	pub header_secret: Option<String>,
+	/// Comma-separated list of origins allowed to make cross-origin (CORS)
+	/// requests, or "*" for any origin. CORS is disabled when unset.
+	pub cors_allowed_origins: Option<String>,
 	/// Sentry DSN to report errors to
 	pub sentry_dsn: Option<String>,
 
@@ -86,6 +89,7 @@ impl BackendConfig {
 			http_host: "127.0.0.1".to_string(),
 			http_port: 8080,
 			header_secret: None,
+			cors_allowed_origins: None,
 			sentry_dsn: None,
 			worker: WorkerConfig::default(),
 			storage: Some(StorageConfig::Noop),
