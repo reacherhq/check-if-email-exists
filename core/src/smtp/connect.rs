@@ -373,13 +373,18 @@ async fn create_smtp_future(
 		// Unfortunately `smtp_transport.is_connected()` doesn't report about this,
 		// so we can only check for "io: incomplete" SMTP error being returned.
 		// https://github.com/async-email/async-smtp/issues/37
+		//
+		// Other servers limit the number of recipients per session, and
+		// answer "452 4.5.3 Too many recipients" here because the catch-all
+		// probe already used the session's quota. The real RCPT TO must then
+		// be sent on a new session too.
 		if let Err(e) = &result {
-			if parser::is_err_io_errors(e) {
+			if parser::is_err_io_errors(e) || parser::is_err_too_many_recipients(e) {
 				tracing::debug!(
 					target: LOG_TARGET,
 					email=to_email.to_string(),
 					error=?e,
-					"Got `io: incomplete` error, reconnecting"
+					"Got `io: incomplete` or too many recipients error, reconnecting"
 				);
 
 				let _ = smtp_transport.quit().await;
@@ -850,6 +855,62 @@ mod tests {
 				err
 			),
 			other => panic!("expected IP blacklisted error, got {:?}", other),
+		}
+		server.await.unwrap();
+	}
+
+	#[tokio::test]
+	async fn too_many_recipients_reconnects_for_real_rcpt() {
+		// The server accepts a single RCPT TO per session: the catch-all probe
+		// uses it, so the real RCPT TO must be sent on a new session.
+		const TOO_MANY: &str = "452 4.5.3 Too many recipients";
+		for (real_reply, is_deliverable) in [("250 OK", true), ("550 5.1.1 User unknown", false)] {
+			let (port, server) = mock_smtp_server(vec![
+				smtp_session(vec!["550 5.1.1 User unknown", TOO_MANY]),
+				smtp_session(vec![real_reply]),
+			])
+			.await;
+			let to_email = EmailAddress::from_str("real@example.org").unwrap();
+
+			let (is_catch_all, deliverability) = create_smtp_future(
+				&to_email,
+				"127.0.0.1",
+				"example.org",
+				&mock_verif_method(port, 1),
+			)
+			.await
+			.unwrap_or_else(|err| panic!("{}: {:?}", real_reply, err));
+
+			assert!(!is_catch_all);
+			assert_eq!(deliverability.is_deliverable, is_deliverable);
+			// The new session only gets the real RCPT TO, no catch-all probe.
+			let received = server.await.unwrap();
+			assert_eq!(count_rcpt(&received[1]), 1, "{received:?}");
+			assert!(received[1].iter().any(|l| l.contains("real@example.org")));
+		}
+	}
+
+	#[tokio::test]
+	async fn too_many_recipients_is_returned_when_reconnect_fails() {
+		// The reconnect is refused: the 452 is still the error to report.
+		let (port, server) = mock_smtp_server(vec![smtp_session(vec![
+			"550 5.1.1 User unknown",
+			"452 4.5.3 Too many recipients",
+		])])
+		.await;
+		let to_email = EmailAddress::from_str("real@example.org").unwrap();
+
+		let res = create_smtp_future(
+			&to_email,
+			"127.0.0.1",
+			"example.org",
+			&mock_verif_method(port, 1),
+		)
+		.await;
+
+		match res {
+			Err(err) => assert!(parser::is_err_too_many_recipients(&err), "{:?}", err),
+			other => panic!("expected too many recipients error, got {:?}", other),
 		}
 		server.await.unwrap();
 	}
