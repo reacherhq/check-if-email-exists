@@ -164,6 +164,21 @@ pub fn is_err_io_errors(e: &SmtpError) -> bool {
 	}
 }
 
+/// Check if the server refused a `RCPT TO` because the session already
+/// reached its limit of recipients, e.g. "452 4.5.3 Too many recipients". The
+/// reply says nothing about the mailbox: the command must be sent again on a
+/// new session. A `452` alone is not enough, as it's also used for
+/// "insufficient system storage".
+pub fn is_err_too_many_recipients(e: &SmtpError) -> bool {
+	match e {
+		SmtpError::AsyncSmtpError(AsyncSmtpError::Transient(r)) if r.has_code(452) => {
+			let message = r.message.join("; ").to_lowercase();
+			message.contains("4.5.3") || message.contains("too many recipients")
+		}
+		_ => false,
+	}
+}
+
 /// Check if the IP is blacklisted.
 pub fn is_err_ip_blacklisted(e: &SmtpError) -> bool {
 	let e = match e {
@@ -258,7 +273,9 @@ pub fn is_err_needs_rdns(e: &SmtpError) -> bool {
 #[cfg(test)]
 mod tests {
 
-	use super::{is_err_ip_blacklisted, is_full_inbox, is_greylisted, is_invalid};
+	use super::{
+		is_err_ip_blacklisted, is_err_too_many_recipients, is_full_inbox, is_greylisted, is_invalid,
+	};
 	use crate::EmailAddress;
 	use crate::SmtpError::AsyncSmtpError;
 	use async_smtp::{
@@ -367,5 +384,45 @@ mod tests {
 		));
 
 		assert!(is_err_ip_blacklisted(&AsyncSmtpError(err)))
+	}
+
+	#[test]
+	fn test_is_err_too_many_recipients() {
+		let transient = |code: Code, message: &str| {
+			AsyncSmtpError(Error::Transient(Response::new(
+				code,
+				vec![message.to_string()],
+			)))
+		};
+		let code_452 = || {
+			Code::new(
+				Severity::TransientNegativeCompletion,
+				Category::MailSystem,
+				Detail::Two,
+			)
+		};
+		let code_450 = Code::new(
+			Severity::TransientNegativeCompletion,
+			Category::MailSystem,
+			Detail::Zero,
+		);
+
+		assert!(is_err_too_many_recipients(&transient(
+			code_452(),
+			"4.5.3 Too many recipients"
+		)));
+		assert!(is_err_too_many_recipients(&transient(
+			code_452(),
+			"Error: too many recipients"
+		)));
+		// 452 is also used for storage errors.
+		assert!(!is_err_too_many_recipients(&transient(
+			code_452(),
+			"4.3.1 Insufficient system storage"
+		)));
+		assert!(!is_err_too_many_recipients(&transient(
+			code_450,
+			"4.7.1 Greylisted, too many recipients"
+		)));
 	}
 }
